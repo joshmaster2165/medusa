@@ -11,11 +11,11 @@ from rich.console import Console
 from rich.table import Table
 
 from medusa import __version__
+from medusa.cli.banner import print_banner
 from medusa.compliance.framework import evaluate_compliance, load_framework
 from medusa.connectors.config_discovery import discover_servers
 from medusa.connectors.http import HttpConnector
 from medusa.connectors.stdio import StdioConnector
-from medusa.core.models import Status
 from medusa.core.registry import CheckRegistry
 from medusa.core.scanner import ScanEngine, has_findings_above_threshold
 from medusa.reporters.html_reporter import HtmlReporter
@@ -26,7 +26,7 @@ from medusa.utils.config_parser import load_config
 console = Console()
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option(version=__version__, prog_name="medusa")
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (-v, -vv, -vvv)")
 @click.option("-q", "--quiet", is_flag=True, help="Suppress all output except errors")
@@ -36,6 +36,13 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
     ctx.obj["quiet"] = quiet
+
+    if not quiet:
+        print_banner(console, __version__)
+
+    # Show help if no subcommand provided
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
     level = logging.WARNING
     if quiet:
@@ -55,14 +62,27 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
 @click.option("--config-file", type=str, default=None, help="Path to MCP config file")
 @click.option("--scan-config", type=str, default=None, help="Path to medusa.yaml")
 @click.option("--http", "http_url", type=str, default=None, help="Scan an HTTP MCP server by URL")
-@click.option("--stdio", "stdio_cmd", type=str, default=None, help="Scan a stdio MCP server by command")
-@click.option("--server", type=str, default=None, help="Scan a specific server by name from config")
-@click.option("-o", "--output", "output_format", type=click.Choice(["json", "html", "markdown"]), default="json", help="Output format")
+@click.option(
+    "--stdio", "stdio_cmd", type=str, default=None,
+    help="Scan a stdio MCP server by command",
+)
+@click.option(
+    "--server", type=str, default=None,
+    help="Scan a specific server by name from config",
+)
+@click.option(
+    "-o", "--output", "output_format",
+    type=click.Choice(["json", "html", "markdown"]),
+    default="json", help="Output format",
+)
 @click.option("--output-file", type=str, default=None, help="Write output to file")
 @click.option("--category", type=str, default=None, help="Comma-separated categories to scan")
 @click.option("--severity", type=str, default=None, help="Minimum severity to report")
 @click.option("--checks", type=str, default=None, help="Comma-separated check IDs to run")
-@click.option("--exclude-checks", type=str, default=None, help="Comma-separated check IDs to exclude")
+@click.option(
+    "--exclude-checks", type=str, default=None,
+    help="Comma-separated check IDs to exclude",
+)
 @click.option("--fail-on", type=str, default="high", help="Min severity for non-zero exit code")
 @click.option("--compliance", type=str, default=None, help="Compliance framework to evaluate")
 @click.option("--no-auto-discover", is_flag=True, help="Disable auto-discovery of servers")
@@ -132,9 +152,9 @@ def scan(
         sys.exit(3)
 
     if not quiet:
-        console.print(f"[bold]Medusa[/bold] v{__version__}")
-        console.print(f"Found {len(connectors)} server(s) to scan")
-        console.print()
+        console.print(
+            f"[green]Found {len(connectors)} server(s) to scan[/green]"
+        )
 
     # Discover and filter checks
     registry = CheckRegistry()
@@ -161,7 +181,9 @@ def scan(
     )
 
     if not quiet:
-        console.print(f"Running {len(engine.checks)} checks...")
+        console.print(
+            f"[green]Running {len(engine.checks)} checks...[/green]"
+        )
         console.print()
 
     result = asyncio.run(engine.scan())
@@ -211,7 +233,11 @@ def _print_summary(result) -> None:
     grade_colors = {"A": "green", "B": "green", "C": "yellow", "D": "red", "F": "red"}
     color = grade_colors.get(result.aggregate_grade, "white")
 
-    console.print(f"[bold {color}]Grade: {result.aggregate_grade} ({result.aggregate_score}/10)[/bold {color}]")
+    grade = result.aggregate_grade
+    score = result.aggregate_score
+    console.print(
+        f"[bold {color}]Grade: {grade} ({score}/10)[/bold {color}]"
+    )
     console.print()
 
     table = Table(show_header=True, header_style="bold")
