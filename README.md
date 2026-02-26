@@ -2,14 +2,14 @@
 
 **Security scanner for MCP servers**
 
-Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers, runs 20+ security checks across 7 categories, scores findings on a 0--10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers, runs 39 security checks across 8 categories, scores findings on a 0--10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
 
 ---
 
 ## Features
 
 - **Auto-discovery** -- finds MCP servers from Claude Desktop, Cursor, Windsurf, and custom config files without manual configuration.
-- **20+ built-in checks** across tool poisoning, authentication, input validation, credential exposure, privilege/scope analysis, and more.
+- **39 built-in checks** across tool poisoning, authentication, input validation, credential exposure, privilege/scope, transport security, data protection, and integrity.
 - **Severity scoring** -- each server receives a 0--10 numeric score and an A--F letter grade.
 - **Multiple output formats** -- JSON (machine-readable), HTML (interactive dashboard), and Markdown.
 - **CI/CD integration** -- `--fail-on` flag returns a non-zero exit code when findings meet or exceed a severity threshold.
@@ -85,17 +85,18 @@ medusa scan --exclude-checks tp005,iv005
 
 ## Check Categories
 
-Medusa ships with **20 checks** across **5 implemented categories** (with 2 additional categories planned):
+Medusa ships with **39 checks** across **8 categories**:
 
-| Category             | Prefix   | Checks | Description                                                 |
-|----------------------|----------|--------|-------------------------------------------------------------|
-| Tool Poisoning       | `tp0xx`  | 5      | Hidden instructions, prompt injection, tool shadowing, suspicious parameters, abnormally long descriptions |
-| Authentication       | `auth0xx`| 4      | Missing auth on HTTP, weak OAuth, missing TLS, localhost without auth |
-| Input Validation     | `iv0xx`  | 5      | Command injection, path traversal, SQL injection, missing schemas, permissive schemas |
-| Credential Exposure  | `cred0xx`| 3      | Secrets in config files, environment variable leakage, secrets in tool definitions |
-| Privilege & Scope    | `priv0xx`| 3      | Overprivileged filesystem access, unrestricted network access, shell execution |
-| Transport Security   | --       | --     | *(planned)* |
-| Integrity            | --       | --     | *(planned)* |
+| Category             | Prefix                    | Checks | Description                                                 |
+|----------------------|---------------------------|--------|-------------------------------------------------------------|
+| Tool Poisoning       | `tp0xx`                   | 5      | Hidden instructions, prompt injection, tool shadowing, suspicious parameters, abnormally long descriptions |
+| Authentication       | `auth0xx`                 | 4      | Missing auth on HTTP, weak OAuth, missing TLS, localhost without auth |
+| Input Validation     | `iv0xx`                   | 5      | Command injection, path traversal, SQL injection, missing schemas, permissive schemas |
+| Credential Exposure  | `cred0xx`                 | 3      | Secrets in config files, environment variable leakage, secrets in tool definitions |
+| Privilege & Scope    | `priv0xx`                 | 3      | Overprivileged filesystem access, unrestricted network access, shell execution |
+| Transport Security   | `ts0xx`                   | 4      | Unencrypted transport, missing certificate validation, insecure TLS, missing transport auth |
+| Data Protection      | `dp0xx` `audit0xx` `ctx0xx` | 8    | PII in definitions, sensitive URIs, missing data classification, excessive data exposure, missing logging/audit, resource over-sharing, resource/prompt injection |
+| Integrity            | `intg0xx` `sc0xx` `shadow0xx` | 7  | Missing version pinning, unsigned binaries, config tampering, missing integrity verification, untrusted package sources, generic server names, unverified server identity |
 
 Run `medusa list-checks` to see the full table with OWASP MCP mappings.
 
@@ -135,16 +136,18 @@ Medusa maps every check to the [OWASP MCP Top 10 2025](https://owasp.org/www-pro
 medusa scan --compliance owasp_mcp_top10
 ```
 
-The report will include a per-requirement pass/fail status showing coverage for:
+The report will include a per-requirement pass/fail status with full coverage across all 10 items:
 
 - MCP01: Token Mismanagement & Secret Exposure
 - MCP02: Excessive Permission Scope
 - MCP03: Tool Poisoning
+- MCP04: Software Supply Chain Attacks
 - MCP05: Command Injection
 - MCP06: Prompt Injection / Intent Flow Subversion
 - MCP07: Insufficient Authentication & Authorization
-
-MCP04 (Supply Chain), MCP08 (Audit/Telemetry), MCP09 (Shadow Servers), and MCP10 (Context Injection) do not yet have automated checks and are listed as uncovered.
+- MCP08: Lack of Audit and Telemetry
+- MCP09: Shadow MCP Servers
+- MCP10: Context Injection & Over-Sharing
 
 ---
 
