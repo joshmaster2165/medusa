@@ -32,7 +32,7 @@ class PiiInDefinitionsCheck(BaseCheck):
         # --- Scan tools ---
         for tool in snapshot.tools:
             tool_name: str = tool.get("name", "<unnamed>")
-            description: str = tool.get("description", "")
+            description: str = tool.get("description") or ""
 
             # Collect all text surfaces from this tool
             surfaces: list[tuple[str, str]] = []
@@ -89,8 +89,8 @@ class PiiInDefinitionsCheck(BaseCheck):
         # --- Scan resources ---
         for resource in snapshot.resources:
             res_name: str = resource.get("name", "<unnamed>")
-            res_desc: str = resource.get("description", "")
-            res_uri: str = resource.get("uri", "")
+            res_desc: str = resource.get("description") or ""
+            res_uri: str = str(resource.get("uri") or "")
 
             surfaces = []
             if res_desc:
@@ -127,7 +127,7 @@ class PiiInDefinitionsCheck(BaseCheck):
         # --- Scan prompts ---
         for prompt in snapshot.prompts:
             prompt_name: str = prompt.get("name", "<unnamed>")
-            prompt_desc: str = prompt.get("description", "")
+            prompt_desc: str = prompt.get("description") or ""
 
             if prompt_desc:
                 pii_matches = _find_pii(prompt_desc)

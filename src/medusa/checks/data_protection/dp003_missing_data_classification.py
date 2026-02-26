@@ -43,7 +43,7 @@ class MissingDataClassificationCheck(BaseCheck):
         for resource in snapshot.resources:
             res_name: str = resource.get("name", "<unnamed>")
             mime_type: str | None = resource.get("mimeType")
-            description: str = resource.get("description", "")
+            description: str = resource.get("description") or ""
 
             has_mime = bool(mime_type)
             has_classification = any(

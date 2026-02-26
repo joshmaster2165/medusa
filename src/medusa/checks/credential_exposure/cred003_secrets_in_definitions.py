@@ -128,9 +128,9 @@ class SecretsInDefinitionsCheck(BaseCheck):
             texts_to_scan = []
 
             if resource.get("description"):
-                texts_to_scan.append(resource["description"])
+                texts_to_scan.append(str(resource["description"]))
             if resource.get("uri"):
-                texts_to_scan.append(resource["uri"])
+                texts_to_scan.append(str(resource["uri"]))
 
             for text in texts_to_scan:
                 for pattern_name, matched in _scan_text(text):
@@ -165,7 +165,7 @@ class SecretsInDefinitionsCheck(BaseCheck):
                 texts_to_scan.append(prompt["description"])
 
             # Scan prompt argument descriptions.
-            for arg in prompt.get("arguments", []):
+            for arg in prompt.get("arguments") or []:
                 if isinstance(arg, dict) and arg.get("description"):
                     texts_to_scan.append(arg["description"])
 

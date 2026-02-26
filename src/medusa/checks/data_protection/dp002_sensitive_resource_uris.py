@@ -33,8 +33,8 @@ class SensitiveResourceUrisCheck(BaseCheck):
 
         for resource in snapshot.resources:
             res_name: str = resource.get("name", "<unnamed>")
-            uri: str = resource.get("uri", "")
-            uri_template: str = resource.get("uriTemplate", "")
+            uri: str = str(resource.get("uri") or "")
+            uri_template: str = str(resource.get("uriTemplate") or "")
 
             # Collect URI surfaces to scan
             surfaces: list[tuple[str, str]] = []

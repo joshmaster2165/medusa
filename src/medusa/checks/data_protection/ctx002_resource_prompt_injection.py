@@ -31,7 +31,7 @@ class ResourcePromptInjectionCheck(BaseCheck):
         # --- Scan resources ---
         for resource in snapshot.resources:
             res_name: str = resource.get("name", "<unnamed>")
-            description: str = resource.get("description", "")
+            description: str = resource.get("description") or ""
 
             if not description:
                 continue
@@ -75,7 +75,7 @@ class ResourcePromptInjectionCheck(BaseCheck):
         # --- Scan prompts ---
         for prompt in snapshot.prompts:
             prompt_name: str = prompt.get("name", "<unnamed>")
-            prompt_desc: str = prompt.get("description", "")
+            prompt_desc: str = prompt.get("description") or ""
 
             # Scan prompt description
             if prompt_desc:
@@ -113,10 +113,10 @@ class ResourcePromptInjectionCheck(BaseCheck):
                     )
 
             # Scan prompt argument descriptions
-            arguments = prompt.get("arguments", [])
+            arguments = prompt.get("arguments") or []
             for arg in arguments:
                 arg_name: str = arg.get("name", "<unnamed>")
-                arg_desc: str = arg.get("description", "")
+                arg_desc: str = arg.get("description") or ""
 
                 if not arg_desc:
                     continue
