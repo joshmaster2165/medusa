@@ -1,0 +1,31 @@
+check_id: tp005
+title: Abnormally Long Tool Descriptions
+category: tool_poisoning
+severity: medium
+description: >
+  Flags tool descriptions that exceed a reasonable length threshold (2000
+  characters). Excessively long descriptions are a common vector for burying
+  hidden instructions, prompt injection phrases, or encoded payloads within
+  large blocks of seemingly legitimate text.
+risk_explanation: >
+  Long descriptions increase the attack surface for tool-poisoning by making
+  manual review impractical. An attacker can hide a small injection payload
+  inside thousands of characters of benign documentation. Additionally,
+  oversized descriptions consume more of the LLM's context window, which can
+  degrade its ability to follow user intent and increases the chance of the
+  model blindly following embedded instructions.
+remediation: >
+  Keep tool descriptions concise and under 2000 characters. Move detailed
+  documentation to external references or resource URIs. Review any description
+  that exceeds the threshold for hidden content. Consider enforcing a maximum
+  description length at the MCP server or client level.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - tool_poisoning
+  - long_description
+  - verbosity
+  - obfuscation

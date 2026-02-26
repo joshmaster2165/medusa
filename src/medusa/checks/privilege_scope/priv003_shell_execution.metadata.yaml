@@ -1,0 +1,36 @@
+check_id: priv003
+title: Shell Execution Capability Detected
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools whose names indicate direct shell or command execution
+  capability (e.g. "exec", "run_command", "shell", "bash", "terminal"). Any
+  tool that provides shell access is inherently the highest privilege available
+  and is always flagged as critical regardless of schema constraints.
+risk_explanation: >
+  Shell execution tools grant the LLM (and any prompt-injection attacker) the
+  ability to run arbitrary operating system commands on the server host. This is
+  equivalent to full remote code execution. An attacker can install malware,
+  exfiltrate data, pivot to other network hosts, create persistent backdoors,
+  and completely compromise the system. No schema constraint can adequately
+  mitigate the risk of unrestricted shell access.
+remediation: >
+  Remove shell execution tools unless absolutely required. If shell access is
+  necessary, implement a strict command allowlist on the server side (not just in
+  the schema), run the server in a minimal container or sandbox with no network
+  access, use read-only filesystems, drop all unnecessary OS capabilities, and
+  require explicit human approval for every invocation. Consider replacing
+  generic shell tools with purpose-built tools that perform specific operations.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+  - https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP05:2025"
+tags:
+  - privilege_scope
+  - shell_execution
+  - remote_code_execution
+  - critical_privilege
+  - least_privilege

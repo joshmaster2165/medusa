@@ -1,0 +1,30 @@
+check_id: tp004
+title: Suspicious Parameter Names
+category: tool_poisoning
+severity: high
+description: >
+  Checks tool input schemas for parameter names that suggest data exfiltration
+  capabilities. Parameters named callback_url, webhook, exfiltrate, send_to,
+  and similar indicate that the tool may be designed to transmit data to
+  attacker-controlled endpoints.
+risk_explanation: >
+  A tool with exfiltration-style parameters can be weaponised by a poisoned
+  prompt to silently send sensitive data (credentials, file contents, user
+  input) to an external endpoint. Because the LLM populates tool parameters
+  automatically, the user may never see or approve the destination URL.
+remediation: >
+  Review tools that accept URL or endpoint parameters. Restrict outbound
+  destinations to an allowlist of trusted domains. Rename innocuous parameters
+  to avoid false positives, and remove any parameters that serve no legitimate
+  purpose. Implement runtime validation that blocks requests to unexpected
+  external endpoints.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - tool_poisoning
+  - exfiltration
+  - suspicious_parameters
+  - data_theft

@@ -1,0 +1,32 @@
+check_id: auth003
+title: Missing TLS on HTTP Transport
+category: authentication
+severity: critical
+description: >
+  Detects MCP servers using plain HTTP (unencrypted) instead of HTTPS for
+  their transport URL. Without TLS, all traffic between the MCP client and
+  server -- including tool invocations, resource data, authentication tokens,
+  and prompt content -- is transmitted in cleartext.
+risk_explanation: >
+  Plaintext HTTP traffic can be intercepted by any attacker with network
+  access (e.g. on the same Wi-Fi network, through a compromised router, or
+  via DNS spoofing). Credentials, API keys, and sensitive data passed through
+  MCP tool calls are fully exposed. Man-in-the-middle attackers can also
+  modify requests and responses, injecting malicious tool definitions or
+  altering tool outputs.
+remediation: >
+  Always use HTTPS (TLS 1.2 or later) for MCP server transport URLs.
+  Configure valid TLS certificates and ensure clients validate them. If the
+  server is behind a reverse proxy, terminate TLS at the proxy and ensure
+  the proxy-to-server link is also secured or on a trusted network segment.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+  - https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - authentication
+  - tls
+  - encryption
+  - http
+  - transport

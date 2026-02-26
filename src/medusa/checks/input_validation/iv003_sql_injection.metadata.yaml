@@ -1,0 +1,33 @@
+check_id: iv003
+title: SQL Injection Risk via Tool Input Schema
+category: input_validation
+severity: high
+description: >
+  Detects MCP tool parameters whose names suggest SQL query handling
+  (e.g. "query", "sql", "where", "filter", "statement") and that accept raw
+  string input without `pattern` or `enum` constraints. Unconstrained SQL
+  parameters allow an attacker to inject arbitrary SQL statements through tool
+  invocations.
+risk_explanation: >
+  SQL injection through MCP tools can expose, modify, or destroy database
+  contents. When a tool parameter passes user-controlled strings directly into
+  SQL queries, an attacker (or a prompt-injected LLM) can bypass authentication,
+  exfiltrate sensitive data, escalate privileges within the database, or execute
+  administrative operations such as DROP TABLE.
+remediation: >
+  Never pass raw user input as SQL. Use parameterised queries or prepared
+  statements on the server side. If the tool schema must accept query-like input,
+  add a `pattern` constraint that restricts the value to a safe subset (e.g.
+  column names only) or use `enum` to limit to predefined queries. Implement
+  server-side allowlisting of permitted SQL operations.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - sql_injection
+  - database
+  - schema_constraints

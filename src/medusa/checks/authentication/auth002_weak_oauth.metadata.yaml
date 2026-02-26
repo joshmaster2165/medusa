@@ -1,0 +1,32 @@
+check_id: auth002
+title: Weak OAuth Configuration
+category: authentication
+severity: high
+description: >
+  Detects OAuth configurations on MCP servers that are missing recommended
+  security features such as PKCE (Proof Key for Code Exchange), use overly
+  broad scopes, or rely on the implicit grant flow. The MCP specification
+  recommends OAuth 2.1 with PKCE for all HTTP transports.
+risk_explanation: >
+  Weak OAuth configurations expose MCP servers to authorization code
+  interception, token theft, and scope escalation attacks. Without PKCE, an
+  attacker who intercepts the authorization code can exchange it for a valid
+  access token. Overly broad scopes grant more permissions than necessary,
+  violating the principle of least privilege.
+remediation: >
+  Upgrade to OAuth 2.1 with mandatory PKCE (code_challenge_method=S256).
+  Use the authorization code grant flow and avoid the implicit flow. Define
+  narrow, purpose-specific scopes and reject wildcard or overly broad scope
+  requests. Validate the redirect_uri against a strict allowlist.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+  - https://datatracker.ietf.org/doc/html/rfc7636
+  - https://oauth.net/2.1/
+owasp_mcp:
+  - "MCP07:2025"
+  - "MCP01:2025"
+tags:
+  - authentication
+  - oauth
+  - pkce
+  - scope

@@ -1,0 +1,26 @@
+check_id: custom001
+title: Tool Missing Description
+category: tool_poisoning
+severity: medium
+description: >
+  Flags MCP tools that have an empty or missing description field.
+  Without a description, users and language models cannot understand
+  what a tool does before invoking it, which prevents informed consent
+  and increases the risk of unintended actions.
+risk_explanation: >
+  A tool with no description is a blind spot. The LLM may still invoke
+  the tool based on its name alone, but cannot accurately assess its
+  purpose or side effects. This undermines human-in-the-loop review and
+  makes it easier for malicious tools to go unnoticed.
+remediation: >
+  Add a clear, concise description to every tool. The description should
+  explain what the tool does, what inputs it expects, and what side effects
+  it has. Keep descriptions under 2000 characters.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - tool_poisoning
+  - missing_description
+  - tool_hygiene

@@ -1,0 +1,24 @@
+check_id: ts003
+title: Insecure TLS Configuration
+category: transport_security
+severity: medium
+description: >
+  Detects configuration specifying deprecated TLS versions such as SSLv2,
+  SSLv3, TLS 1.0, or TLS 1.1. These protocols have known vulnerabilities
+  (POODLE, BEAST, etc.) and should not be used.
+risk_explanation: >
+  Deprecated TLS versions contain cryptographic weaknesses that allow
+  attackers to decrypt traffic or downgrade the connection security. Modern
+  applications should use TLS 1.2 or 1.3 exclusively.
+remediation: >
+  Update TLS configuration to use TLS 1.2 or TLS 1.3 as the minimum
+  version. Remove any references to SSLv2, SSLv3, TLS 1.0, or TLS 1.1
+  from configuration files and environment variables.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - transport_security
+  - tls
+  - deprecated_protocol

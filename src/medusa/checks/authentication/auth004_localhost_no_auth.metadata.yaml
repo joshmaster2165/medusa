@@ -1,0 +1,32 @@
+check_id: auth004
+title: Localhost Binding Without Authentication
+category: authentication
+severity: high
+description: >
+  Detects MCP servers bound to localhost (127.0.0.1 or ::1) over HTTP/SSE
+  without any authentication mechanism. While localhost binding limits direct
+  remote access, it does not protect against DNS rebinding attacks, malicious
+  browser extensions, or other local processes.
+risk_explanation: >
+  Localhost-bound services without authentication are vulnerable to DNS
+  rebinding attacks where a malicious website tricks the user's browser into
+  making requests to the local MCP server. Because the requests originate
+  from the local machine, network-level restrictions are bypassed. Any local
+  process or browser script can also invoke the server's tools without
+  credentials.
+remediation: >
+  Always require authentication even for localhost-bound MCP servers. Use
+  bearer tokens, API keys, or OAuth with PKCE. Additionally, implement CORS
+  restrictions and validate the Host/Origin headers to mitigate DNS rebinding.
+  Consider binding to a Unix domain socket instead of a TCP port when only
+  local access is needed.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+  - https://en.wikipedia.org/wiki/DNS_rebinding
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - authentication
+  - localhost
+  - dns_rebinding
+  - local_access

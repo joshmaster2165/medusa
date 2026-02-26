@@ -1,0 +1,25 @@
+check_id: dp001
+title: PII in Tool/Resource/Prompt Definitions
+category: data_protection
+severity: high
+description: >
+  Detects personally identifiable information (PII) such as email addresses,
+  phone numbers, SSNs, credit card numbers, and IP addresses embedded in MCP
+  tool descriptions, resource descriptions/URIs, prompt descriptions, and
+  inputSchema fields (description, default, enum values).
+risk_explanation: >
+  PII hardcoded in server definitions can be leaked to any LLM client that
+  connects. This exposes sensitive data to unintended consumers and may
+  violate privacy regulations such as GDPR and CCPA.
+remediation: >
+  Remove all PII from tool, resource, and prompt definitions. Use placeholder
+  values or dynamic references instead of real personal data. Implement a
+  pre-publish review process that scans definitions for PII before deployment.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - pii
+  - privacy

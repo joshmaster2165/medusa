@@ -1,0 +1,33 @@
+check_id: priv001
+title: Overprivileged Filesystem Access Tool
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that provide filesystem access (read, write, delete, list
+  files or directories) and evaluates whether their schemas or server
+  configuration restrict the accessible paths. Tools that expose the full
+  filesystem without directory allowlisting violate the principle of least
+  privilege.
+risk_explanation: >
+  Unrestricted filesystem tools allow an LLM (or an attacker exploiting prompt
+  injection) to read sensitive files such as credentials, SSH keys, environment
+  files, and application secrets. Write-capable filesystem tools can modify
+  configuration, plant backdoors, or destroy data. Even listing directories can
+  leak the structure and contents of the host filesystem.
+remediation: >
+  Restrict filesystem tools to a specific set of allowed directories using a
+  server-side allowlist. Implement `pattern` constraints in the tool schema to
+  enforce a base-path prefix. Use `enum` to limit operations to a known set of
+  safe paths where possible. Drop tools that provide unrestricted filesystem
+  access if they are not essential.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP09:2025"
+tags:
+  - privilege_scope
+  - filesystem
+  - least_privilege
+  - overprivileged

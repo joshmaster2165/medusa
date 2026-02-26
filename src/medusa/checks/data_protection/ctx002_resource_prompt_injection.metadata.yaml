@@ -1,0 +1,30 @@
+check_id: ctx002
+title: Hidden Instructions / Prompt Injection in Resources and Prompts
+category: data_protection
+severity: high
+description: >
+  Detects hidden XML/HTML tags and prompt injection phrases in MCP resource
+  descriptions, prompt descriptions, and prompt argument descriptions. This
+  is the resource/prompt counterpart to TP-001 and TP-002, which focus on
+  tool descriptions.
+risk_explanation: >
+  Injected instructions in resource or prompt definitions can manipulate the
+  LLM when those definitions are included in the model's context. Attackers
+  can use hidden tags or injection phrases to override user intent, exfiltrate
+  data, or escalate privileges through the model's actions.
+remediation: >
+  Audit all resource and prompt descriptions for hidden markup and injection
+  phrases. Apply the same validation and sanitisation rules used for tool
+  descriptions. Reject definitions containing XML/HTML tags or phrases that
+  attempt to override system behaviour.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP10:2025"
+  - "MCP06:2025"
+tags:
+  - data_protection
+  - prompt_injection
+  - hidden_instructions
+  - resources
+  - prompts

@@ -1,0 +1,25 @@
+check_id: ts002
+title: Missing Certificate Validation
+category: transport_security
+severity: high
+description: >
+  Detects configuration that disables TLS certificate verification (e.g.
+  NODE_TLS_REJECT_UNAUTHORIZED=0, verify=false). Even when HTTPS is used,
+  disabled cert validation allows man-in-the-middle attacks.
+risk_explanation: >
+  Disabling certificate validation means the client will accept any
+  certificate, including self-signed or attacker-controlled ones. An attacker
+  on the network can intercept, read, and modify all encrypted traffic.
+remediation: >
+  Remove any configuration that disables certificate validation. Ensure
+  NODE_TLS_REJECT_UNAUTHORIZED is not set to 0, verify/ssl_verify is not
+  set to false, and GIT_SSL_NO_VERIFY is not set. Use proper CA certificates
+  instead of disabling validation.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - transport_security
+  - tls
+  - certificate_validation

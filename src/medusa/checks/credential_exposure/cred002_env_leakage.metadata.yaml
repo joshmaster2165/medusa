@@ -1,0 +1,33 @@
+check_id: cred002
+title: Environment Variable Leakage
+category: credential_exposure
+severity: high
+description: >
+  Checks whether the environment variables passed to an MCP server process
+  contain sensitive credentials such as cloud provider keys, API tokens,
+  database connection strings, or private keys. Passing secrets via
+  environment variables to MCP servers gives those servers -- and any tools
+  they expose -- access to credentials beyond what they need.
+risk_explanation: >
+  MCP servers run as separate processes with full access to their environment
+  variables. A compromised or malicious server can read all environment
+  variables passed to it, exfiltrating credentials for cloud services,
+  databases, and APIs. If the server exposes a shell execution tool, these
+  credentials become accessible to the LLM as well, greatly expanding the
+  blast radius of any prompt injection attack.
+remediation: >
+  Only pass the minimum required environment variables to each MCP server.
+  Never forward your entire shell environment. Use dedicated service accounts
+  with scoped credentials for each MCP server. Consider using a secrets
+  manager or short-lived tokens instead of long-lived environment variable
+  credentials. Audit the env block in your MCP configuration regularly.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+  - https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - environment_variables
+  - secrets
+  - least_privilege

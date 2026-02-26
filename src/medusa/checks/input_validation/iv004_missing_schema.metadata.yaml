@@ -1,0 +1,31 @@
+check_id: iv004
+title: Missing or Empty Input Schema on Tool
+category: input_validation
+severity: high
+description: >
+  Detects MCP tools that declare no inputSchema at all, or declare an empty
+  schema (no properties). A tool without a schema accepts completely unvalidated
+  input, bypassing any client-side or protocol-level type checking.
+risk_explanation: >
+  When a tool lacks an input schema, neither the MCP client nor the protocol
+  runtime can validate what the LLM sends. This means any string, object, or
+  blob can be passed to the tool handler, dramatically increasing the attack
+  surface for injection, type-confusion, and data-exfiltration attacks. It also
+  prevents human-in-the-loop review of tool arguments because the UI has no
+  schema to render.
+remediation: >
+  Define a complete JSON Schema for every tool's input. At minimum, specify
+  `type: "object"` with a `properties` map and a `required` array listing
+  mandatory parameters. Even tools that take no user-facing arguments should
+  declare an empty-object schema (`properties: {}`) explicitly to signal intent.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+  - https://json-schema.org/understanding-json-schema/
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - missing_schema
+  - tool_definition
+  - schema_hygiene

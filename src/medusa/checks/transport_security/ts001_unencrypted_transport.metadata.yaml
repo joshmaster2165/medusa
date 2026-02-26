@@ -1,0 +1,25 @@
+check_id: ts001
+title: Unencrypted Transport
+category: transport_security
+severity: critical
+description: >
+  Detects MCP servers using plain HTTP instead of HTTPS for their transport
+  layer. Unencrypted transport exposes all tool calls, responses, and
+  credentials to network-level interception and man-in-the-middle attacks.
+risk_explanation: >
+  Without TLS encryption, any network observer (ISP, shared WiFi, compromised
+  router) can read and modify MCP traffic in transit. This includes tool
+  invocations, their parameters, returned data, and authentication tokens.
+remediation: >
+  Switch all MCP server transport URLs from http:// to https://. Ensure TLS
+  certificates are valid and up to date. If the server is in development,
+  use a self-signed certificate or a local CA for testing.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - transport_security
+  - tls
+  - encryption

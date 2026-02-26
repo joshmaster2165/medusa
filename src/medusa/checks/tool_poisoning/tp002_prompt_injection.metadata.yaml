@@ -1,0 +1,31 @@
+check_id: tp002
+title: Tool Description Prompt Injection
+category: tool_poisoning
+severity: critical
+description: >
+  Detects explicit prompt injection phrases in MCP tool descriptions. These
+  phrases attempt to override LLM behaviour by instructing the model to ignore
+  previous instructions, hide actions from the user, exfiltrate data, or
+  assume a different identity.
+risk_explanation: >
+  Prompt injection phrases embedded in tool descriptions can hijack the LLM's
+  behaviour at runtime. Unlike hidden instructions (TP-001), these phrases may
+  be visible in plaintext but rely on the LLM following embedded directives
+  over user intent. Successful exploitation grants the attacker indirect
+  control over the model's actions.
+remediation: >
+  Remove or reject tool descriptions that contain prompt injection language.
+  Implement allowlist-based description validation on the MCP server. Consider
+  using a secondary classifier to flag descriptions that attempt to override
+  system prompts or instruct the model to act covertly.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://simonwillison.net/2025/Apr/9/mcp-prompt-injection/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP06:2025"
+tags:
+  - tool_poisoning
+  - prompt_injection
+  - description_abuse

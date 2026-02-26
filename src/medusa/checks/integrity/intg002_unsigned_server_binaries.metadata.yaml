@@ -1,0 +1,29 @@
+check_id: intg002
+title: Unsigned Server Binaries
+category: integrity
+severity: medium
+description: >
+  Detects MCP servers running local scripts (e.g. node script.js, python
+  script.py) without any integrity verification mechanism configured in the
+  server configuration. Without hash or signature checks, a tampered script
+  will be executed without detection.
+risk_explanation: >
+  When an MCP server is launched by running a local script file, any
+  modification to that file—whether by malware, a compromised CI/CD
+  pipeline, or an insider threat—will go undetected. Without integrity
+  verification (checksums, code signatures, or hash pinning), the host
+  blindly trusts whatever code is present at launch time.
+remediation: >
+  Add integrity verification to your MCP server configuration. Include a
+  sha256 hash, checksum, or signature field that is validated before the
+  server process starts. Consider using code signing for server binaries
+  and scripts. Store integrity baselines in a separate, protected
+  configuration file.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - binary_signing
+  - code_verification

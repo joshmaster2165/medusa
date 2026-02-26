@@ -1,0 +1,29 @@
+check_id: intg001
+title: Missing Version Pinning for Package Manager Commands
+category: integrity
+severity: medium
+description: >
+  Detects MCP servers launched via package managers (npx, uvx) that
+  auto-install packages without pinning a specific version. Without a
+  version pin an attacker who publishes a malicious update can have their
+  code executed automatically the next time the server starts.
+risk_explanation: >
+  When npx is invoked with the -y/--yes flag and the package name does not
+  include an @version suffix, npm will always fetch the latest version from
+  the registry. A supply-chain attacker who compromises the package or
+  publishes a typosquat can gain arbitrary code execution on the host. The
+  same risk applies to uvx when no version constraint is provided.
+remediation: >
+  Always pin package versions explicitly (e.g. npx @scope/pkg@1.2.3). Avoid
+  using the -y/--yes flag with npx in production configurations. For uvx,
+  specify a version constraint in the command arguments. Consider using a
+  lockfile or hash verification for additional integrity assurance.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://blog.phylum.io/the-dangers-of-npx/
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - supply_chain
+  - version_pinning

@@ -1,0 +1,303 @@
+"""Medusa CLI entry point."""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import sys
+
+import click
+from rich.console import Console
+from rich.table import Table
+
+from medusa import __version__
+from medusa.compliance.framework import evaluate_compliance, load_framework
+from medusa.connectors.config_discovery import discover_servers
+from medusa.connectors.http import HttpConnector
+from medusa.connectors.stdio import StdioConnector
+from medusa.core.models import Status
+from medusa.core.registry import CheckRegistry
+from medusa.core.scanner import ScanEngine, has_findings_above_threshold
+from medusa.reporters.html_reporter import HtmlReporter
+from medusa.reporters.json_reporter import JsonReporter
+from medusa.reporters.markdown_reporter import MarkdownReporter
+from medusa.utils.config_parser import load_config
+
+console = Console()
+
+
+@click.group()
+@click.version_option(version=__version__, prog_name="medusa")
+@click.option("-v", "--verbose", count=True, help="Increase verbosity (-v, -vv, -vvv)")
+@click.option("-q", "--quiet", is_flag=True, help="Suppress all output except errors")
+@click.pass_context
+def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
+    """Medusa - Security scanner for MCP servers."""
+    ctx.ensure_object(dict)
+    ctx.obj["verbose"] = verbose
+    ctx.obj["quiet"] = quiet
+
+    level = logging.WARNING
+    if quiet:
+        level = logging.ERROR
+    elif verbose == 1:
+        level = logging.INFO
+    elif verbose >= 2:
+        level = logging.DEBUG
+
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
+
+
+@cli.command()
+@click.option("--config-file", type=str, default=None, help="Path to MCP config file")
+@click.option("--scan-config", type=str, default=None, help="Path to medusa.yaml")
+@click.option("--http", "http_url", type=str, default=None, help="Scan an HTTP MCP server by URL")
+@click.option("--stdio", "stdio_cmd", type=str, default=None, help="Scan a stdio MCP server by command")
+@click.option("--server", type=str, default=None, help="Scan a specific server by name from config")
+@click.option("-o", "--output", "output_format", type=click.Choice(["json", "html", "markdown"]), default="json", help="Output format")
+@click.option("--output-file", type=str, default=None, help="Write output to file")
+@click.option("--category", type=str, default=None, help="Comma-separated categories to scan")
+@click.option("--severity", type=str, default=None, help="Minimum severity to report")
+@click.option("--checks", type=str, default=None, help="Comma-separated check IDs to run")
+@click.option("--exclude-checks", type=str, default=None, help="Comma-separated check IDs to exclude")
+@click.option("--fail-on", type=str, default="high", help="Min severity for non-zero exit code")
+@click.option("--compliance", type=str, default=None, help="Compliance framework to evaluate")
+@click.option("--no-auto-discover", is_flag=True, help="Disable auto-discovery of servers")
+@click.pass_context
+def scan(
+    ctx: click.Context,
+    config_file: str | None,
+    scan_config: str | None,
+    http_url: str | None,
+    stdio_cmd: str | None,
+    server: str | None,
+    output_format: str,
+    output_file: str | None,
+    category: str | None,
+    severity: str | None,
+    checks: str | None,
+    exclude_checks: str | None,
+    fail_on: str,
+    compliance: str | None,
+    no_auto_discover: bool,
+) -> None:
+    """Scan MCP servers for security vulnerabilities."""
+    quiet = ctx.obj.get("quiet", False)
+
+    # Load scan config
+    config = load_config(scan_config)
+
+    # Build connectors
+    connectors = []
+
+    # Explicit server targets
+    if http_url:
+        connectors.append(HttpConnector(name="cli-http", url=http_url))
+    if stdio_cmd:
+        parts = stdio_cmd.split()
+        connectors.append(
+            StdioConnector(name="cli-stdio", command=parts[0], args=parts[1:])
+        )
+
+    # Config file discovery
+    extra_configs = []
+    if config_file:
+        extra_configs.append(config_file)
+    extra_configs.extend(config.discovery.config_files)
+
+    # Auto-discover from known config locations
+    if not no_auto_discover and config.discovery.auto_discover and not (http_url or stdio_cmd):
+        discovered = discover_servers(additional_config_files=extra_configs)
+        connectors.extend(discovered)
+    elif extra_configs:
+        discovered = discover_servers(additional_config_files=extra_configs)
+        connectors.extend(discovered)
+
+    # Servers from medusa.yaml
+    for srv in config.discovery.servers:
+        if srv.transport == "http" and srv.url:
+            connectors.append(HttpConnector(name=srv.name, url=srv.url, headers=srv.headers))
+        elif srv.transport == "stdio" and srv.command:
+            connectors.append(
+                StdioConnector(name=srv.name, command=srv.command, args=srv.args, env=srv.env)
+            )
+
+    if not connectors:
+        if not quiet:
+            console.print("[yellow]No MCP servers found to scan.[/yellow]")
+            console.print("Use --config-file, --http, or --stdio to specify servers.")
+        sys.exit(3)
+
+    if not quiet:
+        console.print(f"[bold]Medusa[/bold] v{__version__}")
+        console.print(f"Found {len(connectors)} server(s) to scan")
+        console.print()
+
+    # Discover and filter checks
+    registry = CheckRegistry()
+    registry.discover_checks()
+
+    categories = category.split(",") if category else None
+    check_ids = checks.split(",") if checks else None
+    exclude_ids = exclude_checks.split(",") if exclude_checks else None
+    # Merge excludes from config
+    config_excludes = config.checks.exclude
+    if config_excludes:
+        if exclude_ids:
+            exclude_ids.extend(config_excludes)
+        else:
+            exclude_ids = config_excludes
+
+    # Run scan
+    engine = ScanEngine(
+        connectors=connectors,
+        registry=registry,
+        categories=categories,
+        check_ids=check_ids,
+        exclude_ids=exclude_ids,
+    )
+
+    if not quiet:
+        console.print(f"Running {len(engine.checks)} checks...")
+        console.print()
+
+    result = asyncio.run(engine.scan())
+
+    # Evaluate compliance if requested
+    compliance_name = compliance or (
+        config.compliance.frameworks[0] if config.compliance.frameworks else None
+    )
+    if compliance_name:
+        try:
+            framework = load_framework(compliance_name)
+            result.compliance_results[framework.name] = evaluate_compliance(
+                framework, result.findings
+            )
+        except FileNotFoundError:
+            if not quiet:
+                console.print(f"[yellow]Compliance framework not found: {compliance_name}[/yellow]")
+
+    # Generate report
+    reporters = {
+        "json": JsonReporter,
+        "html": HtmlReporter,
+        "markdown": MarkdownReporter,
+    }
+    reporter = reporters[output_format]()
+    output = reporter.generate(result)
+
+    if output_file:
+        reporter.write(result, output_file)
+        if not quiet:
+            console.print(f"Report written to: {output_file}")
+    else:
+        click.echo(output)
+
+    # Print summary to stderr if writing to file
+    if not quiet:
+        console.print()
+        _print_summary(result)
+
+    # Exit code
+    if has_findings_above_threshold(result, fail_on):
+        sys.exit(1)
+
+
+def _print_summary(result) -> None:
+    """Print a summary table to the console."""
+    grade_colors = {"A": "green", "B": "green", "C": "yellow", "D": "red", "F": "red"}
+    color = grade_colors.get(result.aggregate_grade, "white")
+
+    console.print(f"[bold {color}]Grade: {result.aggregate_grade} ({result.aggregate_score}/10)[/bold {color}]")
+    console.print()
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Server")
+    table.add_column("Score")
+    table.add_column("Grade")
+    table.add_column("Critical", style="red")
+    table.add_column("High", style="yellow")
+    table.add_column("Medium")
+    table.add_column("Low", style="blue")
+
+    for ss in result.server_scores:
+        scolor = grade_colors.get(ss.grade, "white")
+        table.add_row(
+            ss.server_name,
+            f"{ss.score}/10",
+            f"[{scolor}]{ss.grade}[/{scolor}]",
+            str(ss.critical_findings),
+            str(ss.high_findings),
+            str(ss.medium_findings),
+            str(ss.low_findings),
+        )
+
+    console.print(table)
+    console.print()
+    console.print(
+        f"Scanned {result.servers_scanned} server(s) in {result.scan_duration_seconds}s"
+    )
+
+
+@cli.command("list-checks")
+@click.option("--category", type=str, default=None, help="Filter by category")
+@click.option("--severity", type=str, default=None, help="Filter by severity")
+@click.option("--format", "fmt", type=click.Choice(["table", "json"]), default="table")
+def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
+    """List all available security checks."""
+    registry = CheckRegistry()
+    registry.discover_checks()
+
+    categories = [category] if category else None
+    severities = [severity] if severity else None
+    all_checks = registry.get_checks(categories=categories, severities=severities)
+
+    if fmt == "json":
+        import json
+        data = [
+            {
+                "check_id": c.metadata().check_id,
+                "title": c.metadata().title,
+                "category": c.metadata().category,
+                "severity": c.metadata().severity.value,
+                "owasp_mcp": c.metadata().owasp_mcp,
+            }
+            for c in all_checks
+        ]
+        click.echo(json.dumps(data, indent=2))
+        return
+
+    table = Table(title=f"Medusa Security Checks ({len(all_checks)})", show_header=True)
+    table.add_column("ID", style="cyan")
+    table.add_column("Title")
+    table.add_column("Category", style="magenta")
+    table.add_column("Severity")
+    table.add_column("OWASP MCP")
+
+    severity_styles = {
+        "critical": "bold red",
+        "high": "red",
+        "medium": "yellow",
+        "low": "blue",
+        "informational": "dim",
+    }
+
+    for check in all_checks:
+        meta = check.metadata()
+        sev_style = severity_styles.get(meta.severity.value, "")
+        table.add_row(
+            meta.check_id,
+            meta.title,
+            meta.category,
+            f"[{sev_style}]{meta.severity.value}[/{sev_style}]",
+            ", ".join(meta.owasp_mcp) if meta.owasp_mcp else "-",
+        )
+
+    console.print(table)
+
+
+if __name__ == "__main__":
+    cli()

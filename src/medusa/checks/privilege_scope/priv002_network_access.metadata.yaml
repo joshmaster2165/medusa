@@ -1,0 +1,33 @@
+check_id: priv002
+title: Unrestricted Network Access Tool
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools with network capabilities (HTTP requests, file downloads,
+  API calls, etc.) and checks whether their schemas enforce URL or domain
+  allowlists. Tools that can reach arbitrary network endpoints enable
+  server-side request forgery (SSRF), data exfiltration, and lateral movement.
+risk_explanation: >
+  Network-capable tools without domain restrictions allow an LLM (or a prompt-
+  injection attack) to send requests to internal services, cloud metadata
+  endpoints (e.g. 169.254.169.254), or attacker-controlled servers. This can
+  lead to credential theft, internal network mapping, data exfiltration, or
+  exploitation of internal APIs that trust the server's network identity.
+remediation: >
+  Enforce a strict URL or domain allowlist in the tool schema using `pattern`
+  (e.g. only allow specific domains) or `enum` (e.g. a fixed set of allowed
+  endpoints). On the server side, implement egress filtering that blocks
+  requests to internal IP ranges, cloud metadata endpoints, and unapproved
+  domains. Log all outbound requests for audit.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - privilege_scope
+  - network_access
+  - ssrf
+  - data_exfiltration
+  - least_privilege

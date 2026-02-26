@@ -1,0 +1,29 @@
+check_id: intg004
+title: Missing Integrity Verification for Tool Definitions
+category: integrity
+severity: high
+description: >
+  Detects MCP servers that expose tools but have no integrity verification
+  baseline (hashes, checksums, or integrity block) in their configuration.
+  Without a baseline, tool definitions can be modified or replaced without
+  detection.
+risk_explanation: >
+  Tool definitions drive what actions an LLM can take. If an attacker
+  modifies a tool's description, parameters, or behaviour—and no integrity
+  baseline exists—the change goes undetected. This enables tool poisoning,
+  parameter injection, and privilege escalation through tampered tool
+  definitions.
+remediation: >
+  Include an integrity verification block in your MCP server configuration
+  that contains hashes or checksums of expected tool definitions. Validate
+  tool definitions against the baseline at startup and reject any tools
+  that do not match. Consider using a tool_hashes or integrity key in
+  your configuration to store SHA-256 digests of each tool definition.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - tool_verification
+  - baseline

@@ -1,0 +1,32 @@
+check_id: tp003
+title: Tool Shadowing / Namespace Collision
+category: tool_poisoning
+severity: high
+description: >
+  Detects tool name collisions within a single MCP server and identifies tools
+  whose names match well-known tool names from popular MCP servers. Duplicate
+  names within a server indicate a misconfiguration or deliberate shadowing
+  attempt. Names that match common tools from other servers may shadow
+  legitimate tools in multi-server environments.
+risk_explanation: >
+  Tool shadowing allows a malicious server to register a tool with the same
+  name as a trusted tool from another server. When the LLM resolves the tool
+  call, it may invoke the attacker's version instead of the legitimate one,
+  enabling data theft, privilege escalation, or arbitrary code execution.
+  Even within a single server, duplicate names cause unpredictable dispatch.
+remediation: >
+  Ensure all tool names within a server are unique. Avoid reusing generic tool
+  names that collide with well-known MCP tools (e.g. read_file, execute,
+  search). Use namespaced tool names that include the server or domain prefix
+  (e.g. myserver_read_file). At the client level, implement tool-call
+  confirmation and prefer fully qualified tool references.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - tool_poisoning
+  - shadowing
+  - namespace_collision
+  - duplicate_tools

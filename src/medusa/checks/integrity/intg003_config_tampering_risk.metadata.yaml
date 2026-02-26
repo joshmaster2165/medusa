@@ -1,0 +1,30 @@
+check_id: intg003
+title: Configuration Stored in World-Writable Path
+category: integrity
+severity: medium
+description: >
+  Detects MCP server configurations stored in world-writable or temporary
+  directories such as /tmp, /var/tmp, or platform-specific temp folders.
+  Configurations in these locations can be modified by any local user or
+  process, enabling config tampering attacks.
+risk_explanation: >
+  When an MCP server's configuration file resides in a world-writable
+  directory, any local user or malicious process can modify it. An attacker
+  could change the server command, inject environment variables containing
+  secrets, or redirect the transport URL to a malicious endpoint—all without
+  requiring elevated privileges.
+remediation: >
+  Store MCP server configuration files in user-owned directories with
+  restrictive permissions (e.g. ~/.config/mcp/ with mode 700). Avoid
+  placing configuration in /tmp, /var/tmp, or other shared temporary
+  directories. Verify file ownership and permissions before reading
+  configuration at startup.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP04:2025"
+  - "MCP09:2025"
+tags:
+  - integrity
+  - config_tampering
+  - file_permissions

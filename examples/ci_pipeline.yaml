@@ -1,0 +1,78 @@
+name: MCP Security Scan
+
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Medusa
+        run: pip install medusa-mcp
+
+      # Option 1: Scan an HTTP MCP server
+      - name: Scan MCP server
+        run: |
+          medusa scan \
+            --http "${{ secrets.MCP_SERVER_URL }}" \
+            -o json \
+            --output-file medusa-report.json \
+            --fail-on high
+
+      # Option 2: Auto-discover from a config file checked into the repo
+      # - name: Scan from config
+      #   run: |
+      #     medusa scan \
+      #       --config-file ./mcp-config.json \
+      #       -o json \
+      #       --output-file medusa-report.json \
+      #       --fail-on high
+
+      # Option 3: Use a medusa.yaml for full control
+      # - name: Scan with custom config
+      #   run: |
+      #     medusa scan \
+      #       --scan-config ./medusa.yaml \
+      #       -o json \
+      #       --output-file medusa-report.json \
+      #       --fail-on high
+
+      - name: Generate HTML dashboard
+        if: always()
+        run: |
+          medusa scan \
+            --http "${{ secrets.MCP_SERVER_URL }}" \
+            -o html \
+            --output-file medusa-dashboard.html \
+            --fail-on critical
+
+      - name: Upload scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: medusa-security-report
+          path: |
+            medusa-report.json
+            medusa-dashboard.html
+          retention-days: 30
+
+      # Optional: Run OWASP MCP Top 10 compliance check
+      # - name: OWASP MCP compliance
+      #   run: |
+      #     medusa scan \
+      #       --http "${{ secrets.MCP_SERVER_URL }}" \
+      #       --compliance owasp_mcp_top10 \
+      #       -o json \
+      #       --output-file compliance-report.json \
+      #       --fail-on high

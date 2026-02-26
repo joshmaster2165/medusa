@@ -1,0 +1,31 @@
+check_id: iv005
+title: Overly Permissive Tool Input Schema
+category: input_validation
+severity: medium
+description: >
+  Detects MCP tool schemas that are overly permissive, specifically those that
+  set `additionalProperties: true` (or omit it, which defaults to true in JSON
+  Schema) or that declare properties but have no `required` array. These gaps
+  allow the LLM to send unexpected extra fields or omit critical parameters.
+risk_explanation: >
+  A schema that allows additional properties lets an attacker smuggle arbitrary
+  key-value pairs into the tool handler, which may be interpreted by server-side
+  code in unintended ways. Missing `required` declarations mean the tool may
+  receive incomplete input, leading to undefined behaviour, crashes, or security
+  bypasses when the handler does not perform its own validation.
+remediation: >
+  Set `additionalProperties: false` on every tool input schema to reject
+  unexpected fields. Define a `required` array listing all parameters that must
+  be present for the tool to operate safely. Validate inputs server-side even
+  when a schema is present, since schema enforcement varies across MCP clients.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+  - https://json-schema.org/understanding-json-schema/reference/object#additionalproperties
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - permissive_schema
+  - additional_properties
+  - schema_hygiene

@@ -1,0 +1,30 @@
+check_id: tp001
+title: Hidden Instructions in Tool Descriptions
+category: tool_poisoning
+severity: critical
+description: >
+  Detects hidden XML/HTML tags, invisible Unicode characters, and concealed
+  instruction blocks embedded in MCP tool descriptions. Attackers use these
+  techniques to inject instructions that are invisible in user interfaces but
+  parsed by language models, enabling tool-poisoning attacks.
+risk_explanation: >
+  Hidden instructions can manipulate an LLM into performing unintended actions
+  such as exfiltrating data, escalating privileges, or invoking dangerous tools.
+  Because these instructions are invisible in most UIs, users cannot review or
+  consent to the injected behaviour.
+remediation: >
+  Audit all tool descriptions for hidden markup and invisible characters. Strip
+  or reject descriptions that contain XML/HTML tags not required for legitimate
+  formatting. Implement server-side input validation that normalises Unicode and
+  rejects hidden codepoints before descriptions reach the LLM.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP06:2025"
+tags:
+  - tool_poisoning
+  - hidden_instructions
+  - invisible_unicode
+  - prompt_injection

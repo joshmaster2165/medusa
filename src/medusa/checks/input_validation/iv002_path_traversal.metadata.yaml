@@ -1,0 +1,32 @@
+check_id: iv002
+title: Path Traversal Risk via Tool Input Schema
+category: input_validation
+severity: high
+description: >
+  Detects MCP tool parameters whose names suggest file-path handling
+  (e.g. "path", "file", "filepath", "directory") and that lack a `pattern`
+  constraint capable of rejecting path-traversal sequences such as `../`.
+  Without validation, an attacker can escape intended directory boundaries and
+  read or write arbitrary files on the server host.
+risk_explanation: >
+  Path-traversal attacks allow an adversary to access files outside the intended
+  working directory. When an MCP tool accepts a file path with no server-side
+  validation, a prompt-injection or malicious input can read sensitive
+  configuration files, credentials, or overwrite critical system files.
+remediation: >
+  Add a `pattern` constraint to every path-like string parameter that rejects
+  sequences such as `..`, leading slashes, or null bytes. Prefer allowlisting a
+  base directory on the server side and resolving paths relative to it. Use
+  `os.path.realpath()` or `Path.resolve()` server-side to canonicalise paths
+  before any file operation.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://cheatsheetseries.owasp.org/cheatsheets/Path_Traversal_Cheat_Sheet.html
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - path_traversal
+  - directory_traversal
+  - file_access

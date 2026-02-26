@@ -1,0 +1,25 @@
+check_id: ts004
+title: Missing Transport Authentication Headers
+category: transport_security
+severity: high
+description: >
+  Detects HTTP/SSE MCP servers that lack authentication headers such as
+  Authorization or X-API-Key in their transport configuration. Without
+  transport-layer authentication headers, requests are sent unauthenticated.
+risk_explanation: >
+  Missing authentication headers mean that the MCP server accepts requests
+  from any client that can reach it over the network. This can lead to
+  unauthorized tool invocation and data access.
+remediation: >
+  Add an Authorization header (e.g. Bearer token) or X-API-Key header to
+  the server's transport configuration. Use strong, unique tokens and
+  rotate them regularly.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - transport_security
+  - authentication
+  - headers

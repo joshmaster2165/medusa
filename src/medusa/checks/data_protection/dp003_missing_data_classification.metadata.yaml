@@ -1,0 +1,27 @@
+check_id: dp003
+title: Missing Data Classification on Resources
+category: data_protection
+severity: low
+description: >
+  Checks whether MCP resources declare a mimeType or include data
+  classification keywords in their description. Resources without any
+  classification signal make it impossible for LLM clients to apply
+  appropriate handling policies.
+risk_explanation: >
+  Without data classification metadata, LLM clients cannot distinguish
+  between public documentation and confidential records. This increases the
+  risk of accidental data leakage when the model includes resource content
+  in its responses.
+remediation: >
+  Add a mimeType to every resource definition. Include a data classification
+  keyword (e.g. "public", "internal", "confidential", "sensitive",
+  "restricted") in the resource description to indicate the sensitivity
+  level of the content.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - data_classification
+  - metadata

@@ -1,0 +1,91 @@
+framework:
+  name: "OWASP MCP Top 10 2025"
+  version: "2025"
+  url: "https://owasp.org/www-project-mcp-top-10/"
+
+requirements:
+  MCP01:2025:
+    title: "Token Mismanagement & Secret Exposure"
+    checks:
+      - cred001
+      - cred002
+      - cred003
+      - auth002
+      - dp002
+
+  MCP02:2025:
+    title: "Excessive Permission Scope"
+    checks:
+      - priv001
+      - priv002
+      - priv003
+
+  MCP03:2025:
+    title: "Tool Poisoning"
+    checks:
+      - tp001
+      - tp002
+      - tp003
+      - tp004
+      - tp005
+
+  MCP04:2025:
+    title: "Software Supply Chain Attacks"
+    checks:
+      - intg001
+      - intg002
+      - intg003
+      - intg004
+      - sc001
+
+  MCP05:2025:
+    title: "Command Injection"
+    checks:
+      - iv001
+      - iv002
+      - iv003
+      - iv004
+      - iv005
+      - priv003
+
+  MCP06:2025:
+    title: "Prompt Injection / Intent Flow Subversion"
+    checks:
+      - tp001
+      - tp002
+      - ctx002
+
+  MCP07:2025:
+    title: "Insufficient Authentication & Authorization"
+    checks:
+      - auth001
+      - auth002
+      - auth003
+      - auth004
+      - ts001
+      - ts002
+      - ts003
+      - ts004
+
+  MCP08:2025:
+    title: "Lack of Audit and Telemetry"
+    checks:
+      - audit001
+      - audit002
+
+  MCP09:2025:
+    title: "Shadow MCP Servers"
+    checks:
+      - shadow001
+      - shadow002
+      - intg003
+
+  MCP10:2025:
+    title: "Context Injection & Over-Sharing"
+    checks:
+      - dp001
+      - dp002
+      - dp003
+      - dp004
+      - ctx001
+      - ctx002

@@ -1,0 +1,31 @@
+check_id: auth001
+title: No Authentication on HTTP Transport
+category: authentication
+severity: critical
+description: >
+  Detects MCP servers exposed over HTTP or SSE transports without any
+  authentication mechanism configured. Unauthenticated HTTP endpoints allow
+  any network-reachable client to invoke server tools, read resources, and
+  exfiltrate data without proving identity.
+risk_explanation: >
+  An unauthenticated MCP server accepts requests from any client on the
+  network. Attackers can discover the endpoint through port scanning or DNS
+  rebinding and invoke arbitrary tools, access sensitive resources, or inject
+  malicious prompts. This is especially dangerous when the server has access
+  to databases, file systems, or third-party APIs.
+remediation: >
+  Configure authentication for all HTTP/SSE MCP servers. Use OAuth 2.1 with
+  PKCE as recommended by the MCP specification. At minimum, require a bearer
+  token or API key in the Authorization header. Never expose unauthenticated
+  MCP endpoints outside localhost, and even localhost endpoints should use
+  authentication to mitigate DNS rebinding attacks.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+  - https://owasp.org/www-project-top-10-for-large-language-model-applications/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - authentication
+  - http
+  - sse
+  - unauthenticated

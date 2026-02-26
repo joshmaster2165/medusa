@@ -1,0 +1,33 @@
+check_id: iv001
+title: Command Injection Risk via Tool Input Schema
+category: input_validation
+severity: critical
+description: >
+  Detects MCP tool parameters whose names suggest shell or command execution
+  (e.g. "command", "cmd", "exec", "shell") and that accept unconstrained string
+  input. When a string parameter intended for shell execution lacks a `pattern`
+  regex constraint or an `enum` allowlist, an attacker (or a manipulated LLM) can
+  inject arbitrary shell commands through the tool invocation.
+risk_explanation: >
+  Unrestricted command parameters give an attacker full shell access on the host
+  running the MCP server. A prompt-injection attack that controls the value of
+  such a parameter can execute arbitrary code, exfiltrate data, install malware,
+  or pivot to other systems on the network. This is the highest-impact input
+  validation failure.
+remediation: >
+  Add strict JSON Schema constraints to every command-like parameter. Use `enum`
+  to restrict values to a known set of safe commands, or use `pattern` to enforce
+  a tight regex allowlist. Preferably, redesign the tool to accept structured
+  arguments instead of raw shell strings. If shell execution is truly required,
+  implement server-side allowlisting and sandboxing independent of the schema.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+  - https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - command_injection
+  - shell_execution
+  - schema_constraints

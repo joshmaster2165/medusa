@@ -1,0 +1,25 @@
+check_id: dp002
+title: Sensitive File Paths in Resource URIs
+category: data_protection
+severity: high
+description: >
+  Detects resource URIs that reference sensitive file paths such as private
+  keys, credential files, SSH directories, and cloud provider configuration
+  files. Also scans for hardcoded secrets embedded directly in URI strings.
+risk_explanation: >
+  Exposing resources that point to sensitive files allows any connected LLM
+  client to read private keys, credentials, and configuration secrets. This
+  can lead to full account compromise and lateral movement across systems.
+remediation: >
+  Remove resources that expose sensitive file paths. If access to secrets is
+  required, use a dedicated secrets manager and expose only opaque references.
+  Restrict resource URIs to application-specific data directories.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP10:2025"
+  - "MCP01:2025"
+tags:
+  - data_protection
+  - sensitive_paths
+  - credentials

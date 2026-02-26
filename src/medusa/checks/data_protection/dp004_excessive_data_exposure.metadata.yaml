@@ -1,0 +1,26 @@
+check_id: dp004
+title: Excessive Data Exposure via Bulk Export Tools
+category: data_protection
+severity: medium
+description: >
+  Detects tools whose names suggest bulk data export (e.g. "dump_all",
+  "export_data", "bulk_fetch") but whose inputSchema lacks pagination
+  parameters such as "limit", "offset", "page", or "cursor". Unbounded
+  bulk export tools can leak entire datasets to connected LLM clients.
+risk_explanation: >
+  Tools that return all records without pagination allow an LLM to access
+  entire databases or data stores in a single call. This dramatically
+  increases the blast radius of any prompt injection or tool-poisoning
+  attack by providing the attacker with bulk access to sensitive data.
+remediation: >
+  Add pagination parameters (limit, offset, page, cursor) to any tool that
+  returns collections. Enforce a maximum page size on the server side.
+  Consider whether bulk export functionality is necessary in an MCP context.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - excessive_data_exposure
+  - pagination
