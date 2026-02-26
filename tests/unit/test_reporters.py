@@ -1,4 +1,4 @@
-"""Tests for medusa.reporters - JSON, Markdown, and HTML report generators."""
+"""Tests for medusa.reporters - JSON, Markdown, HTML, and SARIF report generators."""
 
 import json
 from datetime import UTC, datetime
@@ -9,6 +9,7 @@ from medusa.core.models import Finding, ScanResult, ServerScore, Severity, Statu
 from medusa.reporters.html_reporter import HtmlReporter
 from medusa.reporters.json_reporter import JsonReporter
 from medusa.reporters.markdown_reporter import MarkdownReporter
+from medusa.reporters.sarif_reporter import SarifReporter
 
 
 @pytest.fixture
@@ -167,3 +168,139 @@ class TestHtmlReporter:
         reporter = HtmlReporter()
         output = reporter.generate(sample_scan_result)
         assert "test-server" in output
+
+
+# ── SarifReporter ────────────────────────────────────────────────────────────
+
+
+class TestSarifReporter:
+    def test_generate_produces_valid_json(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        assert isinstance(data, dict)
+
+    def test_sarif_version(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        assert data["version"] == "2.1.0"
+
+    def test_sarif_has_schema(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        assert "$schema" in data
+        assert "sarif" in data["$schema"]
+
+    def test_sarif_has_single_run(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        assert len(data["runs"]) == 1
+
+    def test_sarif_tool_driver_name(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        driver = data["runs"][0]["tool"]["driver"]
+        assert driver["name"] == "Medusa"
+        assert driver["version"] == "0.1.0"
+
+    def test_sarif_only_fail_results(self, sample_scan_result):
+        """SARIF results should only contain FAIL findings."""
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        results = data["runs"][0]["results"]
+        # sample_scan_result has 1 FAIL finding
+        assert len(results) == 1
+
+    def test_sarif_rules_deduplicated(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        rules = data["runs"][0]["tool"]["driver"]["rules"]
+        rule_ids = [r["id"] for r in rules]
+        assert len(rule_ids) == len(set(rule_ids))
+
+    def test_sarif_result_has_location(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        result = data["runs"][0]["results"][0]
+        assert "locations" in result
+        loc = result["locations"][0]
+        uri = loc["physicalLocation"]["artifactLocation"]["uri"]
+        assert uri.startswith("mcp://")
+
+    def test_sarif_severity_mapping(self, sample_scan_result):
+        """CRITICAL severity should map to SARIF 'error' level."""
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        result = data["runs"][0]["results"][0]
+        assert result["level"] == "error"
+
+    def test_sarif_security_severity_property(
+        self, sample_scan_result
+    ):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        rule = data["runs"][0]["tool"]["driver"]["rules"][0]
+        sec_sev = rule["properties"]["security-severity"]
+        assert sec_sev == "9.0"  # CRITICAL -> 9.0
+
+    def test_sarif_invocation_metadata(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        inv = data["runs"][0]["invocations"][0]
+        assert inv["executionSuccessful"] is True
+        assert inv["properties"]["scan_id"] == "test-scan-001"
+
+    def test_sarif_empty_results_for_pass_only(self):
+        """A scan with only PASS findings should have 0 SARIF results."""
+        pass_finding = Finding(
+            check_id="tp001",
+            check_title="Hidden Instructions Check",
+            status=Status.PASS,
+            severity=Severity.CRITICAL,
+            server_name="clean-server",
+            server_transport="stdio",
+            resource_type="server",
+            resource_name="clean-server",
+            status_extended="No issues found",
+            remediation="N/A",
+        )
+        result = ScanResult(
+            scan_id="pass-only",
+            timestamp=datetime.now(UTC),
+            medusa_version="0.1.0",
+            scan_duration_seconds=0.5,
+            servers_scanned=1,
+            total_findings=0,
+            findings=[pass_finding],
+            server_scores=[
+                ServerScore(
+                    server_name="clean-server",
+                    score=10.0,
+                    grade="A",
+                    total_checks=1,
+                    passed=1,
+                    failed=0,
+                    critical_findings=0,
+                    high_findings=0,
+                    medium_findings=0,
+                    low_findings=0,
+                )
+            ],
+            aggregate_score=10.0,
+            aggregate_grade="A",
+        )
+        reporter = SarifReporter()
+        output = reporter.generate(result)
+        data = json.loads(output)
+        assert len(data["runs"][0]["results"]) == 0
+        assert len(data["runs"][0]["tool"]["driver"]["rules"]) == 0
