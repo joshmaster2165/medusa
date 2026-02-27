@@ -1,13 +1,23 @@
-# Medusa
+<p align="center">
+  <img src="docs/logo.svg" alt="Medusa Logo" width="200">
+</p>
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
-[![Checks: 435](https://img.shields.io/badge/checks-435-brightgreen.svg)](#check-categories)
-[![OWASP MCP Top 10](https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange.svg)](#owasp-mcp-top-10-compliance)
+<h1 align="center">Medusa</h1>
 
-**Security scanner for MCP servers**
+<p align="center">
+  <strong>Security scanner for MCP servers</strong>
+</p>
 
-Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers, runs **435 security checks** across **24 categories**, scores findings on a 0--10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License: Apache 2.0"></a>
+  <a href="#check-categories"><img src="https://img.shields.io/badge/checks-435-brightgreen.svg" alt="Checks: 435"></a>
+  <a href="#owasp-mcp-top-10-compliance"><img src="https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange.svg" alt="OWASP MCP Top 10"></a>
+</p>
+
+<p align="center">
+  Medusa is an open-source CLI tool that connects to <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> servers, runs <strong>435 security checks</strong> across <strong>24 categories</strong>, scores findings on a 0–10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+</p>
 
 ---
 
