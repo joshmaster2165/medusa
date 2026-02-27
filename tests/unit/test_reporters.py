@@ -1,11 +1,14 @@
-"""Tests for medusa.reporters - JSON, Markdown, HTML, and SARIF report generators."""
+"""Tests for medusa.reporters - Console, JSON, Markdown, HTML, and SARIF report generators."""
 
 import json
 from datetime import UTC, datetime
+from io import StringIO
 
 import pytest
+from rich.console import Console as RichConsole
 
 from medusa.core.models import Finding, ScanResult, ServerScore, Severity, Status
+from medusa.reporters.console_reporter import ConsoleReporter
 from medusa.reporters.html_reporter import HtmlReporter
 from medusa.reporters.json_reporter import JsonReporter
 from medusa.reporters.markdown_reporter import MarkdownReporter
@@ -302,3 +305,99 @@ class TestSarifReporter:
         data = json.loads(output)
         assert len(data["runs"][0]["results"]) == 0
         assert len(data["runs"][0]["tool"]["driver"]["rules"]) == 0
+
+
+# ── ConsoleReporter ─────────────────────────────────────────────────────────
+
+
+class TestConsoleReporter:
+    def test_generate_returns_plain_summary(self, sample_scan_result):
+        """generate() should return a brief plain-text fallback string."""
+        reporter = ConsoleReporter()
+        output = reporter.generate(sample_scan_result)
+        assert isinstance(output, str)
+        assert "B" in output
+        assert "8.5" in output
+
+    def test_print_to_console_outputs_rich(self, sample_scan_result):
+        """print_to_console() should produce non-empty rich output."""
+        reporter = ConsoleReporter()
+        string_io = StringIO()
+        test_console = RichConsole(file=string_io, force_terminal=True)
+        reporter.print_to_console(sample_scan_result, test_console)
+        output = string_io.getvalue()
+        assert len(output) > 0
+        assert "SCAN RESULTS" in output
+        assert "test-server" in output
+
+    def test_print_to_console_shows_grade(self, sample_scan_result):
+        reporter = ConsoleReporter()
+        string_io = StringIO()
+        test_console = RichConsole(file=string_io, force_terminal=True)
+        reporter.print_to_console(sample_scan_result, test_console)
+        output = string_io.getvalue()
+        assert "Overall Grade" in output
+        assert "8.5" in output
+
+    def test_print_to_console_shows_failed_findings(self, sample_scan_result):
+        reporter = ConsoleReporter()
+        string_io = StringIO()
+        test_console = RichConsole(file=string_io, force_terminal=True)
+        reporter.print_to_console(sample_scan_result, test_console)
+        output = string_io.getvalue()
+        assert "Failed Findings" in output
+        assert "tp001" in output
+
+    def test_print_to_console_shows_server_breakdown(self, sample_scan_result):
+        reporter = ConsoleReporter()
+        string_io = StringIO()
+        test_console = RichConsole(file=string_io, force_terminal=True)
+        reporter.print_to_console(sample_scan_result, test_console)
+        output = string_io.getvalue()
+        assert "Server Breakdown" in output
+
+    def test_print_to_console_no_findings(self):
+        """When all checks pass, should show 'All checks passed'."""
+        pass_finding = Finding(
+            check_id="tp001",
+            check_title="Check",
+            status=Status.PASS,
+            severity=Severity.LOW,
+            server_name="srv",
+            server_transport="stdio",
+            resource_type="tool",
+            resource_name="t",
+            status_extended="OK",
+            remediation="N/A",
+        )
+        result = ScanResult(
+            scan_id="clean",
+            timestamp=datetime.now(UTC),
+            medusa_version="0.1.0",
+            scan_duration_seconds=0.1,
+            servers_scanned=1,
+            total_findings=0,
+            findings=[pass_finding],
+            server_scores=[
+                ServerScore(
+                    server_name="srv",
+                    score=10.0,
+                    grade="A",
+                    total_checks=1,
+                    passed=1,
+                    failed=0,
+                    critical_findings=0,
+                    high_findings=0,
+                    medium_findings=0,
+                    low_findings=0,
+                )
+            ],
+            aggregate_score=10.0,
+            aggregate_grade="A",
+        )
+        reporter = ConsoleReporter()
+        string_io = StringIO()
+        test_console = RichConsole(file=string_io, force_terminal=True)
+        reporter.print_to_console(result, test_console)
+        output = string_io.getvalue()
+        assert "All checks passed" in output

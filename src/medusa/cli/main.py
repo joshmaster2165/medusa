@@ -28,6 +28,7 @@ from medusa.connectors.http import HttpConnector
 from medusa.connectors.stdio import StdioConnector
 from medusa.core.registry import CheckRegistry
 from medusa.core.scanner import ScanEngine, has_findings_above_threshold
+from medusa.reporters.console_reporter import ConsoleReporter
 from medusa.reporters.html_reporter import HtmlReporter
 from medusa.reporters.json_reporter import JsonReporter
 from medusa.reporters.markdown_reporter import MarkdownReporter
@@ -116,9 +117,9 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     "-o",
     "--output",
     "output_format",
-    type=click.Choice(["json", "html", "markdown", "sarif"]),
-    default="json",
-    help="Output format",
+    type=click.Choice(["console", "json", "html", "markdown", "sarif"]),
+    default="console",
+    help="Output format (default: console for terminal, json for pipes)",
 )
 @click.option(
     "--output-file",
@@ -342,20 +343,29 @@ def scan(
 
     # Generate report
     reporters = {
+        "console": ConsoleReporter,
         "json": JsonReporter,
         "html": HtmlReporter,
         "markdown": MarkdownReporter,
         "sarif": SarifReporter,
     }
-    reporter = reporters[output_format]()
-    output = reporter.generate(result)
+
+    # Smart default: fall back to JSON when piped (stdout not a TTY)
+    effective_format = output_format
+    if output_format == "console" and not sys.stdout.isatty() and not output_file:
+        effective_format = "json"
+
+    reporter = reporters[effective_format]()
 
     if output_file:
+        # Console reporter cannot write to file; fall back to JSON
+        if effective_format == "console":
+            reporter = JsonReporter()
         reporter.write(result, output_file)
         if not quiet:
             console.print(f"Report written to: {output_file}")
     else:
-        click.echo(output)
+        reporter.print_to_console(result, console)
 
     # Upload results to dashboard
     if upload:
@@ -406,8 +416,8 @@ def scan(
         except httpx.HTTPError as exc:
             console.print(f"[red]Upload failed: {exc}[/red]")
 
-    # Print summary to stderr if writing to file
-    if not quiet:
+    # Print summary for non-console formats (console reporter includes its own)
+    if not quiet and effective_format != "console":
         console.print()
         _print_summary(result)
 
