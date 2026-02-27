@@ -1,0 +1,31 @@
+check_id: mt003
+title: Tenant Data Leakage
+category: multi_tenant
+severity: critical
+description: >
+  Detects MCP server responses, error messages, logs, or metadata that
+  leak data belonging to one tenant to another tenant. Data leakage can
+  occur through shared error handlers, common log streams, cached
+  responses, or improperly scoped query results.
+risk_explanation: >
+  Tenant data leakage exposes confidential business information,
+  personal data, and security credentials to unauthorized tenants. Even
+  small leaks such as tenant names in error messages or record counts in
+  metadata can reveal business intelligence to competitors. Systematic
+  leakage through query result contamination or cache poisoning can
+  expose entire datasets across tenant boundaries.
+remediation: >
+  Audit all server output paths for potential cross-tenant data leakage.
+  Implement tenant-scoped logging that prevents log data from one tenant
+  being visible to another. Use separate response serialization contexts
+  per tenant. Clear all shared state between tenant request processing.
+  Implement automated testing that verifies tenant data isolation across
+  all server operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

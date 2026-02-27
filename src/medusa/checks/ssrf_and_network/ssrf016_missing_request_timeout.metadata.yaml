@@ -1,0 +1,31 @@
+check_id: ssrf016
+title: Missing Request Timeout
+category: ssrf_and_network
+severity: medium
+description: >
+  Detects MCP server tools that make network requests without
+  configuring timeouts. Missing timeouts allow requests to hang
+  indefinitely, consuming server resources and potentially enabling
+  denial-of-service attacks through slow-response techniques or
+  connection exhaustion.
+risk_explanation: >
+  MCP tools without request timeouts are vulnerable to denial-of-service
+  through slow-response attacks. An attacker can direct tool requests to
+  a server that accepts connections but responds extremely slowly, tying
+  up server threads or connections indefinitely. Over multiple requests,
+  this exhausts the MCP server's connection pool and renders it unable
+  to process legitimate tool invocations.
+remediation: >
+  Configure explicit connection and read timeouts for all network
+  requests made by MCP tools. Set connection timeouts to 5-10 seconds
+  and read timeouts to 30-60 seconds based on expected response times.
+  Implement overall request duration limits that abort requests
+  exceeding the maximum allowed time. Use asynchronous request patterns
+  with timeout handling to prevent thread blocking.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

@@ -1,0 +1,30 @@
+check_id: ssrf006
+title: Internal Service Discovery
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that can be used to discover and access
+  internal network services through hostname enumeration, port scanning,
+  or service probing. Attackers can use error messages, response times,
+  and connection behaviors to map internal network topology.
+risk_explanation: >
+  MCP tools that accept user-controlled URLs can be weaponized for
+  internal service discovery. By observing response times, error
+  messages, and connection success or failure, an attacker can enumerate
+  internal hosts and services, identify open ports, and fingerprint
+  running software. This reconnaissance information is used to plan
+  targeted attacks against the most valuable internal services.
+remediation: >
+  Implement uniform error handling that does not reveal whether a
+  connection was refused, timed out, or succeeded with an error. Use
+  consistent response times for blocked requests to prevent timing-based
+  enumeration. Restrict MCP tool requests to an explicit allowlist of
+  permitted endpoints. Deploy network segmentation to limit the MCP
+  server's view of internal services.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

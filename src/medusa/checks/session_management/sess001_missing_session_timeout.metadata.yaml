@@ -1,0 +1,30 @@
+check_id: sess001
+title: Missing Session Timeout
+category: session_management
+severity: high
+description: >
+  Detects MCP server configurations that lack session timeout settings
+  for client connections. When sessions between LLM clients and MCP
+  servers persist indefinitely, abandoned or forgotten sessions remain
+  active and exploitable. Tool invocations can continue on stale
+  sessions long after the user has disengaged.
+risk_explanation: >
+  Without session timeouts, compromised or abandoned MCP sessions remain
+  valid indefinitely. An attacker who obtains a session token can use it
+  to invoke tools, access resources, and exfiltrate data without time
+  pressure. This is especially dangerous in multi-tenant MCP deployments
+  where long-lived sessions can bridge trust boundaries.
+remediation: >
+  Configure an explicit session timeout for all MCP server connections.
+  Set a maximum session lifetime appropriate for your threat model,
+  typically no longer than 8 hours for interactive sessions. Implement
+  server-side session expiry that cannot be overridden by the client.
+  Ensure expired sessions are fully invalidated and all associated
+  tokens are revoked.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

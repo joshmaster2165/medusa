@@ -1,0 +1,29 @@
+check_id: auth026
+title: Missing Logout Mechanism
+category: authentication
+severity: medium
+description: >
+  Detects MCP server configurations without a mechanism to invalidate
+  active sessions or tokens on logout. Without logout functionality,
+  users cannot terminate their sessions, leaving them vulnerable to
+  session hijacking and unauthorized reuse.
+risk_explanation: >
+  Without a logout mechanism, sessions remain active indefinitely or
+  until they expire naturally. Users cannot terminate sessions from
+  compromised devices. Shared workstations retain active sessions for
+  the next user. In incident response scenarios, there is no way to
+  force-terminate a user's active sessions.
+remediation: >
+  Implement a logout endpoint that invalidates the user's session and
+  associated tokens. Clear session cookies and revoke refresh tokens on
+  logout. Provide a mechanism to terminate all active sessions for a
+  user. Support server-side session invalidation for incident response.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - logout
+  - session_invalidation
+  - access_termination

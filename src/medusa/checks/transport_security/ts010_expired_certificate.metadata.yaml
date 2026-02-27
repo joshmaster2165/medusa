@@ -1,0 +1,31 @@
+check_id: ts010
+title: Expired TLS Certificate
+category: transport_security
+severity: critical
+description: >
+  Detects MCP servers with expired TLS certificates. Expired
+  certificates cause connection errors in properly configured clients
+  and may lead administrators to disable certificate validation to
+  restore service, removing all TLS authentication guarantees.
+risk_explanation: >
+  Expired certificates indicate a failure in certificate lifecycle
+  management. Clients that accept expired certificates lose the
+  guarantee that the certificate was issued to the legitimate server
+  operator. The most dangerous consequence is that operators disable
+  certificate validation to work around the expiration, leaving the
+  connection vulnerable to interception indefinitely.
+remediation: >
+  Implement automated certificate renewal using ACME (Let's Encrypt) or
+  certificate management platforms. Set up monitoring and alerting for
+  certificate expiration at least 30 days before expiry. Use certificate
+  management tools that automatically rotate certificates. Never disable
+  certificate validation to work around expired certificates.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - expired_certificate
+  - certificate_management
+  - lifecycle

@@ -1,0 +1,28 @@
+check_id: dp010
+title: Missing Encryption in Transit
+category: data_protection
+severity: high
+description: >
+  Detects MCP server connections that transmit data without encryption.
+  Unencrypted transport channels expose data to interception via man-in-
+  the-middle attacks on the network.
+risk_explanation: >
+  Data transmitted in plaintext over the network can be intercepted,
+  read, and modified by any attacker with access to the network path.
+  This includes tool invocation parameters, response data, credentials,
+  and PII. Even localhost connections can be intercepted by malware
+  running on the same host.
+remediation: >
+  Enforce TLS for all MCP server communications. Use TLS 1.2 or higher
+  with strong cipher suites. For stdio-based servers, ensure any network
+  calls made by the server to backend services also use encrypted
+  transport. Consider mutual TLS for server-to-server communication.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - encryption
+  - transport
+  - tls

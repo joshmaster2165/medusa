@@ -16,6 +16,48 @@ from medusa.checks.input_validation.iv002_path_traversal import PathTraversalChe
 from medusa.checks.input_validation.iv003_sql_injection import SqlInjectionCheck
 from medusa.checks.input_validation.iv004_missing_schema import MissingSchemaCheck
 from medusa.checks.input_validation.iv005_permissive_schema import PermissiveSchemaCheck
+from medusa.checks.input_validation.iv006_ldap_injection import LdapInjectionCheck
+from medusa.checks.input_validation.iv007_nosql_injection import NosqlInjectionCheck
+from medusa.checks.input_validation.iv008_ssti_injection import SstiInjectionCheck
+from medusa.checks.input_validation.iv009_xxe_injection import XxeInjectionCheck
+from medusa.checks.input_validation.iv010_header_injection import HeaderInjectionCheck
+from medusa.checks.input_validation.iv011_regex_dos import RegexDosCheck
+from medusa.checks.input_validation.iv012_integer_overflow import IntegerOverflowCheck
+from medusa.checks.input_validation.iv013_format_string_injection import FormatStringInjectionCheck
+from medusa.checks.input_validation.iv014_xpath_injection import XpathInjectionCheck
+from medusa.checks.input_validation.iv015_csv_injection import CsvInjectionCheck
+from medusa.checks.input_validation.iv016_unicode_normalization import UnicodeNormalizationCheck
+from medusa.checks.input_validation.iv017_null_byte_injection import NullByteInjectionCheck
+from medusa.checks.input_validation.iv018_crlf_injection import CrlfInjectionCheck
+from medusa.checks.input_validation.iv019_missing_length_constraint import (
+    MissingLengthConstraintCheck,
+)
+from medusa.checks.input_validation.iv020_missing_type_constraint import MissingTypeConstraintCheck
+from medusa.checks.input_validation.iv021_env_variable_injection import EnvVariableInjectionCheck
+from medusa.checks.input_validation.iv022_deserialization_risk import DeserializationRiskCheck
+from medusa.checks.input_validation.iv023_prototype_pollution import PrototypePollutionCheck
+from medusa.checks.input_validation.iv024_log_injection import LogInjectionCheck
+from medusa.checks.input_validation.iv025_template_literal_injection import (
+    TemplateLiteralInjectionCheck,
+)
+from medusa.checks.input_validation.iv026_wildcard_parameter import WildcardParameterCheck
+from medusa.checks.input_validation.iv027_missing_enum_constraint import MissingEnumConstraintCheck
+from medusa.checks.input_validation.iv028_nested_object_depth import NestedObjectDepthCheck
+from medusa.checks.input_validation.iv029_array_length_unbounded import ArrayLengthUnboundedCheck
+from medusa.checks.input_validation.iv030_additional_properties_open import (
+    AdditionalPropertiesOpenCheck,
+)
+from medusa.checks.input_validation.iv031_missing_pattern_validation import (
+    MissingPatternValidationCheck,
+)
+from medusa.checks.input_validation.iv032_url_parameter_injection import UrlParameterInjectionCheck
+from medusa.checks.input_validation.iv033_email_parameter_injection import (
+    EmailParameterInjectionCheck,
+)
+from medusa.checks.input_validation.iv034_file_upload_no_validation import (
+    FileUploadNoValidationCheck,
+)
+from medusa.checks.input_validation.iv035_html_injection import HtmlInjectionCheck
 from medusa.core.check import ServerSnapshot
 from medusa.core.models import Severity, Status
 from tests.conftest import make_snapshot
@@ -46,9 +88,7 @@ class TestIV001CommandInjection:
         assert len(fail_findings) >= 1, (
             "Should flag 'execute_command' tool with unconstrained 'command' param"
         )
-        exec_findings = [
-            f for f in fail_findings if "execute_command" in f.resource_name
-        ]
+        exec_findings = [f for f in fail_findings if "execute_command" in f.resource_name]
         assert len(exec_findings) >= 1, (
             "execute_command.command should be flagged for command injection risk"
         )
@@ -66,9 +106,7 @@ class TestIV001CommandInjection:
         findings = await check.execute(empty_snapshot)
         assert len(findings) == 0, "Empty snapshot should produce zero findings"
 
-    async def test_constrained_command_param_passes(
-        self, check: CommandInjectionCheck
-    ) -> None:
+    async def test_constrained_command_param_passes(self, check: CommandInjectionCheck) -> None:
         """A 'command' param with an enum constraint should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -91,13 +129,9 @@ class TestIV001CommandInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce exactly one finding"
-        assert findings[0].status == Status.PASS, (
-            "Enum-constrained command param should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Enum-constrained command param should PASS"
 
-    async def test_pattern_constrained_command_passes(
-        self, check: CommandInjectionCheck
-    ) -> None:
+    async def test_pattern_constrained_command_passes(self, check: CommandInjectionCheck) -> None:
         """A 'command' param with a pattern constraint should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -120,13 +154,9 @@ class TestIV001CommandInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce exactly one finding"
-        assert findings[0].status == Status.PASS, (
-            "Pattern-constrained command param should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Pattern-constrained command param should PASS"
 
-    async def test_non_string_command_param_is_skipped(
-        self, check: CommandInjectionCheck
-    ) -> None:
+    async def test_non_string_command_param_is_skipped(self, check: CommandInjectionCheck) -> None:
         """A 'command' param with type integer should be ignored."""
         snapshot = make_snapshot(
             tools=[
@@ -146,9 +176,7 @@ class TestIV001CommandInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce one finding"
-        assert findings[0].status == Status.PASS, (
-            "Integer 'command' param should not be flagged"
-        )
+        assert findings[0].status == Status.PASS, "Integer 'command' param should not be flagged"
 
     async def test_multiple_shell_params_flagged(self, check: CommandInjectionCheck) -> None:
         snapshot = make_snapshot(
@@ -171,20 +199,14 @@ class TestIV001CommandInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) == 3, (
-            "All three unconstrained shell params should be flagged"
-        )
+        assert len(fail_findings) == 3, "All three unconstrained shell params should be flagged"
 
     async def test_tool_with_no_input_schema(self, check: CommandInjectionCheck) -> None:
         """Tools without inputSchema are handled by IV-004, not IV-001."""
-        snapshot = make_snapshot(
-            tools=[{"name": "no_schema", "description": "No schema tool."}]
-        )
+        snapshot = make_snapshot(tools=[{"name": "no_schema", "description": "No schema tool."}])
         findings = await check.execute(snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1, (
-            "Tool with no schema should result in PASS for IV-001"
-        )
+        assert len(pass_findings) >= 1, "Tool with no schema should result in PASS for IV-001"
 
     async def test_non_shell_param_names_pass(self, check: CommandInjectionCheck) -> None:
         snapshot = make_snapshot(
@@ -206,9 +228,7 @@ class TestIV001CommandInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce exactly one finding"
-        assert findings[0].status == Status.PASS, (
-            "Non-shell-related param names should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Non-shell-related param names should PASS"
 
 
 # ==========================================================================
@@ -237,12 +257,8 @@ class TestIV002PathTraversal:
         assert len(fail_findings) >= 1, (
             "Should flag 'file_reader' tool with unconstrained 'path' param"
         )
-        path_findings = [
-            f for f in fail_findings if "file_reader" in f.resource_name
-        ]
-        assert len(path_findings) >= 1, (
-            "file_reader.path should be flagged for path traversal risk"
-        )
+        path_findings = [f for f in fail_findings if "file_reader" in f.resource_name]
+        assert len(path_findings) >= 1, "file_reader.path should be flagged for path traversal risk"
 
     async def test_passes_on_secure_snapshot(
         self, check: PathTraversalCheck, secure_snapshot: ServerSnapshot
@@ -257,9 +273,7 @@ class TestIV002PathTraversal:
         findings = await check.execute(empty_snapshot)
         assert len(findings) == 0, "Empty snapshot should produce zero findings"
 
-    async def test_pattern_without_slash_blocks_traversal(
-        self, check: PathTraversalCheck
-    ) -> None:
+    async def test_pattern_without_slash_blocks_traversal(self, check: PathTraversalCheck) -> None:
         """A restrictive pattern that does not allow '/' or '.' blocks traversal."""
         snapshot = make_snapshot(
             tools=[
@@ -311,9 +325,7 @@ class TestIV002PathTraversal:
         )
         findings = await check.execute(snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1, (
-            "Pattern with explicit '..' rejection should PASS"
-        )
+        assert len(pass_findings) >= 1, "Pattern with explicit '..' rejection should PASS"
 
     async def test_enum_constrained_path_passes(self, check: PathTraversalCheck) -> None:
         snapshot = make_snapshot(
@@ -337,9 +349,7 @@ class TestIV002PathTraversal:
         )
         findings = await check.execute(snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1, (
-            "Enum-constrained path param should PASS"
-        )
+        assert len(pass_findings) >= 1, "Enum-constrained path param should PASS"
 
     async def test_various_path_param_names(self, check: PathTraversalCheck) -> None:
         """Multiple path-like param names should all be checked."""
@@ -363,9 +373,7 @@ class TestIV002PathTraversal:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) == 3, (
-            "All three unconstrained path-like params should be flagged"
-        )
+        assert len(fail_findings) == 3, "All three unconstrained path-like params should be flagged"
 
     async def test_non_path_params_pass(self, check: PathTraversalCheck) -> None:
         snapshot = make_snapshot(
@@ -416,12 +424,8 @@ class TestIV003SqlInjection:
         assert len(fail_findings) >= 1, (
             "Should flag 'db_query' tool with unconstrained 'query' param"
         )
-        query_findings = [
-            f for f in fail_findings if "db_query" in f.resource_name
-        ]
-        assert len(query_findings) >= 1, (
-            "db_query.query should be flagged for SQL injection risk"
-        )
+        query_findings = [f for f in fail_findings if "db_query" in f.resource_name]
+        assert len(query_findings) >= 1, "db_query.query should be flagged for SQL injection risk"
 
     async def test_passes_on_secure_snapshot(
         self, check: SqlInjectionCheck, secure_snapshot: ServerSnapshot
@@ -458,13 +462,9 @@ class TestIV003SqlInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce one finding"
-        assert findings[0].status == Status.PASS, (
-            "Enum-constrained query param should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Enum-constrained query param should PASS"
 
-    async def test_pattern_constrained_query_passes(
-        self, check: SqlInjectionCheck
-    ) -> None:
+    async def test_pattern_constrained_query_passes(self, check: SqlInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -486,9 +486,7 @@ class TestIV003SqlInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce one finding"
-        assert findings[0].status == Status.PASS, (
-            "Pattern-constrained query param should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Pattern-constrained query param should PASS"
 
     async def test_multiple_sql_params_flagged(self, check: SqlInjectionCheck) -> None:
         snapshot = make_snapshot(
@@ -511,13 +509,9 @@ class TestIV003SqlInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) == 3, (
-            "All three unconstrained SQL-like params should be flagged"
-        )
+        assert len(fail_findings) == 3, "All three unconstrained SQL-like params should be flagged"
 
-    async def test_maxlength_still_fails_but_notes_it(
-        self, check: SqlInjectionCheck
-    ) -> None:
+    async def test_maxlength_still_fails_but_notes_it(self, check: SqlInjectionCheck) -> None:
         """A query param with maxLength but no pattern/enum should still FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -540,9 +534,7 @@ class TestIV003SqlInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "maxLength alone should not prevent a FAIL"
-        )
+        assert len(fail_findings) >= 1, "maxLength alone should not prevent a FAIL"
         assert "maxLength" in fail_findings[0].status_extended, (
             "The finding should mention the partial maxLength control"
         )
@@ -566,9 +558,7 @@ class TestIV003SqlInjection:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce one finding"
-        assert findings[0].status == Status.PASS, (
-            "Non-string 'query' param should not be flagged"
-        )
+        assert findings[0].status == Status.PASS, "Non-string 'query' param should not be flagged"
 
 
 # ==========================================================================
@@ -594,15 +584,9 @@ class TestIV004MissingSchema:
     ) -> None:
         findings = await check.execute(vulnerable_snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag 'mystery_tool' which has no inputSchema"
-        )
-        mystery_findings = [
-            f for f in fail_findings if f.resource_name == "mystery_tool"
-        ]
-        assert len(mystery_findings) >= 1, (
-            "mystery_tool should be flagged for missing schema"
-        )
+        assert len(fail_findings) >= 1, "Should flag 'mystery_tool' which has no inputSchema"
+        mystery_findings = [f for f in fail_findings if f.resource_name == "mystery_tool"]
+        assert len(mystery_findings) >= 1, "mystery_tool should be flagged for missing schema"
 
     async def test_passes_on_secure_snapshot(
         self, check: MissingSchemaCheck, secure_snapshot: ServerSnapshot
@@ -629,9 +613,7 @@ class TestIV004MissingSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "None inputSchema should be flagged"
-        )
+        assert len(fail_findings) >= 1, "None inputSchema should be flagged"
 
     async def test_tool_with_no_properties_key(self, check: MissingSchemaCheck) -> None:
         snapshot = make_snapshot(
@@ -645,9 +627,7 @@ class TestIV004MissingSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Schema without 'properties' should be flagged"
-        )
+        assert len(fail_findings) >= 1, "Schema without 'properties' should be flagged"
 
     async def test_tool_with_no_type_field(self, check: MissingSchemaCheck) -> None:
         snapshot = make_snapshot(
@@ -663,9 +643,7 @@ class TestIV004MissingSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Schema without 'type' field should be flagged"
-        )
+        assert len(fail_findings) >= 1, "Schema without 'type' field should be flagged"
 
     async def test_complete_schema_passes(self, check: MissingSchemaCheck) -> None:
         snapshot = make_snapshot(
@@ -687,9 +665,7 @@ class TestIV004MissingSchema:
         assert len(findings) == 1, "Should produce one finding"
         assert findings[0].status == Status.PASS, "Complete schema should PASS"
 
-    async def test_empty_properties_with_type_passes(
-        self, check: MissingSchemaCheck
-    ) -> None:
+    async def test_empty_properties_with_type_passes(self, check: MissingSchemaCheck) -> None:
         """A zero-arg tool with type:object and empty properties is intentional."""
         snapshot = make_snapshot(
             tools=[
@@ -705,9 +681,7 @@ class TestIV004MissingSchema:
         )
         findings = await check.execute(snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1, (
-            "Zero-arg tool with type and empty properties should PASS"
-        )
+        assert len(pass_findings) >= 1, "Zero-arg tool with type and empty properties should PASS"
 
     async def test_non_dict_input_schema_fails(self, check: MissingSchemaCheck) -> None:
         snapshot = make_snapshot(
@@ -721,9 +695,7 @@ class TestIV004MissingSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Non-dict inputSchema should be flagged"
-        )
+        assert len(fail_findings) >= 1, "Non-dict inputSchema should be flagged"
         assert "not an object" in fail_findings[0].evidence, (
             "Evidence should mention the schema is not an object"
         )
@@ -755,12 +727,8 @@ class TestIV005PermissiveSchema:
         assert len(fail_findings) >= 1, (
             "Should flag 'loose_tool' with additionalProperties:true and no required"
         )
-        loose_findings = [
-            f for f in fail_findings if f.resource_name == "loose_tool"
-        ]
-        assert len(loose_findings) >= 1, (
-            "loose_tool should be flagged for permissive schema"
-        )
+        loose_findings = [f for f in fail_findings if f.resource_name == "loose_tool"]
+        assert len(loose_findings) >= 1, "loose_tool should be flagged for permissive schema"
 
     async def test_passes_on_secure_snapshot(
         self, check: PermissiveSchemaCheck, secure_snapshot: ServerSnapshot
@@ -775,9 +743,7 @@ class TestIV005PermissiveSchema:
         findings = await check.execute(empty_snapshot)
         assert len(findings) == 0, "Empty snapshot should produce zero findings"
 
-    async def test_additional_properties_true_fails(
-        self, check: PermissiveSchemaCheck
-    ) -> None:
+    async def test_additional_properties_true_fails(self, check: PermissiveSchemaCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -796,16 +762,12 @@ class TestIV005PermissiveSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "additionalProperties: true should be flagged"
-        )
+        assert len(fail_findings) >= 1, "additionalProperties: true should be flagged"
         assert "additionalProperties" in fail_findings[0].status_extended, (
             "Finding should mention additionalProperties"
         )
 
-    async def test_missing_additional_properties_fails(
-        self, check: PermissiveSchemaCheck
-    ) -> None:
+    async def test_missing_additional_properties_fails(self, check: PermissiveSchemaCheck) -> None:
         """When additionalProperties is omitted, JSON Schema defaults to true."""
         snapshot = make_snapshot(
             tools=[
@@ -846,9 +808,7 @@ class TestIV005PermissiveSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Missing 'required' array should be flagged"
-        )
+        assert len(fail_findings) >= 1, "Missing 'required' array should be flagged"
         assert "required" in fail_findings[0].status_extended.lower(), (
             "Finding should mention missing required"
         )
@@ -872,9 +832,7 @@ class TestIV005PermissiveSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Empty 'required' array should be flagged"
-        )
+        assert len(fail_findings) >= 1, "Empty 'required' array should be flagged"
 
     async def test_well_defined_schema_passes(self, check: PermissiveSchemaCheck) -> None:
         snapshot = make_snapshot(
@@ -896,25 +854,17 @@ class TestIV005PermissiveSchema:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce exactly one finding"
-        assert findings[0].status == Status.PASS, (
-            "Well-defined schema should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Well-defined schema should PASS"
 
     async def test_tool_with_no_schema_skipped(self, check: PermissiveSchemaCheck) -> None:
         """Tools with missing schemas are handled by IV-004, not IV-005."""
-        snapshot = make_snapshot(
-            tools=[{"name": "no_schema_tool", "description": "No schema."}]
-        )
+        snapshot = make_snapshot(tools=[{"name": "no_schema_tool", "description": "No schema."}])
         findings = await check.execute(snapshot)
         # Should produce a PASS because no schemas to evaluate as permissive
         pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1, (
-            "Tool without schema should result in PASS for IV-005"
-        )
+        assert len(pass_findings) >= 1, "Tool without schema should result in PASS for IV-005"
 
-    async def test_tool_with_empty_properties_skipped(
-        self, check: PermissiveSchemaCheck
-    ) -> None:
+    async def test_tool_with_empty_properties_skipped(self, check: PermissiveSchemaCheck) -> None:
         """Empty properties are handled by IV-004, IV-005 skips them."""
         snapshot = make_snapshot(
             tools=[
@@ -953,13 +903,547 @@ class TestIV005PermissiveSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) == 1, (
-            "Should produce exactly one FAIL finding with both issues"
-        )
+        assert len(fail_findings) == 1, "Should produce exactly one FAIL finding with both issues"
         status_text = fail_findings[0].status_extended.lower()
-        assert "additionalproperties" in status_text, (
-            "Should mention additionalProperties issue"
-        )
-        assert "required" in status_text, (
-            "Should mention missing required issue"
-        )
+        assert "additionalproperties" in status_text, "Should mention additionalProperties issue"
+        assert "required" in status_text, "Should mention missing required issue"
+
+
+class TestLdapInjectionCheck:
+    """Tests for LdapInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> LdapInjectionCheck:
+        return LdapInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: LdapInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv006"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: LdapInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestNosqlInjectionCheck:
+    """Tests for NosqlInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> NosqlInjectionCheck:
+        return NosqlInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: NosqlInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv007"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: NosqlInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestSstiInjectionCheck:
+    """Tests for SstiInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SstiInjectionCheck:
+        return SstiInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: SstiInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv008"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: SstiInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestXxeInjectionCheck:
+    """Tests for XxeInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> XxeInjectionCheck:
+        return XxeInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: XxeInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv009"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: XxeInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestHeaderInjectionCheck:
+    """Tests for HeaderInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> HeaderInjectionCheck:
+        return HeaderInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: HeaderInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv010"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: HeaderInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestRegexDosCheck:
+    """Tests for RegexDosCheck."""
+
+    @pytest.fixture()
+    def check(self) -> RegexDosCheck:
+        return RegexDosCheck()
+
+    async def test_metadata_loads_correctly(self, check: RegexDosCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv011"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: RegexDosCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestIntegerOverflowCheck:
+    """Tests for IntegerOverflowCheck."""
+
+    @pytest.fixture()
+    def check(self) -> IntegerOverflowCheck:
+        return IntegerOverflowCheck()
+
+    async def test_metadata_loads_correctly(self, check: IntegerOverflowCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv012"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: IntegerOverflowCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestFormatStringInjectionCheck:
+    """Tests for FormatStringInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> FormatStringInjectionCheck:
+        return FormatStringInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: FormatStringInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv013"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: FormatStringInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestXpathInjectionCheck:
+    """Tests for XpathInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> XpathInjectionCheck:
+        return XpathInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: XpathInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv014"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: XpathInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestCsvInjectionCheck:
+    """Tests for CsvInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> CsvInjectionCheck:
+        return CsvInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: CsvInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv015"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: CsvInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestUnicodeNormalizationCheck:
+    """Tests for UnicodeNormalizationCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UnicodeNormalizationCheck:
+        return UnicodeNormalizationCheck()
+
+    async def test_metadata_loads_correctly(self, check: UnicodeNormalizationCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv016"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: UnicodeNormalizationCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestNullByteInjectionCheck:
+    """Tests for NullByteInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> NullByteInjectionCheck:
+        return NullByteInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: NullByteInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv017"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: NullByteInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestCrlfInjectionCheck:
+    """Tests for CrlfInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> CrlfInjectionCheck:
+        return CrlfInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: CrlfInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv018"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: CrlfInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingLengthConstraintCheck:
+    """Tests for MissingLengthConstraintCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingLengthConstraintCheck:
+        return MissingLengthConstraintCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingLengthConstraintCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv019"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: MissingLengthConstraintCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingTypeConstraintCheck:
+    """Tests for MissingTypeConstraintCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingTypeConstraintCheck:
+        return MissingTypeConstraintCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingTypeConstraintCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv020"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: MissingTypeConstraintCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestEnvVariableInjectionCheck:
+    """Tests for EnvVariableInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> EnvVariableInjectionCheck:
+        return EnvVariableInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: EnvVariableInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv021"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: EnvVariableInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestDeserializationRiskCheck:
+    """Tests for DeserializationRiskCheck."""
+
+    @pytest.fixture()
+    def check(self) -> DeserializationRiskCheck:
+        return DeserializationRiskCheck()
+
+    async def test_metadata_loads_correctly(self, check: DeserializationRiskCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv022"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: DeserializationRiskCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestPrototypePollutionCheck:
+    """Tests for PrototypePollutionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> PrototypePollutionCheck:
+        return PrototypePollutionCheck()
+
+    async def test_metadata_loads_correctly(self, check: PrototypePollutionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv023"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: PrototypePollutionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestLogInjectionCheck:
+    """Tests for LogInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> LogInjectionCheck:
+        return LogInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: LogInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv024"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: LogInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestTemplateLiteralInjectionCheck:
+    """Tests for TemplateLiteralInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> TemplateLiteralInjectionCheck:
+        return TemplateLiteralInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: TemplateLiteralInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv025"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: TemplateLiteralInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestWildcardParameterCheck:
+    """Tests for WildcardParameterCheck."""
+
+    @pytest.fixture()
+    def check(self) -> WildcardParameterCheck:
+        return WildcardParameterCheck()
+
+    async def test_metadata_loads_correctly(self, check: WildcardParameterCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv026"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: WildcardParameterCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingEnumConstraintCheck:
+    """Tests for MissingEnumConstraintCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingEnumConstraintCheck:
+        return MissingEnumConstraintCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingEnumConstraintCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv027"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: MissingEnumConstraintCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestNestedObjectDepthCheck:
+    """Tests for NestedObjectDepthCheck."""
+
+    @pytest.fixture()
+    def check(self) -> NestedObjectDepthCheck:
+        return NestedObjectDepthCheck()
+
+    async def test_metadata_loads_correctly(self, check: NestedObjectDepthCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv028"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: NestedObjectDepthCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestArrayLengthUnboundedCheck:
+    """Tests for ArrayLengthUnboundedCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ArrayLengthUnboundedCheck:
+        return ArrayLengthUnboundedCheck()
+
+    async def test_metadata_loads_correctly(self, check: ArrayLengthUnboundedCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv029"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: ArrayLengthUnboundedCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestAdditionalPropertiesOpenCheck:
+    """Tests for AdditionalPropertiesOpenCheck."""
+
+    @pytest.fixture()
+    def check(self) -> AdditionalPropertiesOpenCheck:
+        return AdditionalPropertiesOpenCheck()
+
+    async def test_metadata_loads_correctly(self, check: AdditionalPropertiesOpenCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv030"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: AdditionalPropertiesOpenCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingPatternValidationCheck:
+    """Tests for MissingPatternValidationCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingPatternValidationCheck:
+        return MissingPatternValidationCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingPatternValidationCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv031"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: MissingPatternValidationCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestUrlParameterInjectionCheck:
+    """Tests for UrlParameterInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UrlParameterInjectionCheck:
+        return UrlParameterInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: UrlParameterInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv032"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: UrlParameterInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestEmailParameterInjectionCheck:
+    """Tests for EmailParameterInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> EmailParameterInjectionCheck:
+        return EmailParameterInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: EmailParameterInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv033"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: EmailParameterInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestFileUploadNoValidationCheck:
+    """Tests for FileUploadNoValidationCheck."""
+
+    @pytest.fixture()
+    def check(self) -> FileUploadNoValidationCheck:
+        return FileUploadNoValidationCheck()
+
+    async def test_metadata_loads_correctly(self, check: FileUploadNoValidationCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv034"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: FileUploadNoValidationCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestHtmlInjectionCheck:
+    """Tests for HtmlInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> HtmlInjectionCheck:
+        return HtmlInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: HtmlInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv035"
+        assert meta.category == "input_validation"
+
+    async def test_stub_returns_empty(self, check: HtmlInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)

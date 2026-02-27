@@ -1,0 +1,30 @@
+check_id: priv009
+title: Unrestricted Process Spawning
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that can spawn arbitrary processes without
+  restrictions. Tools with unconstrained process execution capabilities
+  allow running any command on the host system, effectively providing a
+  remote shell.
+risk_explanation: >
+  Unrestricted process spawning is equivalent to remote code execution.
+  An attacker can run any command on the host system, including reverse
+  shells, cryptocurrency miners, data exfiltration scripts, and lateral
+  movement tools. Process spawning is the most common path from tool
+  invocation to full system compromise.
+remediation: >
+  Restrict process spawning to a predefined allowlist of safe commands.
+  Use sandboxed execution environments for tool processes. Implement
+  command-line argument validation and rejection of shell
+  metacharacters. Run tools in isolated environments with restricted
+  process capabilities (seccomp, AppArmor).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - process_spawning
+  - code_execution
+  - sandboxing

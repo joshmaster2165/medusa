@@ -1,0 +1,31 @@
+check_id: ts013
+title: Overly Permissive CORS
+category: transport_security
+severity: high
+description: >
+  Detects MCP servers with CORS configuration that allows all origins
+  (Access-Control-Allow-Origin: *) or reflects the request origin.
+  Overly permissive CORS enables any website to make authenticated
+  requests to the MCP server.
+risk_explanation: >
+  CORS with Access-Control-Allow-Origin: * allows any website to make
+  cross-origin requests to the MCP server. When combined with Access-
+  Control-Allow-Credentials: true, any malicious website can make
+  authenticated requests using the user's cookies. The attacker's
+  website can invoke MCP tools, read responses, and exfiltrate data
+  through the user's authenticated session.
+remediation: >
+  Restrict Access-Control-Allow-Origin to specific trusted domains.
+  Never use wildcards (*) for endpoints that accept authentication.
+  Validate the Origin header against an allowlist before reflecting it.
+  Do not combine Access-Control-Allow-Origin: * with Access-Control-
+  Allow-Credentials: true.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - cors
+  - permissive_origin
+  - cross_site

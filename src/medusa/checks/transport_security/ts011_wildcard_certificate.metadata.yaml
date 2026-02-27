@@ -1,0 +1,31 @@
+check_id: ts011
+title: Wildcard Certificate Usage
+category: transport_security
+severity: low
+description: >
+  Detects MCP servers using wildcard TLS certificates (*.example.com).
+  Wildcard certificates cover all subdomains, meaning a private key
+  compromise on any subdomain's server exposes all subdomains to
+  impersonation.
+risk_explanation: >
+  Wildcard certificates share a single private key across all
+  subdomains. If the key is compromised on any server hosting any
+  subdomain, the attacker can impersonate every subdomain. This is
+  especially risky when the wildcard certificate is deployed to
+  development, staging, and production servers, as the weakest server's
+  security determines the entire domain's security.
+remediation: >
+  Use specific certificates for each subdomain or service instead of
+  wildcard certificates. If wildcards are necessary, restrict their
+  deployment to trusted servers with strong key protection. Use separate
+  certificates for different security zones (production, staging,
+  development). Implement key isolation using HSMs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - wildcard_certificate
+  - key_compromise
+  - subdomain_security

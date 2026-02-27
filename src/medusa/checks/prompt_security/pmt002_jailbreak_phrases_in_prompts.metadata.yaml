@@ -1,0 +1,31 @@
+check_id: pmt002
+title: Jailbreak Phrases in Prompt Definitions
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt definitions that contain known jailbreak phrases or
+  patterns designed to bypass LLM safety guardrails. These phrases
+  include role-play triggers, instruction override patterns, and
+  constraint removal commands embedded in server-defined prompts.
+risk_explanation: >
+  Jailbreak phrases in prompt definitions indicate that the MCP server
+  is designed to bypass LLM safety controls. This can enable the LLM to
+  produce harmful content, bypass content filters, reveal system
+  prompts, or perform actions that the model would normally refuse. A
+  compromised or malicious MCP server can use jailbreak prompts to
+  weaponize any connected LLM client.
+remediation: >
+  Scan all prompt definitions for known jailbreak patterns including DAN
+  (Do Anything Now), role-play overrides, instruction reset phrases, and
+  constraint removal commands. Implement a jailbreak pattern detection
+  system that checks prompts at registration time. Reject prompts
+  containing known bypass patterns. Maintain an updated database of
+  jailbreak techniques.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

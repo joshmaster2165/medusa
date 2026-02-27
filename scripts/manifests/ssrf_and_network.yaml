@@ -1,0 +1,613 @@
+category: ssrf_and_network
+checks:
+  - id: ssrf001
+    slug: private_ip_access
+    title: "Private IP Address Access"
+    severity: critical
+    description: >
+      Detects MCP server tools that allow requests to private IP address ranges
+      (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) without restriction. Tools
+      accepting user-controlled URLs or hostnames can be abused to access internal
+      network resources that should not be reachable from the MCP server.
+    risk_explanation: >
+      Access to private IP ranges from MCP tools enables server-side request
+      forgery (SSRF) attacks against internal infrastructure. An attacker can use
+      MCP tool invocations to scan internal networks, access databases, reach
+      administration panels, and interact with internal services that trust
+      requests from the MCP server's network location. This can lead to full
+      internal network compromise.
+    remediation: >
+      Implement a URL validation layer that blocks requests to private IP address
+      ranges (RFC 1918) and other reserved ranges. Apply validation after DNS
+      resolution to prevent DNS rebinding bypasses. Use an allowlist of permitted
+      external domains and IP ranges. Deploy network-level egress filtering to
+      enforce restrictions independent of application logic.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf002
+    slug: cloud_metadata_ssrf
+    title: "Cloud Metadata SSRF"
+    severity: critical
+    description: >
+      Detects MCP server tools that can access cloud instance metadata endpoints,
+      particularly the AWS metadata service at 169.254.169.254 and equivalent
+      endpoints for GCP, Azure, and other cloud providers. These endpoints expose
+      temporary credentials, instance identity documents, and configuration data.
+    risk_explanation: >
+      Cloud metadata SSRF is one of the most impactful SSRF variants. The metadata
+      endpoint at 169.254.169.254 provides IAM credentials, API keys, and instance
+      configuration without authentication. An attacker exploiting this via MCP
+      tool invocations can obtain cloud credentials that provide access to the
+      entire cloud environment, including databases, storage buckets, and other
+      cloud services. This has been the root cause of numerous high-profile
+      cloud breaches.
+    remediation: >
+      Block all requests to the link-local address range 169.254.0.0/16 from MCP
+      tools. Additionally block cloud-specific metadata endpoints including
+      metadata.google.internal for GCP and 169.254.169.254 for AWS/Azure. Require
+      IMDSv2 (token-based) on AWS instances to add defense in depth. Deploy
+      network-level firewall rules that prevent the MCP server from reaching
+      metadata endpoints.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf003
+    slug: dns_rebinding_risk
+    title: "DNS Rebinding Risk"
+    severity: high
+    description: >
+      Detects MCP server tools that validate URLs at request time but do not
+      re-validate after DNS resolution, making them vulnerable to DNS rebinding
+      attacks. An attacker can configure a DNS record to first resolve to an
+      allowed IP and then switch to an internal IP between validation and use.
+    risk_explanation: >
+      DNS rebinding bypasses URL validation by exploiting the gap between DNS
+      resolution during validation and the actual connection. An attacker sets up
+      a domain that initially resolves to a permitted address, passes validation,
+      then resolves to an internal address when the MCP tool makes the actual
+      request. This technique bypasses all hostname-based SSRF protections and
+      grants access to internal services.
+    remediation: >
+      Validate IP addresses after DNS resolution, not just hostnames. Pin DNS
+      resolutions so the same IP is used for validation and connection. Implement
+      DNS resolution caching with short TTLs that prevent rebinding. Use a
+      dedicated DNS resolver that blocks resolution to private IP ranges. Validate
+      the resolved IP address against the allowlist immediately before establishing
+      the connection.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf004
+    slug: unrestricted_egress
+    title: "Unrestricted Network Egress"
+    severity: high
+    description: >
+      Detects MCP server deployments where tools can make outbound network requests
+      to any destination without egress filtering. Unrestricted egress allows MCP
+      tools to contact arbitrary external services, exfiltrate data, or establish
+      command-and-control channels.
+    risk_explanation: >
+      Unrestricted network egress from MCP servers allows compromised or malicious
+      tools to exfiltrate sensitive data to attacker-controlled endpoints, download
+      additional payloads, establish reverse shells, or participate in attacks
+      against third-party infrastructure. Without egress controls, there is no
+      boundary limiting what an exploited MCP tool can reach on the network.
+    remediation: >
+      Implement network-level egress filtering that restricts MCP server outbound
+      connections to only required destinations. Use a web proxy or firewall with
+      an allowlist of permitted domains and ports. Deploy network policies in
+      container and Kubernetes environments. Monitor egress traffic for anomalous
+      patterns. Regularly review and audit the egress allowlist.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf005
+    slug: localhost_access
+    title: "Localhost Access"
+    severity: high
+    description: >
+      Detects MCP server tools that allow requests to localhost addresses including
+      127.0.0.1, ::1, and the localhost hostname. Localhost access from MCP tools
+      enables exploitation of services running on the same host as the MCP server,
+      including databases, admin interfaces, and debugging endpoints.
+    risk_explanation: >
+      Services bound to localhost are typically configured without authentication
+      because they are assumed to be inaccessible from the network. MCP tools that
+      can access 127.0.0.1 or localhost bypass this assumption, reaching databases,
+      caches, admin panels, and debugging endpoints that are not designed for
+      external access. This can lead to data theft, configuration modification,
+      and remote code execution.
+    remediation: >
+      Block all MCP tool requests to loopback addresses including 127.0.0.0/8,
+      ::1, and the localhost hostname. Apply this restriction at both the
+      application and network levels. Validate resolved IP addresses against the
+      loopback range after DNS resolution. If specific localhost services must be
+      accessed, use a tightly scoped allowlist with authentication requirements.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf006
+    slug: internal_service_access
+    title: "Internal Service Discovery"
+    severity: high
+    description: >
+      Detects MCP server tools that can be used to discover and access internal
+      network services through hostname enumeration, port scanning, or service
+      probing. Attackers can use error messages, response times, and connection
+      behaviors to map internal network topology.
+    risk_explanation: >
+      MCP tools that accept user-controlled URLs can be weaponized for internal
+      service discovery. By observing response times, error messages, and
+      connection success or failure, an attacker can enumerate internal hosts and
+      services, identify open ports, and fingerprint running software. This
+      reconnaissance information is used to plan targeted attacks against the
+      most valuable internal services.
+    remediation: >
+      Implement uniform error handling that does not reveal whether a connection
+      was refused, timed out, or succeeded with an error. Use consistent response
+      times for blocked requests to prevent timing-based enumeration. Restrict
+      MCP tool requests to an explicit allowlist of permitted endpoints. Deploy
+      network segmentation to limit the MCP server's view of internal services.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf007
+    slug: url_redirect_following
+    title: "URL Redirect Following"
+    severity: medium
+    description: >
+      Detects MCP server tools that automatically follow HTTP redirects without
+      re-validating the redirect target. An attacker can use an allowed URL that
+      redirects to an internal or blocked destination, bypassing URL validation
+      controls.
+    risk_explanation: >
+      Automatic redirect following in MCP tools can bypass SSRF protections. An
+      attacker hosts a URL on an allowed domain that responds with a redirect to
+      an internal IP address or blocked service. Since the initial URL passes
+      validation, the tool follows the redirect to the internal target without
+      re-checking. This technique is commonly used to bypass hostname-based
+      allowlists and reach internal services.
+    remediation: >
+      Disable automatic redirect following in MCP tool HTTP clients or limit the
+      number of redirects to a small value (such as 3). Re-validate each redirect
+      target URL against the same security policy applied to the original URL.
+      Block redirects to private IP addresses, localhost, and blocked protocols.
+      Log redirect chains for security monitoring and anomaly detection.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf008
+    slug: protocol_smuggling
+    title: "Protocol Smuggling Risk"
+    severity: high
+    description: >
+      Detects MCP server tools vulnerable to protocol smuggling attacks where
+      HTTP requests are crafted to smuggle commands to non-HTTP services. By
+      injecting protocol-specific commands into HTTP request components, an
+      attacker can interact with services like Redis, Memcached, or SMTP via
+      the MCP tool.
+    risk_explanation: >
+      Protocol smuggling exploits the fact that many protocols are text-based
+      and will process commands embedded in HTTP requests. An attacker can craft
+      MCP tool inputs that, when the tool makes an HTTP request, embed SMTP,
+      Redis, or other protocol commands in headers or body data. If the connection
+      reaches a non-HTTP service, these commands are executed, enabling data
+      manipulation, cache poisoning, or email abuse through the MCP server.
+    remediation: >
+      Restrict MCP tool outbound connections to HTTP and HTTPS protocols only.
+      Validate that destination ports correspond to expected services (80, 443).
+      Sanitize all user-controlled data in HTTP requests to prevent CRLF injection
+      and header manipulation. Use HTTP client libraries that enforce strict HTTP
+      protocol compliance and reject malformed responses from non-HTTP services.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf009
+    slug: ip_address_bypass
+    title: "IP Address Representation Bypass"
+    severity: high
+    description: >
+      Detects MCP server tools that fail to normalize IP address representations
+      before validation. Attackers can bypass IP-based blocklists by using
+      alternative representations such as octal (0177.0.0.1), hexadecimal
+      (0x7f000001), decimal (2130706433), or IPv6-mapped IPv4 addresses
+      (::ffff:127.0.0.1) to encode blocked addresses.
+    risk_explanation: >
+      IP address representation bypasses allow attackers to circumvent SSRF
+      protections that only check for standard dotted-decimal notation. By encoding
+      127.0.0.1 as 0x7f000001 or 2130706433, an attacker can pass URL validation
+      while still reaching localhost. This technique is widely used in real-world
+      SSRF exploits against MCP-like systems and can reach any address on the
+      blocked IP list.
+    remediation: >
+      Normalize all IP addresses to a canonical form before validation. Parse
+      octal, hexadecimal, decimal, and mixed-format IP representations into
+      standard binary form before comparing against blocklists. Handle IPv6-mapped
+      IPv4 addresses and IPv6 loopback addresses. Use a well-tested IP parsing
+      library rather than custom parsing logic. Validate the normalized IP against
+      both IPv4 and IPv6 blocklists.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf010
+    slug: missing_url_scheme_validation
+    title: "Missing URL Scheme Validation"
+    severity: high
+    description: >
+      Detects MCP server tools that accept URLs without validating the URL scheme
+      or protocol. Without scheme validation, attackers can use non-HTTP protocols
+      such as file://, gopher://, dict://, or ftp:// to access local files,
+      interact with internal services, or bypass network-level protections.
+    risk_explanation: >
+      Missing URL scheme validation in MCP tools opens the door to numerous attack
+      vectors beyond standard HTTP SSRF. The file:// scheme enables reading local
+      files including credentials and configuration. The gopher:// scheme enables
+      arbitrary protocol interaction with internal services. The dict:// scheme
+      enables dictionary-based service probing. Each non-HTTP scheme provides
+      unique exploitation capabilities.
+    remediation: >
+      Implement strict URL scheme validation that only permits https:// and
+      optionally http:// for MCP tool requests. Reject all other URL schemes
+      including file://, ftp://, gopher://, dict://, ldap://, and data://. Apply
+      scheme validation before any URL parsing or processing. Use URL parsing
+      libraries that enforce scheme restrictions consistently.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf011
+    slug: missing_egress_allowlist
+    title: "Missing Egress Allowlist"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack an explicit allowlist of permitted
+      external destinations for tool-initiated network requests. Without an egress
+      allowlist, tools can contact any external service, making it difficult to
+      detect and prevent data exfiltration or unauthorized API calls.
+    risk_explanation: >
+      Without an egress allowlist, MCP tools can communicate with any external
+      endpoint. This makes data exfiltration trivial since a compromised tool can
+      send sensitive data to any attacker-controlled server. It also prevents
+      organizations from maintaining an inventory of external dependencies and
+      makes it impossible to detect anomalous outbound traffic from MCP tools.
+    remediation: >
+      Define and enforce an explicit egress allowlist for all MCP tool network
+      requests. The allowlist should specify permitted domains, IP ranges, and
+      ports. Implement the allowlist at both the application level (URL validation)
+      and the network level (firewall rules or proxy configuration). Review and
+      update the allowlist regularly. Log all blocked egress attempts for security
+      monitoring.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf012
+    slug: network_scanning_capability
+    title: "Network Scanning Capability"
+    severity: high
+    description: >
+      Detects MCP server tools that can be abused to perform network scanning by
+      making requests to arbitrary hosts and analyzing response characteristics.
+      Tools that accept hostnames or IP addresses as parameters can be systematically
+      used to discover live hosts on internal networks.
+    risk_explanation: >
+      MCP tools with network scanning capability allow attackers to map internal
+      network topology from an external position. By submitting requests to
+      sequential IP addresses or common hostnames, an attacker can identify live
+      hosts, determine which services are running, and build a target list for
+      further exploitation. This reconnaissance is the first step in most internal
+      network attacks.
+    remediation: >
+      Restrict MCP tool network access to a defined set of permitted endpoints.
+      Implement rate limiting on network requests to prevent rapid scanning.
+      Monitor for sequential or systematic request patterns that indicate scanning
+      activity. Use uniform error responses that do not reveal whether a host
+      exists or a port is open. Deploy network segmentation to limit the scan
+      surface accessible from the MCP server.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf013
+    slug: port_scanning_risk
+    title: "Port Scanning Risk"
+    severity: high
+    description: >
+      Detects MCP server tools that can be used to scan ports on internal or
+      external hosts by observing connection success, failure, or timing differences.
+      Port scanning reveals which services are running on target hosts, providing
+      attackers with information needed to select exploitation techniques.
+    risk_explanation: >
+      Port scanning through MCP tools allows attackers to identify open services
+      on internal hosts. By varying the port number in tool requests and observing
+      whether connections succeed, fail, or time out, an attacker can determine
+      which ports are open. This information reveals the software running on
+      internal systems and is used to select targeted exploits for database
+      servers, web servers, caches, and other services.
+    remediation: >
+      Restrict MCP tool outbound connections to standard HTTP/HTTPS ports (80, 443)
+      unless specific alternative ports are required. Implement port allowlisting
+      rather than blocklisting. Use consistent response times and error messages
+      for all blocked ports to prevent timing-based port detection. Monitor for
+      systematic port scanning patterns in tool invocation logs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf014
+    slug: file_scheme_access
+    title: "File Scheme URL Access"
+    severity: high
+    description: >
+      Detects MCP server tools that accept file:// URLs, enabling direct access
+      to the local filesystem of the MCP server. File scheme URLs can read
+      configuration files, credentials, private keys, and other sensitive data
+      stored on the server.
+    risk_explanation: >
+      File:// URL access from MCP tools exposes the entire readable filesystem of
+      the MCP server to tool invocations. An attacker can read /etc/passwd,
+      application configuration files, private keys, database credentials, and
+      any other file accessible to the MCP server process. This typically provides
+      enough information for full server compromise and lateral movement within
+      the infrastructure.
+    remediation: >
+      Block the file:// URL scheme in all MCP tool URL handlers. Implement URL
+      scheme validation that explicitly permits only https:// and http://. Apply
+      this validation before any URL processing or resolution. If local file
+      access is required for specific tools, implement a dedicated file access
+      API with path validation, sandboxing, and explicit allowlists rather than
+      accepting file:// URLs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf015
+    slug: gopher_protocol_risk
+    title: "Gopher Protocol Risk"
+    severity: high
+    description: >
+      Detects MCP server tools that accept gopher:// URLs, enabling raw TCP
+      communication with internal services. The gopher protocol allows sending
+      arbitrary data to any TCP port, making it possible to interact with Redis,
+      SMTP, MySQL, and other internal services through the MCP tool.
+    risk_explanation: >
+      The gopher:// protocol is the most dangerous SSRF vector because it allows
+      sending arbitrary bytes to any TCP port. Through gopher:// URLs, an attacker
+      can send Redis commands to wipe or modify cache data, send SMTP commands to
+      relay spam, interact with databases, and exploit any TCP-based service
+      accessible from the MCP server. A single gopher SSRF vulnerability can
+      compromise the entire internal network.
+    remediation: >
+      Block the gopher:// URL scheme in all MCP tool URL handlers. Ensure URL
+      parsing libraries do not support gopher:// or treat it as a valid scheme.
+      Implement URL scheme allowlists that only permit https:// and http://.
+      Deploy network-level egress filtering that blocks non-HTTP traffic from
+      the MCP server. Verify that all HTTP client libraries used by tools reject
+      gopher:// URLs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf016
+    slug: missing_request_timeout
+    title: "Missing Request Timeout"
+    severity: medium
+    description: >
+      Detects MCP server tools that make network requests without configuring
+      timeouts. Missing timeouts allow requests to hang indefinitely, consuming
+      server resources and potentially enabling denial-of-service attacks through
+      slow-response techniques or connection exhaustion.
+    risk_explanation: >
+      MCP tools without request timeouts are vulnerable to denial-of-service
+      through slow-response attacks. An attacker can direct tool requests to a
+      server that accepts connections but responds extremely slowly, tying up
+      server threads or connections indefinitely. Over multiple requests, this
+      exhausts the MCP server's connection pool and renders it unable to process
+      legitimate tool invocations.
+    remediation: >
+      Configure explicit connection and read timeouts for all network requests
+      made by MCP tools. Set connection timeouts to 5-10 seconds and read timeouts
+      to 30-60 seconds based on expected response times. Implement overall request
+      duration limits that abort requests exceeding the maximum allowed time.
+      Use asynchronous request patterns with timeout handling to prevent thread
+      blocking.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf017
+    slug: unbounded_redirect_chain
+    title: "Unbounded Redirect Chain"
+    severity: medium
+    description: >
+      Detects MCP server tools that follow HTTP redirects without limiting the
+      number of redirects in a chain. Unbounded redirect following can lead to
+      infinite redirect loops, excessive resource consumption, and redirect-based
+      SSRF attacks that gradually move through allowed domains to reach blocked
+      targets.
+    risk_explanation: >
+      Unbounded redirect chains can cause MCP tool requests to loop indefinitely,
+      consuming server resources and causing denial of service. Additionally,
+      multi-hop redirect chains can be used to gradually traverse from allowed
+      domains through intermediate redirectors to reach blocked internal targets.
+      Each hop in the chain may pass individual URL validation while the final
+      destination violates security policy.
+    remediation: >
+      Limit the maximum number of HTTP redirects followed by MCP tools to a small
+      value such as 3-5. Validate each redirect target against the same SSRF
+      protection rules applied to the original URL. Log the complete redirect
+      chain for security monitoring. Consider disabling automatic redirect
+      following entirely and handling redirects explicitly in tool logic.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf018
+    slug: internal_api_exposure
+    title: "Internal API Exposure"
+    severity: high
+    description: >
+      Detects MCP server tools that can access internal API endpoints intended
+      only for service-to-service communication. Internal APIs typically lack
+      authentication and authorization controls because they are assumed to be
+      unreachable from external sources.
+    risk_explanation: >
+      Internal APIs accessed through MCP tool SSRF often have no authentication
+      because they rely on network isolation for security. An attacker who can
+      reach these APIs through MCP tools gains access to administrative functions,
+      data manipulation endpoints, and service configuration interfaces. This
+      can lead to complete compromise of internal services and the data they
+      manage.
+    remediation: >
+      Block MCP tool access to internal API endpoints through URL validation and
+      network segmentation. Require authentication on all internal APIs regardless
+      of network location. Implement service mesh or zero-trust networking that
+      validates identity for every request. Maintain an inventory of internal APIs
+      and ensure they are excluded from the MCP tool egress allowlist.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf019
+    slug: kubernetes_api_access
+    title: "Kubernetes API Access"
+    severity: critical
+    description: >
+      Detects MCP server tools that can access the Kubernetes API server, typically
+      available at kubernetes.default.svc or via the service account token mounted
+      at /var/run/secrets/kubernetes.io/serviceaccount/token. Access to the
+      Kubernetes API enables cluster-wide enumeration and resource manipulation.
+    risk_explanation: >
+      Kubernetes API access from MCP tools can lead to complete cluster compromise.
+      An attacker can list all pods, services, and secrets; create new privileged
+      containers; modify deployments; and access secrets containing database
+      credentials and API keys. If the MCP server's service account has elevated
+      permissions, the attacker can achieve cluster-admin level access and
+      compromise all workloads in the cluster.
+    remediation: >
+      Block MCP tool access to the Kubernetes API server address and service
+      account token paths. Implement network policies that prevent MCP server
+      pods from reaching the Kubernetes API. Use minimal RBAC permissions for
+      the MCP server's service account. Mount service account tokens as read-only
+      and consider disabling automatic token mounting. Deploy admission controllers
+      that enforce security policies on MCP server pod specifications.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security
+
+  - id: ssrf020
+    slug: docker_api_access
+    title: "Docker API Access"
+    severity: critical
+    description: >
+      Detects MCP server tools that can access the Docker daemon API, typically
+      exposed on /var/run/docker.sock (Unix socket) or TCP port 2375/2376. Access
+      to the Docker API enables container escape, host filesystem access, and
+      arbitrary container creation with elevated privileges.
+    risk_explanation: >
+      Docker API access from MCP tools is equivalent to root access on the host
+      system. An attacker can create privileged containers with host filesystem
+      mounts, execute commands in existing containers, read container logs
+      containing secrets, and modify running containers. Through Docker API
+      access, an attacker can escape the MCP server container, access the host
+      operating system, and compromise all other containers on the same host.
+    remediation: >
+      Block MCP tool access to the Docker socket path (/var/run/docker.sock) and
+      Docker TCP API ports (2375, 2376). Never mount the Docker socket into MCP
+      server containers. Use rootless container runtimes that do not expose a
+      privileged daemon socket. Implement network policies that block access to
+      Docker API ports. If Docker API access is required, use Docker API
+      authorization plugins with strict access controls.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - ssrf
+      - network_security

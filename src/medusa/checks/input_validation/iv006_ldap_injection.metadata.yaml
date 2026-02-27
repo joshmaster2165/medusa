@@ -1,0 +1,31 @@
+check_id: iv006
+title: LDAP Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters whose names or descriptions suggest LDAP query
+  construction without proper input validation. Parameters like
+  'filter', 'dn', 'search_base', or 'ldap_query' that accept
+  unconstrained strings enable LDAP injection attacks.
+risk_explanation: >
+  LDAP injection allows an attacker to modify LDAP queries to bypass
+  authentication, extract directory information, or modify directory
+  entries. An attacker can inject LDAP filter metacharacters to retrieve
+  all records, bypass access controls, or enumerate users and groups in
+  the directory service.
+remediation: >
+  Escape all LDAP special characters in user-supplied parameters before
+  query construction. Use parameterized LDAP queries where available.
+  Add pattern constraints to restrict parameters to expected formats.
+  Validate parameters against an allowlist of permitted LDAP filter
+  components.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/LDAP_Injection_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - ldap_injection
+  - directory_services
+  - query_injection

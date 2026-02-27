@@ -1,0 +1,34 @@
+check_id: tp006
+title: Rug Pull Detection — Tool Definition Drift
+category: tool_poisoning
+severity: critical
+description: >
+  Detects when MCP tool definitions change between sessions without
+  explicit user consent. A malicious server can initially present benign
+  tool definitions to pass review, then silently alter descriptions,
+  parameters, or behaviour in subsequent sessions to perform harmful
+  actions — a technique known as a rug pull attack.
+risk_explanation: >
+  Tool definition drift allows an attacker to bypass initial security
+  review. Once the user or LLM trusts a tool based on its original
+  definition, the attacker modifies it to exfiltrate data, escalate
+  privileges, or execute malicious commands. Because the change happens
+  between sessions, there is no opportunity for the user to review or
+  consent to the new behaviour.
+remediation: >
+  Implement tool definition pinning by hashing tool schemas and
+  descriptions on first use and comparing them on subsequent sessions.
+  Alert the user when any tool definition changes. Require explicit user
+  approval before accepting modified tool definitions. Use version-
+  pinned server references where available.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP04:2025"
+tags:
+  - tool_poisoning
+  - rug_pull
+  - definition_drift
+  - session_integrity

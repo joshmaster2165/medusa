@@ -1,0 +1,30 @@
+check_id: ssrf010
+title: Missing URL Scheme Validation
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that accept URLs without validating the URL
+  scheme or protocol. Without scheme validation, attackers can use non-
+  HTTP protocols such as file://, gopher://, dict://, or ftp:// to
+  access local files, interact with internal services, or bypass
+  network-level protections.
+risk_explanation: >
+  Missing URL scheme validation in MCP tools opens the door to numerous
+  attack vectors beyond standard HTTP SSRF. The file:// scheme enables
+  reading local files including credentials and configuration. The
+  gopher:// scheme enables arbitrary protocol interaction with internal
+  services. The dict:// scheme enables dictionary-based service probing.
+  Each non-HTTP scheme provides unique exploitation capabilities.
+remediation: >
+  Implement strict URL scheme validation that only permits https:// and
+  optionally http:// for MCP tool requests. Reject all other URL schemes
+  including file://, ftp://, gopher://, dict://, ldap://, and data://.
+  Apply scheme validation before any URL parsing or processing. Use URL
+  parsing libraries that enforce scheme restrictions consistently.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

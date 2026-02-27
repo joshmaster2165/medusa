@@ -1,0 +1,31 @@
+check_id: auth009
+title: Bearer Token in URL Parameters
+category: authentication
+severity: high
+description: >
+  Detects authentication tokens passed via URL query string parameters
+  instead of HTTP headers. Tokens in URLs are logged in server access
+  logs, browser history, proxy logs, and referrer headers, creating
+  multiple exposure vectors.
+risk_explanation: >
+  URL-embedded tokens appear in web server logs, proxy logs, browser
+  history, and HTTP Referer headers sent to third-party resources. Any
+  system that records or processes URLs gains access to the
+  authentication token. This exposure is difficult to remediate as
+  tokens may persist in logs indefinitely across multiple systems.
+remediation: >
+  Transmit authentication tokens exclusively in HTTP Authorization
+  headers using the Bearer scheme. Never include tokens in URL query
+  parameters or path segments. Configure servers to reject requests that
+  include tokens in URLs. Implement token binding to prevent token
+  replay from logs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - bearer_token
+  - url_exposure
+  - logging_risk

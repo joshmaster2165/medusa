@@ -1,0 +1,30 @@
+check_id: iv033
+title: Email Parameter Injection
+category: input_validation
+severity: medium
+description: >
+  Detects email-type tool parameters without proper format validation.
+  Email parameters that accept arbitrary strings can be exploited for
+  header injection in SMTP communications, enabling spam relay and
+  phishing attacks through the MCP server.
+risk_explanation: >
+  Email parameter injection exploits SMTP header injection where
+  newlines in the email address field inject additional headers like
+  Bcc, Subject, or body content. An attacker can use the MCP server as
+  an open mail relay for spam or phishing. Malformed email addresses can
+  also cause parsing errors and application crashes.
+remediation: >
+  Validate email parameters using JSON Schema format: email and
+  additional server-side validation. Reject addresses containing
+  newlines, null bytes, or SMTP special characters. Implement email
+  address allowlisting for sensitive operations. Use parameterized SMTP
+  libraries that prevent header injection.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - email_injection
+  - smtp
+  - header_injection

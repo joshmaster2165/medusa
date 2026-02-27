@@ -1,0 +1,31 @@
+check_id: cred016
+title: Encryption Key Exposure
+category: credential_exposure
+severity: critical
+description: >
+  Detects symmetric or asymmetric encryption keys in MCP server
+  configuration. Exposed encryption keys compromise the confidentiality
+  of all data encrypted with those keys, including stored data and
+  communications.
+risk_explanation: >
+  An exposed encryption key allows an attacker to decrypt all data
+  protected by that key. For symmetric keys (AES, ChaCha20), this
+  includes both encrypting new data and decrypting existing data. For
+  asymmetric private keys, the attacker can decrypt communications and
+  forge signatures. Historical encrypted data becomes retroactively
+  compromised.
+remediation: >
+  Store encryption keys in hardware security modules (HSMs) or key
+  management services (AWS KMS, Azure Key Vault, GCP Cloud KMS). Never
+  embed encryption keys in configuration files. Implement key rotation
+  with re-encryption of stored data. Use envelope encryption where the
+  data encryption key is itself encrypted by a master key.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - encryption_key
+  - cryptography
+  - key_management

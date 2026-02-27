@@ -1,0 +1,30 @@
+check_id: iv021
+title: Environment Variable Injection
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters used to set or modify environment variables.
+  Parameters that can influence the process environment allow attackers
+  to override PATH, LD_PRELOAD, and other security-critical variables.
+risk_explanation: >
+  Environment variable injection can override security-critical
+  settings. Setting PATH allows command hijacking, LD_PRELOAD enables
+  shared library injection, and variables like NODE_OPTIONS or
+  PYTHONPATH can force execution of attacker-controlled code.
+  Environment changes persist for the process lifetime and affect all
+  subsequent operations.
+remediation: >
+  Never allow user-supplied parameters to directly set environment
+  variables. Use an allowlist of permitted environment variable names.
+  Validate values against strict patterns. Implement environment
+  isolation for tool execution contexts. Reject parameters containing
+  known dangerous variable names (PATH, LD_PRELOAD, HOME).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - environment_injection
+  - variable_override
+  - process_security

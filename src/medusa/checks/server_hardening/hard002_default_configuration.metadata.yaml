@@ -1,0 +1,31 @@
+check_id: hard002
+title: Default Configuration in Production
+category: server_hardening
+severity: high
+description: >
+  Detects MCP servers deployed with default configuration values that
+  are intended for development or testing. Default configurations
+  typically use weak security settings, permissive access controls, and
+  debug-friendly options that are inappropriate for production.
+risk_explanation: >
+  Default configurations are publicly documented and well-known to
+  attackers. Default ports, paths, credentials, and security settings
+  provide a predictable attack surface. Servers deployed with default
+  configurations often have overly permissive access controls, disabled
+  authentication, verbose logging that leaks information, and relaxed
+  rate limits that enable abuse.
+remediation: >
+  Implement a mandatory configuration review process for production
+  deployments. Create environment-specific configuration profiles that
+  enforce production security requirements. Use configuration validation
+  that fails deployment if default values are detected for security-
+  critical settings. Document all configuration options with their
+  security implications.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

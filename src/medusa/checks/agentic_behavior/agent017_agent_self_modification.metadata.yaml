@@ -1,0 +1,34 @@
+check_id: agent017
+title: Agent Self-Modification
+category: agentic_behavior
+severity: critical
+description: >
+  Detects MCP configurations where agents can modify their own behavior,
+  instructions, safety constraints, or operational parameters through
+  tool invocations. Self-modification allows a compromised agent to
+  remove its own safety guardrails and operate without constraints.
+risk_explanation: >
+  Agent self-modification is one of the most severe agentic risks
+  because it allows an agent to escalate its own capabilities and remove
+  safety constraints. Through MCP tool invocations that modify
+  configuration files, environment variables, or system prompts, a
+  compromised agent can disable its own safety guardrails, grant itself
+  additional permissions, and modify its operational parameters. Once
+  self-modified, the agent operates without the controls that were
+  designed to limit its behavior.
+remediation: >
+  Prevent agents from modifying their own configuration, system prompts,
+  or safety constraints through tool invocations. Implement read-only
+  access to agent configuration from the agent's perspective. Use
+  immutable safety constraints that cannot be altered at runtime. Detect
+  and block tool invocations that target the agent's own operational
+  parameters. Implement integrity monitoring that detects unauthorized
+  changes to agent configuration.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

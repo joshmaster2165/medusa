@@ -1,0 +1,32 @@
+check_id: pmt014
+title: Prompt History Manipulation
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt definitions that can be used to manipulate or forge
+  conversation history, inject fake previous messages, or alter the
+  perceived context of the conversation. History manipulation enables
+  social engineering of the LLM through fabricated context.
+risk_explanation: >
+  Prompt history manipulation allows an attacker to create a false
+  conversation context that tricks the LLM into believing prior
+  agreements, authorizations, or instructions were established. This
+  enables bypassing confirmation requirements by fabricating prior
+  consent, establishing false trust through fake conversation history,
+  and overriding safety constraints by presenting fabricated context
+  where constraints were already relaxed.
+remediation: >
+  Implement conversation history integrity verification that prevents
+  injection of fabricated messages. Use signed or hashed message
+  histories that detect tampering. Separate server-injected prompt
+  content from actual conversation history. Validate that prompt
+  definitions cannot forge message roles or inject into the conversation
+  history context.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

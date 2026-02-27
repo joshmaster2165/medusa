@@ -1,0 +1,32 @@
+check_id: ssrf017
+title: Unbounded Redirect Chain
+category: ssrf_and_network
+severity: medium
+description: >
+  Detects MCP server tools that follow HTTP redirects without limiting
+  the number of redirects in a chain. Unbounded redirect following can
+  lead to infinite redirect loops, excessive resource consumption, and
+  redirect-based SSRF attacks that gradually move through allowed
+  domains to reach blocked targets.
+risk_explanation: >
+  Unbounded redirect chains can cause MCP tool requests to loop
+  indefinitely, consuming server resources and causing denial of
+  service. Additionally, multi-hop redirect chains can be used to
+  gradually traverse from allowed domains through intermediate
+  redirectors to reach blocked internal targets. Each hop in the chain
+  may pass individual URL validation while the final destination
+  violates security policy.
+remediation: >
+  Limit the maximum number of HTTP redirects followed by MCP tools to a
+  small value such as 3-5. Validate each redirect target against the
+  same SSRF protection rules applied to the original URL. Log the
+  complete redirect chain for security monitoring. Consider disabling
+  automatic redirect following entirely and handling redirects
+  explicitly in tool logic.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

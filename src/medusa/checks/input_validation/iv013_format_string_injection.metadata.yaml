@@ -1,0 +1,30 @@
+check_id: iv013
+title: Format String Injection
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters used in string formatting operations without
+  sanitization. Parameters passed to printf-style, f-string, or template
+  string formatters can inject format specifiers that read memory, cause
+  crashes, or write to arbitrary memory locations.
+risk_explanation: >
+  Format string vulnerabilities allow an attacker to read from and write
+  to arbitrary memory addresses using format specifiers like %x, %n, and
+  %s. In higher-level languages, format string injection can leak
+  internal state, cause exceptions, or enable further injection attacks
+  through formatted output.
+remediation: >
+  Never pass user input as the format string argument. Use parameterized
+  formatting where user input is always a format argument, not the
+  format template. Validate parameters to reject strings containing
+  format specifiers (%, {, }). Use structured logging that separates
+  templates from parameters.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - format_string
+  - memory_access
+  - string_formatting

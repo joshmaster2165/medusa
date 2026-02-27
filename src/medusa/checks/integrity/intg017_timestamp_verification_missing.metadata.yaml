@@ -1,0 +1,30 @@
+check_id: intg017
+title: Missing Timestamp Verification
+category: integrity
+severity: medium
+description: >
+  Detects signed artifacts that lack timestamp verification. Without
+  trusted timestamps, signatures remain valid even after the signing key
+  has been compromised or revoked.
+risk_explanation: >
+  Without timestamp verification, a signature made with a compromised
+  key cannot be distinguished from a legitimate signature made before
+  the compromise. Timestamp authorities provide proof that a signature
+  was created at a specific time, allowing revocation of signatures made
+  after key compromise while preserving the validity of earlier
+  signatures.
+remediation: >
+  Include RFC 3161 timestamp tokens in all code signatures. Use trusted
+  timestamp authorities and verify timestamps during signature
+  validation. Implement timestamp-based revocation checking that
+  invalidates signatures created after key compromise events. Configure
+  signature verification to reject artifacts without valid timestamps.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - timestamps
+  - code_signing
+  - verification

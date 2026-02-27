@@ -1,0 +1,249 @@
+category: context_security
+checks:
+  - id: ctx003
+    slug: context_window_overflow
+    title: "Context Window Overflow Attack"
+    severity: high
+    description: >
+      Detects MCP tool outputs or resource contents designed to flood the
+      LLM context window with excessive data. Context window overflow attacks
+      push legitimate instructions out of the context, causing the LLM to
+      lose track of its original directives.
+    risk_explanation: >
+      By filling the LLM's context window with large volumes of irrelevant
+      or adversarial content, an attacker can push the system prompt and
+      earlier safety instructions out of the active context. This causes the
+      LLM to lose its behavioral guardrails, making it susceptible to
+      following attacker-provided instructions embedded in the overflow
+      content.
+    remediation: >
+      Implement output size limits for all MCP tools and resources. Truncate
+      or paginate large responses before they enter the LLM context. Monitor
+      the total context utilisation and alert when a single tool response
+      consumes a disproportionate share of the context window. Use
+      summarization for large data returns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - context_security
+      - overflow
+      - denial_of_service
+      - context_window
+
+  - id: ctx004
+    slug: instruction_hierarchy_violation
+    title: "Instruction Hierarchy Violation"
+    severity: high
+    description: >
+      Detects MCP tool outputs that contain content attempting to override
+      or contradict system-level instructions. Tool content should never
+      be able to elevate its privilege above the system prompt.
+    risk_explanation: >
+      If tool output can override system-level instructions, an attacker who
+      controls a tool's response can effectively reprogram the LLM's behavior.
+      This breaks the instruction hierarchy where system prompts should always
+      take precedence over tool outputs and user inputs, enabling the attacker
+      to bypass safety controls and access restrictions.
+    remediation: >
+      Implement instruction hierarchy enforcement that prevents tool outputs
+      from overriding system-level directives. Sanitize tool outputs to remove
+      instruction-like patterns. Use role-based message tagging to clearly
+      distinguish system instructions from tool content. Validate that system
+      prompt directives persist after tool invocations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+      - "MCP06:2025"
+    tags:
+      - context_security
+      - instruction_hierarchy
+      - privilege_escalation
+      - prompt_injection
+
+  - id: ctx005
+    slug: context_poisoning_via_resources
+    title: "Context Poisoning via Resource Content"
+    severity: high
+    description: >
+      Detects MCP resource content that contains adversarial text designed
+      to manipulate LLM behavior. Malicious resources can embed hidden
+      instructions that the LLM follows when processing the content.
+    risk_explanation: >
+      Resource content (files, database records, web pages) fetched by MCP
+      servers is injected into the LLM context as trusted data. An attacker
+      who controls the resource content can embed instructions that the LLM
+      interprets as directives, causing it to perform unauthorized actions,
+      reveal sensitive information, or alter its behavior in ways the user
+      did not intend.
+    remediation: >
+      Treat all resource content as untrusted input. Implement content
+      sanitization that strips or escapes instruction-like patterns from
+      resource data before it enters the LLM context. Use content tagging
+      to clearly mark resource content as data, not instructions. Apply
+      input validation to resource content fetched by MCP servers.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - context_security
+      - context_poisoning
+      - resources
+      - prompt_injection
+
+  - id: ctx006
+    slug: prompt_leakage_risk
+    title: "System Prompt Leakage Risk"
+    severity: high
+    description: >
+      Detects MCP tool behaviors or output patterns that could cause the LLM
+      to reveal its system prompt or internal instructions. System prompt
+      leakage exposes security controls and business logic.
+    risk_explanation: >
+      System prompts contain security directives, behavioral constraints,
+      and business logic that should remain confidential. If a tool can trick
+      the LLM into revealing its system prompt, attackers learn the exact
+      safety measures in place and can craft targeted bypass techniques. This
+      is often the first step in a more sophisticated attack chain.
+    remediation: >
+      Implement system prompt protection that prevents the LLM from including
+      system prompt content in responses. Filter tool outputs for content
+      that could elicit prompt disclosure. Add explicit system prompt
+      protection directives. Monitor for prompt leakage attempts and alert
+      on suspicious extraction patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - context_security
+      - prompt_leakage
+      - confidentiality
+      - system_prompt
+
+  - id: ctx007
+    slug: cross_conversation_contamination
+    title: "Cross-Conversation Context Contamination"
+    severity: high
+    description: >
+      Detects MCP server implementations that allow data from one
+      conversation session to leak into another. Cross-conversation
+      contamination violates session isolation and exposes user data.
+    risk_explanation: >
+      When data from one user's conversation leaks into another user's
+      session, private information, tool invocation results, and
+      conversation context are exposed to unauthorized parties. This can
+      occur through shared caches, persistent state, or improper session
+      management in the MCP server.
+    remediation: >
+      Implement strict session isolation in the MCP server. Use separate
+      state stores for each conversation session and clear all session data
+      when a conversation ends. Avoid shared caches that span sessions.
+      Validate session boundaries in all tool invocations and resource
+      accesses. Conduct regular testing for cross-session data leakage.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - context_security
+      - session_isolation
+      - data_leakage
+      - cross_conversation
+
+  - id: ctx008
+    slug: token_budget_exhaustion
+    title: "Token Budget Exhaustion"
+    severity: medium
+    description: >
+      Detects MCP tools that return excessively large responses that consume
+      a disproportionate share of the available token budget. Token budget
+      exhaustion degrades LLM performance and increases costs.
+    risk_explanation: >
+      MCP tools that return very large responses consume tokens that could
+      be used for reasoning, safety checks, and user interaction. This
+      reduces the LLM's ability to maintain context, follow safety
+      instructions, and produce useful responses. It also increases API
+      costs and may trigger rate limits, creating a denial-of-service effect.
+    remediation: >
+      Implement response size limits for all MCP tools. Use pagination for
+      large datasets and return summaries with the option to drill down into
+      details. Monitor per-tool token consumption and set budgets for each
+      tool's response size. Compress or summarize large outputs before
+      returning them to the LLM context.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - context_security
+      - token_budget
+      - resource_exhaustion
+      - performance
+
+  - id: ctx009
+    slug: role_confusion_attack
+    title: "Role Confusion Attack"
+    severity: high
+    description: >
+      Detects MCP tool outputs containing content designed to confuse the
+      LLM's understanding of message roles (system, user, assistant, tool).
+      Role confusion can trick the LLM into treating tool output as system
+      instructions.
+    risk_explanation: >
+      LLMs process messages based on their assigned roles. If tool output
+      can trick the LLM into believing it is receiving system-level
+      instructions or user messages, the attacker effectively escalates the
+      privilege of their content. This enables bypassing safety controls,
+      impersonating users, and overriding behavioral constraints.
+    remediation: >
+      Implement strict role tagging that cannot be overridden by message
+      content. Sanitize tool outputs to remove role-indicator patterns such
+      as "System:", "User:", or role-switching markers. Use structural
+      message formatting that separates role metadata from content. Validate
+      message roles at the client level before passing to the LLM.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+      - "MCP06:2025"
+    tags:
+      - context_security
+      - role_confusion
+      - privilege_escalation
+      - prompt_injection
+
+  - id: ctx010
+    slug: multi_turn_manipulation
+    title: "Multi-Turn Conversation Manipulation"
+    severity: high
+    description: >
+      Detects patterns of progressive manipulation across multiple
+      conversation turns. Multi-turn attacks incrementally shift the LLM's
+      behavior over several exchanges to bypass single-turn safety checks.
+    risk_explanation: >
+      Multi-turn manipulation attacks bypass safety measures by gradually
+      shifting the LLM's behavior over several conversation turns. Each
+      individual turn may appear benign, but the cumulative effect steers
+      the LLM toward performing unauthorized actions. This is particularly
+      dangerous because single-turn safety checks may not detect the
+      progressive nature of the attack.
+    remediation: >
+      Implement conversation-level behavior monitoring that tracks
+      cumulative drift across multiple turns. Use anomaly detection to
+      identify progressive manipulation patterns. Periodically reinforce
+      system prompt instructions throughout long conversations. Set maximum
+      conversation lengths and require re-authentication for extended
+      sessions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - context_security
+      - multi_turn
+      - manipulation
+      - conversation_safety

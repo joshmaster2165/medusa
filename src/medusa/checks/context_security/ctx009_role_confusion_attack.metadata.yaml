@@ -1,0 +1,31 @@
+check_id: ctx009
+title: Role Confusion Attack
+category: context_security
+severity: high
+description: >
+  Detects MCP tool outputs containing content designed to confuse the
+  LLM's understanding of message roles (system, user, assistant, tool).
+  Role confusion can trick the LLM into treating tool output as system
+  instructions.
+risk_explanation: >
+  LLMs process messages based on their assigned roles. If tool output
+  can trick the LLM into believing it is receiving system-level
+  instructions or user messages, the attacker effectively escalates the
+  privilege of their content. This enables bypassing safety controls,
+  impersonating users, and overriding behavioral constraints.
+remediation: >
+  Implement strict role tagging that cannot be overridden by message
+  content. Sanitize tool outputs to remove role-indicator patterns such
+  as "System:", "User:", or role-switching markers. Use structural
+  message formatting that separates role metadata from content. Validate
+  message roles at the client level before passing to the LLM.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+  - "MCP06:2025"
+tags:
+  - context_security
+  - role_confusion
+  - privilege_escalation
+  - prompt_injection

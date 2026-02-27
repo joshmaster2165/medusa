@@ -1,0 +1,34 @@
+check_id: dos012
+title: Missing Batch Operation Limit
+category: rate_limiting
+severity: medium
+description: >
+  Detects MCP server tools that accept batch operations without limiting
+  the batch size. Unbounded batch sizes allow a single tool invocation
+  to process an arbitrary number of items, consuming disproportionate
+  resources compared to a single invocation.
+risk_explanation: >
+  Batch operations without size limits allow attackers to amplify the
+  impact of a single MCP tool invocation. By submitting a batch with
+  thousands or millions of items, an attacker can consume server
+  resources equivalent to thousands of individual invocations in a
+  single request. This bypasses per-invocation rate limits and can
+  overwhelm databases, APIs, and processing capacity. Batch operations
+  also increase the blast radius of errors, as a single malformed batch
+  can corrupt large amounts of data.
+remediation: >
+  Implement maximum batch size limits for all MCP tools that accept
+  batch operations. Set reasonable limits based on server capacity and
+  expected usage, typically 100-1000 items per batch. Implement batch
+  processing with pagination that processes items in manageable chunks.
+  Apply the same resource limits to batch operations as to individual
+  invocations scaled by batch size. Monitor batch sizes for anomaly
+  detection.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

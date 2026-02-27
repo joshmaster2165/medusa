@@ -1,0 +1,31 @@
+check_id: hard009
+title: Missing Security Updates
+category: server_hardening
+severity: high
+description: >
+  Detects MCP servers running outdated versions of their runtime,
+  framework, or dependencies that have known security vulnerabilities.
+  Missing security patches leave the server exposed to publicly
+  disclosed exploits with available proof-of-concept code.
+risk_explanation: >
+  Known vulnerabilities in outdated software are actively exploited at
+  scale. Once a CVE is published, exploit code is typically available
+  within hours and automated scanning begins within days. Servers
+  running unpatched software with known vulnerabilities are trivially
+  compromised using publicly available exploit tools. The longer a patch
+  is delayed, the more likely exploitation becomes.
+remediation: >
+  Implement a regular update schedule for the MCP server and all its
+  dependencies. Use dependency scanning tools to detect known
+  vulnerabilities. Set up automated alerts for security advisories
+  affecting server components. Prioritize critical and high severity
+  patches for immediate deployment. Maintain an inventory of all server
+  components and their versions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

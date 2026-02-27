@@ -1,0 +1,29 @@
+check_id: dp018
+title: Browser History Access
+category: data_protection
+severity: high
+description: >
+  Detects MCP tools that access browser history, bookmarks, or browsing
+  data. Browser history reveals private browsing patterns, visited
+  sites, and user interests.
+risk_explanation: >
+  Browser history contains a detailed record of user activity including
+  visited websites, search queries, and login pages. Access to this data
+  enables profiling, targeted phishing, and exposure of sensitive
+  browsing patterns such as medical research, financial activities, or
+  personal interests.
+remediation: >
+  Restrict browser history access to tools that have a clearly
+  documented and justified need. Require explicit user consent before
+  granting browser history access. Implement time-bounded access that
+  only returns history from a specific, user-approved time window. Log
+  all browser data access events.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - browser
+  - privacy
+  - browsing_history

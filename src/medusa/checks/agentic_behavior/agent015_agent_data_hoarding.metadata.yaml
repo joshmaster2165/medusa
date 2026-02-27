@@ -1,0 +1,33 @@
+check_id: agent015
+title: Agent Data Hoarding
+category: agentic_behavior
+severity: medium
+description: >
+  Detects MCP configurations where agents collect, store, or retain more
+  data than necessary for their current task. Data hoarding increases
+  the value of a compromised session and violates data minimization
+  principles required by privacy regulations.
+risk_explanation: >
+  Agents that accumulate unnecessary data in their context create a
+  high-value target for attackers. If the agent's context contains
+  credentials, PII, financial data, or proprietary information from
+  previous tool invocations, a single prompt injection attack can
+  exfiltrate all of this accumulated data. Data hoarding also creates
+  privacy compliance risks as the agent retains personal information
+  beyond the minimum required for task completion.
+remediation: >
+  Implement data minimization policies that limit the information
+  retained in the agent's context. Clear tool outputs from the context
+  after they have been processed and are no longer needed. Apply data
+  classification to tool outputs and enforce retention limits based on
+  sensitivity. Implement context pruning that removes sensitive data
+  after use. Provide users with visibility into what data the agent is
+  retaining.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

@@ -1,0 +1,26 @@
+check_id: audit002
+title: Missing Audit Trail Capability
+category: audit_logging
+severity: medium
+description: >
+  Checks whether the MCP server declares a "logging" key in its capabilities
+  object. Servers that do not advertise logging support lack a structured
+  audit trail for tool invocations and resource access.
+risk_explanation: >
+  Without an advertised logging capability, there is no guarantee that tool
+  calls are being recorded. This makes it impossible to detect misuse,
+  investigate security incidents, or satisfy compliance audit requirements.
+remediation: >
+  Enable the logging capability in the MCP server's initialize response.
+  Ensure that every tool invocation and resource access is logged with
+  sufficient detail for forensic analysis (timestamp, caller, parameters,
+  result summary).
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - data_protection
+  - audit_trail
+  - logging
+  - capabilities

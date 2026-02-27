@@ -1,0 +1,32 @@
+check_id: dp027
+title: Child Data Protection (COPPA)
+category: data_protection
+severity: critical
+description: >
+  Detects MCP tools that may process children's data without
+  implementing COPPA-required protections. Tools accessible to children
+  or processing data about minors must comply with enhanced privacy
+  requirements.
+risk_explanation: >
+  Processing children's data without COPPA compliance exposes the
+  organisation to federal enforcement actions and significant fines.
+  Children are especially vulnerable to data exploitation, and their
+  data requires enhanced protections including verifiable parental
+  consent, data minimization, and strict purpose limitation.
+remediation: >
+  Implement age verification mechanisms for MCP tools that may be
+  accessed by children. Obtain verifiable parental consent before
+  processing any data from users under 13. Apply strict data
+  minimization and purpose limitation. Provide parents with access to
+  and deletion of their children's data. Ensure compliance with COPPA,
+  GDPR Article 8, and applicable state laws.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - coppa
+  - children
+  - compliance
+  - critical_risk

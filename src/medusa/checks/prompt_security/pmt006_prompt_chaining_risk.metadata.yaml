@@ -1,0 +1,30 @@
+check_id: pmt006
+title: Prompt Chaining Risk
+category: prompt_security
+severity: medium
+description: >
+  Detects MCP prompt definitions that reference or invoke other prompts,
+  creating prompt chains where the output of one prompt feeds into
+  another. Uncontrolled chaining can amplify injection attacks and
+  create complex, hard-to-audit prompt execution paths.
+risk_explanation: >
+  Prompt chaining creates indirect execution paths where an injection in
+  one prompt propagates through the entire chain. Attackers can exploit
+  early prompts in the chain to influence all subsequent ones,
+  amplifying the impact of a single injection. Complex chains also make
+  security auditing difficult, as the combined behavior may differ
+  significantly from individual prompt review.
+remediation: >
+  Limit prompt chain depth to a configurable maximum. Implement
+  sanitization between each prompt in the chain to prevent injection
+  propagation. Audit the full chain behavior, not just individual
+  prompts. Add chain execution logging for security monitoring. Consider
+  flattening chains into single prompts where possible.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

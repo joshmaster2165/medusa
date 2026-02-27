@@ -1,0 +1,30 @@
+check_id: cred007
+title: SSH Private Key Exposure
+category: credential_exposure
+severity: critical
+description: >
+  Detects SSH private keys in MCP server environment variables or
+  configuration files. SSH private keys provide direct server access and
+  are frequently used for deployment, git operations, and remote server
+  management.
+risk_explanation: >
+  An exposed SSH private key grants the attacker direct shell access to
+  any server that trusts the corresponding public key. SSH access
+  typically provides full system-level privileges. Private keys embedded
+  in configuration are often shared across team members and
+  environments, making the compromise scope extremely broad.
+remediation: >
+  Never embed SSH private keys in configuration files or environment
+  variables. Use SSH agent forwarding or deploy keys with minimal
+  permissions. Store SSH keys with passphrase protection in secure
+  locations. Use short-lived SSH certificates instead of static keys
+  where possible. Rotate SSH keys regularly.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - ssh
+  - private_key
+  - server_access

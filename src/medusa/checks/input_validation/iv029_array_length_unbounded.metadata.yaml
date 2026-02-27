@@ -1,0 +1,31 @@
+check_id: iv029
+title: Unbounded Array Length
+category: input_validation
+severity: medium
+description: >
+  Detects array-type tool parameters without maxItems constraints.
+  Unbounded arrays allow attackers to submit millions of items, causing
+  memory exhaustion, excessive processing time, and denial of service on
+  the MCP server.
+risk_explanation: >
+  Array parameters without length limits enable denial of service by
+  submitting arrays with millions of elements. Processing large arrays
+  consumes memory and CPU proportionally. Database operations that
+  iterate over array parameters can generate millions of queries.
+  Unbounded arrays in nested structures compound the resource
+  consumption exponentially.
+remediation: >
+  Add maxItems constraints to all array parameters in tool schemas. Set
+  limits appropriate to the parameter's purpose. Implement server-side
+  array length validation independent of schema constraints. Set global
+  request payload size limits at the transport layer to prevent
+  oversized array submissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - array_length
+  - denial_of_service
+  - schema_constraint

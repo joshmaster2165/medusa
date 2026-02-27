@@ -1,0 +1,30 @@
+check_id: ssrf007
+title: URL Redirect Following
+category: ssrf_and_network
+severity: medium
+description: >
+  Detects MCP server tools that automatically follow HTTP redirects
+  without re-validating the redirect target. An attacker can use an
+  allowed URL that redirects to an internal or blocked destination,
+  bypassing URL validation controls.
+risk_explanation: >
+  Automatic redirect following in MCP tools can bypass SSRF protections.
+  An attacker hosts a URL on an allowed domain that responds with a
+  redirect to an internal IP address or blocked service. Since the
+  initial URL passes validation, the tool follows the redirect to the
+  internal target without re-checking. This technique is commonly used
+  to bypass hostname-based allowlists and reach internal services.
+remediation: >
+  Disable automatic redirect following in MCP tool HTTP clients or limit
+  the number of redirects to a small value (such as 3). Re-validate each
+  redirect target URL against the same security policy applied to the
+  original URL. Block redirects to private IP addresses, localhost, and
+  blocked protocols. Log redirect chains for security monitoring and
+  anomaly detection.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

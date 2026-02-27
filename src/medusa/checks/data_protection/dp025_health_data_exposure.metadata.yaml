@@ -1,0 +1,31 @@
+check_id: dp025
+title: Health Data Exposure
+category: data_protection
+severity: critical
+description: >
+  Detects MCP tools that handle health or medical data without
+  appropriate safeguards. Health data is subject to strict regulatory
+  requirements including HIPAA, HITECH, and GDPR special categories.
+risk_explanation: >
+  Health and medical data is among the most sensitive categories of
+  personal information. Exposure of health records, diagnoses,
+  prescriptions, or treatment plans can lead to discrimination,
+  insurance denial, social stigma, and identity theft. Violations of
+  health data regulations carry severe penalties including criminal
+  prosecution.
+remediation: >
+  Implement HIPAA-compliant data handling for all health-related MCP
+  tools. Apply end-to-end encryption, strict access controls, and
+  comprehensive audit logging. Ensure business associate agreements are
+  in place with all data processors. Use de-identification techniques
+  compliant with HIPAA Safe Harbor or Expert Determination methods.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - health_data
+  - hipaa
+  - compliance
+  - critical_risk

@@ -1,0 +1,30 @@
+check_id: intg005
+title: Missing Package Lockfile
+category: integrity
+severity: high
+description: >
+  Detects MCP server projects that lack a package lockfile (e.g.
+  package-lock.json, yarn.lock, pnpm-lock.yaml, poetry.lock). Without a
+  lockfile, dependency versions are resolved at install time and may
+  change unexpectedly.
+risk_explanation: >
+  Without a lockfile, each installation of the MCP server may resolve
+  different dependency versions. An attacker who publishes a malicious
+  patch version of a dependency can have their code installed
+  automatically. Lockfiles ensure deterministic builds and prevent
+  silent dependency substitution attacks.
+remediation: >
+  Generate and commit a lockfile for the MCP server's package manager.
+  Ensure the lockfile is included in version control and updated
+  deliberately through audited dependency update processes. Configure CI
+  to use frozen/locked installs (e.g. npm ci, pip install --require-
+  hashes).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - lockfile
+  - supply_chain
+  - dependencies

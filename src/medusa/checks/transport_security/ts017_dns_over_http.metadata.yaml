@@ -1,0 +1,31 @@
+check_id: ts017
+title: DNS Over HTTP
+category: transport_security
+severity: medium
+description: >
+  Detects MCP server DNS resolution performed over unencrypted HTTP
+  instead of DNS-over-HTTPS (DoH) or DNS-over-TLS (DoT). Unencrypted DNS
+  queries expose the server's communication targets to network observers
+  and are vulnerable to DNS spoofing.
+risk_explanation: >
+  Unencrypted DNS queries reveal which services the MCP server
+  communicates with, enabling traffic analysis. DNS responses can be
+  spoofed by network-level attackers to redirect the server's
+  connections to malicious endpoints. DNS spoofing can redirect API
+  calls, webhook deliveries, and data transmissions to attacker-
+  controlled servers.
+remediation: >
+  Configure DNS-over-HTTPS (DoH) or DNS-over-TLS (DoT) for the MCP
+  server's DNS resolution. Use DNSSEC validation to detect DNS response
+  tampering. Pin DNS resolver addresses to prevent resolver redirection.
+  Implement certificate-based server authentication independent of DNS
+  for critical connections.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - dns
+  - dns_over_https
+  - dns_spoofing

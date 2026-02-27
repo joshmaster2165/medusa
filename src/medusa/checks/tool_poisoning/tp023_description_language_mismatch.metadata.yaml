@@ -1,0 +1,31 @@
+check_id: tp023
+title: Description Language Mismatch
+category: tool_poisoning
+severity: low
+description: >
+  Detects tool descriptions written in a different natural language than
+  the server's configured locale or the majority of other tool
+  descriptions. Language mismatches can indicate copied content from
+  foreign attack toolkits or deliberate obfuscation of malicious
+  instructions.
+risk_explanation: >
+  Descriptions in unexpected languages may contain instructions that
+  bypass content filtering rules designed for the server's primary
+  language. They can also indicate that tool descriptions were copied
+  from an attack framework without localization. Multilingual LLMs may
+  follow instructions in any language, making foreign-language injection
+  viable.
+remediation: >
+  Implement language detection on tool descriptions and flag those that
+  do not match the server's expected locale. Require all tool
+  descriptions to be in a consistent language. Review foreign-language
+  descriptions manually for hidden instructions or suspicious content.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - language_mismatch
+  - locale
+  - obfuscation

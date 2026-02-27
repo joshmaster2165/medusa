@@ -1,0 +1,31 @@
+check_id: ssrf015
+title: Gopher Protocol Risk
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that accept gopher:// URLs, enabling raw TCP
+  communication with internal services. The gopher protocol allows
+  sending arbitrary data to any TCP port, making it possible to interact
+  with Redis, SMTP, MySQL, and other internal services through the MCP
+  tool.
+risk_explanation: >
+  The gopher:// protocol is the most dangerous SSRF vector because it
+  allows sending arbitrary bytes to any TCP port. Through gopher://
+  URLs, an attacker can send Redis commands to wipe or modify cache
+  data, send SMTP commands to relay spam, interact with databases, and
+  exploit any TCP-based service accessible from the MCP server. A single
+  gopher SSRF vulnerability can compromise the entire internal network.
+remediation: >
+  Block the gopher:// URL scheme in all MCP tool URL handlers. Ensure
+  URL parsing libraries do not support gopher:// or treat it as a valid
+  scheme. Implement URL scheme allowlists that only permit https:// and
+  http://. Deploy network-level egress filtering that blocks non-HTTP
+  traffic from the MCP server. Verify that all HTTP client libraries
+  used by tools reject gopher:// URLs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

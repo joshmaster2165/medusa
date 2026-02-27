@@ -1,0 +1,36 @@
+check_id: samp010
+title: Cross-Server Sampling Attack
+category: sampling_security
+severity: critical
+description: >
+  Detects MCP configurations where sampling requests from one server can
+  influence or access the context and tools of other connected MCP
+  servers. Cross-server sampling breaks isolation boundaries and allows
+  a malicious server to leverage trusted servers' capabilities through
+  the shared LLM session.
+risk_explanation: >
+  Cross-server sampling attacks exploit the shared LLM context to bridge
+  isolation boundaries between MCP servers. A malicious server uses
+  sampling to inject instructions that reference tools or data from
+  other trusted servers. Since the LLM has access to all connected
+  servers, the sampling response may invoke tools or reveal data from
+  servers the malicious server should not be able to access. This
+  effectively turns the LLM into a confused deputy that bridges trust
+  boundaries.
+remediation: >
+  Implement strict server isolation in the sampling pipeline. Ensure
+  sampling requests from one server cannot reference or access tools and
+  resources from other servers. Apply the principle of least privilege
+  by restricting the tool set available during sampling to only the
+  requesting server's tools. Use separate LLM contexts for sampling from
+  different servers. Monitor for cross-server reference patterns in
+  sampling requests and responses.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

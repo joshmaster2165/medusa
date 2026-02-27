@@ -1,0 +1,30 @@
+check_id: intg012
+title: Dependency Confusion Risk
+category: integrity
+severity: high
+description: >
+  Detects private package names that may be vulnerable to dependency
+  confusion attacks where a public package with the same name is
+  installed instead of the intended private package.
+risk_explanation: >
+  In a dependency confusion attack, an attacker publishes a malicious
+  package on a public registry using the same name as a private internal
+  package. If the package manager checks the public registry first or
+  prefers higher version numbers from public sources, the malicious
+  package is installed instead of the legitimate private one, achieving
+  arbitrary code execution.
+remediation: >
+  Use scoped package names (e.g. @company/package) for all private
+  packages. Configure package managers to use private registries
+  exclusively for scoped namespaces. Implement registry allowlisting and
+  deny public registry lookups for private package names. Reserve
+  private package names on public registries as a defensive measure.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - dependency_confusion
+  - supply_chain
+  - package_management

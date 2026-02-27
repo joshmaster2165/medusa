@@ -1,0 +1,31 @@
+check_id: iv031
+title: Missing Pattern Validation on String Parameters
+category: input_validation
+severity: low
+description: >
+  Detects string parameters without regex pattern validation in their
+  JSON Schema. Parameters that should match a specific format (emails,
+  UUIDs, dates, identifiers) but lack pattern constraints accept
+  arbitrary strings, expanding the attack surface.
+risk_explanation: >
+  String parameters without pattern validation accept any content,
+  including injection payloads, binary data, and malformed input. A
+  parameter intended for email addresses that lacks a pattern constraint
+  can receive SQL injection payloads, path traversal sequences, or
+  command injection strings. Pattern validation is a first line of
+  defence.
+remediation: >
+  Add pattern constraints to string parameters that have a known format.
+  Use JSON Schema's format keyword for standard formats (email, uri,
+  uuid, date-time). Define custom regex patterns for domain-specific
+  identifiers. Combine pattern validation with maxLength constraints for
+  comprehensive input restriction.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - pattern_validation
+  - string_constraint
+  - regex

@@ -1,0 +1,216 @@
+category: supply_chain
+checks:
+  - id: sc002
+    slug: dependency_vulnerability
+    title: "Known Dependency Vulnerabilities"
+    severity: high
+    description: >
+      Detects MCP server dependencies with known CVEs (Common Vulnerabilities
+      and Exposures). Dependencies with unpatched vulnerabilities provide
+      attackers with documented exploitation techniques.
+    risk_explanation: >
+      Known vulnerabilities in dependencies have publicly available exploit
+      code and detailed technical descriptions. Attackers routinely scan for
+      applications using vulnerable dependencies because exploitation requires
+      minimal effort. A single unpatched dependency can provide remote code
+      execution, data exfiltration, or denial of service capabilities.
+    remediation: >
+      Regularly scan dependencies against vulnerability databases (NVD, OSV,
+      GitHub Advisory). Implement automated dependency update workflows that
+      prioritize security patches. Use tools like npm audit, pip-audit, or
+      Trivy in CI pipelines. Establish a maximum acceptable time-to-patch for
+      each severity level.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - vulnerabilities
+      - cve
+      - dependencies
+
+  - id: sc003
+    slug: abandoned_dependencies
+    title: "Abandoned Dependencies"
+    severity: medium
+    description: >
+      Detects MCP server dependencies that have not been maintained for an
+      extended period. Abandoned packages no longer receive security patches
+      and may contain unaddressed vulnerabilities.
+    risk_explanation: >
+      Dependencies that are no longer actively maintained do not receive
+      security patches for newly discovered vulnerabilities. As the software
+      ecosystem evolves, unmaintained packages become increasingly vulnerable
+      and incompatible. Depending on abandoned packages creates a ticking
+      time bomb where future vulnerabilities will never be patched.
+    remediation: >
+      Audit dependencies for maintenance status regularly. Replace abandoned
+      packages with actively maintained alternatives. Monitor package
+      repositories for maintenance indicators such as last commit date,
+      open issue count, and release frequency. Set thresholds for acceptable
+      maintenance activity (e.g. no updates in 12 months triggers review).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - maintenance
+      - abandoned
+      - dependencies
+
+  - id: sc004
+    slug: excessive_dependencies
+    title: "Excessive Dependency Count"
+    severity: medium
+    description: >
+      Detects MCP servers with an excessive number of transitive
+      dependencies. Each additional dependency increases the attack surface
+      and the likelihood of including a compromised package.
+    risk_explanation: >
+      Every dependency in the dependency tree is a potential attack vector.
+      Projects with hundreds of transitive dependencies have a statistically
+      higher chance of including a compromised, vulnerable, or abandoned
+      package. The complexity of large dependency trees also makes security
+      auditing impractical and increases the risk of dependency confusion
+      attacks.
+    remediation: >
+      Audit the dependency tree and remove unnecessary dependencies. Prefer
+      packages with minimal transitive dependencies. Consider implementing
+      critical functionality directly rather than importing large libraries
+      for small features. Use dependency analysis tools to identify and
+      eliminate redundant or overlapping dependencies.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - dependencies
+      - attack_surface
+      - dependency_management
+
+  - id: sc005
+    slug: unpinned_transitive_deps
+    title: "Unpinned Transitive Dependencies"
+    severity: high
+    description: >
+      Detects MCP server dependency configurations where transitive
+      dependencies are not version-constrained. Unpinned transitive
+      dependencies can silently update to malicious versions.
+    risk_explanation: >
+      When transitive dependencies lack version constraints, package managers
+      resolve them to the latest available version at install time. An
+      attacker who publishes a malicious version of a transitive dependency
+      can have their code installed silently without any change to the MCP
+      server's direct dependency specifications. This is a common supply-
+      chain attack vector.
+    remediation: >
+      Use lockfiles to pin all transitive dependencies to specific versions.
+      Enable hash verification for installed packages (e.g. pip
+      --require-hashes, npm integrity checks). Review transitive dependency
+      updates explicitly. Consider using tools that flatten and pin the
+      entire dependency tree.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - version_pinning
+      - transitive_dependencies
+      - integrity
+
+  - id: sc006
+    slug: install_scripts_present
+    title: "Install Scripts Present"
+    severity: high
+    description: >
+      Detects MCP server dependencies that include install scripts
+      (preinstall, postinstall, or equivalent lifecycle hooks). Install
+      scripts execute arbitrary code during package installation.
+    risk_explanation: >
+      Package install scripts execute arbitrary code with the privileges of
+      the installing user during the npm install, pip install, or equivalent
+      process. A compromised package with a malicious install script achieves
+      code execution before the application even starts. Install scripts run
+      outside the application's security sandbox and can access the full
+      filesystem, network, and environment.
+    remediation: >
+      Audit all packages with install scripts and verify their necessity.
+      Use the --ignore-scripts flag during installation and run required
+      scripts explicitly after review. Configure package managers to block
+      install scripts by default. Use tools that detect and flag packages
+      with install scripts during dependency review.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - install_scripts
+      - arbitrary_execution
+      - dependencies
+
+  - id: sc007
+    slug: native_binary_dependencies
+    title: "Native Binary Dependencies"
+    severity: medium
+    description: >
+      Detects MCP server dependencies that contain prebuilt native binaries.
+      Prebuilt binaries cannot be audited from source code and may contain
+      hidden functionality.
+    risk_explanation: >
+      Prebuilt native binaries in packages cannot be inspected through source
+      code review. They may contain backdoors, keyloggers, or data
+      exfiltration code that is invisible to standard security scanning
+      tools. Binary dependencies also introduce platform-specific risks and
+      complicate reproducible builds.
+    remediation: >
+      Prefer pure-language dependencies over those requiring native binaries.
+      When native dependencies are necessary, build them from source using
+      verified build processes. Verify binary hashes against trusted sources.
+      Use sandboxing to limit the capabilities of native code running within
+      the MCP server process.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - native_binaries
+      - audit
+      - dependencies
+
+  - id: sc008
+    slug: single_maintainer_risk
+    title: "Single Maintainer Risk"
+    severity: low
+    description: >
+      Detects critical MCP server dependencies maintained by a single person.
+      Single-maintainer packages are vulnerable to account takeover,
+      maintainer burnout, and social engineering attacks.
+    risk_explanation: >
+      Packages maintained by a single individual represent a single point of
+      failure. If the maintainer's account is compromised through phishing or
+      credential theft, the attacker can publish malicious updates to all
+      downstream consumers. Single maintainers are also more susceptible to
+      social engineering and may abandon the package without notice,
+      creating an orphaned dependency.
+    remediation: >
+      Identify critical dependencies with single maintainers and assess
+      alternatives with broader maintenance teams. For essential single-
+      maintainer packages, consider forking and maintaining internally,
+      sponsoring additional maintainers, or contributing to the package to
+      establish co-maintainer access. Monitor maintainer changes on critical
+      packages for signs of account takeover.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - supply_chain
+      - maintainer
+      - single_point_of_failure
+      - governance

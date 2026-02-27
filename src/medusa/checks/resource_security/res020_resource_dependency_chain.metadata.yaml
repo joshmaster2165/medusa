@@ -1,0 +1,30 @@
+check_id: res020
+title: Resource Dependency Chain Risk
+category: resource_security
+severity: high
+description: >
+  Detects MCP resources that form dependency chains where one resource
+  references or includes another, creating potential for circular
+  dependencies, infinite resolution loops, and cascading access control
+  bypasses through transitive resource references.
+risk_explanation: >
+  Resource dependency chains can be exploited to create circular
+  references that cause infinite loops and server crashes. Transitive
+  dependencies may bypass access controls when a protected resource is
+  included by reference in an unprotected resource. Deep dependency
+  chains amplify the impact of poisoning a single resource, as the
+  malicious content propagates through all dependent resources.
+remediation: >
+  Implement dependency chain depth limits and circular dependency
+  detection for all resources. Enforce access controls at each level of
+  resource resolution, not just the top-level request. Validate resource
+  references at registration time to prevent circular dependencies.
+  Monitor and log resource dependency chains for security analysis.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

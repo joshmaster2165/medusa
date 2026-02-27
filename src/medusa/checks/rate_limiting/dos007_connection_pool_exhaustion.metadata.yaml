@@ -1,0 +1,34 @@
+check_id: dos007
+title: Connection Pool Exhaustion
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server configurations where connection pools for
+  databases, external APIs, or internal services can be exhausted by
+  excessive tool invocations. Without connection pool management, tools
+  that open connections without proper release can deplete available
+  connections.
+risk_explanation: >
+  Connection pool exhaustion blocks all MCP tool invocations that
+  require external connectivity. When tools consume all available
+  connections to databases, APIs, or caches, new tool invocations fail
+  or hang waiting for connections. An attacker can trigger this by
+  invoking tools that hold connections open through slow requests, error
+  conditions, or intentional delays. This creates a denial of service
+  that affects all users and all tools that share the connection pool.
+remediation: >
+  Configure connection pool limits with appropriate maximum sizes for
+  each external service. Implement connection timeouts that release
+  connections held longer than expected. Use connection pool monitoring
+  to detect exhaustion before it impacts service. Implement per-session
+  connection quotas that prevent any single session from consuming all
+  connections. Use circuit breaker patterns that fail fast when
+  connection pools are near exhaustion.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

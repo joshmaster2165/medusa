@@ -1,0 +1,31 @@
+check_id: hard013
+title: Missing Request Validation
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers that do not validate the structure, content type,
+  and size of incoming requests at the transport level before
+  processing. Missing request validation allows malformed, oversized, or
+  incorrectly typed requests to reach application logic.
+risk_explanation: >
+  Without request validation, malformed requests can trigger parsing
+  errors that crash the server or leak implementation details. Oversized
+  requests can exhaust memory. Incorrectly typed content can exploit
+  parser vulnerabilities. Missing validation at the transport level
+  means each handler must independently validate requests, leading to
+  inconsistent protection.
+remediation: >
+  Implement request validation at the transport boundary that checks
+  content type, content length, request structure, and character
+  encoding before passing requests to handlers. Set maximum request size
+  limits. Validate that request content matches the declared content
+  type. Reject malformed requests with generic error messages. Log
+  rejected requests for security monitoring.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

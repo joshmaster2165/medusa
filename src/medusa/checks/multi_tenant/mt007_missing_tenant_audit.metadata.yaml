@@ -1,0 +1,31 @@
+check_id: mt007
+title: Missing Tenant-Specific Audit
+category: multi_tenant
+severity: medium
+description: >
+  Detects MCP servers that lack tenant-specific audit logging, making it
+  impossible to track which tenant performed which operations. Without
+  tenant-scoped audit trails, security incidents cannot be properly
+  investigated and tenant compliance requirements are unmet.
+risk_explanation: >
+  Missing tenant-specific audit logs prevent forensic investigation of
+  cross-tenant security incidents. When a breach occurs, it is
+  impossible to determine which tenant was affected, what data was
+  accessed, or which tenant initiated the malicious activity. This also
+  fails compliance requirements such as GDPR, SOC 2, and HIPAA that
+  mandate per-tenant audit capabilities.
+remediation: >
+  Implement tenant-scoped audit logging that records the tenant context
+  for every operation. Store audit logs in tenant-isolated partitions to
+  prevent cross-tenant log access. Include tenant identifier, operation
+  type, resources accessed, and outcome in every audit record. Provide
+  per-tenant audit log access for compliance reporting. Implement
+  tamper-proof audit log storage.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

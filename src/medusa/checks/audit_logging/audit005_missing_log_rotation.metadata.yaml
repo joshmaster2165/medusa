@@ -1,0 +1,29 @@
+check_id: audit005
+title: Missing Log Rotation
+category: audit_logging
+severity: low
+description: >
+  Checks whether the MCP server has a log rotation policy configured.
+  Without log rotation, log files grow unbounded, eventually exhausting
+  disk space and causing service disruption.
+risk_explanation: >
+  Without log rotation, log files grow indefinitely and can exhaust
+  available disk space, causing the MCP server or the entire host to
+  fail. Additionally, excessively large log files are difficult to
+  search and analyze during incident response, reducing the
+  effectiveness of security investigations.
+remediation: >
+  Configure log rotation based on file size and time intervals. Use
+  logrotate or equivalent tools to automatically rotate, compress, and
+  archive old log files. Set a maximum retention period aligned with the
+  organisation's data retention policy. Monitor disk usage for log
+  directories.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - log_rotation
+  - operations
+  - disk_management

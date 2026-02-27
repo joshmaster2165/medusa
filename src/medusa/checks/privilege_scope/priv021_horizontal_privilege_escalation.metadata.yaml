@@ -1,0 +1,31 @@
+check_id: priv021
+title: Horizontal Privilege Escalation
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that allow accessing other users' data without
+  proper authorization boundaries. Horizontal escalation occurs when a
+  user at the same privilege level can access another user's resources
+  by manipulating user identifiers or context.
+risk_explanation: >
+  Horizontal privilege escalation allows a regular user to access any
+  other user's data by substituting user IDs, email addresses, or other
+  user identifiers in tool parameters. Unlike vertical escalation
+  (gaining admin rights), horizontal escalation operates within the same
+  privilege level but crosses user boundaries, exposing personal data
+  across the entire user base.
+remediation: >
+  Derive the user identity from the authenticated session, never from
+  user-supplied parameters. Implement per-user data isolation at the
+  query level. Validate that the authenticated user owns or has
+  permission to access the requested resources. Use server-side session
+  context for user identification.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - privilege_scope
+  - horizontal_escalation
+  - user_isolation
+  - data_boundary

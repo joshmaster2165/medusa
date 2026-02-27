@@ -1,0 +1,30 @@
+check_id: cred019
+title: Redis Auth Exposure
+category: credential_exposure
+severity: high
+description: >
+  Detects Redis AUTH passwords in connection strings or MCP server
+  configuration. Redis credentials in configuration files grant access
+  to cached data, session stores, and potentially the entire key-value
+  store.
+risk_explanation: >
+  Exposed Redis credentials grant access to all data stored in the Redis
+  instance, which frequently includes session tokens, cached
+  credentials, rate limiting state, and application data. Redis commands
+  like CONFIG and DEBUG can be used for further exploitation, including
+  writing files to the server filesystem.
+remediation: >
+  Store Redis passwords in secrets managers. Use ACL-based
+  authentication with minimal permissions. Enable TLS for Redis
+  connections. Restrict dangerous Redis commands (CONFIG, DEBUG, EVAL)
+  using ACL rules. Implement network-level access controls to limit
+  Redis connectivity.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - redis
+  - cache
+  - connection_string

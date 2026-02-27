@@ -1,0 +1,33 @@
+check_id: gov015
+title: Missing Audit Schedule
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a defined schedule for
+  security audits and assessments. Without regular audits, security
+  controls degrade over time, new vulnerabilities go undetected, and
+  compliance drift occurs without correction.
+risk_explanation: >
+  Security controls are not static; they degrade over time due to
+  configuration drift, software updates, changing threat landscapes, and
+  operational pressures. Without scheduled audits, these degradations
+  accumulate undetected until a security incident reveals them. MCP
+  servers are particularly susceptible because the rapidly evolving MCP
+  ecosystem introduces new attack vectors that may not be covered by
+  initial security controls.
+remediation: >
+  Establish a security audit schedule that includes annual comprehensive
+  security assessments, quarterly vulnerability assessments, and monthly
+  configuration reviews. Define audit scope to cover MCP-specific
+  security controls including tool authentication, input validation,
+  prompt injection defenses, and session management. Use both internal
+  and external auditors. Track audit findings through remediation to
+  closure. Report audit results to management stakeholders.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

@@ -1,0 +1,29 @@
+check_id: dp028
+title: Missing Data Portability
+category: data_protection
+severity: low
+description: >
+  Checks whether the MCP server provides a mechanism for users to export
+  their data in a portable format. Data portability is a right under
+  GDPR and similar regulations.
+risk_explanation: >
+  Without data portability, users are locked into a specific MCP server
+  or platform and cannot exercise their right to receive their data in a
+  structured, commonly used, and machine-readable format. This creates
+  vendor lock-in and violates GDPR Article 20 data portability
+  requirements.
+remediation: >
+  Implement a data export mechanism that allows users to download their
+  data in standard formats such as JSON, CSV, or XML. Ensure the export
+  includes all user-provided data and any derived data that is subject
+  to portability rights. Provide the export capability through a
+  documented API endpoint or user interface.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - portability
+  - gdpr
+  - compliance

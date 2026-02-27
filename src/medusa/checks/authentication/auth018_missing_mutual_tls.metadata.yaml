@@ -1,0 +1,31 @@
+check_id: auth018
+title: Missing Mutual TLS
+category: authentication
+severity: medium
+description: >
+  Detects MCP servers that do not require client certificate
+  authentication (mutual TLS). Without mTLS, the server cannot
+  cryptographically verify the identity of connecting clients, relying
+  solely on application-layer credentials that may be stolen or forged.
+risk_explanation: >
+  Without mutual TLS, any client presenting valid application-layer
+  credentials (tokens, API keys) is accepted, even if the client itself
+  is not a trusted entity. Stolen credentials can be used from any
+  machine. mTLS provides an additional layer of assurance that the
+  connecting client possesses a valid certificate issued by a trusted
+  authority.
+remediation: >
+  Configure mutual TLS on MCP server endpoints for high-security
+  deployments. Issue client certificates from a private CA to authorized
+  MCP clients. Configure the server to require and validate client
+  certificates during TLS handshake. Use certificate-bound access tokens
+  for additional security.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - mutual_tls
+  - client_certificates
+  - transport_auth

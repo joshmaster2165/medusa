@@ -1,0 +1,33 @@
+check_id: gov005
+title: Missing Incident Response Plan
+category: governance
+severity: high
+description: >
+  Detects MCP server deployments that lack a documented incident
+  response plan for security events. Without an incident response plan,
+  organizations cannot effectively detect, contain, eradicate, and
+  recover from security incidents affecting MCP server operations.
+risk_explanation: >
+  MCP servers face unique security risks including prompt injection,
+  tool poisoning, session hijacking, and data exfiltration through tool
+  abuse. Without an incident response plan tailored to these risks,
+  organizations respond to incidents ad-hoc, leading to delayed
+  containment, incomplete eradication, lost evidence, and prolonged
+  recovery times. The autonomous nature of LLM agents means incidents
+  can escalate rapidly, making preparedness critical.
+remediation: >
+  Develop an incident response plan that addresses MCP-specific security
+  incidents including tool poisoning, prompt injection, session
+  compromise, data exfiltration, and agent manipulation. Define incident
+  severity levels, escalation procedures, communication plans, and
+  recovery procedures. Include specific playbooks for common MCP attack
+  scenarios. Conduct regular incident response exercises and update the
+  plan based on lessons learned.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

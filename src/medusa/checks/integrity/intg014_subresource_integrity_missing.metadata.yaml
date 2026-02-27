@@ -1,0 +1,29 @@
+check_id: intg014
+title: Missing Subresource Integrity
+category: integrity
+severity: medium
+description: >
+  Detects MCP servers that load remote resources (scripts, stylesheets,
+  data files) without Subresource Integrity (SRI) hashes. Without SRI,
+  tampered remote resources are loaded without detection.
+risk_explanation: >
+  Remote resources loaded without SRI hashes can be silently replaced
+  with malicious content if the hosting CDN or server is compromised.
+  The MCP server would load and execute the tampered content without any
+  integrity check, enabling supply-chain attacks through compromised
+  third-party resources.
+remediation: >
+  Add integrity attributes with cryptographic hashes (SHA-256 or
+  stronger) for all remotely loaded resources. Implement Content
+  Security Policy headers that require SRI for scripts and stylesheets.
+  Automate SRI hash generation and verification as part of the build and
+  deployment process.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - sri
+  - remote_resources
+  - supply_chain

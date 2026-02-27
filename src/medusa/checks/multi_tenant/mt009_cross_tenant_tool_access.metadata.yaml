@@ -1,0 +1,32 @@
+check_id: mt009
+title: Cross-Tenant Tool Access
+category: multi_tenant
+severity: critical
+description: >
+  Detects MCP servers where tools registered by one tenant are
+  accessible to other tenants, or where tool execution results from one
+  tenant can be observed by another. Cross-tenant tool access enables
+  unauthorized operations and data theft through shared tool
+  infrastructure.
+risk_explanation: >
+  Cross-tenant tool access allows one tenant to invoke tools configured
+  by another tenant, potentially using the other tenant credentials and
+  permissions. This can result in unauthorized data access, financial
+  transactions, or system modifications performed through another tenant
+  tool configuration. Tool results leaking across tenants exposes
+  operation outcomes and returned data.
+remediation: >
+  Implement strict tenant isolation for tool registration, discovery,
+  and invocation. Ensure that each tenant can only see and invoke tools
+  registered within their own tenant context. Execute tools within
+  tenant-specific sandboxes that prevent cross-tenant resource access.
+  Validate tenant context at tool invocation time and reject cross-
+  tenant tool calls.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

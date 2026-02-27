@@ -1,0 +1,29 @@
+check_id: dp020
+title: Location Data Exposure
+category: data_protection
+severity: high
+description: >
+  Detects MCP tools that access or expose geographic location data.
+  Location data can reveal home addresses, workplace locations, travel
+  patterns, and daily routines.
+risk_explanation: >
+  Location data is classified as sensitive personal data under most
+  privacy regulations. Continuous or historical location access reveals
+  home and work addresses, travel patterns, daily routines, and physical
+  movements. This data can be used for stalking, physical security
+  threats, or targeted attacks.
+remediation: >
+  Require explicit user consent before accessing location data.
+  Implement precision limiting that reduces location accuracy to the
+  minimum needed (e.g. city-level instead of exact coordinates). Avoid
+  storing location history and implement automatic expiration for any
+  cached location data.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - location
+  - privacy
+  - geolocation

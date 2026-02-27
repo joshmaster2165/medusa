@@ -1,0 +1,30 @@
+check_id: priv013
+title: Cron/Scheduled Task Creation
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that can create cron jobs, scheduled tasks, or
+  systemd timers. Scheduled task creation is a common persistence
+  mechanism that allows an attacker to maintain access and execute
+  commands at regular intervals.
+risk_explanation: >
+  Cron jobs and scheduled tasks provide persistent code execution that
+  survives reboots and user logouts. An attacker can install scheduled
+  tasks that periodically exfiltrate data, maintain reverse shells, or
+  re-establish compromised access. Scheduled tasks run without user
+  interaction and are often overlooked during security reviews.
+remediation: >
+  Restrict MCP tools from creating scheduled tasks. Implement monitoring
+  for changes to cron directories, crontab files, and systemd timer
+  units. Run MCP servers in containers without access to scheduling
+  services. Audit existing scheduled tasks regularly for unauthorized
+  entries.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - cron
+  - scheduled_tasks
+  - persistence

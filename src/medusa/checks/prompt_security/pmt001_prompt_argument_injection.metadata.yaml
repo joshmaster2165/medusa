@@ -1,0 +1,31 @@
+check_id: pmt001
+title: Prompt Argument Injection
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt templates that incorporate user-supplied arguments
+  directly into prompt text without sanitization or escaping. Malicious
+  argument values can alter the prompt semantics, inject new
+  instructions, or override the intended prompt behavior.
+risk_explanation: >
+  When prompt arguments are interpolated without sanitization, an
+  attacker can inject additional instructions that the LLM treats as
+  part of the original prompt. This enables privilege escalation by
+  injecting admin-level instructions, data exfiltration by adding
+  instructions to output sensitive context, and behavioral manipulation
+  by overriding the prompt intended purpose.
+remediation: >
+  Sanitize all prompt arguments before interpolation by escaping special
+  characters and instruction delimiters. Use structured prompt templates
+  that clearly delineate system instructions from user input. Implement
+  argument validation with strict type checking and length limits.
+  Consider using parameterized prompts that prevent argument content
+  from being interpreted as instructions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

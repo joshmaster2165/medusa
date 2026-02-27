@@ -1,0 +1,35 @@
+check_id: samp014
+title: Sampling History Poisoning
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server sampling requests that include fabricated
+  conversation history or modified previous messages. By injecting false
+  history into sampling requests, a malicious server can alter the LLM's
+  understanding of past interactions and influence its future responses.
+risk_explanation: >
+  Sampling history poisoning undermines the LLM's ability to maintain
+  accurate context by injecting false conversation history. A malicious
+  MCP server can include fabricated user messages, assistant responses,
+  or tool outputs in the sampling request history. The LLM processes
+  this false history as factual context, leading to decisions based on
+  events that never occurred. This can cause the LLM to trust the
+  malicious server more, follow instructions it would normally reject,
+  or take actions contrary to the user's actual intent.
+remediation: >
+  Validate conversation history in sampling requests against the actual
+  session history maintained by the LLM client. Reject sampling requests
+  containing history entries that do not match verified records.
+  Implement message integrity verification using cryptographic
+  signatures on conversation history entries. Display sampling history
+  to the user for verification before processing. Limit the history
+  context available in sampling to only the current interaction.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

@@ -1,0 +1,478 @@
+category: prompt_security
+checks:
+  - id: pmt001
+    slug: prompt_argument_injection
+    title: "Prompt Argument Injection"
+    severity: high
+    description: >
+      Detects MCP prompt templates that incorporate user-supplied arguments
+      directly into prompt text without sanitization or escaping. Malicious
+      argument values can alter the prompt semantics, inject new instructions,
+      or override the intended prompt behavior.
+    risk_explanation: >
+      When prompt arguments are interpolated without sanitization, an attacker
+      can inject additional instructions that the LLM treats as part of the
+      original prompt. This enables privilege escalation by injecting admin-level
+      instructions, data exfiltration by adding instructions to output sensitive
+      context, and behavioral manipulation by overriding the prompt intended
+      purpose.
+    remediation: >
+      Sanitize all prompt arguments before interpolation by escaping special
+      characters and instruction delimiters. Use structured prompt templates
+      that clearly delineate system instructions from user input. Implement
+      argument validation with strict type checking and length limits. Consider
+      using parameterized prompts that prevent argument content from being
+      interpreted as instructions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt002
+    slug: jailbreak_phrases_in_prompts
+    title: "Jailbreak Phrases in Prompt Definitions"
+    severity: high
+    description: >
+      Detects MCP prompt definitions that contain known jailbreak phrases
+      or patterns designed to bypass LLM safety guardrails. These phrases
+      include role-play triggers, instruction override patterns, and
+      constraint removal commands embedded in server-defined prompts.
+    risk_explanation: >
+      Jailbreak phrases in prompt definitions indicate that the MCP server
+      is designed to bypass LLM safety controls. This can enable the LLM
+      to produce harmful content, bypass content filters, reveal system
+      prompts, or perform actions that the model would normally refuse.
+      A compromised or malicious MCP server can use jailbreak prompts to
+      weaponize any connected LLM client.
+    remediation: >
+      Scan all prompt definitions for known jailbreak patterns including
+      DAN (Do Anything Now), role-play overrides, instruction reset
+      phrases, and constraint removal commands. Implement a jailbreak
+      pattern detection system that checks prompts at registration time.
+      Reject prompts containing known bypass patterns. Maintain an
+      updated database of jailbreak techniques.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt003
+    slug: role_reassignment_in_prompts
+    title: "Role Reassignment in Prompts"
+    severity: high
+    description: >
+      Detects MCP prompt definitions that attempt to reassign the LLM
+      role, override system instructions, or establish new behavioral
+      constraints. Prompts containing phrases like "you are now" or
+      "ignore previous instructions" can manipulate LLM identity.
+    risk_explanation: >
+      Role reassignment in prompts enables an MCP server to take control
+      of the LLM behavior by overriding the system-level identity and
+      instructions set by the client application. This can make the LLM
+      act as a different persona with fewer restrictions, bypass safety
+      controls, or perform actions contrary to the user original intent
+      and the host application security policies.
+    remediation: >
+      Implement prompt analysis that detects role reassignment patterns
+      such as identity overrides, system prompt references, and
+      instruction reset commands. Reject prompts that attempt to modify
+      the LLM role or override previous instructions. Enforce a strict
+      prompt hierarchy where server prompts cannot override client-level
+      system instructions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt004
+    slug: prompt_template_injection
+    title: "Prompt Template Injection"
+    severity: high
+    description: >
+      Detects MCP prompt templates where the template syntax itself can
+      be exploited to inject additional template directives. If the
+      templating engine processes user input as template code rather than
+      literal text, attackers can execute arbitrary template operations.
+    risk_explanation: >
+      Template injection in prompt definitions allows attackers to escape
+      the intended argument context and execute template engine operations.
+      Depending on the templating engine, this can enable reading server
+      environment variables, executing system commands, accessing internal
+      objects, or generating arbitrary prompt content that bypasses the
+      intended template structure.
+    remediation: >
+      Use a sandboxed templating engine that does not allow code execution
+      or object access. Escape all user input before passing it to the
+      template engine. Validate that argument values do not contain
+      template syntax characters. Use logic-less templates that only
+      support simple variable substitution without control structures.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt005
+    slug: missing_prompt_sanitization
+    title: "Missing Prompt Sanitization"
+    severity: medium
+    description: >
+      Detects MCP prompt handlers that pass prompt content and arguments
+      to the LLM without any sanitization, filtering, or validation.
+      Missing sanitization allows any content in prompts and arguments
+      to reach the LLM unmodified, including injection payloads.
+    risk_explanation: >
+      Without prompt sanitization, all content in prompt definitions and
+      their arguments is passed directly to the LLM. This creates a direct
+      channel for prompt injection attacks where malicious content embedded
+      in arguments or dynamically loaded prompt data can manipulate the
+      LLM behavior. The lack of any filtering means even obvious injection
+      patterns pass through undetected.
+    remediation: >
+      Implement a prompt sanitization pipeline that processes all prompt
+      content before it reaches the LLM. Strip or encode known injection
+      patterns, validate argument types and formats, and filter control
+      characters. Apply content security policies that define acceptable
+      prompt content. Log sanitization actions for security monitoring.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt006
+    slug: prompt_chaining_risk
+    title: "Prompt Chaining Risk"
+    severity: medium
+    description: >
+      Detects MCP prompt definitions that reference or invoke other prompts,
+      creating prompt chains where the output of one prompt feeds into
+      another. Uncontrolled chaining can amplify injection attacks and
+      create complex, hard-to-audit prompt execution paths.
+    risk_explanation: >
+      Prompt chaining creates indirect execution paths where an injection
+      in one prompt propagates through the entire chain. Attackers can
+      exploit early prompts in the chain to influence all subsequent ones,
+      amplifying the impact of a single injection. Complex chains also make
+      security auditing difficult, as the combined behavior may differ
+      significantly from individual prompt review.
+    remediation: >
+      Limit prompt chain depth to a configurable maximum. Implement
+      sanitization between each prompt in the chain to prevent injection
+      propagation. Audit the full chain behavior, not just individual
+      prompts. Add chain execution logging for security monitoring.
+      Consider flattening chains into single prompts where possible.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt007
+    slug: excessive_prompt_arguments
+    title: "Excessive Prompt Arguments"
+    severity: medium
+    description: >
+      Detects MCP prompt definitions that accept an excessive number of
+      arguments, creating a large attack surface for injection through
+      any of the argument slots. Prompts with many arguments are harder
+      to validate and more likely to have overlooked injection vectors.
+    risk_explanation: >
+      Each prompt argument is a potential injection vector. Prompts with
+      many arguments increase the probability that at least one argument
+      lacks proper validation. Complex argument schemas are difficult to
+      audit and test comprehensively. Excessive arguments also increase
+      the total user-controlled content in the prompt, making injection
+      payloads easier to disguise among legitimate values.
+    remediation: >
+      Limit the number of arguments per prompt to the minimum necessary.
+      Consolidate related arguments into structured objects with schemas.
+      Implement strict validation for every argument regardless of count.
+      Review prompts with many arguments for potential simplification.
+      Set a configurable maximum argument count policy.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt008
+    slug: prompt_argument_type_coercion
+    title: "Prompt Argument Type Coercion"
+    severity: medium
+    description: >
+      Detects MCP prompt arguments that undergo implicit type coercion
+      when processed, potentially changing their meaning or enabling
+      type confusion attacks. Arguments expected as numbers may be
+      supplied as strings containing injection payloads.
+    risk_explanation: >
+      Type coercion in prompt arguments allows attackers to bypass type-
+      based validation by supplying values in unexpected types. A numeric
+      argument supplied as a string can contain injection payloads that
+      survive numeric validation checks. Object arguments coerced to
+      strings may serialize in ways that inject template directives or
+      prompt instructions into the final prompt text.
+    remediation: >
+      Implement strict type checking for all prompt arguments that rejects
+      values of incorrect types rather than coercing them. Validate
+      argument types before any processing or interpolation. Use typed
+      schema validation that enforces exact type matching. Convert
+      arguments to their expected types explicitly with error handling
+      for invalid conversions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt009
+    slug: default_prompt_arguments
+    title: "Dangerous Default Prompt Arguments"
+    severity: high
+    description: >
+      Detects MCP prompt definitions with default argument values that
+      contain sensitive information, overly permissive instructions, or
+      dangerous operational parameters. Default values are used when
+      clients do not explicitly provide arguments, making them implicit
+      and easy to overlook during security review.
+    risk_explanation: >
+      Dangerous default arguments create hidden risks because they apply
+      automatically when not overridden. Default values containing elevated
+      permissions, broad access scopes, or sensitive configuration create
+      security exposures that users are unaware of. Attackers who discover
+      dangerous defaults can exploit them by simply omitting arguments
+      rather than injecting values, bypassing input validation entirely.
+    remediation: >
+      Review all prompt argument defaults for security implications. Apply
+      the principle of least privilege to default values, using the most
+      restrictive safe defaults. Avoid embedding sensitive information,
+      credentials, or broad access scopes in default values. Document all
+      default values and their security implications. Require explicit
+      argument values for security-sensitive parameters.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt010
+    slug: prompt_output_manipulation
+    title: "Prompt Output Manipulation"
+    severity: high
+    description: >
+      Detects MCP prompt definitions that can be manipulated to control
+      or redirect the LLM output format, destination, or content in ways
+      unintended by the prompt designer. Output manipulation enables
+      data exfiltration, instruction injection into downstream systems,
+      and evasion of output filters.
+    risk_explanation: >
+      Output manipulation allows attackers to use prompts as a conduit to
+      control what the LLM produces and where it sends results. Manipulated
+      output can include encoded data exfiltration payloads, instructions
+      that target downstream tool invocations, or formatted content that
+      bypasses output content filters. This turns the prompt into an
+      indirect attack vector against the entire LLM application.
+    remediation: >
+      Implement output validation that checks LLM responses against
+      expected formats and content policies. Define output schemas for
+      prompts and validate generated content. Filter output for injection
+      patterns before it reaches downstream tools or users. Monitor for
+      anomalous output patterns that may indicate manipulation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt011
+    slug: multilingual_prompt_injection
+    title: "Multilingual Prompt Injection"
+    severity: high
+    description: >
+      Detects MCP prompt arguments and definitions that use non-English
+      languages, Unicode homoglyphs, or mixed-script text to bypass
+      injection detection filters. Injection payloads in alternative
+      languages or scripts may evade English-centric security filters.
+    risk_explanation: >
+      Multilingual injection exploits the fact that most security filters
+      are trained on English-language injection patterns. Payloads written
+      in other languages, using Unicode homoglyphs that visually resemble
+      ASCII characters, or mixing multiple scripts can bypass pattern-based
+      detection while still being understood by multilingual LLMs. This
+      creates a significant blind spot in prompt security defenses.
+    remediation: >
+      Implement multilingual injection detection that covers major
+      languages used by the target LLM. Normalize Unicode text to a
+      canonical form before applying security filters. Detect and flag
+      mixed-script text and homoglyph usage. Use semantic analysis rather
+      than pattern matching alone for injection detection. Maintain
+      injection pattern databases in multiple languages.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt012
+    slug: prompt_encoding_bypass
+    title: "Prompt Encoding Bypass"
+    severity: high
+    description: >
+      Detects MCP prompt arguments that use encoding schemes such as
+      Base64, URL encoding, hex encoding, or Unicode escapes to smuggle
+      injection payloads past content filters. Encoded payloads are
+      decoded by the LLM or processing pipeline after security checks.
+    risk_explanation: >
+      Encoding bypass attacks exploit the processing order where security
+      filters see encoded content that appears benign, but the LLM or a
+      decoding step later in the pipeline reconstructs the malicious
+      payload. Modern LLMs can decode Base64 and other common encodings
+      natively, meaning encoded injection payloads are effectively
+      invisible to pre-processing security filters but fully functional.
+    remediation: >
+      Decode all encoded content in prompt arguments before applying
+      security filters. Detect and handle multiple layers of encoding.
+      Implement recursive decoding that continues until no more encoding
+      is detected. Reject arguments with suspicious encoding patterns.
+      Apply security filters after all decoding stages, not before.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt013
+    slug: prompt_length_limit
+    title: "Missing Prompt Length Limit"
+    severity: medium
+    description: >
+      Detects MCP prompt definitions and argument schemas that do not
+      enforce length limits on prompt content or argument values. Without
+      length limits, extremely long prompts can exhaust LLM context
+      windows, increase processing costs, and enable injection through
+      context overflow.
+    risk_explanation: >
+      Missing prompt length limits enable context window overflow attacks
+      where an extremely long argument pushes important system instructions
+      out of the LLM context. Long prompts also increase API costs and
+      processing time, enabling economic denial of service. Injection
+      payloads hidden in very long argument values are harder to detect
+      through manual review or simple pattern matching.
+    remediation: >
+      Implement maximum length limits for all prompt arguments and the
+      total assembled prompt. Set argument length limits in the prompt
+      schema definition. Validate total prompt size before submission to
+      the LLM. Reject or truncate arguments that exceed defined limits.
+      Monitor prompt sizes and alert on anomalously large submissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt014
+    slug: prompt_history_manipulation
+    title: "Prompt History Manipulation"
+    severity: high
+    description: >
+      Detects MCP prompt definitions that can be used to manipulate or
+      forge conversation history, inject fake previous messages, or alter
+      the perceived context of the conversation. History manipulation
+      enables social engineering of the LLM through fabricated context.
+    risk_explanation: >
+      Prompt history manipulation allows an attacker to create a false
+      conversation context that tricks the LLM into believing prior
+      agreements, authorizations, or instructions were established. This
+      enables bypassing confirmation requirements by fabricating prior
+      consent, establishing false trust through fake conversation history,
+      and overriding safety constraints by presenting fabricated context
+      where constraints were already relaxed.
+    remediation: >
+      Implement conversation history integrity verification that prevents
+      injection of fabricated messages. Use signed or hashed message
+      histories that detect tampering. Separate server-injected prompt
+      content from actual conversation history. Validate that prompt
+      definitions cannot forge message roles or inject into the
+      conversation history context.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection
+
+  - id: pmt015
+    slug: prompt_metadata_leakage
+    title: "Prompt Metadata Leakage"
+    severity: medium
+    description: >
+      Detects MCP prompt definitions that expose sensitive metadata such
+      as internal system names, author information, version details,
+      internal identifiers, or development comments in their descriptions
+      or argument definitions visible to clients.
+    risk_explanation: >
+      Metadata leaked through prompt definitions provides attackers with
+      intelligence about the server internal structure, development
+      practices, and configuration. Internal system names can identify
+      backend services to target. Version information enables CVE
+      targeting. Development comments may reveal security assumptions or
+      known limitations that can be exploited.
+    remediation: >
+      Review all prompt definitions for sensitive metadata before
+      deployment. Remove internal comments, system identifiers, version
+      numbers, and developer notes from client-visible prompt descriptions
+      and argument definitions. Implement a pre-deployment review process
+      that strips metadata. Use separate internal and external description
+      fields for prompts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+      - "MCP10:2025"
+    tags:
+      - prompt_security
+      - injection

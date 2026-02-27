@@ -1,0 +1,159 @@
+category: server_identity
+checks:
+  - id: shadow003
+    slug: duplicate_tool_names_across_servers
+    title: "Duplicate Tool Names Across Servers"
+    severity: critical
+    description: >
+      Detects multiple MCP servers in the same client configuration that
+      expose tools with identical names. Duplicate tool names create
+      ambiguity about which server handles a given tool invocation.
+    risk_explanation: >
+      When multiple servers expose identically-named tools, the LLM or
+      client may route invocations to the wrong server. A malicious server
+      can register tools with the same names as a legitimate server to
+      intercept tool calls, capture sensitive parameters, and return
+      manipulated results. This is a direct tool shadowing attack that
+      exploits name collisions.
+    remediation: >
+      Enforce unique tool names across all MCP servers in a client
+      configuration. Use namespaced tool names that include the server
+      identity (e.g. "acme-billing.create-invoice" instead of
+      "create-invoice"). Implement client-side validation that rejects
+      duplicate tool names at configuration time. Alert users when tool
+      name collisions are detected.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+    tags:
+      - server_identity
+      - tool_shadowing
+      - name_collision
+      - critical_risk
+
+  - id: shadow004
+    slug: missing_server_metadata
+    title: "Missing Server Metadata"
+    severity: medium
+    description: >
+      Detects MCP servers that lack descriptive metadata such as a human-
+      readable description, author information, contact details, or homepage
+      URL. Missing metadata makes it difficult to verify server legitimacy.
+    risk_explanation: >
+      Servers without adequate metadata cannot be easily verified by users or
+      administrators. Missing descriptions prevent users from understanding
+      what a server does before granting it access. Missing contact
+      information prevents reporting security issues. Missing author and
+      homepage details make it impossible to verify the server's provenance
+      and legitimacy.
+    remediation: >
+      Ensure all MCP servers include comprehensive metadata: a clear
+      description of functionality, author name and contact information,
+      homepage or repository URL, and license information. Implement server
+      registration policies that require minimum metadata fields. Display
+      server metadata to users during consent and authorization flows.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+    tags:
+      - server_identity
+      - metadata
+      - transparency
+      - verification
+
+  - id: shadow005
+    slug: suspicious_server_origin
+    title: "Suspicious Server Origin"
+    severity: high
+    description: >
+      Detects MCP server binaries loaded from untrusted or unusual file
+      system locations. Legitimate servers should be installed in standard
+      locations, not loaded from temporary directories, downloads folders,
+      or user-writable system paths.
+    risk_explanation: >
+      Server binaries loaded from untrusted locations such as /tmp,
+      ~/Downloads, or world-writable directories may have been placed there
+      by malware or social engineering attacks. An attacker can trick users
+      into running a malicious MCP server disguised as a legitimate tool by
+      placing it in an unexpected location where it gets automatically
+      discovered or manually configured.
+    remediation: >
+      Restrict MCP server binary locations to trusted installation paths.
+      Implement path allowlisting in client configurations that rejects
+      servers loaded from temporary, download, or world-writable directories.
+      Verify server binary integrity using code signing before execution.
+      Alert users when a server is loaded from an unusual location.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+    tags:
+      - server_identity
+      - origin_verification
+      - binary_location
+      - trust
+
+  - id: shadow006
+    slug: server_version_spoofing
+    title: "Server Version Spoofing"
+    severity: high
+    description: >
+      Detects MCP servers that report a version number that does not match
+      their actual binary or package version. Version spoofing can hide
+      known vulnerabilities or bypass version-based security policies.
+    risk_explanation: >
+      A server that reports a false version number can bypass version-based
+      security checks and compatibility requirements. An outdated server with
+      known vulnerabilities can report a newer version to avoid security
+      scanning. Conversely, a malicious server can report an older version
+      to exploit client-side compatibility shims that relax security controls
+      for legacy servers.
+    remediation: >
+      Implement server version verification by cross-referencing the reported
+      version against the binary hash or package metadata. Use integrity
+      checks that verify the server binary matches the reported version.
+      Alert when version mismatches are detected. Maintain a version
+      verification database for known MCP server packages.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+    tags:
+      - server_identity
+      - version_spoofing
+      - integrity
+      - trust
+
+  - id: shadow007
+    slug: unauthorized_server_registration
+    title: "Unauthorized Server Registration"
+    severity: critical
+    description: >
+      Detects MCP servers that are registered in client configurations
+      without explicit user consent. Unauthorized server registration
+      enables silent tool injection and data interception attacks.
+    risk_explanation: >
+      If servers can be registered without explicit user consent, malware or
+      malicious extensions can silently add MCP servers to the client
+      configuration. These unauthorized servers gain access to all future
+      LLM interactions, can shadow legitimate tools, intercept sensitive
+      data, and inject malicious content into the conversation context
+      without the user's knowledge.
+    remediation: >
+      Require explicit user consent for every MCP server registration.
+      Implement configuration file integrity monitoring that detects
+      unauthorized additions. Display newly registered servers prominently
+      to users and require confirmation before first use. Log all server
+      registration events for audit purposes. Use configuration file
+      permissions that prevent modification by unprivileged processes.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP06:2025"
+    tags:
+      - server_identity
+      - unauthorized_registration
+      - consent
+      - critical_risk

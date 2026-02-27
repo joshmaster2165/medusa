@@ -1,0 +1,32 @@
+check_id: auth007
+title: Insecure Token Storage
+category: authentication
+severity: critical
+description: >
+  Detects authentication tokens stored in plaintext within configuration
+  files, environment files, or source code. Plaintext token storage
+  exposes credentials to anyone with filesystem access, version control
+  access, or backup system access.
+risk_explanation: >
+  Plaintext tokens in configuration files are trivially extracted by
+  attackers who gain read access to the filesystem. Configuration files
+  are frequently committed to version control, included in backups, and
+  logged by monitoring systems. A single exposed token can grant full
+  access to the MCP server and all connected services.
+remediation: >
+  Store tokens in secure credential stores such as OS keychains,
+  hardware security modules, or dedicated secrets managers (HashiCorp
+  Vault, AWS Secrets Manager). Use environment variable references in
+  configuration files instead of literal values. Set restrictive file
+  permissions (600) on any files that must contain credentials. Never
+  commit tokens to version control.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - token_storage
+  - plaintext_credentials
+  - secrets_management

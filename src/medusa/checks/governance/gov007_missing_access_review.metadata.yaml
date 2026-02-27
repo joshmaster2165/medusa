@@ -1,0 +1,32 @@
+check_id: gov007
+title: Missing Access Review Process
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack periodic access reviews to
+  verify that user permissions, tool access grants, and API keys remain
+  appropriate. Without access reviews, permissions accumulate over time
+  and former users may retain access they no longer need.
+risk_explanation: >
+  Without periodic access reviews, MCP server permissions drift from
+  their intended state. Users accumulate tool access they no longer
+  need, former employees retain active credentials, and API keys created
+  for temporary purposes remain valid indefinitely. This expanded access
+  surface increases the risk of unauthorized tool invocations, data
+  access, and privilege escalation. Stale credentials are prime targets
+  for attackers.
+remediation: >
+  Implement a periodic access review process that audits all user
+  permissions, tool access grants, API keys, and service accounts
+  associated with the MCP server. Conduct reviews quarterly at minimum.
+  Revoke access for users who no longer require it. Rotate long-lived
+  credentials. Implement automated access certification workflows that
+  require managers to confirm each user's continued need for access.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

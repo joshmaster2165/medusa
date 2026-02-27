@@ -1,0 +1,31 @@
+check_id: ts009
+title: Self-Signed Certificate Usage
+category: transport_security
+severity: high
+description: >
+  Detects MCP servers using self-signed TLS certificates. Self-signed
+  certificates cannot be verified against a trusted certificate
+  authority chain, requiring clients to disable certificate validation
+  and making them vulnerable to man-in-the-middle attacks.
+risk_explanation: >
+  Self-signed certificates force clients to either reject the connection
+  or disable certificate validation. When validation is disabled, any
+  attacker can present their own self-signed certificate and intercept
+  the connection. Self-signed certificates provide encryption but no
+  authentication, meaning the client cannot verify it is communicating
+  with the intended server.
+remediation: >
+  Replace self-signed certificates with certificates from a trusted CA.
+  Use Let's Encrypt for free automated certificate issuance. For
+  internal services, establish a private CA and distribute its root
+  certificate to clients. If self-signed certificates are temporarily
+  required, implement certificate pinning to prevent MITM attacks.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - self_signed
+  - certificate_validation
+  - mitm

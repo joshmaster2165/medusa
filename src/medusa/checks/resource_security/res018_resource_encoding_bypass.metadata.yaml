@@ -1,0 +1,30 @@
+check_id: res018
+title: Resource Encoding Bypass
+category: resource_security
+severity: high
+description: >
+  Detects MCP resource handlers that fail to properly handle character
+  encoding variations, allowing attackers to bypass content filters and
+  access controls using alternative encodings such as UTF-7, UTF-16,
+  double URL encoding, or mixed encoding schemes.
+risk_explanation: >
+  Encoding bypass attacks exploit differences between how the security
+  filter decodes input and how the backend processes it. An attacker can
+  encode malicious payloads in alternative character sets to evade
+  content validation, inject path traversal sequences through double
+  encoding, or bypass keyword-based filters using homoglyph characters
+  from different Unicode blocks.
+remediation: >
+  Normalize all resource content to a single canonical encoding such as
+  UTF-8 before applying any security checks. Reject requests with
+  ambiguous or unsupported encodings. Decode content fully before
+  validation, including handling of double encoding. Use encoding-aware
+  comparison functions for access control decisions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

@@ -1,0 +1,31 @@
+check_id: pmt011
+title: Multilingual Prompt Injection
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt arguments and definitions that use non-English
+  languages, Unicode homoglyphs, or mixed-script text to bypass
+  injection detection filters. Injection payloads in alternative
+  languages or scripts may evade English-centric security filters.
+risk_explanation: >
+  Multilingual injection exploits the fact that most security filters
+  are trained on English-language injection patterns. Payloads written
+  in other languages, using Unicode homoglyphs that visually resemble
+  ASCII characters, or mixing multiple scripts can bypass pattern-based
+  detection while still being understood by multilingual LLMs. This
+  creates a significant blind spot in prompt security defenses.
+remediation: >
+  Implement multilingual injection detection that covers major languages
+  used by the target LLM. Normalize Unicode text to a canonical form
+  before applying security filters. Detect and flag mixed-script text
+  and homoglyph usage. Use semantic analysis rather than pattern
+  matching alone for injection detection. Maintain injection pattern
+  databases in multiple languages.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

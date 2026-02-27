@@ -1,0 +1,34 @@
+check_id: samp007
+title: Sampling Without Rate Limit
+category: sampling_security
+severity: medium
+description: >
+  Detects MCP server configurations where sampling requests are not
+  subject to rate limiting. Without rate limits, an MCP server can issue
+  high volumes of sampling requests, consuming LLM API quotas,
+  increasing costs, and potentially degrading service for the user.
+risk_explanation: >
+  Unrestricted sampling request rates allow a malicious or compromised
+  MCP server to rapidly consume the user's LLM API quota and generate
+  significant costs. High-frequency sampling can also be used to amplify
+  prompt injection attacks by attempting many variations, overwhelm
+  content filtering systems, or establish a denial-of-service condition
+  that prevents the user from using their LLM client for legitimate
+  purposes.
+remediation: >
+  Implement rate limiting on sampling requests per MCP server and per
+  session. Set reasonable limits based on expected usage patterns,
+  typically no more than 10-20 sampling requests per minute per server.
+  Apply sliding window rate limiting to prevent burst abuse. Notify the
+  user when rate limits are approached or exceeded. Provide
+  configuration for users to set custom rate limits per server based on
+  trust level.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

@@ -1,0 +1,33 @@
+check_id: agent010
+title: Agent Impersonation
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where one agent or MCP server can
+  impersonate another agent's identity or claim to be a trusted system
+  component. Impersonation allows a malicious entity to inherit the
+  trust level and permissions of the impersonated agent, bypassing
+  access controls.
+risk_explanation: >
+  Agent impersonation in MCP systems allows a malicious server to
+  present itself as a trusted agent, inheriting permissions and trust
+  relationships that were not legitimately granted. In multi-agent
+  architectures, this enables unauthorized access to tools, resources,
+  and data that are reserved for the impersonated agent. Users cannot
+  distinguish between the legitimate agent and the impostor, making this
+  attack difficult to detect.
+remediation: >
+  Implement cryptographic identity verification for all agents in the
+  MCP system. Use mutual TLS or signed identity tokens to authenticate
+  agent identities. Prevent MCP servers from claiming arbitrary agent
+  identities. Verify agent identity at each interaction point rather
+  than relying on initial authentication. Implement identity attestation
+  that is verified by the LLM client before granting access.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

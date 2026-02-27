@@ -1,0 +1,30 @@
+check_id: res008
+title: Resource Symlink Following
+category: resource_security
+severity: high
+description: >
+  Detects MCP file-based resource handlers that follow symbolic links
+  without validation, allowing attackers to create symlinks that point
+  to files outside the intended resource directory. This enables reading
+  arbitrary files on the server file system.
+risk_explanation: >
+  Symlink following allows an attacker who can create files within the
+  resource directory to create a symbolic link to any file on the
+  system, such as /etc/shadow, application secrets, or private keys.
+  When the MCP server resolves the resource, it follows the symlink and
+  returns the target file contents, bypassing all directory-based access
+  controls.
+remediation: >
+  Configure file-based resource handlers to not follow symbolic links.
+  Use O_NOFOLLOW flags when opening files. Resolve the real path of
+  resource files and verify they remain within the allowed resource
+  directory before reading. Consider running the MCP server in a
+  container or chroot to limit symlink targets.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

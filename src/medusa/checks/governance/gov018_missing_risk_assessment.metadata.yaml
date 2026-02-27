@@ -1,0 +1,35 @@
+check_id: gov018
+title: Missing Risk Assessment
+category: governance
+severity: high
+description: >
+  Detects MCP server deployments that have not undergone a formal risk
+  assessment identifying threats, vulnerabilities, and potential impacts
+  specific to MCP security. Risk assessment is the foundation of a risk-
+  based security program that prioritizes controls based on actual
+  threats.
+risk_explanation: >
+  Without a risk assessment, security investments are not aligned with
+  actual threats. Organizations may over-invest in low-risk areas while
+  leaving high-risk threats unaddressed. MCP servers face unique risks
+  that differ from traditional web applications, including tool
+  poisoning, prompt injection, agentic attacks, and sampling abuse. A
+  risk assessment that does not account for these MCP-specific threats
+  produces an incomplete picture that leaves critical vulnerabilities
+  unaddressed.
+remediation: >
+  Conduct a formal risk assessment for the MCP server deployment that
+  identifies MCP-specific threats, evaluates existing vulnerabilities,
+  assesses potential business impacts, and prioritizes risks. Use a
+  recognized risk assessment framework such as NIST SP 800-30 or ISO
+  27005. Include MCP-specific attack scenarios from the OWASP MCP Top
+  10. Produce a risk register and risk treatment plan. Review and update
+  the risk assessment annually or when significant changes occur.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

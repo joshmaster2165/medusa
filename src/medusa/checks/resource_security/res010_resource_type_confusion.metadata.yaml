@@ -1,0 +1,30 @@
+check_id: res010
+title: Resource Type Confusion
+category: resource_security
+severity: high
+description: >
+  Detects MCP resources where the declared MIME type does not match the
+  actual content, or where type validation is missing entirely. Type
+  confusion can cause clients to misprocess content, execute code
+  embedded in data files, or misinterpret binary data as text.
+risk_explanation: >
+  Resource type confusion enables attackers to serve executable content
+  disguised as benign data types. An LLM that receives what it believes
+  is a text document but actually contains encoded executable payloads
+  may process the content in unintended ways. Type mismatches can also
+  trigger parser vulnerabilities in clients that handle content based on
+  the declared MIME type.
+remediation: >
+  Validate actual resource content against the declared MIME type using
+  content inspection, not just file extension checks. Reject resources
+  where the content does not match the declared type. Implement a strict
+  allowlist of permitted resource MIME types. Sanitize content based on
+  its verified type before serving to clients.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

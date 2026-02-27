@@ -1,0 +1,30 @@
+check_id: res017
+title: Resource Content-Type Mismatch
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resources that declare one content type in their metadata
+  but serve content of a different type. This mismatch can lead to
+  client-side processing errors, security bypass through type confusion,
+  or exploitation of type-specific parsing vulnerabilities.
+risk_explanation: >
+  Content-type mismatches can trick clients into processing dangerous
+  content using the wrong parser. A resource declared as text/plain but
+  containing HTML may trigger script execution in web-based clients.
+  Binary content served as text can cause encoding errors that expose
+  raw bytes. Type confusion between structured data formats can lead to
+  injection through parser differences.
+remediation: >
+  Implement content-type verification that inspects actual content and
+  compares it against the declared MIME type. Reject resources where the
+  content does not match the declared type. Set content-type headers
+  based on verified content analysis rather than file extensions or
+  client declarations. Use strict content-type checking in clients.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

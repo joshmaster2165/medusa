@@ -1,0 +1,31 @@
+check_id: shadow007
+title: Unauthorized Server Registration
+category: server_identity
+severity: critical
+description: >
+  Detects MCP servers that are registered in client configurations
+  without explicit user consent. Unauthorized server registration
+  enables silent tool injection and data interception attacks.
+risk_explanation: >
+  If servers can be registered without explicit user consent, malware or
+  malicious extensions can silently add MCP servers to the client
+  configuration. These unauthorized servers gain access to all future
+  LLM interactions, can shadow legitimate tools, intercept sensitive
+  data, and inject malicious content into the conversation context
+  without the user's knowledge.
+remediation: >
+  Require explicit user consent for every MCP server registration.
+  Implement configuration file integrity monitoring that detects
+  unauthorized additions. Display newly registered servers prominently
+  to users and require confirmation before first use. Log all server
+  registration events for audit purposes. Use configuration file
+  permissions that prevent modification by unprivileged processes.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - server_identity
+  - unauthorized_registration
+  - consent
+  - critical_risk

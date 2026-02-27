@@ -1,0 +1,32 @@
+check_id: auth008
+title: Missing OAuth PKCE
+category: authentication
+severity: high
+description: >
+  Detects OAuth 2.0 authorization flows that do not implement Proof Key
+  for Code Exchange (PKCE). Without PKCE, authorization codes are
+  vulnerable to interception attacks where a malicious application
+  captures the code and exchanges it for an access token.
+risk_explanation: >
+  Without PKCE, authorization code interception allows an attacker to
+  obtain access tokens by capturing the authorization code from the
+  redirect URI. This is particularly dangerous for public clients
+  (native apps, SPAs) where the client secret cannot be securely stored.
+  The MCP specification recommends OAuth 2.1 which requires PKCE.
+remediation: >
+  Implement PKCE with S256 code challenge method in all OAuth flows. Use
+  the authorization code flow with PKCE as specified in OAuth 2.1 and
+  the MCP authorization specification. Generate a cryptographically
+  random code_verifier of at least 43 characters for each authorization
+  request. Reject authorization flows that do not include
+  code_challenge.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - oauth
+  - pkce
+  - authorization_code

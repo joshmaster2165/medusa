@@ -1,0 +1,30 @@
+check_id: priv016
+title: Package Installation Rights
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that can install system packages (apt, yum, brew,
+  pip install, npm install -g). Package installation allows adding
+  arbitrary software to the system, including malicious packages from
+  compromised registries.
+risk_explanation: >
+  Package installation enables supply chain attacks where malicious
+  packages execute code during installation. System-level package
+  installation modifies the OS installation, potentially overwriting
+  existing binaries with trojanized versions. Global package
+  installations persist across reboots and affect all users of the
+  system.
+remediation: >
+  Restrict MCP tools from installing packages. Use pre-built container
+  images with all required dependencies. Implement package allowlists
+  for environments where installation is required. Use package signing
+  verification and hash pinning for any packages that must be installed.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - package_installation
+  - supply_chain
+  - system_modification

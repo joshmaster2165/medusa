@@ -1,0 +1,31 @@
+check_id: hard005
+title: Admin Interface Exposed
+category: server_hardening
+severity: high
+description: >
+  Detects MCP servers that expose administrative or management
+  interfaces to the same network or transport as client-facing
+  endpoints. Admin interfaces provide elevated capabilities including
+  server configuration, user management, and diagnostic access.
+risk_explanation: >
+  Exposed admin interfaces provide attackers with high-value targets
+  that, if compromised, grant full control over the MCP server. Admin
+  endpoints typically allow modifying server configuration, managing
+  tool registrations, accessing diagnostic data, and controlling user
+  permissions. Even with authentication, exposing admin interfaces
+  increases the risk of brute force attacks and credential stuffing.
+remediation: >
+  Separate admin interfaces onto a dedicated management network or
+  transport that is not accessible to regular MCP clients. Implement
+  additional authentication requirements for admin access such as multi-
+  factor authentication. Restrict admin interface access to specific IP
+  addresses or VPN connections. Monitor and alert on all admin interface
+  access attempts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

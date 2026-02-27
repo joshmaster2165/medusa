@@ -1,0 +1,30 @@
+check_id: priv006
+title: RBAC Bypass Risk
+category: privilege_scope
+severity: high
+description: >
+  Detects missing role-based access control on tool invocations. MCP
+  servers that do not implement RBAC allow any authenticated user to
+  invoke any tool, regardless of their role or the sensitivity of the
+  operation.
+risk_explanation: >
+  Without RBAC, a low-privilege user can invoke administrative tools
+  such as user management, configuration changes, and data export. The
+  absence of role differentiation means that a single compromised
+  credential grants access to all server capabilities. RBAC is essential
+  for limiting the blast radius of credential compromise.
+remediation: >
+  Implement role-based access control that maps user roles to permitted
+  tool sets. Define roles with the minimum required tool access (viewer,
+  editor, admin). Validate the caller's role before executing each tool
+  invocation. Use the MCP authorization framework to enforce per-tool
+  access policies.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - rbac
+  - access_control
+  - role_management

@@ -1,0 +1,32 @@
+check_id: iv007
+title: NoSQL Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters suggesting MongoDB or other NoSQL query
+  construction without validation. Parameters accepting JSON objects or
+  query operators like $gt, $regex, or $where enable NoSQL injection
+  attacks that bypass authentication and access controls.
+risk_explanation: >
+  NoSQL injection allows attackers to manipulate database queries using
+  operator injection. A parameter accepting {"$gt": ""} instead of a
+  simple string can bypass authentication checks. The $where operator
+  enables arbitrary JavaScript execution on the database server. NoSQL
+  injection is often overlooked because developers assume JSON-based
+  queries are safe.
+remediation: >
+  Validate all parameters against expected types before constructing
+  NoSQL queries. Reject objects and arrays when simple strings are
+  expected. Sanitize input to remove MongoDB operator prefixes ($). Use
+  parameterized queries or ODM libraries that handle escaping. Disable
+  server-side JavaScript execution ($where) if not required.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - nosql_injection
+  - mongodb
+  - query_injection

@@ -1,0 +1,33 @@
+check_id: dos002
+title: Missing Request Throttling
+category: rate_limiting
+severity: medium
+description: >
+  Detects MCP server API endpoints that lack request throttling
+  mechanisms. Without throttling, burst traffic from LLM agents can
+  saturate server capacity, degrading performance for all connected
+  clients and potentially causing service outages.
+risk_explanation: >
+  Unthrottled MCP API endpoints are vulnerable to burst traffic that
+  exceeds server capacity. LLM agents can generate rapid bursts of
+  requests during multi-step operations, and without throttling, these
+  bursts consume all available server resources. This degrades response
+  times for all users, can trigger cascade failures in dependent
+  services, and may cause the MCP server to become completely
+  unresponsive.
+remediation: >
+  Implement request throttling that limits the rate of incoming requests
+  per client. Use adaptive throttling that adjusts limits based on
+  current server load. Implement queue-based request processing that
+  absorbs bursts without rejecting requests immediately. Return HTTP 429
+  responses with Retry-After headers when throttle limits are exceeded.
+  Monitor server load metrics and adjust throttle thresholds
+  dynamically.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

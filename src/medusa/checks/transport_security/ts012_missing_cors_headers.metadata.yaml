@@ -1,0 +1,31 @@
+check_id: ts012
+title: Missing CORS Headers
+category: transport_security
+severity: medium
+description: >
+  Detects HTTP endpoints without Cross-Origin Resource Sharing (CORS)
+  configuration. Missing CORS headers can either block legitimate cross-
+  origin requests or indicate that no cross-origin access policy has
+  been considered, potentially defaulting to an insecure state.
+risk_explanation: >
+  Missing CORS configuration means the server has not explicitly defined
+  which origins can access its resources. Without CORS headers, browsers
+  block cross-origin requests by default, but server-side requests are
+  not restricted. The lack of explicit CORS policy indicates missing
+  security consideration for cross-origin access, which may lead to
+  overly permissive configuration when CORS is eventually needed.
+remediation: >
+  Configure explicit CORS headers on all HTTP endpoints. Set Access-
+  Control-Allow-Origin to specific trusted origins, never use wildcards
+  for authenticated endpoints. Define allowed methods and headers
+  explicitly. Implement CORS preflight caching with appropriate max-age
+  values.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - cors
+  - cross_origin
+  - http_headers

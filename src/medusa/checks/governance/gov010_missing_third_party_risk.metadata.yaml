@@ -1,0 +1,34 @@
+check_id: gov010
+title: Missing Third-Party Risk Assessment
+category: governance
+severity: high
+description: >
+  Detects MCP server deployments that integrate with external MCP
+  servers, APIs, or services without performing third-party risk
+  assessments. External integrations introduce supply chain risks
+  including data exposure to third parties and dependency on their
+  security posture.
+risk_explanation: >
+  MCP servers often connect to external services through tool
+  invocations, including cloud APIs, SaaS platforms, and third-party MCP
+  servers. Each external integration introduces risk from the third
+  party's security posture, data handling practices, and operational
+  reliability. Without risk assessment, organizations accept unknown
+  risks from every external integration, potentially exposing sensitive
+  data to parties that do not meet their security requirements.
+remediation: >
+  Conduct third-party risk assessments for all external services
+  integrated with the MCP server. Evaluate each third party's security
+  certifications, data handling practices, incident response
+  capabilities, and business continuity plans. Require security
+  questionnaires or SOC 2 reports from critical third parties. Implement
+  data minimization for third-party interactions. Review third-party
+  risk assessments annually and when significant changes occur.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

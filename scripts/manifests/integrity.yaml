@@ -1,0 +1,390 @@
+category: integrity
+checks:
+  - id: intg005
+    slug: lockfile_missing
+    title: "Missing Package Lockfile"
+    severity: high
+    description: >
+      Detects MCP server projects that lack a package lockfile (e.g.
+      package-lock.json, yarn.lock, pnpm-lock.yaml, poetry.lock). Without a
+      lockfile, dependency versions are resolved at install time and may change
+      unexpectedly.
+    risk_explanation: >
+      Without a lockfile, each installation of the MCP server may resolve
+      different dependency versions. An attacker who publishes a malicious
+      patch version of a dependency can have their code installed automatically.
+      Lockfiles ensure deterministic builds and prevent silent dependency
+      substitution attacks.
+    remediation: >
+      Generate and commit a lockfile for the MCP server's package manager.
+      Ensure the lockfile is included in version control and updated
+      deliberately through audited dependency update processes. Configure CI
+      to use frozen/locked installs (e.g. npm ci, pip install --require-hashes).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - lockfile
+      - supply_chain
+      - dependencies
+
+  - id: intg006
+    slug: lockfile_tampered
+    title: "Lockfile Integrity Tampered"
+    severity: critical
+    description: >
+      Detects lockfiles with hash mismatches, unexpected modifications, or
+      signs of corruption. A tampered lockfile can silently redirect
+      dependency resolution to malicious packages.
+    risk_explanation: >
+      A tampered lockfile is a strong indicator of a supply-chain attack. By
+      modifying lockfile hashes or package URLs, an attacker can redirect
+      dependency resolution to malicious packages while the lockfile appears
+      legitimate. This bypasses the integrity guarantees that lockfiles are
+      designed to provide.
+    remediation: >
+      Verify lockfile integrity by comparing hashes against known-good values.
+      Use lockfile linting tools to detect inconsistencies. Implement CI
+      checks that flag lockfile changes for manual review. Consider signing
+      lockfiles or using tools that verify lockfile authenticity.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - lockfile
+      - tampering
+      - supply_chain
+      - critical_risk
+
+  - id: intg007
+    slug: unsigned_updates
+    title: "Unsigned Server Updates"
+    severity: high
+    description: >
+      Detects MCP server update mechanisms that do not verify cryptographic
+      signatures on updates. Unsigned updates can be replaced with malicious
+      payloads during transit or at the distribution point.
+    risk_explanation: >
+      Without signature verification, an attacker who compromises the update
+      distribution channel can serve malicious updates that are installed
+      without question. This enables persistent compromise of the MCP server
+      through a trusted update mechanism, which is particularly dangerous
+      because updates are expected to change the server's behavior.
+    remediation: >
+      Implement cryptographic signature verification for all server updates.
+      Use code signing certificates from trusted certificate authorities.
+      Verify signatures before applying updates and reject any update that
+      fails verification. Distribute public keys through a separate,
+      authenticated channel.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - code_signing
+      - updates
+      - supply_chain
+
+  - id: intg008
+    slug: missing_sbom
+    title: "Missing Software Bill of Materials"
+    severity: medium
+    description: >
+      Checks whether the MCP server provides a Software Bill of Materials
+      (SBOM). An SBOM lists all components and dependencies, enabling supply
+      chain transparency and vulnerability tracking.
+    risk_explanation: >
+      Without an SBOM, it is impossible to quickly determine whether the MCP
+      server is affected by newly disclosed vulnerabilities. When a critical
+      CVE is announced, organisations without SBOMs must manually audit each
+      server's dependencies, delaying incident response and leaving vulnerable
+      systems exposed.
+    remediation: >
+      Generate an SBOM in a standard format (SPDX or CycloneDX) for the MCP
+      server. Include the SBOM in the server's distribution package and update
+      it with each release. Use automated SBOM generation tools integrated
+      into the build pipeline. Regularly scan the SBOM against vulnerability
+      databases.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - sbom
+      - supply_chain
+      - transparency
+
+  - id: intg009
+    slug: config_schema_missing
+    title: "Missing Configuration Schema"
+    severity: low
+    description: >
+      Checks whether the MCP server defines a schema for its configuration
+      file. Without a schema, invalid or malicious configuration values may
+      be accepted without validation.
+    risk_explanation: >
+      Without a configuration schema, the MCP server accepts arbitrary
+      configuration values without validation. An attacker who can modify the
+      configuration file can inject unexpected values that alter server
+      behavior, disable security controls, or redirect data flows. Schema
+      validation catches malformed or malicious configurations before they
+      take effect.
+    remediation: >
+      Define a JSON Schema or equivalent validation schema for the MCP
+      server's configuration file. Validate all configuration values against
+      the schema at startup and reject invalid configurations. Document the
+      expected configuration format and valid value ranges for each field.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - configuration
+      - schema_validation
+
+  - id: intg010
+    slug: tool_schema_drift
+    title: "Tool Schema Drift Detection"
+    severity: high
+    description: >
+      Detects changes to MCP tool input schemas that occur without a
+      corresponding version bump. Schema drift can indicate tool tampering
+      or uncontrolled changes that break client expectations.
+    risk_explanation: >
+      When tool schemas change without a version update, clients that rely on
+      the previous schema may send incorrect data or fail to validate tool
+      outputs. Attackers can exploit schema drift to add hidden parameters
+      that exfiltrate data or to change tool behavior without triggering
+      version-based security reviews.
+    remediation: >
+      Implement schema versioning that requires a version bump for any change
+      to a tool's input or output schema. Use schema comparison in CI to
+      detect drift automatically. Maintain a schema changelog and require
+      review for all schema modifications.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - schema
+      - versioning
+      - drift_detection
+
+  - id: intg011
+    slug: reproducible_build_missing
+    title: "Missing Reproducible Build"
+    severity: medium
+    description: >
+      Checks whether the MCP server can be built reproducibly from source.
+      Without reproducible builds, there is no way to verify that the
+      distributed binary matches the published source code.
+    risk_explanation: >
+      Without reproducible builds, users must trust that the distributed
+      binary was built from the published source code. An attacker who
+      compromises the build system can inject malicious code that does not
+      appear in the source repository. Reproducible builds allow independent
+      verification that the binary matches the source.
+    remediation: >
+      Configure the build system to produce reproducible outputs. Pin all
+      build dependencies and toolchain versions. Remove sources of
+      non-determinism such as timestamps, random values, and filesystem
+      ordering. Document the build process and provide instructions for
+      independent verification.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - reproducible_builds
+      - supply_chain
+      - verification
+
+  - id: intg012
+    slug: dependency_confusion_risk
+    title: "Dependency Confusion Risk"
+    severity: high
+    description: >
+      Detects private package names that may be vulnerable to dependency
+      confusion attacks where a public package with the same name is
+      installed instead of the intended private package.
+    risk_explanation: >
+      In a dependency confusion attack, an attacker publishes a malicious
+      package on a public registry using the same name as a private internal
+      package. If the package manager checks the public registry first or
+      prefers higher version numbers from public sources, the malicious
+      package is installed instead of the legitimate private one, achieving
+      arbitrary code execution.
+    remediation: >
+      Use scoped package names (e.g. @company/package) for all private
+      packages. Configure package managers to use private registries
+      exclusively for scoped namespaces. Implement registry allowlisting and
+      deny public registry lookups for private package names. Reserve private
+      package names on public registries as a defensive measure.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - dependency_confusion
+      - supply_chain
+      - package_management
+
+  - id: intg013
+    slug: typosquatting_risk
+    title: "Typosquatting Risk"
+    severity: high
+    description: >
+      Detects MCP server dependencies with names that closely resemble popular
+      packages, indicating potential typosquatting. Typosquatting packages
+      contain malicious code disguised as legitimate libraries.
+    risk_explanation: >
+      Typosquatting exploits common typing mistakes to trick developers into
+      installing malicious packages. Packages with names like "reqeusts"
+      instead of "requests" or "lodsah" instead of "lodash" contain malicious
+      code that executes during installation or import. A single misspelled
+      dependency in an MCP server configuration compromises the entire host.
+    remediation: >
+      Verify all dependency names against official package registries before
+      installation. Use typosquatting detection tools in CI pipelines. Pin
+      dependencies by exact version and hash. Review dependency changes
+      carefully in code review, paying special attention to new package
+      additions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - typosquatting
+      - supply_chain
+      - package_management
+
+  - id: intg014
+    slug: subresource_integrity_missing
+    title: "Missing Subresource Integrity"
+    severity: medium
+    description: >
+      Detects MCP servers that load remote resources (scripts, stylesheets,
+      data files) without Subresource Integrity (SRI) hashes. Without SRI,
+      tampered remote resources are loaded without detection.
+    risk_explanation: >
+      Remote resources loaded without SRI hashes can be silently replaced with
+      malicious content if the hosting CDN or server is compromised. The MCP
+      server would load and execute the tampered content without any integrity
+      check, enabling supply-chain attacks through compromised third-party
+      resources.
+    remediation: >
+      Add integrity attributes with cryptographic hashes (SHA-256 or stronger)
+      for all remotely loaded resources. Implement Content Security Policy
+      headers that require SRI for scripts and stylesheets. Automate SRI hash
+      generation and verification as part of the build and deployment process.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - sri
+      - remote_resources
+      - supply_chain
+
+  - id: intg015
+    slug: binary_planting_risk
+    title: "Binary Planting Risk"
+    severity: high
+    description: >
+      Detects MCP server configurations vulnerable to binary planting attacks
+      where executable search path manipulation causes a malicious binary to
+      be executed instead of the intended one.
+    risk_explanation: >
+      Binary planting (also known as DLL hijacking or PATH manipulation)
+      exploits the way operating systems search for executables. If the MCP
+      server's startup command does not use an absolute path, an attacker who
+      can write to a directory in the search path can place a malicious binary
+      that gets executed with the server's privileges.
+    remediation: >
+      Use absolute paths for all executable references in MCP server
+      configurations. Restrict the PATH environment variable to trusted
+      directories only. Verify executable integrity before launch using
+      checksums or code signatures. Avoid using relative paths or relying on
+      system PATH resolution for security-critical binaries.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - binary_planting
+      - path_manipulation
+      - execution
+
+  - id: intg016
+    slug: config_file_permissions
+    title: "Insecure Config File Permissions"
+    severity: high
+    description: >
+      Detects MCP server configuration files with overly permissive file
+      system permissions. World-readable or group-writable configuration
+      files expose secrets and allow unauthorised modification.
+    risk_explanation: >
+      Configuration files often contain sensitive information such as API
+      keys, database credentials, and server secrets. World-readable
+      permissions allow any user on the system to read these secrets, while
+      group-writable or world-writable permissions allow unauthorised
+      modification of the server's configuration, potentially disabling
+      security controls or redirecting data flows.
+    remediation: >
+      Set configuration file permissions to owner-only read/write (600) or
+      owner-read with group-read (640) at most. Ensure the configuration file
+      is owned by the MCP server's service account. Use file integrity
+      monitoring to detect unauthorised permission changes. Store sensitive
+      configuration values in a secrets manager rather than flat files.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - file_permissions
+      - configuration
+      - access_control
+
+  - id: intg017
+    slug: timestamp_verification_missing
+    title: "Missing Timestamp Verification"
+    severity: medium
+    description: >
+      Detects signed artifacts that lack timestamp verification. Without
+      trusted timestamps, signatures remain valid even after the signing
+      key has been compromised or revoked.
+    risk_explanation: >
+      Without timestamp verification, a signature made with a compromised key
+      cannot be distinguished from a legitimate signature made before the
+      compromise. Timestamp authorities provide proof that a signature was
+      created at a specific time, allowing revocation of signatures made after
+      key compromise while preserving the validity of earlier signatures.
+    remediation: >
+      Include RFC 3161 timestamp tokens in all code signatures. Use trusted
+      timestamp authorities and verify timestamps during signature validation.
+      Implement timestamp-based revocation checking that invalidates
+      signatures created after key compromise events. Configure signature
+      verification to reject artifacts without valid timestamps.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP04:2025"
+    tags:
+      - integrity
+      - timestamps
+      - code_signing
+      - verification

@@ -1,0 +1,30 @@
+check_id: sess013
+title: Overly Broad Session Cookie Scope
+category: session_management
+severity: medium
+description: >
+  Detects MCP servers that set session cookies with overly broad domain
+  or path scopes. Cookies scoped to parent domains or root paths are
+  sent with requests to all subdomains and paths, exposing session
+  tokens to unrelated services and increasing the risk of token capture.
+risk_explanation: >
+  Broadly scoped session cookies are sent with every request to matching
+  domains and paths, including requests to unrelated services hosted on
+  the same domain. This exposes MCP session tokens to services that have
+  no need for them, increasing the likelihood of token leakage through
+  logs, caches, or compromised co-hosted applications. Any service on
+  the matching domain can read and potentially abuse the session token.
+remediation: >
+  Set session cookies with the most restrictive domain and path scope
+  possible. Use the exact MCP server hostname rather than a parent
+  domain. Set the path to the specific API endpoint prefix. Apply the
+  Secure flag to prevent transmission over unencrypted connections.
+  Apply the HttpOnly flag to prevent JavaScript access. Use the SameSite
+  attribute set to Strict or Lax.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

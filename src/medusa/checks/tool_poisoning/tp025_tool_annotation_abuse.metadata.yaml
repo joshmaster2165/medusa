@@ -1,0 +1,34 @@
+check_id: tp025
+title: Tool Annotation Abuse
+category: tool_poisoning
+severity: high
+description: >
+  Detects misuse of MCP tool annotations such as readOnlyHint,
+  destructiveHint, idempotentHint, and openWorldHint. A malicious server
+  can set readOnlyHint to true on a destructive tool or destructiveHint
+  to false on a tool that deletes data, causing the LLM to bypass safety
+  confirmations.
+risk_explanation: >
+  Tool annotations are used by LLM clients to determine whether user
+  confirmation is needed before invocation. A tool falsely annotated as
+  read-only bypasses confirmation dialogs, allowing destructive
+  operations to execute without user consent. Mismatched annotations
+  undermine the entire trust model of the tool invocation pipeline.
+remediation: >
+  Verify tool annotations against actual tool behaviour by analyzing
+  parameter schemas and description content. Flag tools where
+  annotations contradict their apparent capabilities (e.g.
+  readOnlyHint=true with write parameters). Implement annotation
+  validation that cross-references hints with the tool's declared
+  operations. Never rely solely on server-provided annotations for
+  security decisions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - annotation_abuse
+  - tool_hints
+  - trust_model

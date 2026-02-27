@@ -1,0 +1,30 @@
+check_id: priv007
+title: Sudo/Root Elevation
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools that execute commands with elevated privileges using
+  sudo, su, runas, or equivalent mechanisms. Tools running as root or
+  with elevated privileges can modify any system resource and bypass all
+  OS-level access controls.
+risk_explanation: >
+  Tools executing with root or elevated privileges have unrestricted
+  access to the entire system, including all files, processes, network
+  interfaces, and kernel settings. An attacker exploiting a root-level
+  tool can install rootkits, modify system configuration, access any
+  user's data, and establish persistent backdoors that survive reboots.
+remediation: >
+  Never run MCP tools with elevated privileges. Use dedicated service
+  accounts with the minimum required permissions. Implement capability-
+  based security (Linux capabilities) instead of full root access. Run
+  MCP servers in unprivileged containers with dropped capabilities.
+  Audit all tools for sudo or elevation commands.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - sudo
+  - root
+  - privilege_escalation

@@ -1,0 +1,31 @@
+check_id: auth005
+title: Weak Token Entropy
+category: authentication
+severity: high
+description: >
+  Detects authentication tokens with insufficient randomness or entropy.
+  Tokens generated with weak random sources or short lengths are
+  susceptible to brute-force attacks and prediction, allowing attackers
+  to forge valid authentication credentials.
+risk_explanation: >
+  Low-entropy tokens can be guessed or brute-forced by an attacker in a
+  feasible timeframe. Once a valid token is predicted, the attacker
+  gains full access to the MCP server with the token holder's
+  privileges. This is especially dangerous for tokens that grant
+  administrative or write-level access to tools and resources.
+remediation: >
+  Generate tokens using cryptographically secure random number
+  generators (e.g. crypto.randomBytes, secrets.token_urlsafe). Ensure
+  tokens are at least 256 bits (32 bytes) of entropy. Avoid sequential,
+  timestamp-based, or UUID v1 tokens for authentication purposes. Use
+  established libraries for token generation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - token_entropy
+  - brute_force
+  - randomness

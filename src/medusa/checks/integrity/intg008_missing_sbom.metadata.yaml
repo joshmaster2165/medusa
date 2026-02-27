@@ -1,0 +1,29 @@
+check_id: intg008
+title: Missing Software Bill of Materials
+category: integrity
+severity: medium
+description: >
+  Checks whether the MCP server provides a Software Bill of Materials
+  (SBOM). An SBOM lists all components and dependencies, enabling supply
+  chain transparency and vulnerability tracking.
+risk_explanation: >
+  Without an SBOM, it is impossible to quickly determine whether the MCP
+  server is affected by newly disclosed vulnerabilities. When a critical
+  CVE is announced, organisations without SBOMs must manually audit each
+  server's dependencies, delaying incident response and leaving
+  vulnerable systems exposed.
+remediation: >
+  Generate an SBOM in a standard format (SPDX or CycloneDX) for the MCP
+  server. Include the SBOM in the server's distribution package and
+  update it with each release. Use automated SBOM generation tools
+  integrated into the build pipeline. Regularly scan the SBOM against
+  vulnerability databases.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - sbom
+  - supply_chain
+  - transparency

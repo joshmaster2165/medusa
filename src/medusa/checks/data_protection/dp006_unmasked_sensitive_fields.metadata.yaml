@@ -1,0 +1,30 @@
+check_id: dp006
+title: Unmasked Sensitive Fields
+category: data_protection
+severity: high
+description: >
+  Detects MCP tool outputs and resource contents that return PII or
+  secrets (e.g. full SSNs, credit card numbers, API keys) without
+  masking or redaction. Sensitive fields should be partially or fully
+  masked before being sent to LLM clients.
+risk_explanation: >
+  Unmasked sensitive fields in tool responses are passed directly into
+  the LLM context window, where they may be logged, cached, or
+  inadvertently included in responses to end users. This creates data
+  breach vectors and violates privacy regulations such as GDPR, CCPA,
+  and PCI-DSS.
+remediation: >
+  Apply field-level masking or tokenisation to all sensitive data before
+  it leaves the MCP server. Use allow-lists for fields that may be
+  returned in full and mask everything else by default. Implement a data
+  classification layer that automatically identifies and redacts PII and
+  secrets.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - pii
+  - masking
+  - secrets

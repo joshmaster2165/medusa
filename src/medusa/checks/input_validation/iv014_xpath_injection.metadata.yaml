@@ -1,0 +1,31 @@
+check_id: iv014
+title: XPath Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters used in XPath query construction without
+  proper validation. Parameters incorporated into XPath expressions can
+  inject query logic to bypass authentication, access unauthorized data,
+  or enumerate XML document structure.
+risk_explanation: >
+  XPath injection allows an attacker to manipulate XML queries to access
+  data they should not see or bypass authentication. An injected ' or
+  1=1 expression can return all nodes regardless of access controls.
+  Unlike SQL injection, XPath injection has no privilege system, so
+  successful injection grants access to the entire XML document.
+remediation: >
+  Use parameterized XPath queries where available. Escape XPath special
+  characters in user input before query construction. Validate input
+  against expected patterns and reject strings containing XPath
+  operators and brackets. Consider using XQuery with parameterized
+  variables instead of string concatenation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - xpath_injection
+  - xml_query
+  - data_access

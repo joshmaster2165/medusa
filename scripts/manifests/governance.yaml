@@ -1,0 +1,667 @@
+category: governance
+checks:
+  - id: gov001
+    slug: missing_security_policy
+    title: "Missing Security Policy"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a documented security policy
+      defining security requirements, controls, and responsibilities for the
+      MCP server and its integrations. A security policy establishes the baseline
+      for secure operation and communicates expectations to all stakeholders.
+    risk_explanation: >
+      Without a documented security policy, MCP server deployments operate without
+      defined security requirements or accountability. Developers and operators
+      make ad-hoc security decisions without consistent guidance, leading to
+      gaps in protection. Incident response is hampered because there is no
+      reference for expected security posture. Compliance audits cannot assess
+      conformance to requirements that do not exist.
+    remediation: >
+      Create and maintain a comprehensive security policy for the MCP server
+      deployment. The policy should define security requirements for authentication,
+      authorization, data protection, transport security, logging, and incident
+      response. Specify roles and responsibilities for security management. Review
+      and update the policy annually or when significant changes occur. Ensure
+      all operators and developers acknowledge the policy.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov002
+    slug: missing_privacy_policy
+    title: "Missing Privacy Policy"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a privacy policy defining how
+      user data, conversation content, tool inputs, and tool outputs are
+      collected, processed, stored, and retained. MCP servers often process
+      sensitive personal information through LLM interactions and tool invocations.
+    risk_explanation: >
+      MCP servers process potentially sensitive data through tool invocations and
+      LLM interactions, including personal information, business data, and
+      conversation contents. Without a privacy policy, there is no defined
+      framework for data handling, retention, or user rights. This creates legal
+      and regulatory risk, particularly under GDPR, CCPA, and other privacy
+      regulations that require transparent data processing practices.
+    remediation: >
+      Develop a privacy policy that covers all data processed by the MCP server
+      including user inputs, tool parameters, tool outputs, conversation history,
+      and session metadata. Define data retention periods, data subject rights,
+      and data processing lawful bases. Specify how data is shared with LLM
+      providers and external services accessed by tools. Make the privacy policy
+      accessible to all users and review it regularly for regulatory compliance.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov003
+    slug: missing_terms_of_service
+    title: "Missing Terms of Service"
+    severity: low
+    description: >
+      Detects MCP server deployments that lack terms of service defining
+      acceptable use, limitations of liability, and user responsibilities. Terms
+      of service establish the contractual framework for MCP server usage and
+      set expectations for both operators and users.
+    risk_explanation: >
+      Without terms of service, MCP server operators have no legal framework for
+      managing user behavior, limiting liability, or enforcing acceptable use
+      policies. Users may misuse the server for purposes it was not designed for,
+      abuse tool access in ways that affect other users, or hold the operator
+      liable for damages caused by tool invocations. The absence of terms creates
+      legal uncertainty for all parties.
+    remediation: >
+      Develop terms of service that define acceptable use policies for the MCP
+      server, including permitted and prohibited actions, liability limitations,
+      and service level expectations. Address the unique aspects of MCP server
+      usage including tool invocation responsibilities, data processing consent,
+      and autonomous agent behavior. Have the terms reviewed by legal counsel
+      and require user acceptance before granting access.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov004
+    slug: missing_compliance_mapping
+    title: "Missing Compliance Mapping"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a mapping between security controls
+      and applicable compliance frameworks such as SOC 2, ISO 27001, NIST CSF,
+      or industry-specific regulations. Compliance mapping demonstrates that
+      security controls address regulatory requirements.
+    risk_explanation: >
+      Without compliance mapping, organizations cannot demonstrate that their MCP
+      server deployment meets regulatory requirements. This creates audit failures,
+      regulatory fines, and potential legal liability. MCP servers that process
+      sensitive data may be subject to multiple compliance frameworks, and without
+      a mapping, gaps between implemented controls and required controls remain
+      undetected until an audit or security incident reveals them.
+    remediation: >
+      Create a compliance mapping document that maps each security control
+      implemented in the MCP server deployment to the applicable compliance
+      framework requirements. Identify gaps where compliance requirements are not
+      met by current controls. Prioritize remediation of compliance gaps based on
+      regulatory risk. Maintain the mapping as controls and regulations evolve.
+      Use automated compliance monitoring tools where available.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov005
+    slug: missing_incident_response_plan
+    title: "Missing Incident Response Plan"
+    severity: high
+    description: >
+      Detects MCP server deployments that lack a documented incident response
+      plan for security events. Without an incident response plan, organizations
+      cannot effectively detect, contain, eradicate, and recover from security
+      incidents affecting MCP server operations.
+    risk_explanation: >
+      MCP servers face unique security risks including prompt injection, tool
+      poisoning, session hijacking, and data exfiltration through tool abuse.
+      Without an incident response plan tailored to these risks, organizations
+      respond to incidents ad-hoc, leading to delayed containment, incomplete
+      eradication, lost evidence, and prolonged recovery times. The autonomous
+      nature of LLM agents means incidents can escalate rapidly, making
+      preparedness critical.
+    remediation: >
+      Develop an incident response plan that addresses MCP-specific security
+      incidents including tool poisoning, prompt injection, session compromise,
+      data exfiltration, and agent manipulation. Define incident severity levels,
+      escalation procedures, communication plans, and recovery procedures. Include
+      specific playbooks for common MCP attack scenarios. Conduct regular incident
+      response exercises and update the plan based on lessons learned.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov006
+    slug: missing_change_management
+    title: "Missing Change Management Process"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a formal change management process
+      for tool modifications, server configuration changes, and security policy
+      updates. Uncontrolled changes can introduce security vulnerabilities,
+      break existing security controls, or disrupt service availability.
+    risk_explanation: >
+      Without change management, modifications to MCP server tools, configurations,
+      and policies are made without review, testing, or approval. This allows
+      security vulnerabilities to be introduced through code changes, misconfig-
+      urations to weaken security controls, and untested changes to cause service
+      disruptions. In MCP environments, a single tool change can affect all
+      connected LLM clients and create new attack vectors for prompt injection
+      or data exfiltration.
+    remediation: >
+      Implement a change management process that requires review and approval for
+      all changes to MCP server tools, configurations, and security policies.
+      Include security review in the change approval process. Test changes in a
+      staging environment before production deployment. Maintain a change log with
+      rollback procedures. Implement automated testing that validates security
+      controls after changes are applied.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov007
+    slug: missing_access_review
+    title: "Missing Access Review Process"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack periodic access reviews to verify
+      that user permissions, tool access grants, and API keys remain appropriate.
+      Without access reviews, permissions accumulate over time and former users
+      may retain access they no longer need.
+    risk_explanation: >
+      Without periodic access reviews, MCP server permissions drift from their
+      intended state. Users accumulate tool access they no longer need, former
+      employees retain active credentials, and API keys created for temporary
+      purposes remain valid indefinitely. This expanded access surface increases
+      the risk of unauthorized tool invocations, data access, and privilege
+      escalation. Stale credentials are prime targets for attackers.
+    remediation: >
+      Implement a periodic access review process that audits all user permissions,
+      tool access grants, API keys, and service accounts associated with the MCP
+      server. Conduct reviews quarterly at minimum. Revoke access for users who
+      no longer require it. Rotate long-lived credentials. Implement automated
+      access certification workflows that require managers to confirm each user's
+      continued need for access.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov008
+    slug: missing_vulnerability_management
+    title: "Missing Vulnerability Management"
+    severity: high
+    description: >
+      Detects MCP server deployments that lack a vulnerability management program
+      covering dependency scanning, security patching, and vulnerability
+      assessment. MCP servers depend on numerous libraries and frameworks that
+      may contain known vulnerabilities.
+    risk_explanation: >
+      MCP servers depend on LLM client libraries, web frameworks, database drivers,
+      and numerous other dependencies that regularly receive security patches.
+      Without vulnerability management, known vulnerabilities in these components
+      remain unpatched, providing attackers with documented exploitation techniques.
+      The MCP protocol specification itself evolves, and without tracking security
+      advisories, servers may miss critical protocol-level security fixes.
+    remediation: >
+      Implement a vulnerability management program that includes automated
+      dependency scanning, regular security assessments, and a defined patching
+      cadence. Use tools like Dependabot, Snyk, or OWASP Dependency-Check to
+      identify known vulnerabilities in MCP server dependencies. Prioritize
+      patching based on severity and exploitability. Track MCP protocol security
+      advisories and apply relevant fixes. Conduct periodic penetration testing
+      focused on MCP-specific attack vectors.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov009
+    slug: missing_data_governance
+    title: "Missing Data Governance Framework"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a data governance framework
+      defining data ownership, classification, handling requirements, and
+      lifecycle management for data processed through tool invocations and
+      LLM interactions.
+    risk_explanation: >
+      Without data governance, organizations cannot ensure that data processed by
+      MCP servers is handled appropriately. Different types of data (PII,
+      financial data, health records, proprietary information) require different
+      handling controls, but without classification and governance, all data
+      receives the same minimal treatment. This leads to regulatory violations,
+      data breaches, and loss of customer trust when sensitive data is inadequately
+      protected.
+    remediation: >
+      Establish a data governance framework that defines data classification
+      levels, ownership, handling requirements, and retention policies for all
+      data processed by the MCP server. Classify tools by the sensitivity of
+      data they process and apply appropriate controls. Implement data lineage
+      tracking that records how data flows through tool invocations. Define data
+      retention and deletion policies. Appoint data stewards responsible for
+      governance compliance.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov010
+    slug: missing_third_party_risk
+    title: "Missing Third-Party Risk Assessment"
+    severity: high
+    description: >
+      Detects MCP server deployments that integrate with external MCP servers,
+      APIs, or services without performing third-party risk assessments. External
+      integrations introduce supply chain risks including data exposure to third
+      parties and dependency on their security posture.
+    risk_explanation: >
+      MCP servers often connect to external services through tool invocations,
+      including cloud APIs, SaaS platforms, and third-party MCP servers. Each
+      external integration introduces risk from the third party's security
+      posture, data handling practices, and operational reliability. Without
+      risk assessment, organizations accept unknown risks from every external
+      integration, potentially exposing sensitive data to parties that do not
+      meet their security requirements.
+    remediation: >
+      Conduct third-party risk assessments for all external services integrated
+      with the MCP server. Evaluate each third party's security certifications,
+      data handling practices, incident response capabilities, and business
+      continuity plans. Require security questionnaires or SOC 2 reports from
+      critical third parties. Implement data minimization for third-party
+      interactions. Review third-party risk assessments annually and when
+      significant changes occur.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov011
+    slug: missing_business_continuity
+    title: "Missing Business Continuity Plan"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a business continuity plan for
+      maintaining MCP server operations during disruptions including infrastructure
+      failures, security incidents, and service provider outages.
+    risk_explanation: >
+      MCP servers may become critical infrastructure for organizations that depend
+      on them for automated workflows, data processing, and business operations.
+      Without a business continuity plan, disruptions to the MCP server cause
+      unplanned downtime, data loss, and business process failures. The
+      interconnected nature of MCP tool invocations means a single service
+      disruption can cascade across multiple dependent workflows.
+    remediation: >
+      Develop a business continuity plan that addresses MCP server availability
+      requirements including maximum tolerable downtime, recovery point objectives,
+      and failover procedures. Identify critical tool dependencies and plan for
+      their unavailability. Implement redundancy for critical MCP server components.
+      Define communication procedures for service disruptions. Test the continuity
+      plan regularly through tabletop exercises and failover drills.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov012
+    slug: missing_disaster_recovery
+    title: "Missing Disaster Recovery Plan"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a disaster recovery plan for
+      restoring service after catastrophic events including data center failures,
+      ransomware attacks, and data corruption. Disaster recovery ensures the
+      ability to restore MCP server operations from a known good state.
+    risk_explanation: >
+      Without disaster recovery planning, catastrophic events affecting the MCP
+      server infrastructure can result in permanent data loss, extended outages,
+      and inability to restore service. MCP servers may store critical
+      configuration, tool definitions, user data, and audit logs that must be
+      recoverable. Ransomware attacks targeting MCP infrastructure can encrypt
+      all server data and configurations, requiring restoration from backups
+      that may not exist without a disaster recovery plan.
+    remediation: >
+      Develop a disaster recovery plan that includes backup and restoration
+      procedures for all MCP server components including configurations, tool
+      definitions, user data, and audit logs. Define recovery time objectives
+      (RTO) and recovery point objectives (RPO). Implement automated backups with
+      off-site storage. Test disaster recovery procedures regularly through
+      restoration drills. Maintain runbooks for common disaster scenarios.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov013
+    slug: missing_sla_definition
+    title: "Missing SLA Definition"
+    severity: low
+    description: >
+      Detects MCP server deployments that lack defined service level agreements
+      (SLAs) specifying availability targets, performance requirements, and
+      support response times. SLAs set expectations for service quality and
+      provide a framework for measuring and reporting on operational performance.
+    risk_explanation: >
+      Without SLAs, there are no measurable commitments for MCP server
+      availability, performance, or support. Users and dependent systems have no
+      basis for planning around MCP server reliability. Performance degradation
+      goes unmeasured and unreported because there are no defined thresholds.
+      This creates a disconnect between user expectations and actual service
+      delivery that manifests as user dissatisfaction and unplanned workflow
+      disruptions.
+    remediation: >
+      Define SLAs for the MCP server deployment including availability targets
+      (such as 99.9% uptime), response time requirements (such as less than 200ms
+      p95), and support response times for different severity levels. Implement
+      monitoring that measures SLA compliance continuously. Publish SLA dashboards
+      for transparency. Define remediation procedures for SLA violations.
+      Review SLAs annually and adjust based on operational history.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov014
+    slug: missing_regulatory_compliance
+    title: "Missing Regulatory Compliance"
+    severity: high
+    description: >
+      Detects MCP server deployments that have not assessed or addressed
+      applicable regulatory requirements. MCP servers processing personal data,
+      financial information, or health records may be subject to GDPR, CCPA,
+      PCI DSS, HIPAA, or other regulations that impose specific security and
+      data handling requirements.
+    risk_explanation: >
+      Non-compliance with applicable regulations exposes organizations to
+      significant financial penalties, legal action, and reputational damage.
+      GDPR violations can result in fines up to 4% of global annual revenue.
+      HIPAA violations can result in fines up to $1.5 million per violation
+      category. MCP servers that process regulated data through tool invocations
+      are subject to the same regulatory requirements as any other data processing
+      system, and the autonomous nature of LLM agents increases the risk of
+      inadvertent violations.
+    remediation: >
+      Conduct a regulatory assessment to identify all compliance requirements
+      applicable to the MCP server deployment based on the types of data
+      processed, the jurisdictions involved, and the industry. Map current
+      security controls to regulatory requirements and identify gaps. Implement
+      remediation plans for compliance gaps with defined timelines. Engage legal
+      and compliance teams to validate regulatory interpretations. Maintain
+      compliance documentation and undergo regular compliance audits.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov015
+    slug: missing_audit_schedule
+    title: "Missing Audit Schedule"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a defined schedule for security
+      audits and assessments. Without regular audits, security controls degrade
+      over time, new vulnerabilities go undetected, and compliance drift occurs
+      without correction.
+    risk_explanation: >
+      Security controls are not static; they degrade over time due to
+      configuration drift, software updates, changing threat landscapes, and
+      operational pressures. Without scheduled audits, these degradations
+      accumulate undetected until a security incident reveals them. MCP servers
+      are particularly susceptible because the rapidly evolving MCP ecosystem
+      introduces new attack vectors that may not be covered by initial security
+      controls.
+    remediation: >
+      Establish a security audit schedule that includes annual comprehensive
+      security assessments, quarterly vulnerability assessments, and monthly
+      configuration reviews. Define audit scope to cover MCP-specific security
+      controls including tool authentication, input validation, prompt injection
+      defenses, and session management. Use both internal and external auditors.
+      Track audit findings through remediation to closure. Report audit results
+      to management stakeholders.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov016
+    slug: missing_training_program
+    title: "Missing Security Training Program"
+    severity: medium
+    description: >
+      Detects MCP server deployments where developers and operators have not
+      received security training covering MCP-specific threats including tool
+      poisoning, prompt injection, SSRF through tools, and session management
+      vulnerabilities.
+    risk_explanation: >
+      Developers and operators who are unaware of MCP-specific security risks
+      inadvertently introduce vulnerabilities during development and operations.
+      MCP security threats such as tool poisoning, indirect prompt injection,
+      and sampling attacks are novel and not covered by traditional security
+      training. Without MCP-specific training, teams cannot design secure tools,
+      configure servers defensively, or detect MCP-specific attacks during
+      operations.
+    remediation: >
+      Develop and deliver security training covering MCP-specific threats and
+      defenses. Include topics such as tool poisoning prevention, prompt injection
+      defense, SSRF mitigation in tools, secure session management, and sampling
+      security. Train developers on secure tool development practices and
+      operators on secure server configuration. Update training content as the
+      MCP threat landscape evolves. Track training completion and require annual
+      refresher training.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov017
+    slug: missing_asset_inventory
+    title: "Missing Asset Inventory"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a comprehensive inventory of
+      all MCP servers, tools, resources, integrations, and dependencies. Without
+      an asset inventory, organizations cannot assess their attack surface or
+      ensure all components receive appropriate security controls.
+    risk_explanation: >
+      Without an asset inventory, organizations have an incomplete picture of
+      their MCP deployment surface. Unknown MCP servers, untracked tool
+      integrations, and undocumented dependencies create blind spots in security
+      monitoring and vulnerability management. Shadow MCP servers deployed by
+      individual teams may lack security controls entirely. Forgotten tools may
+      retain access to sensitive resources. The asset inventory gap grows over
+      time as new components are added without tracking.
+    remediation: >
+      Create and maintain a comprehensive inventory of all MCP servers, tools,
+      resources, external integrations, and dependencies. Include metadata such
+      as owner, purpose, data classification, and security controls for each
+      asset. Implement automated discovery that detects new MCP servers and tools
+      as they are deployed. Review the inventory quarterly for accuracy. Use the
+      inventory as the basis for security assessments, vulnerability management,
+      and access reviews.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov018
+    slug: missing_risk_assessment
+    title: "Missing Risk Assessment"
+    severity: high
+    description: >
+      Detects MCP server deployments that have not undergone a formal risk
+      assessment identifying threats, vulnerabilities, and potential impacts
+      specific to MCP security. Risk assessment is the foundation of a risk-
+      based security program that prioritizes controls based on actual threats.
+    risk_explanation: >
+      Without a risk assessment, security investments are not aligned with actual
+      threats. Organizations may over-invest in low-risk areas while leaving
+      high-risk threats unaddressed. MCP servers face unique risks that differ
+      from traditional web applications, including tool poisoning, prompt
+      injection, agentic attacks, and sampling abuse. A risk assessment that does
+      not account for these MCP-specific threats produces an incomplete picture
+      that leaves critical vulnerabilities unaddressed.
+    remediation: >
+      Conduct a formal risk assessment for the MCP server deployment that
+      identifies MCP-specific threats, evaluates existing vulnerabilities,
+      assesses potential business impacts, and prioritizes risks. Use a recognized
+      risk assessment framework such as NIST SP 800-30 or ISO 27005. Include
+      MCP-specific attack scenarios from the OWASP MCP Top 10. Produce a risk
+      register and risk treatment plan. Review and update the risk assessment
+      annually or when significant changes occur.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov019
+    slug: missing_data_classification_policy
+    title: "Missing Data Classification Policy"
+    severity: medium
+    description: >
+      Detects MCP server deployments that lack a data classification policy
+      defining sensitivity levels and handling requirements for data processed
+      through tool invocations. Without classification, all data receives the
+      same handling regardless of sensitivity, leading to either over-protection
+      of low-sensitivity data or under-protection of high-sensitivity data.
+    risk_explanation: >
+      MCP servers process data of varying sensitivity through tool invocations,
+      from public web content to highly confidential credentials and personal
+      information. Without data classification, security controls cannot be
+      applied proportionally. Low-sensitivity data may be over-protected, wasting
+      resources, while high-sensitivity data may be under-protected, creating
+      breach risk. LLM agents cannot make informed decisions about data handling
+      without classification metadata, increasing the risk of inadvertent
+      exposure.
+    remediation: >
+      Define a data classification policy with at least three levels (such as
+      public, internal, and confidential) and specify handling requirements for
+      each level. Classify tool inputs and outputs by sensitivity. Implement
+      technical controls that enforce classification-based handling such as
+      encryption requirements, access restrictions, and retention limits. Tag
+      data with classification metadata throughout the MCP processing pipeline.
+      Train developers and operators on the classification policy.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise
+
+  - id: gov020
+    slug: missing_vendor_assessment
+    title: "Missing Vendor Security Assessment"
+    severity: high
+    description: >
+      Detects MCP server deployments that use third-party MCP servers, tools, or
+      LLM providers without conducting vendor security assessments. Third-party
+      vendors that process data through MCP integrations must meet security
+      requirements commensurate with the sensitivity of the data they handle.
+    risk_explanation: >
+      Third-party MCP server vendors and tool providers have direct access to
+      data flowing through tool invocations and may store, process, or transmit
+      this data in ways the organization cannot control. Without vendor security
+      assessments, organizations trust vendors with sensitive data based on
+      marketing claims rather than verified security practices. A vendor security
+      breach can expose all data processed through their MCP servers or tools,
+      and the organization bears the regulatory and reputational consequences.
+    remediation: >
+      Conduct security assessments for all third-party MCP server vendors, tool
+      providers, and LLM service providers. Request SOC 2 Type II reports,
+      penetration test summaries, and security certifications. Evaluate vendors
+      against your organization's security requirements. Include security
+      requirements in vendor contracts and service agreements. Conduct annual
+      vendor security reviews and require breach notification commitments.
+      Maintain a vendor risk register that tracks assessment status and findings.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - governance
+      - compliance
+      - enterprise

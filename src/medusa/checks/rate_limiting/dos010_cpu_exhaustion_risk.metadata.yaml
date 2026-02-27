@@ -1,0 +1,34 @@
+check_id: dos010
+title: CPU Exhaustion Risk
+category: rate_limiting
+severity: medium
+description: >
+  Detects MCP server tools that can cause excessive CPU usage through
+  computationally intensive operations such as complex regex evaluation,
+  cryptographic operations, data transformation, or algorithmic
+  processing without CPU time limits.
+risk_explanation: >
+  CPU-intensive MCP tool invocations degrade performance for all
+  sessions sharing the server. An attacker can trigger worst-case
+  computational complexity through crafted inputs such as regex patterns
+  causing catastrophic backtracking, deeply nested JSON structures, or
+  large matrix operations. Unlike memory exhaustion which is immediately
+  fatal, CPU exhaustion causes progressive degradation, making detection
+  more difficult while still rendering the server effectively unusable
+  for all clients.
+remediation: >
+  Implement CPU time limits for individual tool invocations using
+  process-level resource controls. Use algorithms with predictable
+  complexity and avoid operations vulnerable to algorithmic complexity
+  attacks. Implement input validation that rejects inputs likely to
+  trigger worst-case performance. Deploy CPU usage monitoring and
+  alerting. Use process priority or cgroup controls to ensure tool
+  invocations cannot starve the core server process.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

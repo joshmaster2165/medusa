@@ -1,0 +1,35 @@
+check_id: gov017
+title: Missing Asset Inventory
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a comprehensive inventory of
+  all MCP servers, tools, resources, integrations, and dependencies.
+  Without an asset inventory, organizations cannot assess their attack
+  surface or ensure all components receive appropriate security
+  controls.
+risk_explanation: >
+  Without an asset inventory, organizations have an incomplete picture
+  of their MCP deployment surface. Unknown MCP servers, untracked tool
+  integrations, and undocumented dependencies create blind spots in
+  security monitoring and vulnerability management. Shadow MCP servers
+  deployed by individual teams may lack security controls entirely.
+  Forgotten tools may retain access to sensitive resources. The asset
+  inventory gap grows over time as new components are added without
+  tracking.
+remediation: >
+  Create and maintain a comprehensive inventory of all MCP servers,
+  tools, resources, external integrations, and dependencies. Include
+  metadata such as owner, purpose, data classification, and security
+  controls for each asset. Implement automated discovery that detects
+  new MCP servers and tools as they are deployed. Review the inventory
+  quarterly for accuracy. Use the inventory as the basis for security
+  assessments, vulnerability management, and access reviews.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

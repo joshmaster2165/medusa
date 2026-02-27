@@ -1,0 +1,34 @@
+check_id: agent014
+title: Indirect Prompt Injection via Tools
+category: agentic_behavior
+severity: critical
+description: >
+  Detects MCP configurations where tool outputs can contain prompt
+  injection payloads that alter the agent's behavior. When tools return
+  data from external sources such as web pages, files, or databases,
+  this data may contain hidden instructions that the LLM interprets as
+  commands.
+risk_explanation: >
+  Indirect prompt injection via MCP tools is one of the most critical
+  risks in agentic systems. Tool outputs containing attacker-controlled
+  content from web pages, emails, documents, or databases can embed
+  instructions that the LLM follows without user awareness. This enables
+  goal hijacking, data exfiltration, unauthorized tool invocations, and
+  complete compromise of the agent's actions. The attack is especially
+  dangerous because tool outputs are typically treated as trusted data.
+remediation: >
+  Treat all tool outputs as untrusted content that may contain prompt
+  injection payloads. Implement output sanitization that strips or
+  neutralizes potential injection patterns in tool responses. Use
+  content separation techniques that distinguish between data and
+  instructions in the agent's context. Apply instruction hierarchy that
+  prevents tool-provided instructions from overriding user instructions.
+  Monitor for behavioral changes after processing tool outputs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

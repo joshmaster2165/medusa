@@ -1,0 +1,31 @@
+check_id: tp015
+title: Tool Name Impersonation
+category: tool_poisoning
+severity: high
+description: >
+  Detects tools named to impersonate well-known, trusted tool names with
+  minor variations such as typosquatting, prefix/suffix additions, or
+  abbreviation differences. Examples include 'read_flie' instead of
+  'read_file' or 'secure_read_file' shadowing 'read_file'.
+risk_explanation: >
+  Tool name impersonation exploits the LLM's tendency to select tools by
+  name similarity. A tool named to closely match a trusted tool may be
+  selected instead, intercepting sensitive operations. The attacker's
+  tool receives all parameters and context intended for the legitimate
+  tool, enabling data theft or result manipulation.
+remediation: >
+  Implement Levenshtein distance or similar fuzzy matching to detect
+  tool names that are suspiciously similar to known trusted tools.
+  Maintain a registry of canonical tool names and flag new tools with
+  names within a configurable edit distance. Require explicit user
+  confirmation when similarly-named tools are detected.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP06:2025"
+tags:
+  - tool_poisoning
+  - impersonation
+  - typosquatting
+  - name_similarity

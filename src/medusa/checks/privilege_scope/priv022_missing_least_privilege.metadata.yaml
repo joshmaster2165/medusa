@@ -1,0 +1,30 @@
+check_id: priv022
+title: Missing Least Privilege
+category: privilege_scope
+severity: medium
+description: >
+  Detects MCP servers requesting more permissions than their tools
+  require. Servers that request broad filesystem, network, or system
+  access when their tools only need narrow capabilities violate the
+  principle of least privilege.
+risk_explanation: >
+  Over-privileged servers amplify the impact of any vulnerability. A
+  tool that only needs to read a single configuration file but has full
+  filesystem access allows exploitation to read any file on the system.
+  Excess permissions are dormant attack surface that becomes exploitable
+  through any vulnerability in the server's tools.
+remediation: >
+  Audit all server permissions against actual tool requirements. Remove
+  permissions that are not actively used by any tool. Implement
+  capability-based security where each tool declares its required
+  permissions. Use the MCP tool annotations to document required
+  capabilities and validate them against actual server permissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - least_privilege
+  - over_privileged
+  - capability_audit

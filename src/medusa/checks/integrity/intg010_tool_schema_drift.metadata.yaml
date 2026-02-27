@@ -1,0 +1,28 @@
+check_id: intg010
+title: Tool Schema Drift Detection
+category: integrity
+severity: high
+description: >
+  Detects changes to MCP tool input schemas that occur without a
+  corresponding version bump. Schema drift can indicate tool tampering
+  or uncontrolled changes that break client expectations.
+risk_explanation: >
+  When tool schemas change without a version update, clients that rely
+  on the previous schema may send incorrect data or fail to validate
+  tool outputs. Attackers can exploit schema drift to add hidden
+  parameters that exfiltrate data or to change tool behavior without
+  triggering version-based security reviews.
+remediation: >
+  Implement schema versioning that requires a version bump for any
+  change to a tool's input or output schema. Use schema comparison in CI
+  to detect drift automatically. Maintain a schema changelog and require
+  review for all schema modifications.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - schema
+  - versioning
+  - drift_detection

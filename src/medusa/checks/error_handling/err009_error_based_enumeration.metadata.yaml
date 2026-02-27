@@ -1,0 +1,28 @@
+check_id: err009
+title: Error-Based Enumeration
+category: error_handling
+severity: medium
+description: >
+  Detects MCP servers that return different error messages or codes for
+  different failure conditions in a way that allows attackers to
+  enumerate valid resources, users, or tools. For example, returning
+  "tool not found" vs "access denied" reveals whether a tool exists.
+risk_explanation: >
+  Differential error responses allow attackers to enumerate valid tool
+  names, resource URIs, user accounts, or internal endpoints by
+  observing which errors are returned for different inputs. This
+  reconnaissance phase enables targeted attacks against confirmed
+  resources and reduces the attacker effort needed for exploitation.
+remediation: >
+  Return consistent, generic error messages for all unauthorized or
+  invalid access attempts. Use the same error code and message for "not
+  found" and "access denied" scenarios. Implement rate limiting on error
+  responses to slow enumeration attempts. Log enumeration patterns for
+  security monitoring.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

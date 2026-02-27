@@ -1,0 +1,31 @@
+check_id: sess019
+title: Missing Session Audit Trail
+category: session_management
+severity: medium
+description: >
+  Detects MCP server deployments that do not maintain an audit trail of
+  session lifecycle events including creation, authentication, tool
+  invocations, privilege changes, and termination. Without session
+  auditing, security incidents involving compromised sessions cannot be
+  investigated or detected.
+risk_explanation: >
+  Without session audit trails, organizations cannot detect session
+  hijacking, investigate security incidents, or demonstrate compliance
+  with regulatory requirements. When an MCP session is compromised, the
+  lack of audit data makes it impossible to determine what tools were
+  invoked, what data was accessed, or how long the attacker maintained
+  access. This hampers incident response and forensic analysis.
+remediation: >
+  Implement comprehensive session audit logging that records all session
+  lifecycle events. Log session creation with client metadata,
+  authentication events, all tool invocations with timestamps, privilege
+  changes, and session termination reasons. Store audit logs in a
+  tamper-resistant log store with appropriate retention periods.
+  Implement real-time alerting on suspicious session activity patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

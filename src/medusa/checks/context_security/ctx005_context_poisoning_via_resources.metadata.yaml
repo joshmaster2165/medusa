@@ -1,0 +1,30 @@
+check_id: ctx005
+title: Context Poisoning via Resource Content
+category: context_security
+severity: high
+description: >
+  Detects MCP resource content that contains adversarial text designed
+  to manipulate LLM behavior. Malicious resources can embed hidden
+  instructions that the LLM follows when processing the content.
+risk_explanation: >
+  Resource content (files, database records, web pages) fetched by MCP
+  servers is injected into the LLM context as trusted data. An attacker
+  who controls the resource content can embed instructions that the LLM
+  interprets as directives, causing it to perform unauthorized actions,
+  reveal sensitive information, or alter its behavior in ways the user
+  did not intend.
+remediation: >
+  Treat all resource content as untrusted input. Implement content
+  sanitization that strips or escapes instruction-like patterns from
+  resource data before it enters the LLM context. Use content tagging to
+  clearly mark resource content as data, not instructions. Apply input
+  validation to resource content fetched by MCP servers.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - context_security
+  - context_poisoning
+  - resources
+  - prompt_injection

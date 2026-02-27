@@ -1,0 +1,29 @@
+check_id: audit004
+title: Log Tampering Risk
+category: audit_logging
+severity: high
+description: >
+  Detects MCP server log storage configurations where logs are stored in
+  writable locations without integrity protections. Attackers who
+  compromise the server can modify or delete logs to cover their tracks.
+risk_explanation: >
+  If logs are stored in locations writable by the MCP server process, an
+  attacker who compromises the server can delete or modify log entries
+  to erase evidence of their activities. This defeats the purpose of
+  audit logging and allows attackers to operate undetected for extended
+  periods.
+remediation: >
+  Ship logs to a write-only remote destination that the MCP server
+  cannot modify or delete. Use append-only log storage with
+  cryptographic chaining to detect tampering. Implement log integrity
+  verification using hash chains or digital signatures. Separate log
+  storage permissions from the server's runtime permissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - log_integrity
+  - tampering
+  - security

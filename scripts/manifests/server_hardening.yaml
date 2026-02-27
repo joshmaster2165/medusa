@@ -1,0 +1,483 @@
+category: server_hardening
+checks:
+  - id: hard001
+    slug: unnecessary_services_enabled
+    title: "Unnecessary Services Enabled"
+    severity: medium
+    description: >
+      Detects MCP servers that expose capabilities, endpoints, or protocol
+      features beyond what is required for their intended function. Each
+      unnecessary service increases the attack surface and provides
+      additional vectors for exploitation.
+    risk_explanation: >
+      Every enabled service or capability is a potential attack vector.
+      Unnecessary MCP capabilities such as unused tool handlers, resource
+      endpoints, or prompt definitions provide attackers with additional
+      entry points to probe for vulnerabilities. Services that are enabled
+      but not actively maintained are especially dangerous as they may
+      contain unpatched security issues.
+    remediation: >
+      Audit all enabled MCP server capabilities and disable any that are
+      not required for the server intended function. Remove unused tool
+      definitions, resource handlers, and prompt endpoints. Apply the
+      principle of least functionality by only enabling the minimum set
+      of capabilities needed. Regularly review enabled services against
+      actual usage patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard002
+    slug: default_configuration
+    title: "Default Configuration in Production"
+    severity: high
+    description: >
+      Detects MCP servers deployed with default configuration values that
+      are intended for development or testing. Default configurations
+      typically use weak security settings, permissive access controls,
+      and debug-friendly options that are inappropriate for production.
+    risk_explanation: >
+      Default configurations are publicly documented and well-known to
+      attackers. Default ports, paths, credentials, and security settings
+      provide a predictable attack surface. Servers deployed with default
+      configurations often have overly permissive access controls, disabled
+      authentication, verbose logging that leaks information, and relaxed
+      rate limits that enable abuse.
+    remediation: >
+      Implement a mandatory configuration review process for production
+      deployments. Create environment-specific configuration profiles
+      that enforce production security requirements. Use configuration
+      validation that fails deployment if default values are detected
+      for security-critical settings. Document all configuration options
+      with their security implications.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard003
+    slug: missing_security_headers
+    title: "Missing Security Headers"
+    severity: medium
+    description: >
+      Detects MCP servers using HTTP-based transports that do not set
+      security-relevant response headers such as Content-Security-Policy,
+      X-Content-Type-Options, Strict-Transport-Security, X-Frame-Options,
+      and Cache-Control for sensitive responses.
+    risk_explanation: >
+      Missing security headers leave MCP clients vulnerable to content
+      type sniffing attacks, clickjacking through iframe embedding, and
+      insecure caching of sensitive responses. Without HSTS, connections
+      can be downgraded from HTTPS to HTTP. Missing CSP allows injection
+      of malicious scripts if MCP responses are rendered in web contexts.
+    remediation: >
+      Configure the MCP server HTTP transport to include all recommended
+      security headers. Set Content-Security-Policy with a restrictive
+      policy. Enable Strict-Transport-Security with a long max-age. Set
+      X-Content-Type-Options to nosniff. Set Cache-Control to no-store
+      for sensitive responses. Implement a security header middleware
+      that applies headers consistently to all responses.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard004
+    slug: directory_listing_enabled
+    title: "Directory Listing Enabled"
+    severity: medium
+    description: >
+      Detects MCP servers with file-based resource handlers that enable
+      directory listing, allowing clients to enumerate all files and
+      subdirectories within served paths. Directory listings reveal the
+      server file structure and expose files that may not be intended
+      for access.
+    risk_explanation: >
+      Directory listings expose the complete file structure of served
+      directories, revealing configuration files, backup files, temporary
+      files, and other resources that were not intended to be publicly
+      accessible. Attackers use directory listings to discover sensitive
+      files such as .env files, database backups, log files with
+      credentials, and source code.
+    remediation: >
+      Disable directory listing in all MCP server file-serving
+      configurations. Return 403 Forbidden or 404 Not Found for directory
+      access requests. If directory listing is required for functionality,
+      implement it through an explicit resource handler with access
+      controls rather than automatic file system directory listing.
+      Exclude sensitive file patterns from any listing results.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard005
+    slug: admin_interface_exposed
+    title: "Admin Interface Exposed"
+    severity: high
+    description: >
+      Detects MCP servers that expose administrative or management
+      interfaces to the same network or transport as client-facing
+      endpoints. Admin interfaces provide elevated capabilities including
+      server configuration, user management, and diagnostic access.
+    risk_explanation: >
+      Exposed admin interfaces provide attackers with high-value targets
+      that, if compromised, grant full control over the MCP server.
+      Admin endpoints typically allow modifying server configuration,
+      managing tool registrations, accessing diagnostic data, and
+      controlling user permissions. Even with authentication, exposing
+      admin interfaces increases the risk of brute force attacks and
+      credential stuffing.
+    remediation: >
+      Separate admin interfaces onto a dedicated management network or
+      transport that is not accessible to regular MCP clients. Implement
+      additional authentication requirements for admin access such as
+      multi-factor authentication. Restrict admin interface access to
+      specific IP addresses or VPN connections. Monitor and alert on all
+      admin interface access attempts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard006
+    slug: debug_endpoints_enabled
+    title: "Debug Endpoints Enabled"
+    severity: high
+    description: >
+      Detects MCP servers that expose debug or diagnostic endpoints in
+      production deployments. Debug endpoints may include health checks
+      with internal details, profiling endpoints, memory dumps, or
+      configuration inspection endpoints that reveal sensitive internals.
+    risk_explanation: >
+      Debug endpoints expose internal server state, performance metrics,
+      configuration details, memory contents, and execution traces.
+      Attackers use this information to understand the server architecture,
+      identify vulnerable components, extract secrets from memory dumps,
+      and time attacks using profiling data. Some debug endpoints may
+      even allow arbitrary code execution or configuration modification.
+    remediation: >
+      Disable all debug and diagnostic endpoints in production
+      deployments. Implement environment checks that prevent debug
+      endpoints from being registered in production mode. If health
+      check endpoints are needed, limit them to basic availability
+      status without internal details. Protect any remaining diagnostic
+      endpoints with strong authentication and network-level restrictions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard007
+    slug: missing_input_sanitization
+    title: "Missing Server-Level Input Sanitization"
+    severity: high
+    description: >
+      Detects MCP servers that lack a centralized input sanitization layer
+      at the server transport boundary. Without server-level sanitization,
+      each tool and resource handler must independently implement input
+      validation, leading to inconsistent protection across the server.
+    risk_explanation: >
+      Without centralized input sanitization, the security of each tool
+      and resource depends entirely on its individual implementation.
+      This leads to inconsistent validation where some handlers may miss
+      critical checks. A single tool with missing validation can compromise
+      the entire server. Centralized sanitization provides defense in
+      depth that catches attacks missed by individual handlers.
+    remediation: >
+      Implement a server-level input sanitization middleware that validates
+      all incoming requests before they reach individual tool or resource
+      handlers. Apply common security checks including input length
+      limits, character encoding validation, null byte detection, and
+      control character filtering at the transport boundary. Use the
+      sanitization layer as a first line of defense, not a replacement
+      for handler-level validation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard008
+    slug: insecure_default_credentials
+    title: "Insecure Default Credentials"
+    severity: critical
+    description: >
+      Detects MCP servers that ship with default usernames, passwords,
+      API keys, or tokens that are documented, predictable, or shared
+      across all installations. Default credentials are the most common
+      entry point for server compromise.
+    risk_explanation: >
+      Default credentials are publicly known and immediately exploited
+      by automated scanning tools. Attackers maintain databases of default
+      credentials for common software and continuously scan for servers
+      using them. An MCP server with default credentials can be fully
+      compromised within minutes of deployment, as no vulnerability
+      exploitation is required, just authentication with known values.
+    remediation: >
+      Never ship MCP servers with default credentials. Force credential
+      creation during initial setup with complexity requirements. Generate
+      unique random credentials per installation if defaults are needed
+      for bootstrapping. Implement first-run setup that requires
+      credential change before the server accepts client connections.
+      Detect and alert on use of known default credentials.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard009
+    slug: missing_security_updates
+    title: "Missing Security Updates"
+    severity: high
+    description: >
+      Detects MCP servers running outdated versions of their runtime,
+      framework, or dependencies that have known security vulnerabilities.
+      Missing security patches leave the server exposed to publicly
+      disclosed exploits with available proof-of-concept code.
+    risk_explanation: >
+      Known vulnerabilities in outdated software are actively exploited
+      at scale. Once a CVE is published, exploit code is typically
+      available within hours and automated scanning begins within days.
+      Servers running unpatched software with known vulnerabilities are
+      trivially compromised using publicly available exploit tools. The
+      longer a patch is delayed, the more likely exploitation becomes.
+    remediation: >
+      Implement a regular update schedule for the MCP server and all its
+      dependencies. Use dependency scanning tools to detect known
+      vulnerabilities. Set up automated alerts for security advisories
+      affecting server components. Prioritize critical and high severity
+      patches for immediate deployment. Maintain an inventory of all
+      server components and their versions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard010
+    slug: exposed_version_information
+    title: "Exposed Version Information"
+    severity: low
+    description: >
+      Detects MCP servers that expose version information in response
+      headers, error messages, capability declarations, or server
+      metadata. Version information helps attackers identify specific
+      software releases and their known vulnerabilities.
+    risk_explanation: >
+      Exposed version information enables targeted attacks by allowing
+      attackers to look up known vulnerabilities for the exact software
+      version in use. Without version information, attackers must attempt
+      exploits blindly which is less efficient and more likely to trigger
+      detection. Version fingerprinting is a standard reconnaissance
+      technique in the early stages of an attack.
+    remediation: >
+      Remove version strings from all server responses, headers, and
+      metadata. Configure the MCP server and its HTTP transport to
+      suppress version headers such as Server and X-Powered-By. Review
+      capability declarations and server info responses for version
+      leakage. Use generic identifiers that do not reveal specific
+      version numbers.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard011
+    slug: missing_resource_limits
+    title: "Missing Server Resource Limits"
+    severity: medium
+    description: >
+      Detects MCP servers that do not enforce limits on system resource
+      consumption including memory usage, CPU time, file descriptor
+      count, disk space, and network connections. Without resource limits,
+      a single request can consume all available server resources.
+    risk_explanation: >
+      Missing resource limits enable denial-of-service attacks where a
+      single crafted request or a small number of concurrent requests
+      exhaust all available server resources. Memory exhaustion crashes
+      the server, CPU exhaustion makes it unresponsive, file descriptor
+      exhaustion prevents new connections, and disk exhaustion blocks
+      logging and data persistence.
+    remediation: >
+      Configure operating system-level resource limits for the MCP server
+      process using cgroups, ulimits, or container resource constraints.
+      Implement application-level limits for request processing time,
+      response size, and concurrent operation count. Set per-client
+      resource quotas. Monitor resource usage and alert on abnormal
+      consumption patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard012
+    slug: unnecessary_http_methods
+    title: "Unnecessary HTTP Methods Enabled"
+    severity: medium
+    description: >
+      Detects MCP servers using HTTP-based transports that accept HTTP
+      methods beyond those required for MCP operation. Methods such as
+      TRACE, OPTIONS, PUT, DELETE, and PATCH may be enabled by default
+      but are not needed for standard MCP communication.
+    risk_explanation: >
+      Unnecessary HTTP methods expand the attack surface. The TRACE
+      method enables cross-site tracing attacks that can steal credentials.
+      PUT and DELETE methods may allow unauthorized file manipulation.
+      OPTIONS responses may reveal server capabilities to attackers.
+      Each enabled method is a potential entry point for HTTP-specific
+      attacks that would not exist with MCP over other transports.
+    remediation: >
+      Restrict the MCP server HTTP transport to only accept the HTTP
+      methods required for MCP protocol operation, typically GET and POST.
+      Explicitly disable TRACE, OPTIONS, PUT, DELETE, PATCH, and other
+      unnecessary methods. Return 405 Method Not Allowed for disabled
+      methods. Configure the web server or reverse proxy to enforce
+      method restrictions at the network edge.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard013
+    slug: missing_request_validation
+    title: "Missing Request Validation"
+    severity: medium
+    description: >
+      Detects MCP servers that do not validate the structure, content
+      type, and size of incoming requests at the transport level before
+      processing. Missing request validation allows malformed, oversized,
+      or incorrectly typed requests to reach application logic.
+    risk_explanation: >
+      Without request validation, malformed requests can trigger parsing
+      errors that crash the server or leak implementation details.
+      Oversized requests can exhaust memory. Incorrectly typed content
+      can exploit parser vulnerabilities. Missing validation at the
+      transport level means each handler must independently validate
+      requests, leading to inconsistent protection.
+    remediation: >
+      Implement request validation at the transport boundary that checks
+      content type, content length, request structure, and character
+      encoding before passing requests to handlers. Set maximum request
+      size limits. Validate that request content matches the declared
+      content type. Reject malformed requests with generic error messages.
+      Log rejected requests for security monitoring.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard014
+    slug: insecure_file_permissions
+    title: "Insecure File Permissions"
+    severity: high
+    description: >
+      Detects MCP server installations with overly permissive file
+      permissions on configuration files, credential stores, log files,
+      and server binaries. World-readable or world-writable permissions
+      allow unauthorized access and modification of server components.
+    risk_explanation: >
+      Insecure file permissions allow local users or compromised processes
+      to read sensitive configuration including credentials, modify server
+      binaries to inject backdoors, alter configuration to weaken security,
+      or read log files containing sensitive information. In shared hosting
+      or container environments, file permission issues can enable cross-
+      tenant attacks and privilege escalation.
+    remediation: >
+      Set restrictive file permissions on all MCP server files. Make
+      configuration files readable only by the server process user.
+      Protect credential files with permissions 600 or more restrictive.
+      Make server binaries and scripts read-only to prevent modification.
+      Use a dedicated service account for the MCP server process with
+      minimal file system permissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth
+
+  - id: hard015
+    slug: missing_network_segmentation
+    title: "Missing Network Segmentation"
+    severity: medium
+    description: >
+      Detects MCP servers deployed without network segmentation between
+      client-facing interfaces and backend services. Without segmentation,
+      a compromised MCP server has direct network access to databases,
+      internal APIs, and other sensitive backend services.
+    risk_explanation: >
+      Missing network segmentation means that a compromised MCP server
+      can directly access all backend services on the same network. This
+      eliminates the defense-in-depth benefit of network isolation and
+      allows an attacker who compromises the MCP server to pivot to
+      databases, internal APIs, credential stores, and other servers
+      without additional network-level barriers.
+    remediation: >
+      Deploy the MCP server in a DMZ or dedicated network segment with
+      firewall rules restricting access to only required backend services
+      on specific ports. Use network policies to prevent lateral movement.
+      Implement service mesh or zero-trust networking for internal
+      communication. Monitor network traffic between segments for
+      anomalous patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+      - "MCP07:2025"
+    tags:
+      - server_hardening
+      - defense_in_depth

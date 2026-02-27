@@ -1,0 +1,32 @@
+check_id: ts006
+title: Weak TLS Cipher Suites
+category: transport_security
+severity: high
+description: >
+  Detects MCP servers configured with weak or deprecated TLS cipher
+  suites. Weak ciphers such as RC4, DES, 3DES, and export-grade ciphers
+  can be broken by modern attacks, compromising the confidentiality of
+  encrypted communications.
+risk_explanation: >
+  Weak cipher suites allow an attacker to decrypt TLS-encrypted traffic
+  through known cryptographic attacks. RC4 has practical biases enabling
+  plaintext recovery, DES and 3DES are vulnerable to Sweet32 attacks,
+  and export ciphers use intentionally weakened key sizes. Servers
+  supporting weak ciphers are vulnerable even if they also support
+  strong ciphers due to downgrade attacks.
+remediation: >
+  Configure TLS to use only strong cipher suites. Prefer AEAD ciphers
+  (AES-GCM, ChaCha20-Poly1305). Disable all CBC-mode ciphers, RC4, DES,
+  3DES, and export ciphers. Set TLS minimum version to 1.2, preferring
+  TLS 1.3 which eliminates weak cipher negotiation. Use tools like
+  testssl.sh to audit cipher configuration.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/TLS_Cipher_String_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - cipher_suites
+  - tls
+  - cryptography

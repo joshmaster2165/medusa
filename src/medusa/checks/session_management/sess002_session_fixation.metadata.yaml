@@ -1,0 +1,31 @@
+check_id: sess002
+title: Session Fixation Vulnerability
+category: session_management
+severity: high
+description: >
+  Detects MCP server implementations vulnerable to session fixation
+  attacks where an attacker can force a known session ID onto a victim's
+  LLM client connection. If the server accepts externally supplied
+  session identifiers without regeneration after authentication, an
+  attacker can pre-set the session ID and then hijack the authenticated
+  session.
+risk_explanation: >
+  Session fixation allows an attacker to establish a valid session and
+  then trick a legitimate user into authenticating on that session. Once
+  the victim authenticates, the attacker already possesses the session
+  token and gains full access to all MCP tool invocations and resources
+  available to the victim. This can lead to unauthorized data access,
+  privilege escalation, and tool abuse.
+remediation: >
+  Always generate a new session ID on the server side after successful
+  authentication. Reject any session IDs supplied by the client prior to
+  authentication. Invalidate pre-authentication session tokens
+  immediately upon login. Implement session ID regeneration at privilege
+  level changes within the MCP server lifecycle.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

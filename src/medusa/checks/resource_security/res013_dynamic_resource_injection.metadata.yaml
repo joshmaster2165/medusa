@@ -1,0 +1,30 @@
+check_id: res013
+title: Dynamic Resource Injection
+category: resource_security
+severity: high
+description: >
+  Detects MCP servers that allow dynamic registration of new resources
+  at runtime without validation or authorization. Dynamically injected
+  resources can introduce malicious content into the server resource
+  pool, poisoning the data available to LLM clients.
+risk_explanation: >
+  Dynamic resource injection allows an attacker with limited access to
+  register new resources containing prompt injection payloads,
+  misleading data, or malicious content. These injected resources appear
+  as legitimate server resources and may be automatically included in
+  LLM context, enabling indirect prompt injection and data manipulation
+  without modifying existing resources.
+remediation: >
+  Restrict dynamic resource registration to authorized administrators
+  only. Implement content validation and approval workflows for new
+  resources. Sign resources to verify their origin and integrity.
+  Monitor for unexpected resource registrations and alert on anomalies.
+  Maintain an audit log of all resource lifecycle operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

@@ -1,0 +1,31 @@
+check_id: tp013
+title: Excessive Tool Parameter Count
+category: tool_poisoning
+severity: medium
+description: >
+  Detects tools with an unreasonably large number of parameters, which
+  may indicate complexity designed to hide malicious parameters among
+  legitimate ones. An excessive parameter count increases the attack
+  surface and makes manual review impractical.
+risk_explanation: >
+  Tools with many parameters are difficult to review and audit. An
+  attacker can hide a malicious parameter (e.g. an exfiltration target,
+  a command injection field) among dozens of legitimate-looking
+  parameters. The LLM may populate these hidden parameters with
+  sensitive data from context without the user noticing the extra
+  fields.
+remediation: >
+  Set a maximum parameter count threshold for tools (e.g. 15-20
+  parameters). Flag tools exceeding this threshold for manual review.
+  Encourage tool designers to use structured sub-objects instead of flat
+  parameter lists. Audit each parameter individually for tools that
+  legitimately require many inputs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - excessive_parameters
+  - complexity
+  - review_evasion

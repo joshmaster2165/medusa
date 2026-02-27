@@ -1,0 +1,32 @@
+check_id: dos001
+title: Missing Rate Limiting
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server configurations that lack rate limiting on tool
+  invocations. Without rate limits, an attacker or compromised LLM agent
+  can invoke tools at an unlimited rate, overwhelming the server and any
+  downstream services the tools interact with.
+risk_explanation: >
+  Missing rate limiting on MCP tool invocations allows attackers to
+  flood the server with requests, causing denial of service for all
+  users. High-frequency tool invocations can exhaust server resources,
+  overwhelm downstream APIs and databases, trigger billing overages on
+  metered services, and create cascading failures across the
+  infrastructure. Automated agents can generate thousands of requests
+  per minute without rate controls.
+remediation: >
+  Implement rate limiting on all MCP tool invocations using a sliding
+  window or token bucket algorithm. Set per-user, per-session, and per-
+  tool rate limits based on expected usage patterns. Return appropriate
+  rate limit exceeded errors that allow the client to implement backoff.
+  Deploy rate limiting at the server edge to protect against volumetric
+  attacks. Monitor rate limit hits for anomaly detection.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

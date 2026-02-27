@@ -1,0 +1,35 @@
+check_id: samp009
+title: Missing Sampling Response Validation
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server implementations that process sampling responses
+  from the LLM without validation. Unvalidated sampling responses may
+  contain unexpected content, malformed data, or injected instructions
+  that the server processes as trusted input, leading to secondary
+  injection attacks or logic errors.
+risk_explanation: >
+  When MCP servers process LLM sampling responses without validation,
+  they are vulnerable to attacks where the LLM's response contains
+  unexpected or malicious content. An attacker who can influence the
+  LLM's output through prompt injection can use sampling responses as a
+  vector for injecting commands into the MCP server's processing
+  pipeline. This creates a bidirectional attack channel where
+  compromised LLM outputs exploit the server.
+remediation: >
+  Validate all sampling responses before processing them in MCP server
+  logic. Implement schema validation for expected response formats.
+  Sanitize response content to remove potential injection payloads.
+  Apply content type checking and length limits on sampling responses.
+  Treat all sampling responses as untrusted input regardless of their
+  origin from the LLM client. Log and alert on malformed or suspicious
+  sampling responses.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

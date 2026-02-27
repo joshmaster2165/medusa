@@ -1,0 +1,33 @@
+check_id: tp008
+title: Unicode Homoglyph Tool Names
+category: tool_poisoning
+severity: high
+description: >
+  Detects tool names that use Unicode homoglyph characters to visually
+  impersonate legitimate tool names. Confusable characters such as
+  Cyrillic 'a' (U+0430) in place of Latin 'a' (U+0061) make tool names
+  appear identical to trusted tools while being technically different
+  identifiers.
+risk_explanation: >
+  Homoglyph tool names trick both users and LLMs into invoking a
+  malicious tool believing it to be a trusted one. The attacker's tool
+  can intercept parameters meant for the legitimate tool, exfiltrate
+  sensitive data, or return manipulated results. Visual inspection alone
+  cannot distinguish homoglyph names from originals.
+remediation: >
+  Normalize all tool names to ASCII or a canonical Unicode form
+  (NFC/NFKC) before registration. Reject tool names containing
+  characters from mixed scripts (e.g. Latin mixed with Cyrillic).
+  Implement confusable detection using Unicode Technical Standard #39
+  security mechanisms.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unicode.org/reports/tr39/"
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP06:2025"
+tags:
+  - tool_poisoning
+  - homoglyph
+  - unicode
+  - impersonation

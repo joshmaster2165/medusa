@@ -1,0 +1,31 @@
+check_id: mt002
+title: Shared Resource Cross-Tenant Access
+category: multi_tenant
+severity: critical
+description: >
+  Detects MCP server resources that are accessible across tenant
+  boundaries without proper access control. Shared resources such as
+  files, database connections, caches, and temporary storage that lack
+  tenant-scoped access controls enable cross-tenant data access.
+risk_explanation: >
+  Shared resources without tenant scoping create direct data leakage
+  paths between tenants. A tenant can read files created by another
+  tenant, access cached data from other tenant sessions, query database
+  records belonging to other tenants, or read temporary files from other
+  tenant operations. This violates data confidentiality and may breach
+  regulatory requirements.
+remediation: >
+  Scope all server resources to the requesting tenant using tenant-
+  specific prefixes, namespaces, or separate storage. Implement tenant
+  validation on all resource access operations. Use separate database
+  schemas, file directories, or cache namespaces per tenant. Audit all
+  shared resources to ensure tenant isolation is enforced at the storage
+  level, not just the application level.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

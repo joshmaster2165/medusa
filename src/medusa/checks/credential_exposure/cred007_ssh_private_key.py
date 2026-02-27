@@ -1,0 +1,28 @@
+"""CRED007: SSH Private Key Exposure.
+
+Detects SSH private keys in MCP server environment variables or configuration files. SSH private
+keys provide direct server access and are frequently used for deployment, git operations, and
+remote server management.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import yaml
+
+from medusa.core.check import BaseCheck, ServerSnapshot
+from medusa.core.models import CheckMetadata, Finding
+
+
+class SshPrivateKeyCheck(BaseCheck):
+    """SSH Private Key Exposure."""
+
+    def metadata(self) -> CheckMetadata:
+        meta_path = Path(__file__).with_suffix(".metadata.yaml")
+        data = yaml.safe_load(meta_path.read_text())
+        return CheckMetadata(**data)
+
+    async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
+        # TODO: Implement cred007 check logic
+        return []

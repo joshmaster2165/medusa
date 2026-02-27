@@ -1,0 +1,34 @@
+check_id: agent001
+title: Missing Human-in-the-Loop
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP server configurations where destructive or irreversible
+  tool invocations can be executed without requiring explicit user
+  confirmation. Actions such as file deletion, database modification,
+  sending emails, or executing system commands should require a human
+  approval step before proceeding.
+risk_explanation: >
+  Without human-in-the-loop controls, an LLM agent connected to MCP
+  servers can autonomously execute destructive actions based on
+  misunderstood instructions, prompt injection, or model hallucination.
+  A single erroneous tool invocation can delete data, send unauthorized
+  communications, modify production systems, or commit financial
+  transactions without the user's knowledge or consent. The speed of
+  autonomous execution prevents timely intervention.
+remediation: >
+  Implement a confirmation mechanism that requires explicit user
+  approval for destructive or high-impact tool invocations. Categorize
+  tools by risk level and require confirmation for medium and high-risk
+  operations. Display the full tool invocation details including
+  parameters and expected effects before requesting approval. Implement
+  a timeout for approval requests that defaults to denial if not
+  answered.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

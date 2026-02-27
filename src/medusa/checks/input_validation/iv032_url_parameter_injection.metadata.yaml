@@ -1,0 +1,31 @@
+check_id: iv032
+title: URL Parameter Injection
+category: input_validation
+severity: high
+description: >
+  Detects URL-type tool parameters without scheme restrictions.
+  Parameters accepting arbitrary URLs can be set to file://,
+  javascript:, data:, or internal network URLs, enabling local file
+  access, script execution, and server-side request forgery.
+risk_explanation: >
+  Unrestricted URL parameters enable server-side request forgery (SSRF)
+  by targeting internal network services. The file:// scheme reads local
+  files, javascript: executes code in browser contexts, and data: URIs
+  can embed malicious payloads. Internal URLs (http://169.254.169.254)
+  access cloud metadata services containing credentials.
+remediation: >
+  Restrict URL parameters to https:// scheme only. Validate URLs against
+  an allowlist of permitted domains. Block access to internal IP ranges
+  (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16). Reject
+  URLs containing credentials, fragments, or suspicious encoding. Use
+  JSON Schema format: uri with additional server-side validation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - url_injection
+  - ssrf
+  - scheme_restriction

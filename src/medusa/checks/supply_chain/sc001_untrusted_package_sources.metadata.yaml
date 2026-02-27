@@ -1,0 +1,29 @@
+check_id: sc001
+title: Untrusted Package Sources
+category: supply_chain
+severity: high
+description: >
+  Detects MCP server configurations that install packages from untrusted
+  or non-standard sources. This includes custom npm registries, pip
+  installs from arbitrary URLs, and npm installs from git URLs without
+  commit hash pinning.
+risk_explanation: >
+  Installing packages from untrusted registries, raw URLs, or unpinned
+  git repositories exposes the host to supply-chain attacks. An attacker
+  controlling the source can inject malicious code that executes with the
+  privileges of the MCP server process. Without commit hash pinning on
+  git URLs, even a trusted repository can be compromised through branch
+  manipulation.
+remediation: >
+  Only install packages from official registries (registry.npmjs.org,
+  pypi.org). When using git URLs, always pin to a specific commit hash.
+  Avoid installing packages directly from HTTP/HTTPS URLs. Use lockfiles
+  and hash verification to ensure package integrity.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - supply_chain
+  - package_sources

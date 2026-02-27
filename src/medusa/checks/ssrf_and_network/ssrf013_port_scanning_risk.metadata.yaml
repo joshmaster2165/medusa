@@ -1,0 +1,32 @@
+check_id: ssrf013
+title: Port Scanning Risk
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that can be used to scan ports on internal or
+  external hosts by observing connection success, failure, or timing
+  differences. Port scanning reveals which services are running on
+  target hosts, providing attackers with information needed to select
+  exploitation techniques.
+risk_explanation: >
+  Port scanning through MCP tools allows attackers to identify open
+  services on internal hosts. By varying the port number in tool
+  requests and observing whether connections succeed, fail, or time out,
+  an attacker can determine which ports are open. This information
+  reveals the software running on internal systems and is used to select
+  targeted exploits for database servers, web servers, caches, and other
+  services.
+remediation: >
+  Restrict MCP tool outbound connections to standard HTTP/HTTPS ports
+  (80, 443) unless specific alternative ports are required. Implement
+  port allowlisting rather than blocklisting. Use consistent response
+  times and error messages for all blocked ports to prevent timing-based
+  port detection. Monitor for systematic port scanning patterns in tool
+  invocation logs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

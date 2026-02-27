@@ -1,0 +1,31 @@
+check_id: auth021
+title: Basic Auth Over HTTP
+category: authentication
+severity: critical
+description: >
+  Detects HTTP Basic authentication used over unencrypted HTTP
+  connections. Basic auth transmits credentials as base64-encoded
+  plaintext, which is trivially decoded by any network observer when TLS
+  is not used.
+risk_explanation: >
+  Basic authentication over HTTP transmits username and password in
+  every request as a base64-encoded string that is equivalent to
+  plaintext. Any network observer, proxy, or man-in-the-middle can
+  decode the credentials instantly. Unlike token-based auth, Basic auth
+  transmits the actual password, making compromise permanent until the
+  password is changed.
+remediation: >
+  Never use HTTP Basic authentication without TLS. Switch to HTTPS for
+  all endpoints using Basic auth. Preferably, migrate to token-based
+  authentication (OAuth 2.1 Bearer tokens) which limits the exposure
+  window. If Basic auth is required, enforce HSTS to prevent protocol
+  downgrade attacks.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - basic_auth
+  - plaintext
+  - http

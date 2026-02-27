@@ -1,0 +1,35 @@
+check_id: agent012
+title: Agent Persistence Risk
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where agents maintain state, context, or
+  behavioral modifications beyond the current session. Persistent agent
+  state can carry compromised configurations, poisoned memories, or
+  attacker- injected instructions across sessions, affecting future
+  interactions.
+risk_explanation: >
+  Agent persistence allows the effects of an attack to survive session
+  boundaries. If an agent's memory, preferences, or learned behaviors
+  persist across sessions, a prompt injection attack in one session can
+  influence the agent's behavior in all future sessions. This creates a
+  persistent compromise that survives the typical remediation step of
+  starting a new session. Poisoned persistent state can continuously
+  redirect the agent toward attacker objectives without the user's
+  knowledge.
+remediation: >
+  Implement session isolation that prevents agent state from persisting
+  across sessions by default. If persistence is required, validate
+  persisted state before loading it in new sessions. Apply integrity
+  checks to persisted agent memory and discard entries that fail
+  validation. Provide users with visibility into and control over
+  persisted agent state. Implement periodic state review and cleanup
+  processes.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

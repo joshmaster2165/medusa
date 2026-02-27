@@ -1,0 +1,30 @@
+check_id: intg016
+title: Insecure Config File Permissions
+category: integrity
+severity: high
+description: >
+  Detects MCP server configuration files with overly permissive file
+  system permissions. World-readable or group-writable configuration
+  files expose secrets and allow unauthorised modification.
+risk_explanation: >
+  Configuration files often contain sensitive information such as API
+  keys, database credentials, and server secrets. World-readable
+  permissions allow any user on the system to read these secrets, while
+  group-writable or world-writable permissions allow unauthorised
+  modification of the server's configuration, potentially disabling
+  security controls or redirecting data flows.
+remediation: >
+  Set configuration file permissions to owner-only read/write (600) or
+  owner-read with group-read (640) at most. Ensure the configuration
+  file is owned by the MCP server's service account. Use file integrity
+  monitoring to detect unauthorised permission changes. Store sensitive
+  configuration values in a secrets manager rather than flat files.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - file_permissions
+  - configuration
+  - access_control

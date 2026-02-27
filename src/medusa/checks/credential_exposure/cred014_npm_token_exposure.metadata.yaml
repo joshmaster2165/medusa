@@ -1,0 +1,28 @@
+check_id: cred014
+title: NPM Token Exposure
+category: credential_exposure
+severity: high
+description: >
+  Detects NPM authentication tokens in .npmrc files, environment
+  variables, or MCP server configuration. NPM tokens grant permissions
+  to publish, modify, and manage packages in the npm registry.
+risk_explanation: >
+  An exposed NPM token allows an attacker to publish malicious versions
+  of packages owned by the token holder. This enables supply chain
+  attacks where downstream consumers automatically install compromised
+  packages. The attacker can also access private packages, modify
+  package metadata, and delete published versions.
+remediation: >
+  Use npm token list to audit existing tokens. Revoke and rotate any
+  exposed tokens immediately. Use granular automation tokens with
+  minimal scopes for CI/CD. Store tokens in CI/CD secrets management,
+  not in .npmrc files. Enable two-factor authentication on npm accounts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - npm
+  - package_registry
+  - supply_chain

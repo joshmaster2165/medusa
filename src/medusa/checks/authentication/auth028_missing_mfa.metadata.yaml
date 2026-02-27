@@ -1,0 +1,31 @@
+check_id: auth028
+title: Missing Multi-Factor Authentication
+category: authentication
+severity: medium
+description: >
+  Detects MCP server configurations without support for multi-factor
+  authentication. MFA provides an additional layer of security beyond
+  passwords, significantly reducing the risk of credential-based
+  attacks.
+risk_explanation: >
+  Single-factor authentication (password only) is vulnerable to
+  phishing, credential stuffing, and brute-force attacks. Without MFA, a
+  compromised password grants immediate full access to the MCP server.
+  MFA adds a second verification step that prevents access even when the
+  primary credential is compromised.
+remediation: >
+  Implement multi-factor authentication for all MCP server access,
+  especially for administrative and sensitive operations. Support TOTP
+  (RFC 6238) or WebAuthn/FIDO2 as second factors. Require MFA for
+  initial authentication and for privilege escalation events. Provide
+  backup recovery codes for MFA lockout scenarios.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - mfa
+  - two_factor
+  - phishing_resistance

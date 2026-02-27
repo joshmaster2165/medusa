@@ -1,0 +1,31 @@
+check_id: hard012
+title: Unnecessary HTTP Methods Enabled
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers using HTTP-based transports that accept HTTP
+  methods beyond those required for MCP operation. Methods such as
+  TRACE, OPTIONS, PUT, DELETE, and PATCH may be enabled by default but
+  are not needed for standard MCP communication.
+risk_explanation: >
+  Unnecessary HTTP methods expand the attack surface. The TRACE method
+  enables cross-site tracing attacks that can steal credentials. PUT and
+  DELETE methods may allow unauthorized file manipulation. OPTIONS
+  responses may reveal server capabilities to attackers. Each enabled
+  method is a potential entry point for HTTP-specific attacks that would
+  not exist with MCP over other transports.
+remediation: >
+  Restrict the MCP server HTTP transport to only accept the HTTP methods
+  required for MCP protocol operation, typically GET and POST.
+  Explicitly disable TRACE, OPTIONS, PUT, DELETE, PATCH, and other
+  unnecessary methods. Return 405 Method Not Allowed for disabled
+  methods. Configure the web server or reverse proxy to enforce method
+  restrictions at the network edge.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

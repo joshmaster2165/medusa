@@ -1,0 +1,435 @@
+category: error_handling
+checks:
+  - id: err001
+    slug: stack_trace_exposure
+    title: "Stack Trace Exposure"
+    severity: high
+    description: >
+      Detects MCP server error responses that include full stack traces or
+      exception tracebacks. Stack traces often contain internal file paths,
+      library versions, class names, and code logic that help attackers
+      understand the server internals and craft targeted exploits.
+    risk_explanation: >
+      Leaked stack traces reveal implementation details such as programming
+      language, framework version, internal file structure, database driver
+      information, and code flow. Attackers use this intelligence to identify
+      known CVEs, pinpoint injection points, and map the internal architecture
+      of the MCP server without needing source code access.
+    remediation: >
+      Configure the MCP server to catch all exceptions at the transport
+      boundary and return generic error messages to clients. Log full stack
+      traces server-side only. Use a structured error response format that
+      includes an error code and a user-safe message without internal details.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err002
+    slug: debug_mode_enabled
+    title: "Debug Mode Enabled"
+    severity: high
+    description: >
+      Detects MCP servers running with debug or development mode flags
+      enabled in production environments. Debug mode typically disables
+      security controls, enables verbose logging, exposes diagnostic
+      endpoints, and may auto-reload code on changes.
+    risk_explanation: >
+      Debug mode often disables authentication, enables detailed error
+      pages with interactive debuggers, exposes environment variables,
+      and provides code execution capabilities through debug consoles.
+      An attacker who discovers a debug-mode server can achieve full
+      remote code execution or extract secrets with minimal effort.
+    remediation: >
+      Ensure all MCP servers are deployed with debug and development mode
+      flags explicitly set to false or removed entirely. Use environment
+      variable checks to enforce production mode. Implement CI/CD checks
+      that fail deployments containing debug configuration flags.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err003
+    slug: verbose_error_messages
+    title: "Verbose Error Messages"
+    severity: medium
+    description: >
+      Detects MCP server error responses that include overly detailed
+      messages revealing internal implementation specifics such as database
+      table names, query structures, internal API endpoints, configuration
+      values, or third-party service identifiers.
+    risk_explanation: >
+      Verbose error messages provide attackers with a roadmap of the server
+      internals. Database table names enable SQL injection targeting,
+      internal API paths enable SSRF attacks, and configuration details
+      may reveal security misconfigurations. This information reduces the
+      effort required for a successful attack significantly.
+    remediation: >
+      Implement an error mapping layer that translates internal errors into
+      generic, user-facing messages with unique error codes. Store detailed
+      error information in server-side logs only. Review all error response
+      templates to ensure no internal details leak to clients.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err004
+    slug: missing_error_handling
+    title: "Missing Error Handling"
+    severity: medium
+    description: >
+      Detects MCP tool implementations that lack error handling for
+      operations that may fail, such as file I/O, network requests,
+      database queries, or external API calls. Unhandled errors cause
+      unpredictable behavior including crashes and data corruption.
+    risk_explanation: >
+      When tool execution fails without proper error handling, the server
+      may crash, leak partial results, leave resources in an inconsistent
+      state, or expose raw exception data to the LLM client. An attacker
+      can intentionally trigger failures to cause denial of service or
+      extract sensitive information from unhandled error paths.
+    remediation: >
+      Wrap all tool execution logic in try-catch blocks with specific
+      exception types. Return structured MCP error responses with
+      appropriate error codes for each failure mode. Implement resource
+      cleanup in finally blocks to prevent leaks on failure. Add timeout
+      handling for all external calls.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err005
+    slug: information_disclosure_via_errors
+    title: "Information Disclosure via Errors"
+    severity: high
+    description: >
+      Detects MCP server error responses that disclose system-level
+      information such as operating system details, hostname, IP addresses,
+      user account names, installed software versions, or runtime
+      environment configuration.
+    risk_explanation: >
+      System information disclosed through errors enables attackers to
+      fingerprint the server environment, identify vulnerable software
+      versions, determine network topology, and craft OS-specific exploits.
+      Hostnames and IP addresses can reveal internal network structure and
+      enable lateral movement planning.
+    remediation: >
+      Sanitize all error responses to remove system-level information
+      before returning them to clients. Configure the MCP server runtime
+      to suppress system details in error messages. Implement an error
+      response middleware that strips hostnames, paths, IPs, and version
+      strings from all outgoing error payloads.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err006
+    slug: missing_error_codes
+    title: "Missing Error Codes"
+    severity: low
+    description: >
+      Detects MCP server error responses that lack standardized error
+      codes, relying solely on free-text error messages. Without
+      consistent error codes, clients cannot programmatically handle
+      different error conditions or implement proper retry logic.
+    risk_explanation: >
+      Missing error codes force LLM clients to parse free-text error
+      messages, which is unreliable and may lead to incorrect error
+      handling decisions. Clients may retry non-retryable errors, ignore
+      critical failures, or misinterpret error severity. This can result
+      in data loss, infinite retry loops, or silent security failures.
+    remediation: >
+      Define a standardized error code taxonomy for the MCP server that
+      covers authentication errors, authorization errors, validation
+      errors, rate limiting, and internal errors. Return a machine-readable
+      error code alongside every error message. Document the error codes
+      and their meanings for client developers.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err007
+    slug: error_message_injection
+    title: "Error Message Injection"
+    severity: high
+    description: >
+      Detects MCP server error messages that directly include unsanitized
+      user input. When user-supplied data is reflected in error responses
+      without encoding or escaping, it creates injection vectors that
+      can manipulate LLM behavior or exploit downstream consumers.
+    risk_explanation: >
+      User input reflected in error messages can be crafted to inject
+      instructions that the LLM interprets as legitimate server guidance.
+      This enables prompt injection through error channels, cross-site
+      scripting if errors are rendered in web UIs, and log injection that
+      can corrupt audit trails or trigger log processing vulnerabilities.
+    remediation: >
+      Never include raw user input in error messages. Sanitize and encode
+      all user-supplied values before including them in error responses.
+      Use parameterized error message templates with placeholder values
+      that are escaped for the output context. Validate and truncate
+      user input before any error message interpolation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err008
+    slug: unhandled_exception_risk
+    title: "Unhandled Exception Risk"
+    severity: medium
+    description: >
+      Detects MCP server implementations that lack a top-level catch-all
+      exception handler at the transport boundary. Without a global
+      exception handler, unexpected errors can crash the server process
+      or leak raw exception details to clients.
+    risk_explanation: >
+      Unhandled exceptions at the transport boundary cause the MCP server
+      to either crash entirely or return raw language-specific exception
+      objects to clients. Server crashes enable denial-of-service attacks,
+      while leaked exception objects reveal implementation details. Both
+      outcomes are exploitable by an attacker sending malformed requests.
+    remediation: >
+      Implement a global exception handler at the MCP transport boundary
+      that catches all unhandled exceptions, logs them with full context
+      server-side, and returns a generic error response to the client.
+      Use process supervisors to restart crashed servers automatically.
+      Monitor for elevated unhandled exception rates.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err009
+    slug: error_based_enumeration
+    title: "Error-Based Enumeration"
+    severity: medium
+    description: >
+      Detects MCP servers that return different error messages or codes
+      for different failure conditions in a way that allows attackers to
+      enumerate valid resources, users, or tools. For example, returning
+      "tool not found" vs "access denied" reveals whether a tool exists.
+    risk_explanation: >
+      Differential error responses allow attackers to enumerate valid
+      tool names, resource URIs, user accounts, or internal endpoints
+      by observing which errors are returned for different inputs. This
+      reconnaissance phase enables targeted attacks against confirmed
+      resources and reduces the attacker effort needed for exploitation.
+    remediation: >
+      Return consistent, generic error messages for all unauthorized or
+      invalid access attempts. Use the same error code and message for
+      "not found" and "access denied" scenarios. Implement rate limiting
+      on error responses to slow enumeration attempts. Log enumeration
+      patterns for security monitoring.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err010
+    slug: missing_graceful_degradation
+    title: "Missing Graceful Degradation"
+    severity: medium
+    description: >
+      Detects MCP servers that fail completely when dependent services
+      become unavailable rather than degrading gracefully. Missing
+      degradation strategies mean a single service failure can cascade
+      into total MCP server unavailability.
+    risk_explanation: >
+      Without graceful degradation, an attacker can take down the entire
+      MCP server by disrupting a single dependency. Cascading failures
+      amplify denial-of-service attacks and may leave the system in an
+      inconsistent state. Tools that depend on failed services may
+      return corrupted or partial data without indicating the failure.
+    remediation: >
+      Implement circuit breaker patterns for all external service calls.
+      Design tools to operate in degraded mode when dependencies are
+      unavailable, returning partial results with clear status indicators.
+      Use timeouts and fallback responses for non-critical dependencies.
+      Monitor dependency health and alert on degraded operation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err011
+    slug: error_rate_alerting
+    title: "Missing Error Rate Alerting"
+    severity: low
+    description: >
+      Detects MCP server deployments that lack monitoring and alerting
+      for elevated error rates. Without error rate tracking, attacks
+      that trigger errors such as brute force, fuzzing, or denial of
+      service go undetected until major damage occurs.
+    risk_explanation: >
+      Elevated error rates are often the first signal of an active
+      attack. Without alerting, brute-force authentication attempts,
+      input fuzzing campaigns, and resource exhaustion attacks proceed
+      undetected. By the time the impact is noticed, the attacker may
+      have already achieved their objective or moved laterally.
+    remediation: >
+      Implement error rate monitoring with configurable thresholds and
+      alerting for the MCP server. Track error rates by category, tool,
+      and client. Set up alerts for sudden error rate spikes that may
+      indicate attacks. Integrate error monitoring with the security
+      incident response workflow.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err012
+    slug: sensitive_path_in_errors
+    title: "Sensitive File Paths in Errors"
+    severity: high
+    description: >
+      Detects MCP server error messages that include absolute file paths,
+      revealing the server installation directory, configuration file
+      locations, temporary file paths, or source code directory structure
+      on the host system.
+    risk_explanation: >
+      Exposed file paths reveal the server deployment layout, operating
+      system type, user account names embedded in home directory paths,
+      and the locations of sensitive files such as configuration and
+      credential stores. Attackers use this information to target path
+      traversal attacks, locate configuration files for extraction, and
+      identify writable directories for payload placement.
+    remediation: >
+      Configure the server runtime to strip absolute file paths from all
+      error messages. Use relative paths or symbolic identifiers in error
+      messages where file references are necessary. Implement an error
+      sanitization filter that detects and removes path patterns from
+      outgoing error responses.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err013
+    slug: database_errors_exposed
+    title: "Database Errors Exposed"
+    severity: high
+    description: >
+      Detects MCP server error responses that include raw database error
+      messages, SQL statements, connection strings, or database engine
+      error codes. These details reveal database type, schema structure,
+      and query logic to potential attackers.
+    risk_explanation: >
+      Raw database errors can reveal table names, column names, SQL query
+      structure, database engine version, and connection details. This
+      information directly enables SQL injection attacks by showing
+      attackers the exact query context. Connection strings may contain
+      credentials. Database version information identifies known CVEs.
+    remediation: >
+      Catch all database exceptions at the data access layer and translate
+      them into generic application-level errors. Never expose raw SQL
+      errors, connection strings, or database engine details to MCP
+      clients. Log database errors server-side with full context for
+      debugging. Use parameterized queries to prevent SQL injection.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err014
+    slug: api_version_in_errors
+    title: "API Version in Error Messages"
+    severity: low
+    description: >
+      Detects MCP server error messages that include API version numbers,
+      protocol version identifiers, or internal build version strings.
+      Version information helps attackers identify specific software
+      releases and their known vulnerabilities.
+    risk_explanation: >
+      Version information in error messages allows attackers to precisely
+      identify the software version running on the server and cross-
+      reference it against public vulnerability databases. This targeted
+      approach is more efficient than blind exploitation and increases
+      the success rate of attacks against known CVEs.
+    remediation: >
+      Remove version strings from all error response messages and headers.
+      If version information must be communicated, use the MCP protocol
+      negotiation phase rather than error messages. Implement build
+      processes that strip version identifiers from production error
+      message templates.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure
+
+  - id: err015
+    slug: missing_error_recovery
+    title: "Missing Error Recovery"
+    severity: medium
+    description: >
+      Detects MCP server implementations that lack automatic error
+      recovery mechanisms such as retry logic, connection re-establishment,
+      or state rollback after transient failures. Missing recovery causes
+      persistent failures from temporary issues.
+    risk_explanation: >
+      Without automatic error recovery, transient failures such as
+      network timeouts, temporary resource unavailability, or brief
+      service interruptions cause permanent tool failures until manual
+      intervention. Attackers can exploit this by causing brief disruptions
+      that permanently degrade server functionality. State inconsistencies
+      from unrecovered errors may also create security vulnerabilities.
+    remediation: >
+      Implement retry logic with exponential backoff for transient failures
+      in tool operations. Add connection pool recovery for database and
+      network connections. Implement transaction rollback on failure to
+      maintain state consistency. Use health checks to detect and recover
+      from degraded states automatically.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - error_handling
+      - information_disclosure

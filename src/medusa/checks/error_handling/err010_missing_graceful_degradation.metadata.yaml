@@ -1,0 +1,28 @@
+check_id: err010
+title: Missing Graceful Degradation
+category: error_handling
+severity: medium
+description: >
+  Detects MCP servers that fail completely when dependent services
+  become unavailable rather than degrading gracefully. Missing
+  degradation strategies mean a single service failure can cascade into
+  total MCP server unavailability.
+risk_explanation: >
+  Without graceful degradation, an attacker can take down the entire MCP
+  server by disrupting a single dependency. Cascading failures amplify
+  denial-of-service attacks and may leave the system in an inconsistent
+  state. Tools that depend on failed services may return corrupted or
+  partial data without indicating the failure.
+remediation: >
+  Implement circuit breaker patterns for all external service calls.
+  Design tools to operate in degraded mode when dependencies are
+  unavailable, returning partial results with clear status indicators.
+  Use timeouts and fallback responses for non-critical dependencies.
+  Monitor dependency health and alert on degraded operation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

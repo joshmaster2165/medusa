@@ -1,0 +1,33 @@
+check_id: samp012
+title: Sampling Output Injection
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server implementations where sampling response content is
+  incorporated into tool outputs, resource contents, or other data
+  returned to the LLM without sanitization. Injected content from
+  sampling can influence subsequent LLM decisions and tool invocations.
+risk_explanation: >
+  Sampling output injection creates a feedback loop where attacker-
+  influenced sampling responses are embedded in tool outputs that the
+  LLM processes in subsequent turns. This allows persistent prompt
+  injection where malicious instructions survive across conversation
+  turns. The injected content can redirect the LLM's behavior, override
+  safety constraints, and create compounding effects that escalate the
+  severity of the attack over time.
+remediation: >
+  Sanitize all sampling response content before incorporating it into
+  tool outputs or resource data. Apply output encoding and content
+  filtering that strips potential injection payloads. Mark sampling-
+  derived content with metadata that allows the LLM client to apply
+  additional scrutiny. Implement content integrity checks that detect
+  modifications to tool outputs after sampling interactions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

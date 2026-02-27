@@ -1,0 +1,30 @@
+check_id: sc006
+title: Install Scripts Present
+category: supply_chain
+severity: high
+description: >
+  Detects MCP server dependencies that include install scripts
+  (preinstall, postinstall, or equivalent lifecycle hooks). Install
+  scripts execute arbitrary code during package installation.
+risk_explanation: >
+  Package install scripts execute arbitrary code with the privileges of
+  the installing user during the npm install, pip install, or equivalent
+  process. A compromised package with a malicious install script
+  achieves code execution before the application even starts. Install
+  scripts run outside the application's security sandbox and can access
+  the full filesystem, network, and environment.
+remediation: >
+  Audit all packages with install scripts and verify their necessity.
+  Use the --ignore-scripts flag during installation and run required
+  scripts explicitly after review. Configure package managers to block
+  install scripts by default. Use tools that detect and flag packages
+  with install scripts during dependency review.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - supply_chain
+  - install_scripts
+  - arbitrary_execution
+  - dependencies

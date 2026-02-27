@@ -1,0 +1,31 @@
+check_id: auth012
+title: Missing Token Rotation
+category: authentication
+severity: medium
+description: >
+  Detects long-lived authentication tokens without a rotation mechanism.
+  Tokens that persist for extended periods without rotation increase the
+  window of opportunity for attackers who have obtained a compromised
+  token.
+risk_explanation: >
+  Without token rotation, a compromised token remains valid for its
+  entire lifetime, which may be weeks, months, or indefinite. The
+  attacker has extended access to the MCP server, and there is no
+  automatic mechanism to invalidate the compromised credential. Long-
+  lived tokens also accumulate exposure through logs and monitoring
+  systems over time.
+remediation: >
+  Implement automatic token rotation with configurable intervals. Use
+  short-lived access tokens (15-60 minutes) with refresh token rotation.
+  Invalidate the previous token when a new one is issued. Implement
+  sliding window expiration that extends token lifetime on active use
+  while revoking idle tokens.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - token_rotation
+  - credential_lifecycle
+  - refresh_tokens

@@ -1,0 +1,28 @@
+check_id: cred022
+title: SendGrid API Key Exposure
+category: credential_exposure
+severity: high
+description: >
+  Detects SendGrid API keys in MCP server configuration or environment.
+  SendGrid API keys grant permissions to send emails, manage contacts,
+  and access email analytics through the SendGrid platform.
+risk_explanation: >
+  Exposed SendGrid API keys allow an attacker to send emails through the
+  organization's SendGrid account, bypassing email authentication (SPF,
+  DKIM). The attacker can send phishing emails that appear to originate
+  from the organization's verified domains. Access to contact lists
+  exposes customer email addresses and metadata.
+remediation: >
+  Store SendGrid API keys in secrets managers. Use scoped API keys with
+  minimal permissions (e.g. mail send only). Implement IP access
+  management to restrict API key usage to known IP ranges. Monitor
+  sending patterns for anomalies. Rotate API keys regularly.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - sendgrid
+  - email
+  - api_key

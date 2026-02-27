@@ -1,0 +1,33 @@
+check_id: gov004
+title: Missing Compliance Mapping
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a mapping between security
+  controls and applicable compliance frameworks such as SOC 2, ISO
+  27001, NIST CSF, or industry-specific regulations. Compliance mapping
+  demonstrates that security controls address regulatory requirements.
+risk_explanation: >
+  Without compliance mapping, organizations cannot demonstrate that
+  their MCP server deployment meets regulatory requirements. This
+  creates audit failures, regulatory fines, and potential legal
+  liability. MCP servers that process sensitive data may be subject to
+  multiple compliance frameworks, and without a mapping, gaps between
+  implemented controls and required controls remain undetected until an
+  audit or security incident reveals them.
+remediation: >
+  Create a compliance mapping document that maps each security control
+  implemented in the MCP server deployment to the applicable compliance
+  framework requirements. Identify gaps where compliance requirements
+  are not met by current controls. Prioritize remediation of compliance
+  gaps based on regulatory risk. Maintain the mapping as controls and
+  regulations evolve. Use automated compliance monitoring tools where
+  available.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

@@ -1,0 +1,30 @@
+check_id: audit006
+title: Missing Security Alerting
+category: audit_logging
+severity: medium
+description: >
+  Checks whether the MCP server has alerting configured for security-
+  relevant events. Without alerting, security incidents are only
+  discovered during manual log review, which may be too late.
+risk_explanation: >
+  Without automated alerting, security events such as repeated
+  authentication failures, privilege escalation attempts, unusual data
+  access patterns, or tool invocation anomalies go unnoticed until
+  manual log review occurs. This delay gives attackers extended dwell
+  time to achieve their objectives before detection.
+remediation: >
+  Configure automated alerts for security-relevant events including
+  authentication failures, privilege escalation, anomalous tool
+  invocations, and data access spikes. Use a SIEM or log aggregation
+  platform with alerting capabilities. Define alert thresholds and
+  escalation procedures. Test alerting regularly to ensure it functions
+  correctly.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - alerting
+  - monitoring
+  - incident_detection

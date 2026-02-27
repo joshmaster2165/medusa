@@ -1,0 +1,31 @@
+check_id: ts014
+title: WebSocket Without TLS
+category: transport_security
+severity: high
+description: >
+  Detects MCP server WebSocket connections using ws:// instead of
+  wss://. Unencrypted WebSocket connections expose all bidirectional
+  communication to network-level interception, including tool
+  invocations, responses, and authentication tokens.
+risk_explanation: >
+  WebSocket connections over ws:// transmit all data in plaintext,
+  including authentication handshakes, tool invocations, and server
+  responses. A network attacker can intercept, read, and modify
+  WebSocket frames in real time. Unlike HTTP where each request is
+  independent, WebSocket connections are long-lived, giving the attacker
+  sustained access to the communication stream.
+remediation: >
+  Switch all WebSocket connections from ws:// to wss://. Configure TLS
+  certificates for the WebSocket server. Implement the same TLS
+  configuration standards (cipher suites, protocol versions) for
+  WebSocket as for HTTPS endpoints. Reject ws:// connection attempts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - websocket
+  - tls
+  - encryption

@@ -1,0 +1,31 @@
+check_id: iv011
+title: Regular Expression DoS (ReDoS)
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters used in regular expression matching without
+  complexity limits. User-controlled input in regex patterns or matched
+  against vulnerable regex patterns can cause catastrophic backtracking,
+  leading to denial of service.
+risk_explanation: >
+  ReDoS attacks exploit regular expressions with exponential
+  backtracking behaviour. A crafted input string can cause the regex
+  engine to consume 100% CPU for minutes or hours, effectively denying
+  service. Common vulnerable patterns include nested quantifiers like
+  (a+)+ and overlapping alternations.
+remediation: >
+  Never use user-supplied input directly as regex patterns. Set
+  execution time limits on regex matching operations. Use regex engines
+  with linear-time guarantees (RE2, rust-regex). Review all regex
+  patterns for catastrophic backtracking using tools like rxxr2 or safe-
+  regex. Implement input length limits for strings matched against
+  regex.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - redos
+  - denial_of_service
+  - regex

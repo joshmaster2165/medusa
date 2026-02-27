@@ -1,0 +1,36 @@
+check_id: gov014
+title: Missing Regulatory Compliance
+category: governance
+severity: high
+description: >
+  Detects MCP server deployments that have not assessed or addressed
+  applicable regulatory requirements. MCP servers processing personal
+  data, financial information, or health records may be subject to GDPR,
+  CCPA, PCI DSS, HIPAA, or other regulations that impose specific
+  security and data handling requirements.
+risk_explanation: >
+  Non-compliance with applicable regulations exposes organizations to
+  significant financial penalties, legal action, and reputational
+  damage. GDPR violations can result in fines up to 4% of global annual
+  revenue. HIPAA violations can result in fines up to $1.5 million per
+  violation category. MCP servers that process regulated data through
+  tool invocations are subject to the same regulatory requirements as
+  any other data processing system, and the autonomous nature of LLM
+  agents increases the risk of inadvertent violations.
+remediation: >
+  Conduct a regulatory assessment to identify all compliance
+  requirements applicable to the MCP server deployment based on the
+  types of data processed, the jurisdictions involved, and the industry.
+  Map current security controls to regulatory requirements and identify
+  gaps. Implement remediation plans for compliance gaps with defined
+  timelines. Engage legal and compliance teams to validate regulatory
+  interpretations. Maintain compliance documentation and undergo regular
+  compliance audits.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

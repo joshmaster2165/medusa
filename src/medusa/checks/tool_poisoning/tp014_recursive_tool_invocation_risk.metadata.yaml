@@ -1,0 +1,31 @@
+check_id: tp014
+title: Recursive Tool Invocation Risk
+category: tool_poisoning
+severity: high
+description: >
+  Detects tool descriptions that encourage or instruct the LLM to invoke
+  additional tools in a recursive or chained fashion. Malicious
+  descriptions can create tool invocation loops or chains that escalate
+  privileges, exfiltrate data across multiple steps, or cause denial of
+  service.
+risk_explanation: >
+  Recursive tool invocation can amplify the impact of a single poisoned
+  tool. An attacker's tool description instructs the LLM to call another
+  tool with manipulated parameters, creating a chain that progressively
+  escalates access or exfiltrates data in stages. Unbounded recursion
+  can also exhaust resources, causing denial of service.
+remediation: >
+  Implement invocation depth limits for tool chains. Detect and flag
+  tool descriptions that reference other tools by name or instruct the
+  LLM to perform additional invocations. Require explicit user approval
+  for each step in a tool invocation chain. Monitor for circular
+  invocation patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - recursive_invocation
+  - tool_chaining
+  - denial_of_service

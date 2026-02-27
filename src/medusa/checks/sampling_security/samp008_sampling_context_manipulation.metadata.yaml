@@ -1,0 +1,35 @@
+check_id: samp008
+title: Sampling Context Manipulation
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server implementations where sampling requests can
+  manipulate the LLM's context window by injecting or modifying the
+  conversation history, system prompts, or tool outputs available during
+  sampling. Context manipulation can alter the LLM's understanding of
+  the current task and available information.
+risk_explanation: >
+  Sampling context manipulation allows a malicious MCP server to alter
+  the information the LLM uses to make decisions. By injecting false
+  conversation history, fabricated tool outputs, or modified system
+  instructions into the sampling context, the attacker can cause the LLM
+  to make decisions based on false premises. This can lead to incorrect
+  tool invocations, data corruption, and actions that the user would not
+  have approved if given accurate information.
+remediation: >
+  Isolate the sampling context from the main conversation context.
+  Validate all context provided by MCP servers in sampling requests
+  against expected formats and content policies. Prevent sampling
+  requests from modifying the conversation history or system prompts.
+  Display the sampling context to the user for verification. Implement
+  context integrity checks that detect modifications to protected
+  context elements.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

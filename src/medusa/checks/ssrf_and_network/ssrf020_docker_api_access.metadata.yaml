@@ -1,0 +1,32 @@
+check_id: ssrf020
+title: Docker API Access
+category: ssrf_and_network
+severity: critical
+description: >
+  Detects MCP server tools that can access the Docker daemon API,
+  typically exposed on /var/run/docker.sock (Unix socket) or TCP port
+  2375/2376. Access to the Docker API enables container escape, host
+  filesystem access, and arbitrary container creation with elevated
+  privileges.
+risk_explanation: >
+  Docker API access from MCP tools is equivalent to root access on the
+  host system. An attacker can create privileged containers with host
+  filesystem mounts, execute commands in existing containers, read
+  container logs containing secrets, and modify running containers.
+  Through Docker API access, an attacker can escape the MCP server
+  container, access the host operating system, and compromise all other
+  containers on the same host.
+remediation: >
+  Block MCP tool access to the Docker socket path (/var/run/docker.sock)
+  and Docker TCP API ports (2375, 2376). Never mount the Docker socket
+  into MCP server containers. Use rootless container runtimes that do
+  not expose a privileged daemon socket. Implement network policies that
+  block access to Docker API ports. If Docker API access is required,
+  use Docker API authorization plugins with strict access controls.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

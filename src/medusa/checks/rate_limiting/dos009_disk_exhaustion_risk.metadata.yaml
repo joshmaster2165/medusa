@@ -1,0 +1,34 @@
+check_id: dos009
+title: Disk Exhaustion Risk
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server tools that can fill disk space through writing
+  logs, temporary files, output data, or uploaded content without
+  storage limits. Disk exhaustion prevents the server from writing logs,
+  creating temporary files, or processing requests, causing cascading
+  failures.
+risk_explanation: >
+  Disk exhaustion on MCP servers causes widespread failures because many
+  server components depend on disk access. When disk space is exhausted,
+  the server cannot write logs (losing audit data), create temporary
+  files (failing tool executions), or save state (corrupting sessions).
+  An attacker can trigger disk exhaustion through tools that generate
+  large outputs, write temporary files, or accept file uploads. Database
+  operations may also fail if the database shares the same filesystem.
+remediation: >
+  Implement disk usage quotas for MCP tool operations including
+  temporary file creation, output storage, and file uploads. Set per-
+  tool disk usage limits and enforce them at the filesystem level.
+  Monitor disk usage and alert before critical thresholds are reached.
+  Implement automatic cleanup of temporary files with configurable
+  retention periods. Use separate filesystems or volumes for tool data
+  to prevent exhaustion from affecting core server operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

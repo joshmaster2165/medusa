@@ -1,0 +1,34 @@
+check_id: gov001
+title: Missing Security Policy
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a documented security policy
+  defining security requirements, controls, and responsibilities for the
+  MCP server and its integrations. A security policy establishes the
+  baseline for secure operation and communicates expectations to all
+  stakeholders.
+risk_explanation: >
+  Without a documented security policy, MCP server deployments operate
+  without defined security requirements or accountability. Developers
+  and operators make ad-hoc security decisions without consistent
+  guidance, leading to gaps in protection. Incident response is hampered
+  because there is no reference for expected security posture.
+  Compliance audits cannot assess conformance to requirements that do
+  not exist.
+remediation: >
+  Create and maintain a comprehensive security policy for the MCP server
+  deployment. The policy should define security requirements for
+  authentication, authorization, data protection, transport security,
+  logging, and incident response. Specify roles and responsibilities for
+  security management. Review and update the policy annually or when
+  significant changes occur. Ensure all operators and developers
+  acknowledge the policy.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

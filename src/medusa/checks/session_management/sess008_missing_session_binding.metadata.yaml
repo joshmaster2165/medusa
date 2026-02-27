@@ -1,0 +1,31 @@
+check_id: sess008
+title: Missing Session-IP Binding
+category: session_management
+severity: medium
+description: >
+  Detects MCP server sessions that are not bound to the originating
+  client IP address or other client fingerprint. Without session
+  binding, a session token stolen from one network location can be used
+  from any other location to invoke tools and access resources on the
+  MCP server.
+risk_explanation: >
+  Unbound MCP sessions can be used from any network location, meaning a
+  stolen session token grants full access regardless of where the
+  attacker is located. This removes a significant barrier to session
+  hijacking and makes stolen tokens maximally useful to attackers. In
+  MCP deployments handling sensitive tool invocations, this
+  significantly increases the blast radius of token compromise.
+remediation: >
+  Bind MCP sessions to the client's IP address or a stable client
+  fingerprint at session creation time. Invalidate sessions when the
+  source IP changes unexpectedly. For environments where IP changes are
+  expected (mobile users, VPNs), use additional binding factors such as
+  TLS client certificate fingerprints or User-Agent strings. Log and
+  alert on binding violations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

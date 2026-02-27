@@ -1,0 +1,28 @@
+check_id: err008
+title: Unhandled Exception Risk
+category: error_handling
+severity: medium
+description: >
+  Detects MCP server implementations that lack a top-level catch-all
+  exception handler at the transport boundary. Without a global
+  exception handler, unexpected errors can crash the server process or
+  leak raw exception details to clients.
+risk_explanation: >
+  Unhandled exceptions at the transport boundary cause the MCP server to
+  either crash entirely or return raw language-specific exception
+  objects to clients. Server crashes enable denial-of-service attacks,
+  while leaked exception objects reveal implementation details. Both
+  outcomes are exploitable by an attacker sending malformed requests.
+remediation: >
+  Implement a global exception handler at the MCP transport boundary
+  that catches all unhandled exceptions, logs them with full context
+  server-side, and returns a generic error response to the client. Use
+  process supervisors to restart crashed servers automatically. Monitor
+  for elevated unhandled exception rates.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

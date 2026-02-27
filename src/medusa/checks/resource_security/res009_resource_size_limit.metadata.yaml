@@ -1,0 +1,30 @@
+check_id: res009
+title: Missing Resource Size Limit
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resource handlers that do not enforce size limits on
+  resource content, allowing extremely large resources to be requested
+  and processed. This can exhaust server memory, consume excessive
+  bandwidth, and overwhelm the LLM context window.
+risk_explanation: >
+  Without size limits, an attacker can request very large resources that
+  consume all available server memory, causing denial of service. Large
+  resources injected into the LLM context can displace important
+  instructions, overwhelm token limits, and increase processing costs.
+  Resource size amplification attacks can also saturate network
+  bandwidth.
+remediation: >
+  Implement configurable maximum size limits for all resource types.
+  Stream large resources with chunking rather than loading them entirely
+  into memory. Return appropriate error responses when size limits are
+  exceeded. Set per-client bandwidth quotas for resource access.
+  Truncate oversized resources with clear indicators.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

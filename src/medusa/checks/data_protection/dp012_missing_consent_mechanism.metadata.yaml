@@ -1,0 +1,28 @@
+check_id: dp012
+title: Missing Data Consent Mechanism
+category: data_protection
+severity: medium
+description: >
+  Checks whether the MCP server provides a mechanism for obtaining user
+  consent before processing personal data. Servers that process data
+  without consent violate privacy-by-design principles.
+risk_explanation: >
+  Processing personal data without user consent violates GDPR, CCPA, and
+  other privacy regulations. Without a consent mechanism, users cannot
+  make informed decisions about how their data is used, and the
+  organisation faces regulatory fines and reputational damage.
+remediation: >
+  Implement a consent mechanism that informs users about data processing
+  activities and obtains explicit consent before processing begins.
+  Provide granular consent options for different data processing
+  purposes. Record consent decisions for audit purposes and allow users
+  to withdraw consent.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - consent
+  - privacy
+  - compliance

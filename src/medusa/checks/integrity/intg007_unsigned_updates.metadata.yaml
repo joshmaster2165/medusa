@@ -1,0 +1,29 @@
+check_id: intg007
+title: Unsigned Server Updates
+category: integrity
+severity: high
+description: >
+  Detects MCP server update mechanisms that do not verify cryptographic
+  signatures on updates. Unsigned updates can be replaced with malicious
+  payloads during transit or at the distribution point.
+risk_explanation: >
+  Without signature verification, an attacker who compromises the update
+  distribution channel can serve malicious updates that are installed
+  without question. This enables persistent compromise of the MCP server
+  through a trusted update mechanism, which is particularly dangerous
+  because updates are expected to change the server's behavior.
+remediation: >
+  Implement cryptographic signature verification for all server updates.
+  Use code signing certificates from trusted certificate authorities.
+  Verify signatures before applying updates and reject any update that
+  fails verification. Distribute public keys through a separate,
+  authenticated channel.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - code_signing
+  - updates
+  - supply_chain

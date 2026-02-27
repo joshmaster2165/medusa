@@ -1,0 +1,28 @@
+check_id: dp011
+title: Excessive Logging of PII
+category: data_protection
+severity: high
+description: >
+  Detects MCP server configurations or code patterns that write
+  personally identifiable information to log files. PII in logs creates
+  secondary exposure vectors and complicates regulatory compliance.
+risk_explanation: >
+  Log files are often stored with weaker access controls than primary
+  data stores and may be shipped to third-party log aggregation
+  services. PII in logs can be exposed through log viewer access, log
+  file backups, or log aggregation platform breaches, creating
+  compliance violations under GDPR, CCPA, and HIPAA.
+remediation: >
+  Implement log scrubbing that removes or masks PII before writing to
+  log files. Use structured logging with explicit field allow-lists.
+  Configure log frameworks to redact sensitive fields automatically.
+  Audit log outputs regularly for PII leakage.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - logging
+  - pii
+  - compliance

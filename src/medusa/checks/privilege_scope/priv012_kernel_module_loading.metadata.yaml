@@ -1,0 +1,29 @@
+check_id: priv012
+title: Kernel Module Loading
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools that can load kernel modules or interact with kernel
+  interfaces. Kernel module loading provides the highest level of system
+  access, operating in ring 0 with complete control over the operating
+  system.
+risk_explanation: >
+  Kernel module loading allows installation of rootkits that operate
+  below the operating system's security mechanisms. Kernel modules can
+  hide processes, intercept system calls, modify network traffic, and
+  access any memory location. A malicious kernel module is effectively
+  undetectable by user-space security tools.
+remediation: >
+  Never grant MCP tools kernel module loading capabilities. Use Secure
+  Boot with module signing to prevent unsigned module loading. Run MCP
+  servers in unprivileged containers with dropped CAP_SYS_MODULE. Lock
+  down the kernel module loading interface using sysctl settings.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - kernel_module
+  - rootkit
+  - ring_zero

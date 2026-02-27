@@ -1,0 +1,31 @@
+check_id: sess016
+title: Session Token in Logs
+category: session_management
+severity: high
+description: >
+  Detects MCP server configurations where session tokens or session
+  identifiers are written to application logs, access logs, or debug
+  output. Logged session tokens can be harvested by anyone with access
+  to log files, log aggregation systems, or monitoring dashboards.
+risk_explanation: >
+  Session tokens recorded in logs are accessible to anyone with log
+  access, including system administrators, logging service providers,
+  and attackers who compromise log storage. In MCP deployments, logs
+  often contain tool invocation details alongside session identifiers,
+  making it trivial to correlate stolen tokens with high-value sessions.
+  Log retention policies may keep these tokens available for extended
+  periods.
+remediation: >
+  Implement log sanitization that redacts or masks session tokens before
+  they are written to any log destination. Configure structured logging
+  that excludes session identifiers from log fields. Review log
+  configurations for all components in the MCP request path including
+  proxies, load balancers, and application servers. Use session
+  reference IDs in logs that cannot be used for authentication.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

@@ -1,0 +1,30 @@
+check_id: pmt004
+title: Prompt Template Injection
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt templates where the template syntax itself can be
+  exploited to inject additional template directives. If the templating
+  engine processes user input as template code rather than literal text,
+  attackers can execute arbitrary template operations.
+risk_explanation: >
+  Template injection in prompt definitions allows attackers to escape
+  the intended argument context and execute template engine operations.
+  Depending on the templating engine, this can enable reading server
+  environment variables, executing system commands, accessing internal
+  objects, or generating arbitrary prompt content that bypasses the
+  intended template structure.
+remediation: >
+  Use a sandboxed templating engine that does not allow code execution
+  or object access. Escape all user input before passing it to the
+  template engine. Validate that argument values do not contain template
+  syntax characters. Use logic-less templates that only support simple
+  variable substitution without control structures.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

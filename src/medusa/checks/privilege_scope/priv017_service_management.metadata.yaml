@@ -1,0 +1,30 @@
+check_id: priv017
+title: System Service Management
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that can start, stop, enable, or modify system
+  services (systemd, init.d, Windows Services). Service management
+  allows disrupting critical system functions and installing persistent
+  backdoor services.
+risk_explanation: >
+  Service management capabilities allow an attacker to stop security
+  services (antivirus, logging, monitoring), install new malicious
+  services for persistence, and modify existing service configurations
+  to execute attacker code. Stopping critical services causes denial of
+  service, while installing new services provides persistent access.
+remediation: >
+  Remove system service management capabilities from MCP tools. Use
+  dedicated orchestration tools for service management. Implement
+  monitoring for unauthorized service changes. Run MCP servers in
+  containers that cannot access the host's service management
+  interfaces.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - service_management
+  - systemd
+  - persistence

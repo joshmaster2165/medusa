@@ -1,0 +1,29 @@
+check_id: audit009
+title: Log Injection Risk
+category: audit_logging
+severity: high
+description: >
+  Detects MCP server logging patterns that write user-supplied input to
+  log files without sanitization. Unsanitized log entries enable log
+  injection attacks that corrupt log integrity.
+risk_explanation: >
+  Log injection allows attackers to forge log entries by embedding
+  newlines, control characters, or structured log syntax in user input.
+  Forged log entries can hide malicious activity, create false audit
+  trails, and exploit log processing systems that parse log content as
+  commands or queries (e.g. SIEM injection, log4shell-style attacks).
+remediation: >
+  Sanitize all user input before writing to logs. Escape or strip
+  newline characters, control characters, and structured log delimiters.
+  Use structured logging formats (JSON) that properly encode user input
+  as string values. Validate that log entries conform to the expected
+  format before ingestion into log processing systems.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - log_injection
+  - input_sanitization
+  - security

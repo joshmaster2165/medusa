@@ -1,0 +1,35 @@
+check_id: samp006
+title: Recursive Sampling Attack
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server configurations that enable recursive or self-
+  referential sampling where a sampling response triggers additional
+  sampling requests, creating an infinite loop. Recursive sampling can
+  exhaust API quotas, consume server resources, and create denial-of-
+  service conditions for the LLM client.
+risk_explanation: >
+  Recursive sampling attacks create infinite loops where the LLM's
+  sampling response triggers the MCP server to issue another sampling
+  request, which generates another response, and so on indefinitely.
+  This consumes the user's LLM API quota, ties up server and client
+  resources, and can result in significant costs for pay-per-token LLM
+  services. The attack is difficult to detect because each individual
+  sampling request appears legitimate.
+remediation: >
+  Implement recursion depth limits for sampling requests that cap the
+  number of consecutive sampling interactions. Track sampling request
+  chains and reject requests that exceed a configurable depth limit
+  (recommended: 3-5 levels). Set a maximum total number of sampling
+  requests per session. Implement circuit-breaker patterns that halt
+  sampling when resource consumption exceeds thresholds. Alert on
+  detected recursive patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

@@ -1,0 +1,31 @@
+check_id: res016
+title: Missing URI Normalization
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resource handlers that do not normalize URIs before
+  processing, allowing different URI representations to bypass access
+  controls. URL encoding, case variations, path folding, and trailing
+  slashes can create equivalent URIs that receive different access
+  control decisions.
+risk_explanation: >
+  Without URI normalization, an attacker can bypass access controls by
+  using alternative URI representations. For example, /resource/secret
+  and /resource/%73ecret or /Resource/Secret may point to the same
+  resource but receive different access control decisions. This
+  inconsistency enables authorization bypass attacks on protected
+  resources.
+remediation: >
+  Implement consistent URI normalization before access control checks.
+  Decode percent-encoded characters, normalize case, remove duplicate
+  slashes, and resolve dot segments. Apply the same normalization to
+  both the requested URI and the access control policy patterns. Use a
+  well-tested URI normalization library.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

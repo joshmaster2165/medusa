@@ -1,0 +1,29 @@
+check_id: iv020
+title: Missing Type Constraint
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters without explicit type definitions in their
+  JSON Schema. Parameters lacking a type constraint accept any JSON
+  value, making it impossible to validate input structure and enabling
+  type confusion attacks.
+risk_explanation: >
+  Typeless parameters accept strings, numbers, objects, arrays,
+  booleans, and null values interchangeably. An attacker can submit an
+  object where a string is expected, potentially triggering prototype
+  pollution, injection through object properties, or unexpected code
+  paths that were never tested with non-string input.
+remediation: >
+  Define explicit type constraints for every tool parameter in the JSON
+  Schema. Use the 'type' keyword to specify the expected data type.
+  Avoid union types unless genuinely required. Implement server-side
+  type checking that rejects values not matching the declared type.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - type_constraint
+  - schema_validation
+  - type_confusion

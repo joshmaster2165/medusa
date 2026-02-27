@@ -1,0 +1,33 @@
+check_id: gov009
+title: Missing Data Governance Framework
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a data governance framework
+  defining data ownership, classification, handling requirements, and
+  lifecycle management for data processed through tool invocations and
+  LLM interactions.
+risk_explanation: >
+  Without data governance, organizations cannot ensure that data
+  processed by MCP servers is handled appropriately. Different types of
+  data (PII, financial data, health records, proprietary information)
+  require different handling controls, but without classification and
+  governance, all data receives the same minimal treatment. This leads
+  to regulatory violations, data breaches, and loss of customer trust
+  when sensitive data is inadequately protected.
+remediation: >
+  Establish a data governance framework that defines data classification
+  levels, ownership, handling requirements, and retention policies for
+  all data processed by the MCP server. Classify tools by the
+  sensitivity of data they process and apply appropriate controls.
+  Implement data lineage tracking that records how data flows through
+  tool invocations. Define data retention and deletion policies. Appoint
+  data stewards responsible for governance compliance.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

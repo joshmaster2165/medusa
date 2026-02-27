@@ -1,0 +1,31 @@
+check_id: iv008
+title: Server-Side Template Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters that may be passed to server-side template
+  engines without sanitization. Parameters named 'template', 'content',
+  'message_body', or similar that accept unconstrained strings can
+  enable template injection in engines like Jinja2, Twig, or Handlebars.
+risk_explanation: >
+  Server-side template injection allows an attacker to inject template
+  directives that execute arbitrary code on the server. In Python's
+  Jinja2, injecting {{config}} or {{''.__class__.__mro__}} can access
+  server configuration or achieve remote code execution. SSTI often
+  leads to complete server compromise.
+remediation: >
+  Never pass user input directly into template rendering contexts. Use
+  template sandboxing features where available. Validate input against
+  expected patterns and reject strings containing template delimiters
+  ({{ }}, {% %}, ${ }, #{ }). Use logic-less template engines for user-
+  controlled content.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - ssti
+  - template_injection
+  - code_execution

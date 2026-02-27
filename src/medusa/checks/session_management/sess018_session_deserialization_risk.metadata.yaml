@@ -1,0 +1,33 @@
+check_id: sess018
+title: Session Deserialization Risk
+category: session_management
+severity: high
+description: >
+  Detects MCP server implementations that deserialize session data from
+  untrusted sources without validation. Insecure deserialization of
+  session objects can lead to remote code execution, privilege
+  escalation, or denial of service when an attacker crafts malicious
+  serialized session payloads.
+risk_explanation: >
+  Insecure deserialization of MCP session data can allow an attacker to
+  execute arbitrary code on the server, modify session state to escalate
+  privileges, or crash the server via malformed objects. If session data
+  is serialized using formats like Python pickle, Java
+  ObjectInputStream, or PHP serialize, an attacker who can modify
+  session storage or intercept session data can inject malicious
+  payloads that execute upon deserialization.
+remediation: >
+  Avoid deserializing session data from untrusted sources. Use safe
+  serialization formats such as JSON that do not support arbitrary code
+  execution during deserialization. If complex object serialization is
+  required, implement integrity checks using HMAC signatures on
+  serialized session data. Use allowlists for permitted classes during
+  deserialization. Consider using signed and encrypted session tokens
+  (such as JWTs) instead of server-side session objects.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

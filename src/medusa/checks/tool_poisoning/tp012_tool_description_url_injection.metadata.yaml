@@ -1,0 +1,31 @@
+check_id: tp012
+title: URL Injection in Tool Descriptions
+category: tool_poisoning
+severity: medium
+description: >
+  Detects suspicious URLs embedded in tool descriptions that may be used
+  for data exfiltration or phishing. Tool descriptions containing URLs
+  to external services can direct the LLM to send sensitive data to
+  attacker-controlled endpoints during tool invocation.
+risk_explanation: >
+  URLs in tool descriptions can instruct the LLM to fetch from or post
+  data to external endpoints. An attacker can embed an exfiltration URL
+  that receives sensitive context data, tool outputs, or user
+  credentials as URL parameters. The LLM may follow URL-based
+  instructions without user awareness, especially when the URL is
+  presented as documentation.
+remediation: >
+  Scan tool descriptions for embedded URLs and validate them against an
+  allowlist of trusted domains. Flag descriptions containing URLs with
+  query parameters, IP addresses, or uncommon TLDs. Remove or neutralize
+  URLs that are not essential for tool documentation. Implement content
+  filtering to prevent the LLM from following description-embedded URLs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - url_injection
+  - exfiltration
+  - description_analysis

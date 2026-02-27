@@ -1,0 +1,28 @@
+"""CRED020: Firebase Credential Exposure.
+
+Detects Firebase API keys, service account data, or admin SDK credentials in MCP server
+configuration. Firebase credentials provide access to Firestore, Realtime Database,
+Authentication, and Cloud Storage services.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import yaml
+
+from medusa.core.check import BaseCheck, ServerSnapshot
+from medusa.core.models import CheckMetadata, Finding
+
+
+class FirebaseCredentialsCheck(BaseCheck):
+    """Firebase Credential Exposure."""
+
+    def metadata(self) -> CheckMetadata:
+        meta_path = Path(__file__).with_suffix(".metadata.yaml")
+        data = yaml.safe_load(meta_path.read_text())
+        return CheckMetadata(**data)
+
+    async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
+        # TODO: Implement cred020 check logic
+        return []

@@ -1,0 +1,32 @@
+check_id: hard007
+title: Missing Server-Level Input Sanitization
+category: server_hardening
+severity: high
+description: >
+  Detects MCP servers that lack a centralized input sanitization layer
+  at the server transport boundary. Without server-level sanitization,
+  each tool and resource handler must independently implement input
+  validation, leading to inconsistent protection across the server.
+risk_explanation: >
+  Without centralized input sanitization, the security of each tool and
+  resource depends entirely on its individual implementation. This leads
+  to inconsistent validation where some handlers may miss critical
+  checks. A single tool with missing validation can compromise the
+  entire server. Centralized sanitization provides defense in depth that
+  catches attacks missed by individual handlers.
+remediation: >
+  Implement a server-level input sanitization middleware that validates
+  all incoming requests before they reach individual tool or resource
+  handlers. Apply common security checks including input length limits,
+  character encoding validation, null byte detection, and control
+  character filtering at the transport boundary. Use the sanitization
+  layer as a first line of defense, not a replacement for handler-level
+  validation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

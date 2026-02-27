@@ -1,0 +1,31 @@
+check_id: ctx003
+title: Context Window Overflow Attack
+category: context_security
+severity: high
+description: >
+  Detects MCP tool outputs or resource contents designed to flood the
+  LLM context window with excessive data. Context window overflow
+  attacks push legitimate instructions out of the context, causing the
+  LLM to lose track of its original directives.
+risk_explanation: >
+  By filling the LLM's context window with large volumes of irrelevant
+  or adversarial content, an attacker can push the system prompt and
+  earlier safety instructions out of the active context. This causes the
+  LLM to lose its behavioral guardrails, making it susceptible to
+  following attacker-provided instructions embedded in the overflow
+  content.
+remediation: >
+  Implement output size limits for all MCP tools and resources. Truncate
+  or paginate large responses before they enter the LLM context. Monitor
+  the total context utilisation and alert when a single tool response
+  consumes a disproportionate share of the context window. Use
+  summarization for large data returns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - context_security
+  - overflow
+  - denial_of_service
+  - context_window

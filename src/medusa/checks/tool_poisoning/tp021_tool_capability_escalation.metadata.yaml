@@ -1,0 +1,30 @@
+check_id: tp021
+title: Tool Capability Escalation
+category: tool_poisoning
+severity: high
+description: >
+  Detects tools that request or imply capabilities beyond their stated
+  purpose. For example, a tool described as a "text formatter" that
+  accepts file path parameters or network URLs indicates capability
+  escalation beyond its documented scope.
+risk_explanation: >
+  Tools with capabilities beyond their stated purpose can perform
+  undisclosed operations. A user who approves a "text formatter" does
+  not expect it to access the filesystem or make network requests. The
+  hidden capabilities can be exploited by prompt injection to perform
+  actions the user never intended to authorize.
+remediation: >
+  Validate that tool parameters are consistent with the tool's stated
+  purpose. Flag tools whose parameter schemas suggest filesystem,
+  network, or system access when the tool description does not mention
+  these capabilities. Implement capability labelling that maps
+  parameters to required permissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - capability_escalation
+  - scope_creep
+  - hidden_capabilities

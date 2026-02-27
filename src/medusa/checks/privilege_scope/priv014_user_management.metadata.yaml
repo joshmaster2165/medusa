@@ -1,0 +1,29 @@
+check_id: priv014
+title: User Management Operations
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that can create, modify, or delete system users and
+  groups. User management capabilities allow an attacker to create
+  backdoor accounts, modify group memberships, and escalate privileges.
+risk_explanation: >
+  User management tools allow creating administrative accounts that
+  provide persistent backdoor access. Modifying group memberships can
+  escalate privileges by adding users to sudo, docker, or admin groups.
+  Deleting users can cause denial of service and data loss. User
+  management is a critical administrative function that should never be
+  exposed through MCP tools.
+remediation: >
+  Remove user management capabilities from MCP tools. Use dedicated
+  identity management systems for user provisioning. Implement
+  monitoring for unauthorized user and group changes. Run MCP servers
+  with service accounts that lack user management permissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - user_management
+  - account_creation
+  - group_membership

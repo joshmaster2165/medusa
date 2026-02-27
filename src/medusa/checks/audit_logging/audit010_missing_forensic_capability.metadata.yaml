@@ -1,0 +1,31 @@
+check_id: audit010
+title: Missing Forensic Capability
+category: audit_logging
+severity: medium
+description: >
+  Checks whether the MCP server's logging and data retention provide
+  sufficient information for security forensic investigations.
+  Incomplete forensic data prevents root cause analysis after security
+  incidents.
+risk_explanation: >
+  After a security incident, forensic investigators need detailed data
+  to determine the attack vector, scope of compromise, data accessed,
+  and timeline of events. Without sufficient forensic capability,
+  organizations cannot determine the root cause, assess the full impact,
+  or implement effective countermeasures to prevent recurrence.
+remediation: >
+  Ensure logging captures sufficient detail for forensic analysis
+  including full request/response payloads for sensitive operations,
+  network connection metadata, process execution details, and file
+  access events. Implement log correlation across MCP components.
+  Maintain log retention for a minimum period required for forensic
+  investigations (typically 90 days to 1 year).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - forensics
+  - incident_response
+  - data_retention

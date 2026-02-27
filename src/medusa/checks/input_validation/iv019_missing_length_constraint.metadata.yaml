@@ -1,0 +1,30 @@
+check_id: iv019
+title: Missing Input Length Constraint
+category: input_validation
+severity: medium
+description: >
+  Detects string parameters in tool schemas without maxLength
+  constraints. Unbounded string parameters allow attackers to submit
+  extremely large inputs that cause memory exhaustion, buffer overflows,
+  or denial of service through excessive processing.
+risk_explanation: >
+  Without length constraints, an attacker can submit megabytes of data
+  in a single parameter, causing memory exhaustion on the server. Large
+  inputs can also trigger pathological behaviour in string processing
+  algorithms, regex engines, and database queries. The absence of limits
+  is itself a vulnerability indicator.
+remediation: >
+  Add maxLength constraints to all string parameters in tool schemas.
+  Set limits appropriate to the parameter's purpose (e.g. 255 for names,
+  2048 for URLs). Implement server-side length validation independent of
+  schema constraints. Set global request size limits at the transport
+  layer.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - length_constraint
+  - denial_of_service
+  - schema_constraint

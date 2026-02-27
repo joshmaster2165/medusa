@@ -1,0 +1,29 @@
+check_id: iv017
+title: Null Byte Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters that may be vulnerable to null byte injection.
+  Null bytes (\\x00) in file paths or strings can truncate processing in
+  C-based libraries, causing the application to operate on a different
+  resource than validated.
+risk_explanation: >
+  Null byte injection exploits the difference between how high-level
+  languages (Python, Java) and C-level libraries handle null characters.
+  A path like 'safe.txt\\x00.jpg' passes a .jpg extension check but is
+  truncated to 'safe.txt' by the filesystem. This bypasses extension
+  validation, path restrictions, and type checking.
+remediation: >
+  Reject all input containing null bytes (\\x00). Strip null bytes from
+  parameters before processing. Implement validation that explicitly
+  checks for null byte presence. Use language-native path handling
+  functions that are not vulnerable to null byte truncation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - null_byte
+  - path_truncation
+  - c_string

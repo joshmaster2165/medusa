@@ -1,0 +1,30 @@
+check_id: ctx008
+title: Token Budget Exhaustion
+category: context_security
+severity: medium
+description: >
+  Detects MCP tools that return excessively large responses that consume
+  a disproportionate share of the available token budget. Token budget
+  exhaustion degrades LLM performance and increases costs.
+risk_explanation: >
+  MCP tools that return very large responses consume tokens that could
+  be used for reasoning, safety checks, and user interaction. This
+  reduces the LLM's ability to maintain context, follow safety
+  instructions, and produce useful responses. It also increases API
+  costs and may trigger rate limits, creating a denial-of-service
+  effect.
+remediation: >
+  Implement response size limits for all MCP tools. Use pagination for
+  large datasets and return summaries with the option to drill down into
+  details. Monitor per-tool token consumption and set budgets for each
+  tool's response size. Compress or summarize large outputs before
+  returning them to the LLM context.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - context_security
+  - token_budget
+  - resource_exhaustion
+  - performance

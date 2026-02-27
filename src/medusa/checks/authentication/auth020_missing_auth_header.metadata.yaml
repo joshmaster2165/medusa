@@ -1,0 +1,30 @@
+check_id: auth020
+title: Missing Authorization Header
+category: authentication
+severity: high
+description: >
+  Detects MCP servers using HTTP transport without any Authorization
+  header configuration. Servers that do not expect or validate
+  Authorization headers accept all requests as authenticated, providing
+  no access control.
+risk_explanation: >
+  Without Authorization header validation, the MCP server treats all
+  incoming requests as legitimate. Any client that can reach the server
+  endpoint can invoke tools and access resources. This is equivalent to
+  running the server with no authentication, exposing all capabilities
+  to unauthorized access.
+remediation: >
+  Configure the MCP server to require and validate an Authorization
+  header on all requests. Implement OAuth 2.1 bearer token validation as
+  recommended by the MCP specification. Reject requests that do not
+  include a valid Authorization header with a 401 Unauthorized response.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - authorization_header
+  - http_transport
+  - missing_auth

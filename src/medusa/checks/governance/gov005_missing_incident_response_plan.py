@@ -1,0 +1,28 @@
+"""GOV005: Missing Incident Response Plan.
+
+Detects MCP server deployments that lack a documented incident response plan for security
+events. Without an incident response plan, organizations cannot effectively detect, contain,
+eradicate, and recover from security incidents affecting MCP server operations.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import yaml
+
+from medusa.core.check import BaseCheck, ServerSnapshot
+from medusa.core.models import CheckMetadata, Finding
+
+
+class MissingIncidentResponsePlanCheck(BaseCheck):
+    """Missing Incident Response Plan."""
+
+    def metadata(self) -> CheckMetadata:
+        meta_path = Path(__file__).with_suffix(".metadata.yaml")
+        data = yaml.safe_load(meta_path.read_text())
+        return CheckMetadata(**data)
+
+    async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
+        # TODO: Implement gov005 check logic
+        return []

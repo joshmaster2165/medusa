@@ -1,0 +1,29 @@
+check_id: err015
+title: Missing Error Recovery
+category: error_handling
+severity: medium
+description: >
+  Detects MCP server implementations that lack automatic error recovery
+  mechanisms such as retry logic, connection re-establishment, or state
+  rollback after transient failures. Missing recovery causes persistent
+  failures from temporary issues.
+risk_explanation: >
+  Without automatic error recovery, transient failures such as network
+  timeouts, temporary resource unavailability, or brief service
+  interruptions cause permanent tool failures until manual intervention.
+  Attackers can exploit this by causing brief disruptions that
+  permanently degrade server functionality. State inconsistencies from
+  unrecovered errors may also create security vulnerabilities.
+remediation: >
+  Implement retry logic with exponential backoff for transient failures
+  in tool operations. Add connection pool recovery for database and
+  network connections. Implement transaction rollback on failure to
+  maintain state consistency. Use health checks to detect and recover
+  from degraded states automatically.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

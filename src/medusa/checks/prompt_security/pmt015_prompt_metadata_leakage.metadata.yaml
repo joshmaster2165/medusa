@@ -1,0 +1,31 @@
+check_id: pmt015
+title: Prompt Metadata Leakage
+category: prompt_security
+severity: medium
+description: >
+  Detects MCP prompt definitions that expose sensitive metadata such as
+  internal system names, author information, version details, internal
+  identifiers, or development comments in their descriptions or argument
+  definitions visible to clients.
+risk_explanation: >
+  Metadata leaked through prompt definitions provides attackers with
+  intelligence about the server internal structure, development
+  practices, and configuration. Internal system names can identify
+  backend services to target. Version information enables CVE targeting.
+  Development comments may reveal security assumptions or known
+  limitations that can be exploited.
+remediation: >
+  Review all prompt definitions for sensitive metadata before
+  deployment. Remove internal comments, system identifiers, version
+  numbers, and developer notes from client-visible prompt descriptions
+  and argument definitions. Implement a pre-deployment review process
+  that strips metadata. Use separate internal and external description
+  fields for prompts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

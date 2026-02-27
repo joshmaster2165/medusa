@@ -1,0 +1,31 @@
+check_id: ctx010
+title: Multi-Turn Conversation Manipulation
+category: context_security
+severity: high
+description: >
+  Detects patterns of progressive manipulation across multiple
+  conversation turns. Multi-turn attacks incrementally shift the LLM's
+  behavior over several exchanges to bypass single-turn safety checks.
+risk_explanation: >
+  Multi-turn manipulation attacks bypass safety measures by gradually
+  shifting the LLM's behavior over several conversation turns. Each
+  individual turn may appear benign, but the cumulative effect steers
+  the LLM toward performing unauthorized actions. This is particularly
+  dangerous because single-turn safety checks may not detect the
+  progressive nature of the attack.
+remediation: >
+  Implement conversation-level behavior monitoring that tracks
+  cumulative drift across multiple turns. Use anomaly detection to
+  identify progressive manipulation patterns. Periodically reinforce
+  system prompt instructions throughout long conversations. Set maximum
+  conversation lengths and require re-authentication for extended
+  sessions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - context_security
+  - multi_turn
+  - manipulation
+  - conversation_safety

@@ -1,0 +1,31 @@
+check_id: iv025
+title: Template Literal Injection
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters used in JavaScript template literals or
+  equivalent constructs without sanitization. User input interpolated
+  into template literals can execute arbitrary JavaScript expressions
+  via ${...} syntax.
+risk_explanation: >
+  Template literal injection in JavaScript evaluates arbitrary
+  expressions within ${} blocks. An attacker injecting
+  ${process.env.SECRET} can exfiltrate environment variables, while
+  ${require('child_process') .execSync('id')} achieves remote code
+  execution. This is analogous to server-side template injection but
+  specific to JavaScript runtime.
+remediation: >
+  Never interpolate user input directly into template literals. Use
+  tagged template literals with proper escaping. Validate input to
+  reject strings containing ${ sequences. Use parameterized string
+  building instead of template literal interpolation for user-controlled
+  content.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - template_literal
+  - javascript
+  - code_injection

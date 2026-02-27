@@ -1,0 +1,35 @@
+check_id: agent019
+title: Agent Resource Exhaustion
+category: agentic_behavior
+severity: medium
+description: >
+  Detects MCP configurations where agents can consume excessive
+  computational resources including CPU, memory, disk, network
+  bandwidth, and API quotas through unrestricted tool invocations.
+  Resource exhaustion degrades or denies service for all users of the
+  MCP infrastructure.
+risk_explanation: >
+  Agent resource exhaustion can be triggered by prompt injection attacks
+  that instruct the agent to invoke resource-intensive tools repeatedly.
+  This affects not only the attacker's session but potentially all users
+  sharing the MCP infrastructure. Exhaustion of API quotas can block
+  legitimate operations, memory exhaustion can crash servers, and CPU
+  exhaustion can degrade performance for all sessions. The agent's
+  autonomy amplifies the impact because it can continuously request
+  resources without human intervention.
+remediation: >
+  Implement resource budgets for each agent session including limits on
+  CPU time, memory usage, disk space, network bandwidth, and API call
+  counts. Monitor resource consumption in real time and terminate
+  sessions that exceed budgets. Implement per-tool resource limits that
+  prevent any single tool invocation from consuming excessive resources.
+  Use isolation mechanisms such as containers or sandboxes to enforce
+  resource limits at the infrastructure level.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

@@ -1,0 +1,33 @@
+check_id: sess020
+title: WebSocket Session Security
+category: session_management
+severity: high
+description: >
+  Detects MCP servers using WebSocket transport without proper session
+  security controls. WebSocket connections used for MCP communication
+  may lack authentication token validation on upgrade, origin checking,
+  or per-message session verification, allowing unauthorized access to
+  tool invocations.
+risk_explanation: >
+  WebSocket connections for MCP transport present unique session
+  security challenges. If session tokens are only validated during the
+  initial HTTP upgrade and not on subsequent messages, a hijacked
+  WebSocket connection provides persistent unauthorized access. Cross-
+  origin WebSocket connections without proper origin validation can be
+  initiated by malicious web pages, enabling cross-site WebSocket
+  hijacking attacks against MCP servers.
+remediation: >
+  Validate authentication tokens on the WebSocket upgrade request and
+  periodically during the connection lifetime. Implement origin checking
+  to reject WebSocket connections from unauthorized origins. Use per-
+  message authentication or session binding for long-lived WebSocket
+  connections. Implement connection-level timeouts and idle detection.
+  Close WebSocket connections when the associated session expires or is
+  invalidated.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

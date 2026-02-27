@@ -1,0 +1,34 @@
+check_id: agent002
+title: Autonomous Action Risk
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP server deployments where the LLM agent can take actions in
+  the real world without user approval. This includes sending network
+  requests, modifying files, interacting with external APIs, or
+  executing commands autonomously based solely on the LLM's
+  interpretation of the user's intent.
+risk_explanation: >
+  Autonomous actions by LLM agents connected to MCP servers carry
+  significant risk because LLMs can misinterpret instructions,
+  hallucinate actions, or be manipulated through prompt injection.
+  Without approval gates, a compromised agent can cause widespread
+  damage across all connected tools and services before the user becomes
+  aware. The autonomous nature of these actions means they can chain
+  together, amplifying the impact.
+remediation: >
+  Implement an action approval framework that categorizes tool
+  invocations by risk level and requires user approval for actions above
+  a configurable threshold. Provide a preview of the planned action
+  including affected resources and potential consequences. Support both
+  synchronous approval (blocking until approved) and asynchronous
+  notification. Allow users to configure auto-approval rules for
+  trusted, low-risk operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

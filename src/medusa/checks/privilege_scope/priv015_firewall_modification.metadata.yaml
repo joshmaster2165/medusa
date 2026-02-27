@@ -1,0 +1,30 @@
+check_id: priv015
+title: Firewall Rule Modification
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools that can modify network firewall rules (iptables,
+  nftables, Windows Firewall, cloud security groups). Firewall
+  modification can expose internal services, disable network security
+  controls, and enable lateral movement.
+risk_explanation: >
+  Firewall rule modification allows an attacker to open network ports,
+  exposing internal services to the internet. Disabling firewall rules
+  removes network-level security controls, enabling unrestricted lateral
+  movement. In cloud environments, security group modifications can
+  expose databases and internal APIs to the public internet.
+remediation: >
+  Never grant MCP tools firewall modification capabilities. Use
+  infrastructure-as-code for firewall management with proper change
+  control. Implement firewall rule monitoring and alerting for
+  unauthorized changes. Run MCP servers in network segments that cannot
+  reach firewall management interfaces.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - firewall
+  - network_security
+  - security_groups

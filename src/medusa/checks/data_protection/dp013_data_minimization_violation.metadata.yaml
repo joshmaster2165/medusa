@@ -1,0 +1,30 @@
+check_id: dp013
+title: Data Minimization Violation
+category: data_protection
+severity: medium
+description: >
+  Detects MCP tools that collect or request more data than is necessary
+  for their stated purpose. Data minimization is a core privacy
+  principle that limits the amount of personal data collected and
+  processed.
+risk_explanation: >
+  Collecting excessive data increases the blast radius of a data breach
+  and violates the principle of data minimization required by GDPR and
+  other regulations. Tools that request unnecessary fields create larger
+  attack surfaces and increase the volume of sensitive data that must be
+  protected.
+remediation: >
+  Review each tool's input schema and remove fields that are not
+  strictly necessary for the tool's function. Implement purpose
+  limitation by documenting why each field is collected. Use progressive
+  data collection where additional fields are requested only when
+  needed.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - data_minimization
+  - privacy
+  - gdpr

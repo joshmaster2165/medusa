@@ -1,0 +1,30 @@
+check_id: iv030
+title: Open Additional Properties
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameter schemas that allow arbitrary additional
+  properties beyond those explicitly defined. Open schemas accept any
+  extra properties, enabling injection of unexpected parameters that may
+  be processed by the server without validation.
+risk_explanation: >
+  Schemas with additionalProperties set to true (or not set, defaulting
+  to true) accept arbitrary extra properties. An attacker can inject
+  properties like '__proto__', 'admin', or 'command' that may be
+  processed by server-side code. These injected properties bypass the
+  validation applied to declared properties.
+remediation: >
+  Set additionalProperties to false in all tool parameter schemas.
+  Reject requests containing properties not defined in the schema. If
+  dynamic properties are required, use patternProperties with strict
+  name patterns. Implement server-side property name validation that
+  rejects unknown properties.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - additional_properties
+  - schema_strictness
+  - property_injection

@@ -1,0 +1,615 @@
+category: resource_security
+checks:
+  - id: res001
+    slug: missing_resource_access_control
+    title: "Missing Resource Access Control"
+    severity: high
+    description: >
+      Detects MCP resource endpoints that lack access control checks,
+      allowing any authenticated or unauthenticated client to read, list,
+      or subscribe to resources without authorization verification. Resources
+      may contain sensitive data that should be restricted by role or scope.
+    risk_explanation: >
+      Without access control on resources, any MCP client can access all
+      exposed data including configuration files, database contents, and
+      internal documents. An attacker who connects a malicious client can
+      exfiltrate all server resources. This is especially dangerous when
+      resources expose file system contents or database records.
+    remediation: >
+      Implement resource-level access control that validates client
+      authorization before returning resource content. Define access
+      policies per resource URI pattern. Use the MCP session context to
+      enforce per-user or per-role restrictions. Deny access by default
+      and require explicit grants for each resource.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res002
+    slug: resource_template_traversal
+    title: "Resource Template Path Traversal"
+    severity: high
+    description: >
+      Detects MCP resource templates that accept user-controlled path
+      segments without validation, enabling directory traversal attacks.
+      Templates using patterns like {path} or {filename} in URI templates
+      can be exploited with ../ sequences to access arbitrary files.
+    risk_explanation: >
+      Path traversal through resource templates allows attackers to read
+      files outside the intended resource scope, including system files
+      such as /etc/passwd, application configuration containing secrets,
+      source code, and other sensitive data. This can lead to full
+      server compromise through credential extraction.
+    remediation: >
+      Validate all resource template parameters against an allowlist of
+      permitted values or patterns. Canonicalize paths and reject any
+      containing ../ or other traversal sequences. Implement a resource
+      root directory and verify all resolved paths remain within it.
+      Use chroot or similar sandboxing for file-based resources.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res003
+    slug: resource_content_validation
+    title: "Missing Resource Content Validation"
+    severity: medium
+    description: >
+      Detects MCP resources that serve content without validating or
+      sanitizing it before delivery to clients. Unsanitized resource
+      content may contain malicious payloads such as prompt injection
+      strings, script tags, or encoded attack sequences.
+    risk_explanation: >
+      Resources that return unsanitized content can be weaponized to
+      inject malicious instructions into the LLM context. An attacker
+      who can modify a resource target such as a file or database record
+      can embed prompt injection payloads that the LLM will process as
+      instructions, potentially leading to unauthorized actions.
+    remediation: >
+      Implement content validation and sanitization for all resources
+      before they are returned to clients. Scan resource content for
+      known injection patterns. Apply content security policies that
+      restrict the types of content that can be served. Tag resource
+      content with its trust level for downstream processing.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res004
+    slug: resource_injection_via_uri
+    title: "Resource Injection via URI"
+    severity: high
+    description: >
+      Detects MCP resource URIs that incorporate user input without proper
+      sanitization, enabling injection attacks through the URI itself.
+      Attackers can inject special characters, protocol handlers, or
+      encoded payloads into resource URIs to manipulate server behavior.
+    risk_explanation: >
+      URI injection can redirect resource lookups to attacker-controlled
+      endpoints, trigger server-side request forgery through protocol
+      handler manipulation, or exploit URI parsing inconsistencies to
+      bypass access controls. Injected URIs may also cause the server
+      to fetch and cache malicious content from external sources.
+    remediation: >
+      Validate and sanitize all user-supplied components of resource URIs.
+      Use a strict URI schema validator that rejects unexpected protocols
+      and special characters. Encode URI components before assembly.
+      Maintain an allowlist of permitted URI schemes and host patterns
+      for resource resolution.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res005
+    slug: resource_enumeration
+    title: "Resource Enumeration Risk"
+    severity: medium
+    description: >
+      Detects MCP servers that expose predictable or sequential resource
+      identifiers, enabling attackers to enumerate all available resources
+      by iterating through ID ranges or patterns. Resource listing
+      endpoints without pagination limits also enable bulk enumeration.
+    risk_explanation: >
+      Predictable resource identifiers allow attackers to discover and
+      access resources they were not intended to see, including other
+      users data, internal configuration resources, and administrative
+      resources. Enumeration is often the first step in a data exfiltration
+      attack where all discoverable resources are harvested.
+    remediation: >
+      Use non-sequential, non-predictable identifiers for resources such
+      as UUIDs or cryptographic hashes. Implement pagination with
+      reasonable limits on resource listing endpoints. Add rate limiting
+      to resource listing and access operations to slow enumeration
+      attempts. Require authorization for resource listing.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res006
+    slug: resource_race_condition
+    title: "Resource Race Condition"
+    severity: high
+    description: >
+      Detects MCP resource handlers that are vulnerable to time-of-check
+      to time-of-use (TOCTOU) race conditions. When access control checks
+      and resource reads are not atomic, an attacker can manipulate the
+      resource between the check and the read operation.
+    risk_explanation: >
+      Race conditions in resource access allow attackers to bypass access
+      controls by timing their requests to coincide with legitimate access
+      checks. Symlink races can redirect file-based resources to sensitive
+      files after the access check passes. Concurrent modifications can
+      cause data corruption or expose intermediate states containing
+      sensitive information.
+    remediation: >
+      Implement atomic check-and-read operations for all resources. Use
+      file locks or database transactions to prevent concurrent access
+      race conditions. Verify resource identity and permissions at the
+      point of use, not just at the point of request. Use immutable
+      resource snapshots for time-sensitive operations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res007
+    slug: resource_caching_risk
+    title: "Resource Caching Security Risk"
+    severity: medium
+    description: >
+      Detects MCP resources that are cached without considering security
+      implications. Cached resources may be served to unauthorized clients,
+      retain stale access control decisions, or persist sensitive data
+      beyond its intended lifetime in cache storage.
+    risk_explanation: >
+      Improper caching of resources can serve sensitive content to clients
+      who should not have access after permission changes. Cached resources
+      may persist in shared memory or on disk after the user session ends,
+      enabling later extraction. Cache poisoning attacks can inject
+      malicious content that is then served to legitimate clients.
+    remediation: >
+      Implement cache-aware access control that validates permissions on
+      cache hits, not just cache misses. Set appropriate cache expiration
+      times for sensitive resources. Use per-user cache keys to prevent
+      cross-user cache leaks. Mark sensitive resources as non-cacheable.
+      Clear cached resources when access permissions change.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res008
+    slug: resource_symlink_risk
+    title: "Resource Symlink Following"
+    severity: high
+    description: >
+      Detects MCP file-based resource handlers that follow symbolic links
+      without validation, allowing attackers to create symlinks that point
+      to files outside the intended resource directory. This enables
+      reading arbitrary files on the server file system.
+    risk_explanation: >
+      Symlink following allows an attacker who can create files within the
+      resource directory to create a symbolic link to any file on the
+      system, such as /etc/shadow, application secrets, or private keys.
+      When the MCP server resolves the resource, it follows the symlink
+      and returns the target file contents, bypassing all directory-based
+      access controls.
+    remediation: >
+      Configure file-based resource handlers to not follow symbolic links.
+      Use O_NOFOLLOW flags when opening files. Resolve the real path of
+      resource files and verify they remain within the allowed resource
+      directory before reading. Consider running the MCP server in a
+      container or chroot to limit symlink targets.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res009
+    slug: resource_size_limit
+    title: "Missing Resource Size Limit"
+    severity: medium
+    description: >
+      Detects MCP resource handlers that do not enforce size limits on
+      resource content, allowing extremely large resources to be requested
+      and processed. This can exhaust server memory, consume excessive
+      bandwidth, and overwhelm the LLM context window.
+    risk_explanation: >
+      Without size limits, an attacker can request very large resources
+      that consume all available server memory, causing denial of service.
+      Large resources injected into the LLM context can displace important
+      instructions, overwhelm token limits, and increase processing costs.
+      Resource size amplification attacks can also saturate network bandwidth.
+    remediation: >
+      Implement configurable maximum size limits for all resource types.
+      Stream large resources with chunking rather than loading them
+      entirely into memory. Return appropriate error responses when size
+      limits are exceeded. Set per-client bandwidth quotas for resource
+      access. Truncate oversized resources with clear indicators.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res010
+    slug: resource_type_confusion
+    title: "Resource Type Confusion"
+    severity: high
+    description: >
+      Detects MCP resources where the declared MIME type does not match
+      the actual content, or where type validation is missing entirely.
+      Type confusion can cause clients to misprocess content, execute
+      code embedded in data files, or misinterpret binary data as text.
+    risk_explanation: >
+      Resource type confusion enables attackers to serve executable content
+      disguised as benign data types. An LLM that receives what it believes
+      is a text document but actually contains encoded executable payloads
+      may process the content in unintended ways. Type mismatches can also
+      trigger parser vulnerabilities in clients that handle content based
+      on the declared MIME type.
+    remediation: >
+      Validate actual resource content against the declared MIME type using
+      content inspection, not just file extension checks. Reject resources
+      where the content does not match the declared type. Implement a
+      strict allowlist of permitted resource MIME types. Sanitize content
+      based on its verified type before serving to clients.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res011
+    slug: resource_origin_validation
+    title: "Missing Resource Origin Validation"
+    severity: high
+    description: >
+      Detects MCP resources that fetch or proxy content from external
+      origins without validating the source. Resources that pull data
+      from user-specified URLs, external APIs, or remote file systems
+      without origin validation enable SSRF and data poisoning attacks.
+    risk_explanation: >
+      Missing origin validation allows attackers to point resource URIs
+      at internal services, cloud metadata endpoints such as
+      169.254.169.254, or attacker-controlled servers. This enables
+      server-side request forgery to access internal networks, exfiltrate
+      data to external servers, or inject malicious content through
+      attacker-controlled resource origins.
+    remediation: >
+      Implement strict origin validation with an allowlist of permitted
+      external hosts and protocols. Block access to internal network
+      ranges and cloud metadata endpoints. Validate DNS resolution to
+      prevent DNS rebinding attacks. Use network-level controls to restrict
+      outbound connections from the MCP server.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res012
+    slug: resource_lifetime_management
+    title: "Missing Resource Lifetime Management"
+    severity: medium
+    description: >
+      Detects MCP resources that lack explicit lifetime management,
+      including expiration, cleanup, and invalidation mechanisms. Resources
+      without lifecycle controls may persist indefinitely, accumulate stale
+      data, and consume storage without bound.
+    risk_explanation: >
+      Resources without lifetime management accumulate over time, consuming
+      server storage and memory. Stale resources may contain outdated access
+      tokens, expired credentials, or obsolete data that should have been
+      purged. Attackers can exploit long-lived resources to access data that
+      should have been deleted or to overwhelm the server with resource
+      accumulation.
+    remediation: >
+      Implement resource expiration policies with configurable time-to-live
+      values. Add automatic cleanup for expired resources. Provide resource
+      invalidation mechanisms that cascade to dependent resources. Monitor
+      resource counts and storage usage with alerts for abnormal growth.
+      Document expected resource lifetimes for each resource type.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res013
+    slug: dynamic_resource_injection
+    title: "Dynamic Resource Injection"
+    severity: high
+    description: >
+      Detects MCP servers that allow dynamic registration of new resources
+      at runtime without validation or authorization. Dynamically injected
+      resources can introduce malicious content into the server resource
+      pool, poisoning the data available to LLM clients.
+    risk_explanation: >
+      Dynamic resource injection allows an attacker with limited access to
+      register new resources containing prompt injection payloads, misleading
+      data, or malicious content. These injected resources appear as
+      legitimate server resources and may be automatically included in LLM
+      context, enabling indirect prompt injection and data manipulation
+      without modifying existing resources.
+    remediation: >
+      Restrict dynamic resource registration to authorized administrators
+      only. Implement content validation and approval workflows for new
+      resources. Sign resources to verify their origin and integrity.
+      Monitor for unexpected resource registrations and alert on anomalies.
+      Maintain an audit log of all resource lifecycle operations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res014
+    slug: resource_schema_validation
+    title: "Missing Resource Schema Validation"
+    severity: medium
+    description: >
+      Detects MCP resources that lack schema definitions or validation for
+      their content structure. Without schema validation, resources can
+      contain unexpected fields, malformed data, or additional properties
+      that may be processed in unintended ways by consumers.
+    risk_explanation: >
+      Missing schema validation allows attackers to inject additional
+      fields or malformed content into resources that clients process
+      without verification. Extra properties may override expected values,
+      inject instructions into LLM processing, or exploit parser
+      vulnerabilities in downstream consumers. Malformed data can cause
+      application errors or undefined behavior.
+    remediation: >
+      Define JSON Schema or equivalent validation schemas for all resource
+      types. Validate resource content against its schema before serving
+      to clients. Reject resources that fail validation with clear error
+      messages. Use strict schema validation that rejects unknown
+      additional properties by default.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res015
+    slug: resource_subscription_abuse
+    title: "Resource Subscription Abuse"
+    severity: medium
+    description: >
+      Detects MCP resource subscription endpoints that lack rate limiting,
+      maximum subscription counts, or client validation. Uncontrolled
+      subscriptions can exhaust server resources through notification
+      flooding or enable unauthorized real-time data monitoring.
+    risk_explanation: >
+      Without subscription controls, an attacker can create thousands of
+      subscriptions to resource updates, overwhelming the server with
+      notification processing. Excessive subscriptions consume memory,
+      CPU, and network bandwidth. Unrestricted subscriptions also allow
+      attackers to monitor all resource changes in real-time, enabling
+      data surveillance and timing attacks.
+    remediation: >
+      Implement per-client subscription limits with configurable maximums.
+      Add rate limiting on subscription creation and notification delivery.
+      Require authorization for subscribing to sensitive resources. Monitor
+      subscription counts and alert on anomalous patterns. Clean up stale
+      subscriptions automatically.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res016
+    slug: resource_uri_normalization
+    title: "Missing URI Normalization"
+    severity: medium
+    description: >
+      Detects MCP resource handlers that do not normalize URIs before
+      processing, allowing different URI representations to bypass access
+      controls. URL encoding, case variations, path folding, and trailing
+      slashes can create equivalent URIs that receive different access
+      control decisions.
+    risk_explanation: >
+      Without URI normalization, an attacker can bypass access controls by
+      using alternative URI representations. For example, /resource/secret
+      and /resource/%73ecret or /Resource/Secret may point to the same
+      resource but receive different access control decisions. This
+      inconsistency enables authorization bypass attacks on protected
+      resources.
+    remediation: >
+      Implement consistent URI normalization before access control checks.
+      Decode percent-encoded characters, normalize case, remove duplicate
+      slashes, and resolve dot segments. Apply the same normalization to
+      both the requested URI and the access control policy patterns. Use
+      a well-tested URI normalization library.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res017
+    slug: resource_content_type_mismatch
+    title: "Resource Content-Type Mismatch"
+    severity: medium
+    description: >
+      Detects MCP resources that declare one content type in their metadata
+      but serve content of a different type. This mismatch can lead to
+      client-side processing errors, security bypass through type
+      confusion, or exploitation of type-specific parsing vulnerabilities.
+    risk_explanation: >
+      Content-type mismatches can trick clients into processing dangerous
+      content using the wrong parser. A resource declared as text/plain but
+      containing HTML may trigger script execution in web-based clients.
+      Binary content served as text can cause encoding errors that expose
+      raw bytes. Type confusion between structured data formats can lead
+      to injection through parser differences.
+    remediation: >
+      Implement content-type verification that inspects actual content and
+      compares it against the declared MIME type. Reject resources where
+      the content does not match the declared type. Set content-type headers
+      based on verified content analysis rather than file extensions or
+      client declarations. Use strict content-type checking in clients.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res018
+    slug: resource_encoding_bypass
+    title: "Resource Encoding Bypass"
+    severity: high
+    description: >
+      Detects MCP resource handlers that fail to properly handle character
+      encoding variations, allowing attackers to bypass content filters and
+      access controls using alternative encodings such as UTF-7, UTF-16,
+      double URL encoding, or mixed encoding schemes.
+    risk_explanation: >
+      Encoding bypass attacks exploit differences between how the security
+      filter decodes input and how the backend processes it. An attacker
+      can encode malicious payloads in alternative character sets to evade
+      content validation, inject path traversal sequences through double
+      encoding, or bypass keyword-based filters using homoglyph characters
+      from different Unicode blocks.
+    remediation: >
+      Normalize all resource content to a single canonical encoding such
+      as UTF-8 before applying any security checks. Reject requests with
+      ambiguous or unsupported encodings. Decode content fully before
+      validation, including handling of double encoding. Use encoding-aware
+      comparison functions for access control decisions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res019
+    slug: resource_quota_missing
+    title: "Missing Resource Quota"
+    severity: medium
+    description: >
+      Detects MCP servers that do not enforce quotas on resource creation,
+      storage, or access frequency per client. Without quotas, a single
+      client can monopolize server resources, starving other clients and
+      causing denial of service through resource exhaustion.
+    risk_explanation: >
+      Missing resource quotas enable a single client or attacker to consume
+      all available server resources including storage space, memory for
+      active resources, and processing capacity for resource operations.
+      This prevents legitimate clients from accessing the server and can
+      cause cascading failures across all connected clients.
+    remediation: >
+      Implement per-client quotas for resource creation count, total
+      storage size, and access frequency. Set sensible default quotas and
+      allow administrators to configure per-client limits. Return clear
+      error messages when quotas are exceeded. Monitor quota usage and
+      alert on clients approaching their limits.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control
+
+  - id: res020
+    slug: resource_dependency_chain
+    title: "Resource Dependency Chain Risk"
+    severity: high
+    description: >
+      Detects MCP resources that form dependency chains where one resource
+      references or includes another, creating potential for circular
+      dependencies, infinite resolution loops, and cascading access control
+      bypasses through transitive resource references.
+    risk_explanation: >
+      Resource dependency chains can be exploited to create circular
+      references that cause infinite loops and server crashes. Transitive
+      dependencies may bypass access controls when a protected resource
+      is included by reference in an unprotected resource. Deep dependency
+      chains amplify the impact of poisoning a single resource, as the
+      malicious content propagates through all dependent resources.
+    remediation: >
+      Implement dependency chain depth limits and circular dependency
+      detection for all resources. Enforce access controls at each level
+      of resource resolution, not just the top-level request. Validate
+      resource references at registration time to prevent circular
+      dependencies. Monitor and log resource dependency chains for
+      security analysis.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+      - "MCP10:2025"
+    tags:
+      - resource_security
+      - access_control

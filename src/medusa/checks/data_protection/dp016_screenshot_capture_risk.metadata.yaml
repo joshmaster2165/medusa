@@ -1,0 +1,30 @@
+check_id: dp016
+title: Screenshot Capture Risk
+category: data_protection
+severity: high
+description: >
+  Detects MCP tools with capabilities to capture screen content.
+  Screenshot capture can expose any visible information including
+  private messages, banking details, medical records, and authentication
+  tokens.
+risk_explanation: >
+  Screen capture provides access to all visible information on the
+  user's display, regardless of the application or context. A malicious
+  MCP tool with screenshot capabilities can capture sensitive
+  information from any application, including banking portals, medical
+  systems, private messages, and authentication screens.
+remediation: >
+  Restrict screenshot capabilities to explicitly approved use cases.
+  Require user confirmation before each capture. Implement capture
+  region limiting so that only the relevant application window is
+  captured. Apply automatic redaction of detected sensitive content in
+  captured images.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - screenshot
+  - privacy
+  - screen_capture

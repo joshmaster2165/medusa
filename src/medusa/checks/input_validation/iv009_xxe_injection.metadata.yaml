@@ -1,0 +1,32 @@
+check_id: iv009
+title: XML External Entity Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters that accept XML input without restrictions on
+  external entity processing. XXE attacks exploit XML parsers that
+  resolve external entities, enabling file disclosure, SSRF, and denial
+  of service.
+risk_explanation: >
+  XXE injection allows an attacker to read local files on the server by
+  defining external entities that reference file:// URIs. It can also
+  trigger server-side requests to internal services (SSRF) or cause
+  denial of service through recursive entity expansion (billion laughs
+  attack). XXE is dangerous because many XML parsers enable external
+  entities by default.
+remediation: >
+  Disable external entity processing in all XML parsers. Set
+  XMLConstants.FEATURE_SECURE_PROCESSING and disable DTDs. Use JSON
+  instead of XML where possible. If XML is required, use a parser
+  configured to reject external entities and DTD processing. Add schema
+  validation for XML parameters.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - xxe
+  - xml_injection
+  - entity_expansion

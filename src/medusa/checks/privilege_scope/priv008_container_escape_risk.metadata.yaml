@@ -1,0 +1,30 @@
+check_id: priv008
+title: Container Escape Risk
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools with access to the host filesystem, Docker socket,
+  or container runtime that could enable container escape. Tools that
+  can mount host paths or communicate with the Docker daemon can break
+  out of container isolation.
+risk_explanation: >
+  Container escape gives an attacker access to the host system and all
+  other containers running on it. Mounting the Docker socket allows
+  creating privileged containers with host access. Host filesystem
+  mounts bypass container isolation entirely. Container escape from an
+  MCP server compromises the entire host infrastructure.
+remediation: >
+  Never mount the Docker socket into MCP server containers. Restrict
+  host filesystem mounts to specific required paths with read-only
+  access. Use rootless containers and user namespace mapping. Drop all
+  unnecessary Linux capabilities. Implement seccomp profiles to restrict
+  system calls.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - container_escape
+  - docker
+  - host_access

@@ -1,0 +1,31 @@
+check_id: shadow003
+title: Duplicate Tool Names Across Servers
+category: server_identity
+severity: critical
+description: >
+  Detects multiple MCP servers in the same client configuration that
+  expose tools with identical names. Duplicate tool names create
+  ambiguity about which server handles a given tool invocation.
+risk_explanation: >
+  When multiple servers expose identically-named tools, the LLM or
+  client may route invocations to the wrong server. A malicious server
+  can register tools with the same names as a legitimate server to
+  intercept tool calls, capture sensitive parameters, and return
+  manipulated results. This is a direct tool shadowing attack that
+  exploits name collisions.
+remediation: >
+  Enforce unique tool names across all MCP servers in a client
+  configuration. Use namespaced tool names that include the server
+  identity (e.g. "acme-billing.create-invoice" instead of "create-
+  invoice"). Implement client-side validation that rejects duplicate
+  tool names at configuration time. Alert users when tool name
+  collisions are detected.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - server_identity
+  - tool_shadowing
+  - name_collision
+  - critical_risk

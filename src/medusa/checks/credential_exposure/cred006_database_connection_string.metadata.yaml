@@ -1,0 +1,31 @@
+check_id: cred006
+title: Database Connection String Exposure
+category: credential_exposure
+severity: critical
+description: >
+  Detects database connection strings with embedded credentials in MCP
+  server configuration. Connection strings containing username:password
+  in URLs (e.g. postgresql://user:pass@host/db) expose database
+  credentials in plaintext.
+risk_explanation: >
+  Database connection strings with embedded credentials grant direct
+  database access. An attacker obtaining the connection string can
+  connect to the database, read sensitive data, modify records, or drop
+  tables. Connection strings in configuration files are often committed
+  to version control and appear in logs, multiplying exposure vectors.
+remediation: >
+  Remove credentials from database connection strings. Use environment
+  variables for database credentials and reference them in connection
+  configuration. Implement database credential rotation through secrets
+  managers. Use certificate-based or IAM-based database authentication
+  where available.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Database_Security_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - database
+  - connection_string
+  - embedded_credentials

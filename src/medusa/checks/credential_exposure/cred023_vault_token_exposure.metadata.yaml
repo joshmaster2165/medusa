@@ -1,0 +1,32 @@
+check_id: cred023
+title: HashiCorp Vault Token Exposure
+category: credential_exposure
+severity: critical
+description: >
+  Detects HashiCorp Vault root tokens or service tokens in MCP server
+  configuration. Vault tokens provide access to the secrets management
+  infrastructure itself, potentially exposing all secrets stored in the
+  vault.
+risk_explanation: >
+  A compromised Vault token, especially a root token, grants access to
+  all secrets stored in the vault. This is a cascading compromise
+  because Vault typically stores all other credentials (database
+  passwords, API keys, encryption keys). Root tokens have unrestricted
+  access and can modify policies, create new tokens, and access any
+  secret path.
+remediation: >
+  Never store Vault tokens in configuration files. Use Vault agent auto-
+  auth or Kubernetes auth methods for automatic token acquisition.
+  Revoke root tokens after initial setup. Use periodic tokens with TTL
+  limits. Implement response wrapping for token distribution. Audit
+  Vault token usage and revoke unused tokens.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://developer.hashicorp.com/vault/docs/concepts/tokens"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - vault
+  - secrets_manager
+  - root_token

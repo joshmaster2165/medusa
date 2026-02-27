@@ -1,0 +1,29 @@
+check_id: dp008
+title: Cross-Origin Data Sharing
+category: data_protection
+severity: high
+description: >
+  Detects MCP servers that share data across origin boundaries without
+  explicit user consent. Data returned by one tool or resource may be
+  forwarded to a different server or domain without the user's
+  knowledge.
+risk_explanation: >
+  Cross-origin data sharing without consent enables data exfiltration
+  attacks where a malicious MCP server can harvest data produced by
+  legitimate servers in the same client session. This violates the
+  principle of origin isolation and can expose sensitive business data
+  to untrusted third parties.
+remediation: >
+  Implement origin-aware data boundaries that prevent tool outputs from
+  being forwarded to servers on different origins without explicit user
+  consent. Use data tagging to track the origin of each piece of data
+  and enforce sharing policies at the client level.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - cross_origin
+  - consent
+  - data_isolation

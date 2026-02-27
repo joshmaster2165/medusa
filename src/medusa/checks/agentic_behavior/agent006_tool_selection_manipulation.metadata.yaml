@@ -1,0 +1,34 @@
+check_id: agent006
+title: Tool Selection Manipulation
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where the agent's tool selection process
+  can be manipulated through crafted tool descriptions, misleading
+  names, or prompt injection in tool metadata. An attacker can influence
+  which tool the agent selects for a given task, redirecting actions to
+  a malicious or compromised tool.
+risk_explanation: >
+  Tool selection manipulation exploits the LLM's reliance on tool
+  descriptions and names to choose which tool to invoke. A malicious MCP
+  server can craft tool descriptions that make a dangerous tool appear
+  suitable for common tasks, or shadow a legitimate tool's name to
+  intercept invocations. This causes the agent to invoke the wrong tool,
+  sending user data to malicious endpoints or executing unintended
+  operations.
+remediation: >
+  Implement tool selection verification that validates the chosen tool
+  against the user's intent. Display the selected tool and its server
+  origin to the user before invocation. Detect and warn about tools with
+  similar names from different servers. Apply tool reputation scoring
+  based on server trust level and usage history. Prevent tool
+  descriptions from containing instructions that override the agent's
+  selection logic.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

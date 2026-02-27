@@ -1,0 +1,33 @@
+check_id: agent005
+title: Delegation Without Authorization
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where one LLM agent can delegate tasks to
+  other agents or sub-agents without proper authorization checks. In
+  multi-agent architectures, delegation without authorization allows a
+  compromised agent to leverage other agents' capabilities and access
+  rights.
+risk_explanation: >
+  Unauthorized delegation in multi-agent MCP systems allows a
+  compromised or manipulated agent to recruit other agents to perform
+  actions on its behalf. The delegated agents may have different
+  permission sets, access to different MCP servers, or higher privilege
+  levels. This creates a privilege escalation path where a low-privilege
+  agent can achieve high-privilege outcomes by delegating to more
+  capable agents without proper authorization verification.
+remediation: >
+  Implement authorization checks for all agent delegation requests.
+  Verify that the delegating agent has permission to request the
+  specific actions being delegated. Maintain delegation chains and
+  enforce depth limits. Require the same user approval for delegated
+  actions as for directly invoked actions. Log all delegation events
+  including the delegating agent, target agent, and requested actions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

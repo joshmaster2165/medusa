@@ -1,0 +1,30 @@
+check_id: audit003
+title: Insufficient Log Detail
+category: audit_logging
+severity: medium
+description: >
+  Detects MCP server logging configurations that lack essential detail
+  such as caller identity, tool invocation parameters, timestamps, or
+  request correlation IDs. Incomplete logs hinder security
+  investigations.
+risk_explanation: >
+  Logs without sufficient detail cannot support effective incident
+  response. Missing caller identity prevents attribution of malicious
+  actions, missing parameters prevent reconstruction of attack payloads,
+  and missing correlation IDs prevent tracing of multi-step attacks
+  across distributed components.
+remediation: >
+  Configure structured logging that includes caller identity, tool name,
+  invocation parameters, timestamps, correlation IDs, and response
+  status for every tool invocation. Use a logging framework that
+  enforces a minimum set of required fields. Regularly audit log
+  completeness.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - log_detail
+  - observability
+  - incident_response

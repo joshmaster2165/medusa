@@ -1,0 +1,30 @@
+check_id: shadow001
+title: Generic or Duplicate-Prone Server Name
+category: server_identity
+severity: high
+description: >
+  Detects MCP servers using generic, short, or commonly duplicated names
+  that make it easy for a malicious server to masquerade as a legitimate
+  one. Generic names like "server", "test", or "mcp" provide no meaningful
+  identity and increase the risk of server shadowing attacks.
+risk_explanation: >
+  When multiple MCP servers share generic names, an attacker can register a
+  shadow server with the same name. The LLM or client may route requests to
+  the malicious server instead of the legitimate one, enabling data
+  exfiltration, tool poisoning, or privilege escalation. Short or generic
+  names also make it harder for users to distinguish between servers during
+  consent and audit flows.
+remediation: >
+  Use unique, descriptive server names that clearly identify the server's
+  purpose and owner (e.g. "acme-corp-billing-api" instead of "server").
+  Server names should be at least 3 characters long and avoid common
+  generic terms. Consider using a naming convention that includes the
+  organisation, service, and environment.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - integrity
+  - shadow_server
+  - server_identity

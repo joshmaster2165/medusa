@@ -1,0 +1,33 @@
+check_id: samp011
+title: Sampling Token Exhaustion
+category: sampling_security
+severity: medium
+description: >
+  Detects MCP server configurations where sampling requests can consume
+  excessive LLM tokens through large prompts, high max_tokens values, or
+  frequent requests. Token exhaustion creates a denial-of-service
+  condition for the user's LLM quota and can result in significant
+  financial costs.
+risk_explanation: >
+  Sampling token exhaustion allows a malicious MCP server to rapidly
+  consume the user's LLM API quota by issuing sampling requests with
+  large input prompts and high output token limits. In pay-per-token LLM
+  services, this directly translates to financial damage. Even in quota-
+  based services, token exhaustion prevents the user from using their
+  LLM for legitimate purposes, creating an effective denial of service.
+remediation: >
+  Implement token budgets for sampling requests per server and per
+  session. Limit the maximum input prompt size and output token count
+  for individual sampling requests. Track cumulative token usage per
+  server and enforce configurable limits. Alert users when sampling
+  token consumption exceeds normal thresholds. Provide per-server token
+  budget configuration in the MCP client settings.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

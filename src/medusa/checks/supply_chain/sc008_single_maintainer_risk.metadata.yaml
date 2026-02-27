@@ -1,0 +1,31 @@
+check_id: sc008
+title: Single Maintainer Risk
+category: supply_chain
+severity: low
+description: >
+  Detects critical MCP server dependencies maintained by a single
+  person. Single-maintainer packages are vulnerable to account takeover,
+  maintainer burnout, and social engineering attacks.
+risk_explanation: >
+  Packages maintained by a single individual represent a single point of
+  failure. If the maintainer's account is compromised through phishing
+  or credential theft, the attacker can publish malicious updates to all
+  downstream consumers. Single maintainers are also more susceptible to
+  social engineering and may abandon the package without notice,
+  creating an orphaned dependency.
+remediation: >
+  Identify critical dependencies with single maintainers and assess
+  alternatives with broader maintenance teams. For essential single-
+  maintainer packages, consider forking and maintaining internally,
+  sponsoring additional maintainers, or contributing to the package to
+  establish co-maintainer access. Monitor maintainer changes on critical
+  packages for signs of account takeover.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - supply_chain
+  - maintainer
+  - single_point_of_failure
+  - governance

@@ -1,0 +1,28 @@
+check_id: cred015
+title: PyPI Token Exposure
+category: credential_exposure
+severity: high
+description: >
+  Detects PyPI API tokens in configuration files, .pypirc, or
+  environment variables. PyPI tokens grant permissions to upload Python
+  packages to the Python Package Index.
+risk_explanation: >
+  Exposed PyPI tokens allow an attacker to upload malicious versions of
+  Python packages. This is a direct supply chain attack vector, as
+  downstream users who install the package receive the compromised code.
+  PyPI tokens typically have project-scoped or account-wide upload
+  permissions.
+remediation: >
+  Use scoped API tokens instead of account-wide tokens for PyPI uploads.
+  Store tokens in CI/CD secrets management. Rotate tokens after any
+  potential exposure. Enable two-factor authentication on PyPI accounts.
+  Use trusted publishers (OIDC-based publishing) for CI/CD pipelines.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - pypi
+  - package_registry
+  - supply_chain

@@ -1,0 +1,29 @@
+check_id: res004
+title: Resource Injection via URI
+category: resource_security
+severity: high
+description: >
+  Detects MCP resource URIs that incorporate user input without proper
+  sanitization, enabling injection attacks through the URI itself.
+  Attackers can inject special characters, protocol handlers, or encoded
+  payloads into resource URIs to manipulate server behavior.
+risk_explanation: >
+  URI injection can redirect resource lookups to attacker-controlled
+  endpoints, trigger server-side request forgery through protocol
+  handler manipulation, or exploit URI parsing inconsistencies to bypass
+  access controls. Injected URIs may also cause the server to fetch and
+  cache malicious content from external sources.
+remediation: >
+  Validate and sanitize all user-supplied components of resource URIs.
+  Use a strict URI schema validator that rejects unexpected protocols
+  and special characters. Encode URI components before assembly.
+  Maintain an allowlist of permitted URI schemes and host patterns for
+  resource resolution.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

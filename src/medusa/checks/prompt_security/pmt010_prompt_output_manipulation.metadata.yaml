@@ -1,0 +1,31 @@
+check_id: pmt010
+title: Prompt Output Manipulation
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt definitions that can be manipulated to control or
+  redirect the LLM output format, destination, or content in ways
+  unintended by the prompt designer. Output manipulation enables data
+  exfiltration, instruction injection into downstream systems, and
+  evasion of output filters.
+risk_explanation: >
+  Output manipulation allows attackers to use prompts as a conduit to
+  control what the LLM produces and where it sends results. Manipulated
+  output can include encoded data exfiltration payloads, instructions
+  that target downstream tool invocations, or formatted content that
+  bypasses output content filters. This turns the prompt into an
+  indirect attack vector against the entire LLM application.
+remediation: >
+  Implement output validation that checks LLM responses against expected
+  formats and content policies. Define output schemas for prompts and
+  validate generated content. Filter output for injection patterns
+  before it reaches downstream tools or users. Monitor for anomalous
+  output patterns that may indicate manipulation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

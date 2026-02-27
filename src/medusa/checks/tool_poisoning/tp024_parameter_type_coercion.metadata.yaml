@@ -1,0 +1,30 @@
+check_id: tp024
+title: Parameter Type Coercion Risk
+category: tool_poisoning
+severity: medium
+description: >
+  Detects tool parameters with loose type definitions that allow
+  injection via type coercion. Parameters typed as 'any', 'string |
+  object', or using oneOf with mixed types can be exploited by providing
+  structured objects where strings are expected, bypassing validation.
+risk_explanation: >
+  Loose parameter types allow attackers to pass structured objects
+  instead of simple values. A parameter expecting a filename string that
+  also accepts objects can receive a payload like {"__proto__": {...}}
+  or {"command": "rm -rf /"}. Type coercion bypasses string-based
+  validation rules and can trigger unexpected code paths in the server.
+remediation: >
+  Define explicit, strict types for all tool parameters. Avoid 'any'
+  type and mixed-type unions. Use JSON Schema's type keyword with a
+  single concrete type. Implement server-side type checking that rejects
+  values not matching the declared type. Add format constraints for
+  string parameters (e.g. "format": "uri" for URLs).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - type_coercion
+  - loose_typing
+  - schema_weakness

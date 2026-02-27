@@ -1,0 +1,30 @@
+check_id: shadow006
+title: Server Version Spoofing
+category: server_identity
+severity: high
+description: >
+  Detects MCP servers that report a version number that does not match
+  their actual binary or package version. Version spoofing can hide
+  known vulnerabilities or bypass version-based security policies.
+risk_explanation: >
+  A server that reports a false version number can bypass version-based
+  security checks and compatibility requirements. An outdated server
+  with known vulnerabilities can report a newer version to avoid
+  security scanning. Conversely, a malicious server can report an older
+  version to exploit client-side compatibility shims that relax security
+  controls for legacy servers.
+remediation: >
+  Implement server version verification by cross-referencing the
+  reported version against the binary hash or package metadata. Use
+  integrity checks that verify the server binary matches the reported
+  version. Alert when version mismatches are detected. Maintain a
+  version verification database for known MCP server packages.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - server_identity
+  - version_spoofing
+  - integrity
+  - trust

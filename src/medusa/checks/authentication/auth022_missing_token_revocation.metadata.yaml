@@ -1,0 +1,28 @@
+check_id: auth022
+title: Missing Token Revocation
+category: authentication
+severity: medium
+description: >
+  Detects MCP server configurations without a mechanism to revoke
+  compromised or unused tokens. Without revocation, compromised tokens
+  remain valid until they expire, which may be a long time or never.
+risk_explanation: >
+  When a token is compromised, the inability to revoke it means the
+  attacker retains access until natural expiration. For long-lived or
+  non-expiring tokens, this means indefinite unauthorized access. Token
+  revocation is essential for incident response and access management.
+remediation: >
+  Implement a token revocation endpoint that immediately invalidates
+  compromised tokens. Maintain a revocation list or use short-lived
+  tokens with a token introspection endpoint. Support RFC 7009 token
+  revocation for OAuth-based flows. Include revocation as part of the
+  incident response procedure.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - token_revocation
+  - incident_response
+  - access_management

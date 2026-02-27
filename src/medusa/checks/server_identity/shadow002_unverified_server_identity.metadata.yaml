@@ -1,0 +1,29 @@
+check_id: shadow002
+title: Unverified Server Identity
+category: server_identity
+severity: medium
+description: >
+  Detects MCP servers that do not provide proper identity information in
+  their server_info response. A server that lacks a name or version in its
+  identity metadata cannot be reliably distinguished from impostor servers.
+risk_explanation: >
+  The MCP protocol allows servers to declare their identity via the
+  server_info field during initialization. When this field is missing or
+  incomplete, clients and users cannot verify they are communicating with
+  the intended server. An attacker running a shadow server can trivially
+  impersonate a legitimate server that does not assert its identity.
+remediation: >
+  Ensure your MCP server returns complete server_info during initialization,
+  including at minimum a non-empty name and version string. Use the name
+  field to clearly identify the server and the version field to enable
+  clients to detect unexpected changes. Consider implementing server
+  identity verification at the client level.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/lifecycle
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - integrity
+  - shadow_server
+  - server_identity

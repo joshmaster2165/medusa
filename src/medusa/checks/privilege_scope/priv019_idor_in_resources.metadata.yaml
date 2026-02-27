@@ -1,0 +1,30 @@
+check_id: priv019
+title: IDOR in Resource Access
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP resources accessible via sequential or easily guessable
+  identifiers without proper authorization. Insecure Direct Object
+  References allow users to access resources belonging to other users by
+  manipulating ID values.
+risk_explanation: >
+  IDOR vulnerabilities allow an attacker to enumerate and access all
+  resources by iterating through sequential IDs. A user who accesses
+  /resource/123 can access /resource/124 and all other resources without
+  authorization checks. This exposes other users' data, including
+  personal information, documents, and configuration.
+remediation: >
+  Implement authorization checks on every resource access, not just
+  authentication. Use UUIDs or opaque identifiers instead of sequential
+  IDs. Verify that the requesting user has permission to access the
+  specific resource. Implement resource-level access control lists that
+  enforce ownership and sharing rules.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - privilege_scope
+  - idor
+  - resource_access
+  - authorization

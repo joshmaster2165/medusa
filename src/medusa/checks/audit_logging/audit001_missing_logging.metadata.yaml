@@ -1,0 +1,26 @@
+check_id: audit001
+title: Missing Logging Configuration
+category: audit_logging
+severity: medium
+description: >
+  Checks whether the MCP server's configuration or environment variables
+  include any logging or observability settings. Servers without logging
+  configuration cannot produce audit trails for security investigations.
+risk_explanation: >
+  Without logging, malicious tool invocations, data exfiltration attempts,
+  and prompt injection attacks leave no trace. Incident response teams
+  cannot reconstruct attack timelines or determine the scope of a breach.
+remediation: >
+  Configure structured logging for the MCP server. Set a LOG_LEVEL
+  environment variable and ensure logs are shipped to a centralised logging
+  platform. Consider integrating OpenTelemetry or a similar observability
+  framework.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - data_protection
+  - logging
+  - audit
+  - observability

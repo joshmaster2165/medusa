@@ -1,0 +1,30 @@
+check_id: res014
+title: Missing Resource Schema Validation
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resources that lack schema definitions or validation for
+  their content structure. Without schema validation, resources can
+  contain unexpected fields, malformed data, or additional properties
+  that may be processed in unintended ways by consumers.
+risk_explanation: >
+  Missing schema validation allows attackers to inject additional fields
+  or malformed content into resources that clients process without
+  verification. Extra properties may override expected values, inject
+  instructions into LLM processing, or exploit parser vulnerabilities in
+  downstream consumers. Malformed data can cause application errors or
+  undefined behavior.
+remediation: >
+  Define JSON Schema or equivalent validation schemas for all resource
+  types. Validate resource content against its schema before serving to
+  clients. Reject resources that fail validation with clear error
+  messages. Use strict schema validation that rejects unknown additional
+  properties by default.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

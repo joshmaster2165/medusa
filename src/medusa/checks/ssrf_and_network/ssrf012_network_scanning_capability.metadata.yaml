@@ -1,0 +1,31 @@
+check_id: ssrf012
+title: Network Scanning Capability
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that can be abused to perform network
+  scanning by making requests to arbitrary hosts and analyzing response
+  characteristics. Tools that accept hostnames or IP addresses as
+  parameters can be systematically used to discover live hosts on
+  internal networks.
+risk_explanation: >
+  MCP tools with network scanning capability allow attackers to map
+  internal network topology from an external position. By submitting
+  requests to sequential IP addresses or common hostnames, an attacker
+  can identify live hosts, determine which services are running, and
+  build a target list for further exploitation. This reconnaissance is
+  the first step in most internal network attacks.
+remediation: >
+  Restrict MCP tool network access to a defined set of permitted
+  endpoints. Implement rate limiting on network requests to prevent
+  rapid scanning. Monitor for sequential or systematic request patterns
+  that indicate scanning activity. Use uniform error responses that do
+  not reveal whether a host exists or a port is open. Deploy network
+  segmentation to limit the scan surface accessible from the MCP server.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

@@ -1,0 +1,30 @@
+check_id: iv016
+title: Unicode Normalization Bypass
+category: input_validation
+severity: medium
+description: >
+  Detects input validation that can be bypassed via Unicode
+  normalization transformations. Characters that appear different in
+  their composed and decomposed forms can bypass security filters while
+  being normalized to dangerous values by the processing system.
+risk_explanation: >
+  Unicode normalization can transform filtered characters into dangerous
+  equivalents after validation. For example, the fullwidth solidus
+  (U+FF0F) normalizes to a regular slash (/), bypassing path traversal
+  filters. The validation check passes the pre-normalized form while the
+  application processes the post-normalized dangerous form.
+remediation: >
+  Apply Unicode normalization (NFC or NFKC) to all input before
+  validation, not after. Validate against the normalized form to ensure
+  filters see the same representation as the processing logic. Reject
+  input containing non-ASCII characters when only ASCII is expected. Use
+  Unicode-aware validation libraries.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - unicode_normalization
+  - filter_bypass
+  - encoding

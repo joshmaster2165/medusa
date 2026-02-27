@@ -1,0 +1,34 @@
+check_id: agent004
+title: Multi-Step Attack Chain Risk
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations that do not monitor for multi-step attack
+  chains where individually benign tool invocations combine to form a
+  malicious sequence. An attacker can use prompt injection to guide the
+  agent through a series of steps that collectively achieve a harmful
+  outcome.
+risk_explanation: >
+  Multi-step attack chains are particularly dangerous because each
+  individual tool invocation may appear legitimate when reviewed in
+  isolation. For example, reading a configuration file, extracting a
+  database URL, connecting to the database, and exporting data are each
+  normal operations that together constitute a data breach. Without
+  chain analysis, these attacks bypass per-tool security controls and
+  exploit the agent's ability to compose actions autonomously.
+remediation: >
+  Implement behavioral analysis that monitors sequences of tool
+  invocations for suspicious patterns. Define rules that detect known
+  attack patterns such as read-credentials-then-connect or enumerate-
+  then-exfiltrate. Use anomaly detection to identify unusual tool
+  invocation sequences. Log complete invocation chains for forensic
+  analysis. Implement step-level approval for chains that trigger
+  security rules.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

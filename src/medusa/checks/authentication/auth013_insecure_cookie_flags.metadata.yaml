@@ -1,0 +1,30 @@
+check_id: auth013
+title: Insecure Cookie Flags
+category: authentication
+severity: high
+description: >
+  Detects authentication cookies missing security flags such as Secure,
+  HttpOnly, and SameSite. Cookies without these flags are vulnerable to
+  interception over unencrypted connections, cross-site scripting theft,
+  and cross-site request forgery.
+risk_explanation: >
+  Missing Secure flag allows cookies to be transmitted over HTTP,
+  enabling network interception. Missing HttpOnly flag exposes cookies
+  to JavaScript, enabling theft via XSS attacks. Missing SameSite flag
+  allows cookies to be sent in cross-origin requests, enabling CSRF
+  attacks. Each missing flag creates a distinct attack vector.
+remediation: >
+  Set all authentication cookies with Secure, HttpOnly, and
+  SameSite=Strict flags. Use the __Host- cookie prefix to ensure cookies
+  are only sent over HTTPS to the originating host. Set appropriate
+  expiration times and path restrictions to limit cookie scope.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - cookie_security
+  - httponly
+  - samesite

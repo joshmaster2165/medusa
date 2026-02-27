@@ -16,6 +16,50 @@ from medusa.checks.tool_poisoning.tp002_prompt_injection import PromptInjectionC
 from medusa.checks.tool_poisoning.tp003_tool_shadowing import ToolShadowingCheck
 from medusa.checks.tool_poisoning.tp004_suspicious_params import SuspiciousParamsCheck
 from medusa.checks.tool_poisoning.tp005_long_descriptions import LongDescriptionsCheck
+from medusa.checks.tool_poisoning.tp006_rug_pull_detection import RugPullDetectionCheck
+from medusa.checks.tool_poisoning.tp007_schema_poisoning import SchemaPoisoningCheck
+from medusa.checks.tool_poisoning.tp008_unicode_homoglyph_tool_names import (
+    UnicodeHomoglyphToolNamesCheck,
+)
+from medusa.checks.tool_poisoning.tp009_base64_encoded_instructions import (
+    Base64EncodedInstructionsCheck,
+)
+from medusa.checks.tool_poisoning.tp010_cross_server_tool_shadowing import (
+    CrossServerToolShadowingCheck,
+)
+from medusa.checks.tool_poisoning.tp011_invisible_unicode_in_descriptions import (
+    InvisibleUnicodeInDescriptionsCheck,
+)
+from medusa.checks.tool_poisoning.tp012_tool_description_url_injection import (
+    ToolDescriptionUrlInjectionCheck,
+)
+from medusa.checks.tool_poisoning.tp013_excessive_tool_parameters import (
+    ExcessiveToolParametersCheck,
+)
+from medusa.checks.tool_poisoning.tp014_recursive_tool_invocation_risk import (
+    RecursiveToolInvocationRiskCheck,
+)
+from medusa.checks.tool_poisoning.tp015_tool_name_impersonation import ToolNameImpersonationCheck
+from medusa.checks.tool_poisoning.tp016_hidden_xml_attributes import HiddenXmlAttributesCheck
+from medusa.checks.tool_poisoning.tp017_markdown_injection import MarkdownInjectionCheck
+from medusa.checks.tool_poisoning.tp018_json_injection_in_defaults import (
+    JsonInjectionInDefaultsCheck,
+)
+from medusa.checks.tool_poisoning.tp019_tool_description_length_ratio import (
+    ToolDescriptionLengthRatioCheck,
+)
+from medusa.checks.tool_poisoning.tp020_conflicting_parameter_descriptions import (
+    ConflictingParameterDescriptionsCheck,
+)
+from medusa.checks.tool_poisoning.tp021_tool_capability_escalation import (
+    ToolCapabilityEscalationCheck,
+)
+from medusa.checks.tool_poisoning.tp022_time_of_check_time_of_use import TimeOfCheckTimeOfUseCheck
+from medusa.checks.tool_poisoning.tp023_description_language_mismatch import (
+    DescriptionLanguageMismatchCheck,
+)
+from medusa.checks.tool_poisoning.tp024_parameter_type_coercion import ParameterTypeCoercionCheck
+from medusa.checks.tool_poisoning.tp025_tool_annotation_abuse import ToolAnnotationAbuseCheck
 from medusa.core.check import ServerSnapshot
 from medusa.core.models import Severity, Status
 
@@ -137,9 +181,7 @@ class TestTP001HiddenInstructions:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Hidden tags in parameter descriptions should be detected"
-        )
+        assert len(fail_findings) >= 1, "Hidden tags in parameter descriptions should be detected"
 
     async def test_tool_with_no_description_is_skipped(
         self, check: HiddenInstructionsCheck
@@ -162,16 +204,13 @@ class TestTP001HiddenInstructions:
             "Tool with no description should not produce FAIL findings"
         )
 
-    async def test_multiple_hidden_tags_in_one_tool(
-        self, check: HiddenInstructionsCheck
-    ) -> None:
+    async def test_multiple_hidden_tags_in_one_tool(self, check: HiddenInstructionsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
                     "name": "multi_tag_tool",
                     "description": (
-                        "<IMPORTANT>Step 1</IMPORTANT> Normal text "
-                        "<HIDDEN>Step 2</HIDDEN>"
+                        "<IMPORTANT>Step 1</IMPORTANT> Normal text <HIDDEN>Step 2</HIDDEN>"
                     ),
                     "inputSchema": {
                         "type": "object",
@@ -213,12 +252,8 @@ class TestTP002PromptInjection:
             "Should detect prompt injection phrases in vulnerable snapshot"
         )
         # The 'helpful_tool' has "ignore previous instructions" and "secretly"
-        helpful_findings = [
-            f for f in fail_findings if f.resource_name == "helpful_tool"
-        ]
-        assert len(helpful_findings) >= 1, (
-            "helpful_tool should be flagged for prompt injection"
-        )
+        helpful_findings = [f for f in fail_findings if f.resource_name == "helpful_tool"]
+        assert len(helpful_findings) >= 1, "helpful_tool should be flagged for prompt injection"
 
     async def test_passes_on_secure_snapshot(
         self, check: PromptInjectionCheck, secure_snapshot: ServerSnapshot
@@ -372,13 +407,10 @@ class TestTP003ToolShadowing:
         findings = await check.execute(vulnerable_snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1, (
-            "Vulnerable snapshot has no duplicate or well-known tool names, "
-            "so TP-003 should PASS"
+            "Vulnerable snapshot has no duplicate or well-known tool names, so TP-003 should PASS"
         )
 
-    async def test_detects_well_known_tool_names(
-        self, check: ToolShadowingCheck
-    ) -> None:
+    async def test_detects_well_known_tool_names(self, check: ToolShadowingCheck) -> None:
         """Tools with well-known names like 'read_file' should be flagged."""
         snapshot = make_snapshot(
             tools=[
@@ -417,9 +449,7 @@ class TestTP003ToolShadowing:
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Duplicate tool names should be flagged"
-        dup_finding = [
-            f for f in fail_findings if "my_tool" in f.resource_name
-        ]
+        dup_finding = [f for f in fail_findings if "my_tool" in f.resource_name]
         assert len(dup_finding) >= 1, "The duplicated name 'my_tool' should be in findings"
 
     async def test_detects_shadowing_of_read_file(self, check: ToolShadowingCheck) -> None:
@@ -447,9 +477,7 @@ class TestTP003ToolShadowing:
         )
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce exactly one finding"
-        assert findings[0].status == Status.PASS, (
-            "Unique, non-well-known tool names should PASS"
-        )
+        assert findings[0].status == Status.PASS, "Unique, non-well-known tool names should PASS"
 
 
 # ==========================================================================
@@ -475,12 +503,8 @@ class TestTP004SuspiciousParams:
     ) -> None:
         findings = await check.execute(vulnerable_snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should detect callback_url as suspicious parameter"
-        )
-        callback_findings = [
-            f for f in fail_findings if "data_processor" in f.resource_name
-        ]
+        assert len(fail_findings) >= 1, "Should detect callback_url as suspicious parameter"
+        callback_findings = [f for f in fail_findings if "data_processor" in f.resource_name]
         assert len(callback_findings) >= 1, (
             "data_processor tool with callback_url should be flagged"
         )
@@ -538,9 +562,7 @@ class TestTP004SuspiciousParams:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "'exfil' parameter should be flagged"
 
-    async def test_detects_nested_suspicious_params(
-        self, check: SuspiciousParamsCheck
-    ) -> None:
+    async def test_detects_nested_suspicious_params(self, check: SuspiciousParamsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -562,9 +584,7 @@ class TestTP004SuspiciousParams:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Nested suspicious parameters should be detected"
-        )
+        assert len(fail_findings) >= 1, "Nested suspicious parameters should be detected"
 
     async def test_normal_params_pass(self, check: SuspiciousParamsCheck) -> None:
         snapshot = make_snapshot(
@@ -586,18 +606,12 @@ class TestTP004SuspiciousParams:
         assert len(findings) == 1, "Should produce exactly one finding"
         assert findings[0].status == Status.PASS, "Safe params should PASS"
 
-    async def test_tool_with_no_input_schema_is_skipped(
-        self, check: SuspiciousParamsCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            tools=[{"name": "no_schema", "description": "Has no schema."}]
-        )
+    async def test_tool_with_no_input_schema_is_skipped(self, check: SuspiciousParamsCheck) -> None:
+        snapshot = make_snapshot(tools=[{"name": "no_schema", "description": "Has no schema."}])
         findings = await check.execute(snapshot)
         # With tools present but no schema to inspect, check should PASS
         pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1, (
-            "Tool with no schema should not cause a FAIL for TP-004"
-        )
+        assert len(pass_findings) >= 1, "Tool with no schema should not cause a FAIL for TP-004"
 
 
 # ==========================================================================
@@ -623,12 +637,8 @@ class TestTP005LongDescriptions:
     ) -> None:
         findings = await check.execute(vulnerable_snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should detect the verbose_tool with 2500-char description"
-        )
-        verbose_findings = [
-            f for f in fail_findings if f.resource_name == "verbose_tool"
-        ]
+        assert len(fail_findings) >= 1, "Should detect the verbose_tool with 2500-char description"
+        verbose_findings = [f for f in fail_findings if f.resource_name == "verbose_tool"]
         assert len(verbose_findings) == 1, "verbose_tool should be flagged exactly once"
         assert "2,500" in verbose_findings[0].status_extended, (
             "Status should mention the actual character count"
@@ -690,13 +700,9 @@ class TestTP005LongDescriptions:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) == 2, (
-            "Should flag exactly 2 tools with long descriptions"
-        )
+        assert len(fail_findings) == 2, "Should flag exactly 2 tools with long descriptions"
 
-    async def test_tool_with_empty_description_passes(
-        self, check: LongDescriptionsCheck
-    ) -> None:
+    async def test_tool_with_empty_description_passes(self, check: LongDescriptionsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -712,9 +718,7 @@ class TestTP005LongDescriptions:
 
     async def test_evidence_contains_preview(self, check: LongDescriptionsCheck) -> None:
         long_desc = "START " + "X" * 3000 + " END"
-        snapshot = make_snapshot(
-            tools=[{"name": "preview_test", "description": long_desc}]
-        )
+        snapshot = make_snapshot(tools=[{"name": "preview_test", "description": long_desc}])
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1, "Should flag the long description"
@@ -724,3 +728,367 @@ class TestTP005LongDescriptions:
         assert "END" in fail_findings[0].evidence, (
             "Evidence preview should include end of description"
         )
+
+
+class TestRugPullDetectionCheck:
+    """Tests for RugPullDetectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> RugPullDetectionCheck:
+        return RugPullDetectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: RugPullDetectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp006"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: RugPullDetectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestSchemaPoisoningCheck:
+    """Tests for SchemaPoisoningCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SchemaPoisoningCheck:
+        return SchemaPoisoningCheck()
+
+    async def test_metadata_loads_correctly(self, check: SchemaPoisoningCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp007"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: SchemaPoisoningCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestUnicodeHomoglyphToolNamesCheck:
+    """Tests for UnicodeHomoglyphToolNamesCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UnicodeHomoglyphToolNamesCheck:
+        return UnicodeHomoglyphToolNamesCheck()
+
+    async def test_metadata_loads_correctly(self, check: UnicodeHomoglyphToolNamesCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp008"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: UnicodeHomoglyphToolNamesCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestBase64EncodedInstructionsCheck:
+    """Tests for Base64EncodedInstructionsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> Base64EncodedInstructionsCheck:
+        return Base64EncodedInstructionsCheck()
+
+    async def test_metadata_loads_correctly(self, check: Base64EncodedInstructionsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp009"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: Base64EncodedInstructionsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestCrossServerToolShadowingCheck:
+    """Tests for CrossServerToolShadowingCheck."""
+
+    @pytest.fixture()
+    def check(self) -> CrossServerToolShadowingCheck:
+        return CrossServerToolShadowingCheck()
+
+    async def test_metadata_loads_correctly(self, check: CrossServerToolShadowingCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp010"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: CrossServerToolShadowingCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestInvisibleUnicodeInDescriptionsCheck:
+    """Tests for InvisibleUnicodeInDescriptionsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> InvisibleUnicodeInDescriptionsCheck:
+        return InvisibleUnicodeInDescriptionsCheck()
+
+    async def test_metadata_loads_correctly(
+        self, check: InvisibleUnicodeInDescriptionsCheck
+    ) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp011"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: InvisibleUnicodeInDescriptionsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestToolDescriptionUrlInjectionCheck:
+    """Tests for ToolDescriptionUrlInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ToolDescriptionUrlInjectionCheck:
+        return ToolDescriptionUrlInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: ToolDescriptionUrlInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp012"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ToolDescriptionUrlInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestExcessiveToolParametersCheck:
+    """Tests for ExcessiveToolParametersCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ExcessiveToolParametersCheck:
+        return ExcessiveToolParametersCheck()
+
+    async def test_metadata_loads_correctly(self, check: ExcessiveToolParametersCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp013"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ExcessiveToolParametersCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestRecursiveToolInvocationRiskCheck:
+    """Tests for RecursiveToolInvocationRiskCheck."""
+
+    @pytest.fixture()
+    def check(self) -> RecursiveToolInvocationRiskCheck:
+        return RecursiveToolInvocationRiskCheck()
+
+    async def test_metadata_loads_correctly(self, check: RecursiveToolInvocationRiskCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp014"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: RecursiveToolInvocationRiskCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestToolNameImpersonationCheck:
+    """Tests for ToolNameImpersonationCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ToolNameImpersonationCheck:
+        return ToolNameImpersonationCheck()
+
+    async def test_metadata_loads_correctly(self, check: ToolNameImpersonationCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp015"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ToolNameImpersonationCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestHiddenXmlAttributesCheck:
+    """Tests for HiddenXmlAttributesCheck."""
+
+    @pytest.fixture()
+    def check(self) -> HiddenXmlAttributesCheck:
+        return HiddenXmlAttributesCheck()
+
+    async def test_metadata_loads_correctly(self, check: HiddenXmlAttributesCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp016"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: HiddenXmlAttributesCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMarkdownInjectionCheck:
+    """Tests for MarkdownInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MarkdownInjectionCheck:
+        return MarkdownInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: MarkdownInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp017"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: MarkdownInjectionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestJsonInjectionInDefaultsCheck:
+    """Tests for JsonInjectionInDefaultsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> JsonInjectionInDefaultsCheck:
+        return JsonInjectionInDefaultsCheck()
+
+    async def test_metadata_loads_correctly(self, check: JsonInjectionInDefaultsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp018"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: JsonInjectionInDefaultsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestToolDescriptionLengthRatioCheck:
+    """Tests for ToolDescriptionLengthRatioCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ToolDescriptionLengthRatioCheck:
+        return ToolDescriptionLengthRatioCheck()
+
+    async def test_metadata_loads_correctly(self, check: ToolDescriptionLengthRatioCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp019"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ToolDescriptionLengthRatioCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestConflictingParameterDescriptionsCheck:
+    """Tests for ConflictingParameterDescriptionsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ConflictingParameterDescriptionsCheck:
+        return ConflictingParameterDescriptionsCheck()
+
+    async def test_metadata_loads_correctly(
+        self, check: ConflictingParameterDescriptionsCheck
+    ) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp020"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ConflictingParameterDescriptionsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestToolCapabilityEscalationCheck:
+    """Tests for ToolCapabilityEscalationCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ToolCapabilityEscalationCheck:
+        return ToolCapabilityEscalationCheck()
+
+    async def test_metadata_loads_correctly(self, check: ToolCapabilityEscalationCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp021"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ToolCapabilityEscalationCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestTimeOfCheckTimeOfUseCheck:
+    """Tests for TimeOfCheckTimeOfUseCheck."""
+
+    @pytest.fixture()
+    def check(self) -> TimeOfCheckTimeOfUseCheck:
+        return TimeOfCheckTimeOfUseCheck()
+
+    async def test_metadata_loads_correctly(self, check: TimeOfCheckTimeOfUseCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp022"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: TimeOfCheckTimeOfUseCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestDescriptionLanguageMismatchCheck:
+    """Tests for DescriptionLanguageMismatchCheck."""
+
+    @pytest.fixture()
+    def check(self) -> DescriptionLanguageMismatchCheck:
+        return DescriptionLanguageMismatchCheck()
+
+    async def test_metadata_loads_correctly(self, check: DescriptionLanguageMismatchCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp023"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: DescriptionLanguageMismatchCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestParameterTypeCoercionCheck:
+    """Tests for ParameterTypeCoercionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ParameterTypeCoercionCheck:
+        return ParameterTypeCoercionCheck()
+
+    async def test_metadata_loads_correctly(self, check: ParameterTypeCoercionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp024"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ParameterTypeCoercionCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestToolAnnotationAbuseCheck:
+    """Tests for ToolAnnotationAbuseCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ToolAnnotationAbuseCheck:
+        return ToolAnnotationAbuseCheck()
+
+    async def test_metadata_loads_correctly(self, check: ToolAnnotationAbuseCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "tp025"
+        assert meta.category == "tool_poisoning"
+
+    async def test_stub_returns_empty(self, check: ToolAnnotationAbuseCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)

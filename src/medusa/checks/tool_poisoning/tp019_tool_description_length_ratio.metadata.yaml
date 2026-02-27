@@ -1,0 +1,31 @@
+check_id: tp019
+title: Abnormal Description-to-Name Length Ratio
+category: tool_poisoning
+severity: low
+description: >
+  Detects tools with suspiciously long descriptions relative to their
+  tool name length. An extremely high description-to-name ratio may
+  indicate that the description contains hidden instructions, encoded
+  payloads, or excessive content designed to influence LLM behaviour
+  beyond documenting the tool's legitimate purpose.
+risk_explanation: >
+  Abnormally long descriptions provide more surface area for embedding
+  hidden instructions, prompt injection payloads, and social engineering
+  content. While long descriptions alone are not malicious, they
+  increase the probability that injected content goes unnoticed during
+  review and provide more tokens for the LLM to process as instructions.
+remediation: >
+  Set a maximum description length threshold relative to tool
+  complexity. Flag descriptions exceeding a configurable character limit
+  (e.g. 2000 characters) for manual review. Compare description lengths
+  across tools in the same server to identify outliers. Encourage
+  concise, focused tool descriptions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - description_length
+  - anomaly_detection
+  - heuristic

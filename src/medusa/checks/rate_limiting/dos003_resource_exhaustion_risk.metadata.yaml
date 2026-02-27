@@ -1,0 +1,33 @@
+check_id: dos003
+title: Resource Exhaustion Risk
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server tools that can consume unbounded system resources
+  during execution. Tools that process large inputs, perform complex
+  computations, or interact with external services without resource
+  limits can exhaust server capacity and affect all connected sessions.
+risk_explanation: >
+  MCP tools without resource boundaries can consume unlimited CPU,
+  memory, network bandwidth, or disk I/O during a single invocation. An
+  attacker can craft tool inputs that trigger worst-case resource
+  consumption, such as regex patterns causing catastrophic backtracking,
+  queries returning massive result sets, or computations with
+  exponential complexity. A single resource- exhausting tool invocation
+  can render the entire MCP server unresponsive.
+remediation: >
+  Implement resource limits for each tool invocation including CPU time,
+  memory allocation, output size, and execution duration. Use process
+  isolation, containers, or sandboxes to enforce resource limits at the
+  operating system level. Set timeouts for all tool executions that
+  terminate runaway processes. Monitor resource consumption per tool
+  invocation and alert on anomalous usage. Implement input size
+  validation to prevent resource-intensive processing.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

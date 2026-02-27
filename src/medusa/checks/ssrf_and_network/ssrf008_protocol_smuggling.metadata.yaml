@@ -1,0 +1,32 @@
+check_id: ssrf008
+title: Protocol Smuggling Risk
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools vulnerable to protocol smuggling attacks
+  where HTTP requests are crafted to smuggle commands to non-HTTP
+  services. By injecting protocol-specific commands into HTTP request
+  components, an attacker can interact with services like Redis,
+  Memcached, or SMTP via the MCP tool.
+risk_explanation: >
+  Protocol smuggling exploits the fact that many protocols are text-
+  based and will process commands embedded in HTTP requests. An attacker
+  can craft MCP tool inputs that, when the tool makes an HTTP request,
+  embed SMTP, Redis, or other protocol commands in headers or body data.
+  If the connection reaches a non-HTTP service, these commands are
+  executed, enabling data manipulation, cache poisoning, or email abuse
+  through the MCP server.
+remediation: >
+  Restrict MCP tool outbound connections to HTTP and HTTPS protocols
+  only. Validate that destination ports correspond to expected services
+  (80, 443). Sanitize all user-controlled data in HTTP requests to
+  prevent CRLF injection and header manipulation. Use HTTP client
+  libraries that enforce strict HTTP protocol compliance and reject
+  malformed responses from non-HTTP services.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

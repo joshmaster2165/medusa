@@ -1,0 +1,30 @@
+check_id: res011
+title: Missing Resource Origin Validation
+category: resource_security
+severity: high
+description: >
+  Detects MCP resources that fetch or proxy content from external
+  origins without validating the source. Resources that pull data from
+  user-specified URLs, external APIs, or remote file systems without
+  origin validation enable SSRF and data poisoning attacks.
+risk_explanation: >
+  Missing origin validation allows attackers to point resource URIs at
+  internal services, cloud metadata endpoints such as 169.254.169.254,
+  or attacker-controlled servers. This enables server-side request
+  forgery to access internal networks, exfiltrate data to external
+  servers, or inject malicious content through attacker-controlled
+  resource origins.
+remediation: >
+  Implement strict origin validation with an allowlist of permitted
+  external hosts and protocols. Block access to internal network ranges
+  and cloud metadata endpoints. Validate DNS resolution to prevent DNS
+  rebinding attacks. Use network-level controls to restrict outbound
+  connections from the MCP server.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

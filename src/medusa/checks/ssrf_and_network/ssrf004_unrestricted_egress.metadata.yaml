@@ -1,0 +1,30 @@
+check_id: ssrf004
+title: Unrestricted Network Egress
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server deployments where tools can make outbound network
+  requests to any destination without egress filtering. Unrestricted
+  egress allows MCP tools to contact arbitrary external services,
+  exfiltrate data, or establish command-and-control channels.
+risk_explanation: >
+  Unrestricted network egress from MCP servers allows compromised or
+  malicious tools to exfiltrate sensitive data to attacker-controlled
+  endpoints, download additional payloads, establish reverse shells, or
+  participate in attacks against third-party infrastructure. Without
+  egress controls, there is no boundary limiting what an exploited MCP
+  tool can reach on the network.
+remediation: >
+  Implement network-level egress filtering that restricts MCP server
+  outbound connections to only required destinations. Use a web proxy or
+  firewall with an allowlist of permitted domains and ports. Deploy
+  network policies in container and Kubernetes environments. Monitor
+  egress traffic for anomalous patterns. Regularly review and audit the
+  egress allowlist.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

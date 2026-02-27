@@ -1,0 +1,31 @@
+check_id: ssrf014
+title: File Scheme URL Access
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that accept file:// URLs, enabling direct
+  access to the local filesystem of the MCP server. File scheme URLs can
+  read configuration files, credentials, private keys, and other
+  sensitive data stored on the server.
+risk_explanation: >
+  File:// URL access from MCP tools exposes the entire readable
+  filesystem of the MCP server to tool invocations. An attacker can read
+  /etc/passwd, application configuration files, private keys, database
+  credentials, and any other file accessible to the MCP server process.
+  This typically provides enough information for full server compromise
+  and lateral movement within the infrastructure.
+remediation: >
+  Block the file:// URL scheme in all MCP tool URL handlers. Implement
+  URL scheme validation that explicitly permits only https:// and
+  http://. Apply this validation before any URL processing or
+  resolution. If local file access is required for specific tools,
+  implement a dedicated file access API with path validation,
+  sandboxing, and explicit allowlists rather than accepting file://
+  URLs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

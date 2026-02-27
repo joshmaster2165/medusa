@@ -1,0 +1,33 @@
+check_id: agent016
+title: Unauthorized External Communications
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where agents can contact external services,
+  APIs, or endpoints that are not part of the approved communication
+  set. Unauthorized external communications enable data exfiltration,
+  command-and- control channels, and interactions with malicious
+  infrastructure.
+risk_explanation: >
+  Unauthorized external communications from MCP agents create channels
+  for data exfiltration and command-and-control. A compromised agent can
+  send sensitive data to attacker-controlled servers, download malicious
+  payloads, or receive real-time attack instructions through external
+  API calls. Without communication controls, there is no boundary
+  limiting what an exploited agent can share with external parties.
+remediation: >
+  Implement an allowlist of approved external endpoints that agents can
+  communicate with. Monitor all outbound communications from agents for
+  anomalous destinations or patterns. Require user approval for
+  communications with new external endpoints. Deploy network-level
+  controls that enforce egress restrictions on agent traffic. Log all
+  external communications with full request and response details for
+  audit.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

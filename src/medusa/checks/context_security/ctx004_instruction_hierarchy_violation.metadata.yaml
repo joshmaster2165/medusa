@@ -1,0 +1,31 @@
+check_id: ctx004
+title: Instruction Hierarchy Violation
+category: context_security
+severity: high
+description: >
+  Detects MCP tool outputs that contain content attempting to override
+  or contradict system-level instructions. Tool content should never be
+  able to elevate its privilege above the system prompt.
+risk_explanation: >
+  If tool output can override system-level instructions, an attacker who
+  controls a tool's response can effectively reprogram the LLM's
+  behavior. This breaks the instruction hierarchy where system prompts
+  should always take precedence over tool outputs and user inputs,
+  enabling the attacker to bypass safety controls and access
+  restrictions.
+remediation: >
+  Implement instruction hierarchy enforcement that prevents tool outputs
+  from overriding system-level directives. Sanitize tool outputs to
+  remove instruction-like patterns. Use role-based message tagging to
+  clearly distinguish system instructions from tool content. Validate
+  that system prompt directives persist after tool invocations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+  - "MCP06:2025"
+tags:
+  - context_security
+  - instruction_hierarchy
+  - privilege_escalation
+  - prompt_injection

@@ -1,0 +1,33 @@
+check_id: samp003
+title: Unauthorized Sampling Requests
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server implementations that issue sampling requests to the
+  LLM client without explicit user consent or authorization. Sampling
+  allows the server to request LLM completions, and without proper
+  consent mechanisms, servers can silently invoke the LLM to process
+  attacker-controlled prompts.
+risk_explanation: >
+  Unauthorized sampling requests allow MCP servers to use the user's LLM
+  session without their knowledge or consent. The server can issue
+  prompts that consume the user's API quota, generate content the user
+  did not request, and influence the conversation context. This violates
+  the principle of user control and can be exploited for prompt
+  injection, data harvesting, and unauthorized resource consumption.
+remediation: >
+  Implement a user consent mechanism for all sampling requests from MCP
+  servers. Display the sampling request content to the user before
+  forwarding it to the LLM. Allow users to approve, deny, or modify
+  sampling requests. Maintain an audit log of all sampling requests and
+  their approval status. Provide configuration to disable sampling
+  entirely for servers that do not require it.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

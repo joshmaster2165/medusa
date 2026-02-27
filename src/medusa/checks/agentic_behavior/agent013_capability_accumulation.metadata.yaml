@@ -1,0 +1,35 @@
+check_id: agent013
+title: Capability Accumulation
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where an agent gradually accumulates
+  permissions, tool access, or resource privileges over the course of a
+  session or across sessions. Capability accumulation violates the
+  principle of least privilege by granting the agent more access than
+  needed for any single task.
+risk_explanation: >
+  Capability accumulation creates a growing attack surface as the agent
+  gains access to more tools, resources, and permissions over time. Each
+  new capability increases the potential damage from a compromise. A
+  prompt injection attack is more damaging when the agent has
+  accumulated access to file systems, databases, external APIs, and
+  administrative tools than when it has access to only the tools needed
+  for the current task. Accumulated capabilities also increase the value
+  of session hijacking.
+remediation: >
+  Implement dynamic capability management that grants tools and
+  permissions only for the current task and revokes them when the task
+  is complete. Apply the principle of least privilege by starting each
+  interaction with minimal capabilities. Require explicit user approval
+  for capability grants that exceed the current task scope. Track and
+  display the agent's current capability set to the user. Implement
+  capability expiration timers.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

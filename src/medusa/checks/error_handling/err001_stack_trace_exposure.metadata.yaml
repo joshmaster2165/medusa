@@ -1,0 +1,28 @@
+check_id: err001
+title: Stack Trace Exposure
+category: error_handling
+severity: high
+description: >
+  Detects MCP server error responses that include full stack traces or
+  exception tracebacks. Stack traces often contain internal file paths,
+  library versions, class names, and code logic that help attackers
+  understand the server internals and craft targeted exploits.
+risk_explanation: >
+  Leaked stack traces reveal implementation details such as programming
+  language, framework version, internal file structure, database driver
+  information, and code flow. Attackers use this intelligence to
+  identify known CVEs, pinpoint injection points, and map the internal
+  architecture of the MCP server without needing source code access.
+remediation: >
+  Configure the MCP server to catch all exceptions at the transport
+  boundary and return generic error messages to clients. Log full stack
+  traces server-side only. Use a structured error response format that
+  includes an error code and a user-safe message without internal
+  details.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

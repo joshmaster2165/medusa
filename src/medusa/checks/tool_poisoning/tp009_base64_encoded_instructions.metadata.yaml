@@ -1,0 +1,32 @@
+check_id: tp009
+title: Base64-Encoded Instructions in Descriptions
+category: tool_poisoning
+severity: high
+description: >
+  Detects base64-encoded content embedded within tool descriptions.
+  Attackers encode malicious instructions in base64 to bypass content
+  filtering and hide prompt injection payloads from human reviewers. The
+  LLM may decode and follow these hidden instructions during tool
+  invocation.
+risk_explanation: >
+  Base64-encoded instructions evade both automated scanning and manual
+  review. When an LLM encounters base64 content, it may decode and
+  execute the embedded instructions, which could direct it to exfiltrate
+  data, invoke other tools, or override user intent. This technique is
+  particularly effective because base64 strings appear as harmless
+  opaque data.
+remediation: >
+  Scan all tool descriptions for base64-encoded content patterns. Reject
+  or flag descriptions containing valid base64 strings above a minimum
+  length threshold. Implement content-security policies that strip or
+  decode base64 content before presenting descriptions to the LLM.
+  Require plain-text descriptions only.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - base64
+  - encoded_instructions
+  - obfuscation

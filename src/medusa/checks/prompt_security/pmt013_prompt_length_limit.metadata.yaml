@@ -1,0 +1,31 @@
+check_id: pmt013
+title: Missing Prompt Length Limit
+category: prompt_security
+severity: medium
+description: >
+  Detects MCP prompt definitions and argument schemas that do not
+  enforce length limits on prompt content or argument values. Without
+  length limits, extremely long prompts can exhaust LLM context windows,
+  increase processing costs, and enable injection through context
+  overflow.
+risk_explanation: >
+  Missing prompt length limits enable context window overflow attacks
+  where an extremely long argument pushes important system instructions
+  out of the LLM context. Long prompts also increase API costs and
+  processing time, enabling economic denial of service. Injection
+  payloads hidden in very long argument values are harder to detect
+  through manual review or simple pattern matching.
+remediation: >
+  Implement maximum length limits for all prompt arguments and the total
+  assembled prompt. Set argument length limits in the prompt schema
+  definition. Validate total prompt size before submission to the LLM.
+  Reject or truncate arguments that exceed defined limits. Monitor
+  prompt sizes and alert on anomalously large submissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

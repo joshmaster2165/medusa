@@ -1,0 +1,29 @@
+check_id: res003
+title: Missing Resource Content Validation
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resources that serve content without validating or
+  sanitizing it before delivery to clients. Unsanitized resource content
+  may contain malicious payloads such as prompt injection strings,
+  script tags, or encoded attack sequences.
+risk_explanation: >
+  Resources that return unsanitized content can be weaponized to inject
+  malicious instructions into the LLM context. An attacker who can
+  modify a resource target such as a file or database record can embed
+  prompt injection payloads that the LLM will process as instructions,
+  potentially leading to unauthorized actions.
+remediation: >
+  Implement content validation and sanitization for all resources before
+  they are returned to clients. Scan resource content for known
+  injection patterns. Apply content security policies that restrict the
+  types of content that can be served. Tag resource content with its
+  trust level for downstream processing.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

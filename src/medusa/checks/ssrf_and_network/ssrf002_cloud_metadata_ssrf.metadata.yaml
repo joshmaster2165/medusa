@@ -1,0 +1,32 @@
+check_id: ssrf002
+title: Cloud Metadata SSRF
+category: ssrf_and_network
+severity: critical
+description: >
+  Detects MCP server tools that can access cloud instance metadata
+  endpoints, particularly the AWS metadata service at 169.254.169.254
+  and equivalent endpoints for GCP, Azure, and other cloud providers.
+  These endpoints expose temporary credentials, instance identity
+  documents, and configuration data.
+risk_explanation: >
+  Cloud metadata SSRF is one of the most impactful SSRF variants. The
+  metadata endpoint at 169.254.169.254 provides IAM credentials, API
+  keys, and instance configuration without authentication. An attacker
+  exploiting this via MCP tool invocations can obtain cloud credentials
+  that provide access to the entire cloud environment, including
+  databases, storage buckets, and other cloud services. This has been
+  the root cause of numerous high-profile cloud breaches.
+remediation: >
+  Block all requests to the link-local address range 169.254.0.0/16 from
+  MCP tools. Additionally block cloud-specific metadata endpoints
+  including metadata.google.internal for GCP and 169.254.169.254 for
+  AWS/Azure. Require IMDSv2 (token-based) on AWS instances to add
+  defense in depth. Deploy network-level firewall rules that prevent the
+  MCP server from reaching metadata endpoints.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

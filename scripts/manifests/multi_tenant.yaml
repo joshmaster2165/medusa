@@ -1,0 +1,324 @@
+category: multi_tenant
+checks:
+  - id: mt001
+    slug: missing_tenant_isolation
+    title: "Missing Tenant Isolation"
+    severity: critical
+    description: >
+      Detects MCP servers that handle multiple tenants without implementing
+      proper isolation between tenant contexts. Missing isolation allows
+      one tenant operations, data, and tool invocations to affect or be
+      visible to other tenants sharing the same server instance.
+    risk_explanation: >
+      Without tenant isolation, one tenant can access another tenant data,
+      tool results, and resources. This is a catastrophic security failure
+      in multi-tenant deployments where competing organizations, different
+      security clearance levels, or privacy-regulated data share the same
+      MCP server. A single compromised tenant account can exfiltrate all
+      other tenants data.
+    remediation: >
+      Implement strict tenant isolation at every layer of the MCP server
+      including request processing, data access, tool execution, resource
+      access, and response delivery. Use tenant-specific execution contexts
+      that prevent cross-tenant memory access. Enforce tenant boundaries
+      in all database queries and file system operations. Validate tenant
+      context on every request and reject any cross-tenant access attempts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt002
+    slug: shared_resource_access
+    title: "Shared Resource Cross-Tenant Access"
+    severity: critical
+    description: >
+      Detects MCP server resources that are accessible across tenant
+      boundaries without proper access control. Shared resources such as
+      files, database connections, caches, and temporary storage that
+      lack tenant-scoped access controls enable cross-tenant data access.
+    risk_explanation: >
+      Shared resources without tenant scoping create direct data leakage
+      paths between tenants. A tenant can read files created by another
+      tenant, access cached data from other tenant sessions, query database
+      records belonging to other tenants, or read temporary files from
+      other tenant operations. This violates data confidentiality and may
+      breach regulatory requirements.
+    remediation: >
+      Scope all server resources to the requesting tenant using tenant-
+      specific prefixes, namespaces, or separate storage. Implement tenant
+      validation on all resource access operations. Use separate database
+      schemas, file directories, or cache namespaces per tenant. Audit
+      all shared resources to ensure tenant isolation is enforced at the
+      storage level, not just the application level.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt003
+    slug: tenant_data_leakage
+    title: "Tenant Data Leakage"
+    severity: critical
+    description: >
+      Detects MCP server responses, error messages, logs, or metadata
+      that leak data belonging to one tenant to another tenant. Data
+      leakage can occur through shared error handlers, common log streams,
+      cached responses, or improperly scoped query results.
+    risk_explanation: >
+      Tenant data leakage exposes confidential business information,
+      personal data, and security credentials to unauthorized tenants.
+      Even small leaks such as tenant names in error messages or record
+      counts in metadata can reveal business intelligence to competitors.
+      Systematic leakage through query result contamination or cache
+      poisoning can expose entire datasets across tenant boundaries.
+    remediation: >
+      Audit all server output paths for potential cross-tenant data
+      leakage. Implement tenant-scoped logging that prevents log data
+      from one tenant being visible to another. Use separate response
+      serialization contexts per tenant. Clear all shared state between
+      tenant request processing. Implement automated testing that verifies
+      tenant data isolation across all server operations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt004
+    slug: missing_tenant_context
+    title: "Missing Tenant Context Validation"
+    severity: high
+    description: >
+      Detects MCP server requests that are processed without validating
+      the tenant context, or where the tenant identifier is derived from
+      client-supplied data without verification. Missing tenant context
+      validation allows clients to operate outside their authorized
+      tenant scope.
+    risk_explanation: >
+      Without tenant context validation, a client can forge or manipulate
+      its tenant identifier to access another tenant context. If the
+      tenant ID is taken from a request header or parameter without
+      cryptographic verification, any client can impersonate any tenant
+      by simply changing the value. This enables complete bypass of all
+      tenant-based access controls.
+    remediation: >
+      Derive the tenant context from authenticated session state rather
+      than client-supplied parameters. Validate tenant context
+      cryptographically using signed tokens or verified session data.
+      Reject requests that lack valid tenant context. Implement tenant
+      context as an immutable property of the authenticated session that
+      cannot be modified by the client after authentication.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt005
+    slug: tenant_impersonation
+    title: "Tenant Impersonation Risk"
+    severity: critical
+    description: >
+      Detects MCP server configurations that allow one tenant to
+      impersonate another through token manipulation, session hijacking,
+      or exploitation of tenant switching mechanisms. Impersonation
+      enables full access to the target tenant data and operations.
+    risk_explanation: >
+      Tenant impersonation is the most severe multi-tenant vulnerability
+      as it grants an attacker complete access to the target tenant
+      environment. The attacker can read all data, invoke all tools,
+      modify resources, and perform actions attributed to the impersonated
+      tenant. This can go undetected if audit logs record the forged
+      tenant identity rather than the actual source.
+    remediation: >
+      Implement cryptographically secure tenant identity that cannot be
+      forged or manipulated. Use server-side session management that binds
+      tenant identity to the authenticated principal. Remove any tenant
+      switching functionality unless absolutely required, and if required,
+      implement it with additional authentication and comprehensive audit
+      logging. Monitor for anomalous tenant access patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt006
+    slug: shared_credential_store
+    title: "Shared Credential Store"
+    severity: high
+    description: >
+      Detects MCP servers that store credentials for multiple tenants in
+      a shared credential store without proper encryption and access
+      controls per tenant. A shared credential store creates a single
+      point of compromise that exposes all tenant credentials.
+    risk_explanation: >
+      A shared credential store means that a breach affecting one tenant
+      credentials exposes the credentials of all tenants. If the store
+      lacks per-tenant encryption, a database compromise reveals all
+      tenant secrets simultaneously. Shared storage also creates the risk
+      of credential cross-contamination where one tenant operation
+      accidentally uses another tenant credentials.
+    remediation: >
+      Implement per-tenant encryption for stored credentials using tenant-
+      specific encryption keys. Use a secrets management service that
+      enforces tenant-scoped access controls. Isolate credential storage
+      per tenant using separate encryption contexts or storage partitions.
+      Implement access controls that prevent any single credential
+      retrieval operation from accessing multiple tenant credentials.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt007
+    slug: missing_tenant_audit
+    title: "Missing Tenant-Specific Audit"
+    severity: medium
+    description: >
+      Detects MCP servers that lack tenant-specific audit logging, making
+      it impossible to track which tenant performed which operations.
+      Without tenant-scoped audit trails, security incidents cannot be
+      properly investigated and tenant compliance requirements are unmet.
+    risk_explanation: >
+      Missing tenant-specific audit logs prevent forensic investigation
+      of cross-tenant security incidents. When a breach occurs, it is
+      impossible to determine which tenant was affected, what data was
+      accessed, or which tenant initiated the malicious activity. This
+      also fails compliance requirements such as GDPR, SOC 2, and HIPAA
+      that mandate per-tenant audit capabilities.
+    remediation: >
+      Implement tenant-scoped audit logging that records the tenant
+      context for every operation. Store audit logs in tenant-isolated
+      partitions to prevent cross-tenant log access. Include tenant
+      identifier, operation type, resources accessed, and outcome in
+      every audit record. Provide per-tenant audit log access for
+      compliance reporting. Implement tamper-proof audit log storage.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt008
+    slug: tenant_resource_exhaustion
+    title: "Tenant Resource Exhaustion"
+    severity: high
+    description: >
+      Detects MCP servers that do not enforce per-tenant resource quotas,
+      allowing a single tenant to monopolize shared server resources
+      including CPU, memory, network bandwidth, storage, and database
+      connections, causing denial of service for other tenants.
+    risk_explanation: >
+      Without per-tenant resource limits, a single tenant can consume all
+      available server resources through normal heavy usage or intentional
+      abuse. This causes performance degradation or complete denial of
+      service for all other tenants. In a competitive multi-tenant
+      environment, a malicious tenant can deliberately exhaust resources
+      to disrupt competitor tenants.
+    remediation: >
+      Implement per-tenant resource quotas for CPU time, memory usage,
+      storage space, network bandwidth, and concurrent connections. Use
+      fair scheduling algorithms that prevent any single tenant from
+      monopolizing shared resources. Set rate limits per tenant for API
+      calls and tool invocations. Monitor per-tenant resource consumption
+      and alert on abnormal usage patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt009
+    slug: cross_tenant_tool_access
+    title: "Cross-Tenant Tool Access"
+    severity: critical
+    description: >
+      Detects MCP servers where tools registered by one tenant are
+      accessible to other tenants, or where tool execution results from
+      one tenant can be observed by another. Cross-tenant tool access
+      enables unauthorized operations and data theft through shared
+      tool infrastructure.
+    risk_explanation: >
+      Cross-tenant tool access allows one tenant to invoke tools
+      configured by another tenant, potentially using the other tenant
+      credentials and permissions. This can result in unauthorized data
+      access, financial transactions, or system modifications performed
+      through another tenant tool configuration. Tool results leaking
+      across tenants exposes operation outcomes and returned data.
+    remediation: >
+      Implement strict tenant isolation for tool registration, discovery,
+      and invocation. Ensure that each tenant can only see and invoke
+      tools registered within their own tenant context. Execute tools
+      within tenant-specific sandboxes that prevent cross-tenant resource
+      access. Validate tenant context at tool invocation time and reject
+      cross-tenant tool calls.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection
+
+  - id: mt010
+    slug: missing_tenant_configuration
+    title: "Missing Tenant Configuration Isolation"
+    severity: high
+    description: >
+      Detects MCP servers where tenant-specific configuration such as
+      security policies, feature flags, access controls, and operational
+      parameters is stored in shared configuration without proper
+      isolation. Configuration bleed between tenants can alter security
+      posture unexpectedly.
+    risk_explanation: >
+      Shared configuration without tenant isolation means that a
+      configuration change for one tenant can inadvertently affect other
+      tenants. Security policy changes, feature flag modifications, and
+      access control updates for one tenant may be applied to others.
+      An attacker who gains configuration access for one tenant can
+      weaken security settings for all tenants on the server.
+    remediation: >
+      Implement tenant-isolated configuration storage with independent
+      configuration contexts per tenant. Validate that configuration
+      changes are scoped to the requesting tenant. Use configuration
+      inheritance hierarchies where tenant-specific settings override
+      shared defaults without affecting other tenants. Audit all
+      configuration changes with tenant context for traceability.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - multi_tenant
+      - isolation
+      - data_protection

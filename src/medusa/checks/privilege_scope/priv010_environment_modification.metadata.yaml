@@ -1,0 +1,29 @@
+check_id: priv010
+title: Environment Variable Modification
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools that can modify the process environment variables.
+  Environment modification allows changing security-critical settings
+  such as PATH, library loading paths, and application configuration.
+risk_explanation: >
+  Environment variable modification enables privilege escalation through
+  PATH hijacking, library injection via LD_PRELOAD, and configuration
+  override through application-specific variables. Changes persist for
+  the lifetime of the process and affect all subsequently spawned
+  commands. Environment modification is a precursor to many other
+  attacks.
+remediation: >
+  Prevent MCP tools from modifying environment variables. Use immutable
+  environment configurations set at server startup. Implement allowlists
+  for any environment variables that tools must read. Isolate tool
+  execution in separate process contexts with clean environments.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - environment_variables
+  - path_hijacking
+  - configuration_override

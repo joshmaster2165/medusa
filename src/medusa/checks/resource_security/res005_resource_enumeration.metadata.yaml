@@ -1,0 +1,29 @@
+check_id: res005
+title: Resource Enumeration Risk
+category: resource_security
+severity: medium
+description: >
+  Detects MCP servers that expose predictable or sequential resource
+  identifiers, enabling attackers to enumerate all available resources
+  by iterating through ID ranges or patterns. Resource listing endpoints
+  without pagination limits also enable bulk enumeration.
+risk_explanation: >
+  Predictable resource identifiers allow attackers to discover and
+  access resources they were not intended to see, including other users
+  data, internal configuration resources, and administrative resources.
+  Enumeration is often the first step in a data exfiltration attack
+  where all discoverable resources are harvested.
+remediation: >
+  Use non-sequential, non-predictable identifiers for resources such as
+  UUIDs or cryptographic hashes. Implement pagination with reasonable
+  limits on resource listing endpoints. Add rate limiting to resource
+  listing and access operations to slow enumeration attempts. Require
+  authorization for resource listing.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

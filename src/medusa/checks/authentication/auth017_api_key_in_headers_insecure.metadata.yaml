@@ -1,0 +1,30 @@
+check_id: auth017
+title: API Key in Insecure Headers
+category: authentication
+severity: medium
+description: >
+  Detects API keys transmitted in non-standard or commonly logged HTTP
+  headers. Using headers like X-Api-Key without TLS, or placing keys in
+  headers that proxy servers and load balancers routinely log, exposes
+  credentials to interception.
+risk_explanation: >
+  API keys in non-standard headers may be logged by web application
+  firewalls, reverse proxies, CDNs, and monitoring tools that capture
+  custom headers. Unlike the standard Authorization header, custom
+  headers are not typically treated as sensitive by infrastructure
+  components, leading to inadvertent credential exposure in logs.
+remediation: >
+  Use the standard HTTP Authorization header with the Bearer scheme for
+  token transmission. Configure infrastructure components to redact the
+  Authorization header from logs. If custom headers must be used, ensure
+  all intermediaries are configured to treat them as sensitive. Always
+  use TLS for API key transmission.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - api_key
+  - headers
+  - logging_risk

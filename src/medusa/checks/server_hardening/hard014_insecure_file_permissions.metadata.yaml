@@ -1,0 +1,31 @@
+check_id: hard014
+title: Insecure File Permissions
+category: server_hardening
+severity: high
+description: >
+  Detects MCP server installations with overly permissive file
+  permissions on configuration files, credential stores, log files, and
+  server binaries. World-readable or world-writable permissions allow
+  unauthorized access and modification of server components.
+risk_explanation: >
+  Insecure file permissions allow local users or compromised processes
+  to read sensitive configuration including credentials, modify server
+  binaries to inject backdoors, alter configuration to weaken security,
+  or read log files containing sensitive information. In shared hosting
+  or container environments, file permission issues can enable cross-
+  tenant attacks and privilege escalation.
+remediation: >
+  Set restrictive file permissions on all MCP server files. Make
+  configuration files readable only by the server process user. Protect
+  credential files with permissions 600 or more restrictive. Make server
+  binaries and scripts read-only to prevent modification. Use a
+  dedicated service account for the MCP server process with minimal file
+  system permissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

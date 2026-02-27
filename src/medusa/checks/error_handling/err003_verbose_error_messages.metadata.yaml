@@ -1,0 +1,27 @@
+check_id: err003
+title: Verbose Error Messages
+category: error_handling
+severity: medium
+description: >
+  Detects MCP server error responses that include overly detailed
+  messages revealing internal implementation specifics such as database
+  table names, query structures, internal API endpoints, configuration
+  values, or third-party service identifiers.
+risk_explanation: >
+  Verbose error messages provide attackers with a roadmap of the server
+  internals. Database table names enable SQL injection targeting,
+  internal API paths enable SSRF attacks, and configuration details may
+  reveal security misconfigurations. This information reduces the effort
+  required for a successful attack significantly.
+remediation: >
+  Implement an error mapping layer that translates internal errors into
+  generic, user-facing messages with unique error codes. Store detailed
+  error information in server-side logs only. Review all error response
+  templates to ensure no internal details leak to clients.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

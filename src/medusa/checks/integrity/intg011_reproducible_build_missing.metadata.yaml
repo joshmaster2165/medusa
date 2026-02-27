@@ -1,0 +1,29 @@
+check_id: intg011
+title: Missing Reproducible Build
+category: integrity
+severity: medium
+description: >
+  Checks whether the MCP server can be built reproducibly from source.
+  Without reproducible builds, there is no way to verify that the
+  distributed binary matches the published source code.
+risk_explanation: >
+  Without reproducible builds, users must trust that the distributed
+  binary was built from the published source code. An attacker who
+  compromises the build system can inject malicious code that does not
+  appear in the source repository. Reproducible builds allow independent
+  verification that the binary matches the source.
+remediation: >
+  Configure the build system to produce reproducible outputs. Pin all
+  build dependencies and toolchain versions. Remove sources of non-
+  determinism such as timestamps, random values, and filesystem
+  ordering. Document the build process and provide instructions for
+  independent verification.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - reproducible_builds
+  - supply_chain
+  - verification

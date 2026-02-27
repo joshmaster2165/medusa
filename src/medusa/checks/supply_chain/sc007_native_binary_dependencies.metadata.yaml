@@ -1,0 +1,29 @@
+check_id: sc007
+title: Native Binary Dependencies
+category: supply_chain
+severity: medium
+description: >
+  Detects MCP server dependencies that contain prebuilt native binaries.
+  Prebuilt binaries cannot be audited from source code and may contain
+  hidden functionality.
+risk_explanation: >
+  Prebuilt native binaries in packages cannot be inspected through
+  source code review. They may contain backdoors, keyloggers, or data
+  exfiltration code that is invisible to standard security scanning
+  tools. Binary dependencies also introduce platform-specific risks and
+  complicate reproducible builds.
+remediation: >
+  Prefer pure-language dependencies over those requiring native
+  binaries. When native dependencies are necessary, build them from
+  source using verified build processes. Verify binary hashes against
+  trusted sources. Use sandboxing to limit the capabilities of native
+  code running within the MCP server process.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - supply_chain
+  - native_binaries
+  - audit
+  - dependencies

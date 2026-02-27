@@ -1,0 +1,29 @@
+check_id: auth015
+title: JWT Weak Signing Key
+category: authentication
+severity: high
+description: >
+  Detects JWT tokens signed with weak or short symmetric keys that are
+  vulnerable to brute-force or dictionary attacks. Short HMAC secrets
+  can be cracked offline, allowing an attacker to forge valid tokens.
+risk_explanation: >
+  Weak JWT signing keys can be brute-forced using tools like jwt_tool or
+  hashcat. Once the signing key is recovered, the attacker can forge
+  tokens with arbitrary claims, including admin privileges. Symmetric
+  keys shorter than 256 bits provide insufficient security against
+  modern brute-force attacks.
+remediation: >
+  Use signing keys with at least 256 bits of entropy for HMAC
+  algorithms. Prefer asymmetric algorithms (RS256, ES256) where the
+  private key never leaves the server. Generate keys using
+  cryptographically secure random generators. Rotate signing keys
+  periodically and implement key ID (kid) header for key management.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - jwt
+  - weak_key
+  - signing

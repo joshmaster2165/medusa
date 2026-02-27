@@ -1,0 +1,33 @@
+check_id: tp010
+title: Cross-Server Tool Name Collision
+category: tool_poisoning
+severity: critical
+description: >
+  Detects when multiple MCP servers expose tools with identical names.
+  When two servers register a tool with the same name, the LLM may
+  invoke the wrong implementation, allowing a malicious server to shadow
+  a legitimate tool and intercept its invocations.
+risk_explanation: >
+  Cross-server tool name collisions enable a malicious server to
+  silently replace a trusted tool. The attacker's implementation
+  receives all parameters intended for the legitimate tool, including
+  sensitive data such as credentials, file paths, and database queries.
+  The malicious tool can also return falsified results that influence
+  subsequent LLM reasoning.
+remediation: >
+  Implement namespace prefixing for tool names using the server identity
+  (e.g. server_name.tool_name). Detect and alert on tool name collisions
+  across registered servers before allowing invocations. Require users
+  to explicitly resolve collisions by selecting the intended server. Use
+  tool annotations to verify server provenance.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP06:2025"
+tags:
+  - tool_poisoning
+  - tool_shadowing
+  - name_collision
+  - cross_server

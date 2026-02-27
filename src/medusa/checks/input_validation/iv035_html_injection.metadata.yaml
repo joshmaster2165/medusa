@@ -1,0 +1,31 @@
+check_id: iv035
+title: HTML Injection Risk
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters whose output may be rendered in HTML contexts
+  without proper escaping. Parameters containing HTML tags or entities
+  can inject content into web pages, enabling cross-site scripting and
+  content spoofing attacks.
+risk_explanation: >
+  HTML injection allows attackers to modify the visual presentation of
+  web pages, inject phishing forms, or escalate to cross-site scripting
+  (XSS) by injecting script tags. Even without script execution, HTML
+  injection can create fake login forms, misleading content, or UI
+  redress attacks that trick users into unintended actions.
+remediation: >
+  Escape all user-controlled parameters before rendering in HTML
+  contexts. Use context-appropriate encoding (HTML entity encoding for
+  content, attribute encoding for attributes, URL encoding for URLs).
+  Implement Content Security Policy headers to mitigate XSS. Use
+  template engines with automatic escaping enabled by default.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - html_injection
+  - xss
+  - output_encoding

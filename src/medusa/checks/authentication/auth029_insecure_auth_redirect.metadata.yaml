@@ -1,0 +1,32 @@
+check_id: auth029
+title: Insecure Auth Redirect
+category: authentication
+severity: high
+description: >
+  Detects OAuth redirect URI configurations that allow open redirects.
+  When redirect URIs are not strictly validated, an attacker can
+  redirect the authorization code or token to a malicious endpoint under
+  their control.
+risk_explanation: >
+  Open redirect vulnerabilities in OAuth flows allow an attacker to
+  intercept authorization codes or tokens by redirecting the user to a
+  malicious URI after authentication. The attacker receives the
+  credentials intended for the legitimate application. Wildcard redirect
+  URIs and partial path matching are common sources of this
+  vulnerability.
+remediation: >
+  Implement strict redirect URI validation using exact string matching.
+  Never allow wildcard patterns in redirect URIs. Register all valid
+  redirect URIs explicitly with the authorization server. Validate the
+  complete URI including scheme, host, port, and path. Reject redirect
+  URIs with open redirect patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - oauth
+  - open_redirect
+  - redirect_uri

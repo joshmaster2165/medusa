@@ -1,0 +1,28 @@
+check_id: dp019
+title: Contact Data Access
+category: data_protection
+severity: high
+description: >
+  Detects MCP tools that access contacts, address books, or contact
+  databases. Contact data contains PII of third parties who have not
+  consented to data processing.
+risk_explanation: >
+  Contact data includes names, phone numbers, email addresses, and
+  physical addresses of the user's contacts. Accessing this data exposes
+  the PII of third parties who have not consented to data processing,
+  creating GDPR violations and enabling social engineering attacks
+  against the user's contacts.
+remediation: >
+  Require explicit user consent before accessing contact data. Implement
+  granular access controls that allow users to share specific contacts
+  rather than the entire address book. Apply data minimization by only
+  accessing the specific contact fields needed for the tool's function.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - contacts
+  - pii
+  - third_party_data

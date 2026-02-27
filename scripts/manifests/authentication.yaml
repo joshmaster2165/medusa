@@ -1,0 +1,777 @@
+category: authentication
+checks:
+  - id: auth005
+    slug: weak_token_entropy
+    title: "Weak Token Entropy"
+    severity: high
+    description: >
+      Detects authentication tokens with insufficient randomness or entropy.
+      Tokens generated with weak random sources or short lengths are susceptible
+      to brute-force attacks and prediction, allowing attackers to forge valid
+      authentication credentials.
+    risk_explanation: >
+      Low-entropy tokens can be guessed or brute-forced by an attacker in a
+      feasible timeframe. Once a valid token is predicted, the attacker gains
+      full access to the MCP server with the token holder's privileges. This
+      is especially dangerous for tokens that grant administrative or
+      write-level access to tools and resources.
+    remediation: >
+      Generate tokens using cryptographically secure random number generators
+      (e.g. crypto.randomBytes, secrets.token_urlsafe). Ensure tokens are at
+      least 256 bits (32 bytes) of entropy. Avoid sequential, timestamp-based,
+      or UUID v1 tokens for authentication purposes. Use established libraries
+      for token generation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - token_entropy
+      - brute_force
+      - randomness
+
+  - id: auth006
+    slug: missing_token_expiry
+    title: "Missing Token Expiration"
+    severity: high
+    description: >
+      Detects JWT tokens and API keys without expiration claims or time-to-live
+      settings. Tokens that never expire remain valid indefinitely, even after
+      the user's access should have been revoked or the token has been
+      compromised.
+    risk_explanation: >
+      Non-expiring tokens grant permanent access. If such a token is leaked
+      through logs, configuration files, or a data breach, the attacker has
+      indefinite access to the MCP server. Without expiration, there is no
+      automatic mechanism to limit the window of compromise after a token leak.
+    remediation: >
+      Set appropriate expiration times on all authentication tokens using the
+      'exp' claim in JWTs or TTL settings for API keys. Use short-lived access
+      tokens (15-60 minutes) paired with longer-lived refresh tokens. Implement
+      token refresh flows that issue new tokens before expiration.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - token_expiry
+      - jwt
+      - token_lifetime
+
+  - id: auth007
+    slug: insecure_token_storage
+    title: "Insecure Token Storage"
+    severity: critical
+    description: >
+      Detects authentication tokens stored in plaintext within configuration
+      files, environment files, or source code. Plaintext token storage exposes
+      credentials to anyone with filesystem access, version control access, or
+      backup system access.
+    risk_explanation: >
+      Plaintext tokens in configuration files are trivially extracted by
+      attackers who gain read access to the filesystem. Configuration files are
+      frequently committed to version control, included in backups, and logged
+      by monitoring systems. A single exposed token can grant full access to
+      the MCP server and all connected services.
+    remediation: >
+      Store tokens in secure credential stores such as OS keychains, hardware
+      security modules, or dedicated secrets managers (HashiCorp Vault, AWS
+      Secrets Manager). Use environment variable references in configuration
+      files instead of literal values. Set restrictive file permissions (600)
+      on any files that must contain credentials. Never commit tokens to
+      version control.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - token_storage
+      - plaintext_credentials
+      - secrets_management
+
+  - id: auth008
+    slug: missing_oauth_pkce
+    title: "Missing OAuth PKCE"
+    severity: high
+    description: >
+      Detects OAuth 2.0 authorization flows that do not implement Proof Key
+      for Code Exchange (PKCE). Without PKCE, authorization codes are vulnerable
+      to interception attacks where a malicious application captures the code
+      and exchanges it for an access token.
+    risk_explanation: >
+      Without PKCE, authorization code interception allows an attacker to
+      obtain access tokens by capturing the authorization code from the
+      redirect URI. This is particularly dangerous for public clients (native
+      apps, SPAs) where the client secret cannot be securely stored. The
+      MCP specification recommends OAuth 2.1 which requires PKCE.
+    remediation: >
+      Implement PKCE with S256 code challenge method in all OAuth flows. Use
+      the authorization code flow with PKCE as specified in OAuth 2.1 and the
+      MCP authorization specification. Generate a cryptographically random
+      code_verifier of at least 43 characters for each authorization request.
+      Reject authorization flows that do not include code_challenge.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - oauth
+      - pkce
+      - authorization_code
+
+  - id: auth009
+    slug: bearer_token_in_url
+    title: "Bearer Token in URL Parameters"
+    severity: high
+    description: >
+      Detects authentication tokens passed via URL query string parameters
+      instead of HTTP headers. Tokens in URLs are logged in server access logs,
+      browser history, proxy logs, and referrer headers, creating multiple
+      exposure vectors.
+    risk_explanation: >
+      URL-embedded tokens appear in web server logs, proxy logs, browser
+      history, and HTTP Referer headers sent to third-party resources. Any
+      system that records or processes URLs gains access to the authentication
+      token. This exposure is difficult to remediate as tokens may persist
+      in logs indefinitely across multiple systems.
+    remediation: >
+      Transmit authentication tokens exclusively in HTTP Authorization headers
+      using the Bearer scheme. Never include tokens in URL query parameters or
+      path segments. Configure servers to reject requests that include tokens
+      in URLs. Implement token binding to prevent token replay from logs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - bearer_token
+      - url_exposure
+      - logging_risk
+
+  - id: auth010
+    slug: missing_csrf_protection
+    title: "Missing CSRF Protection"
+    severity: high
+    description: >
+      Detects HTTP transport endpoints without Cross-Site Request Forgery
+      protection. MCP servers exposed over HTTP without CSRF tokens or
+      same-origin validation are vulnerable to attacks where a malicious
+      website forces the user's browser to invoke MCP tools.
+    risk_explanation: >
+      Without CSRF protection, a malicious website can craft requests to the
+      MCP server that execute in the context of the authenticated user's
+      session. This allows attackers to invoke tools, modify resources, and
+      exfiltrate data by tricking the user into visiting a crafted page. CSRF
+      is especially dangerous for MCP servers accessible on localhost.
+    remediation: >
+      Implement CSRF protection using synchronizer tokens, double-submit
+      cookies, or same-origin request validation. Set SameSite=Strict on all
+      authentication cookies. Validate the Origin and Referer headers on
+      state-changing requests. Use custom request headers that cannot be set
+      by cross-origin requests.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - authentication
+      - csrf
+      - cross_site
+      - session_security
+
+  - id: auth011
+    slug: hardcoded_credentials
+    title: "Hardcoded Credentials in Config"
+    severity: critical
+    description: >
+      Detects username and password pairs, API keys, and other credentials
+      hardcoded directly in MCP server configuration files or source code.
+      Hardcoded credentials cannot be rotated without code changes and are
+      trivially extracted from the codebase.
+    risk_explanation: >
+      Hardcoded credentials are shared with anyone who has access to the source
+      code or configuration files. They persist in version control history even
+      after removal, are identical across all deployments, and cannot be rotated
+      without a code change. A single repository leak exposes all instances
+      of the service.
+    remediation: >
+      Remove all hardcoded credentials from source code and configuration files.
+      Use environment variables, secrets managers, or secure vault services for
+      credential storage. Implement credential rotation mechanisms that do not
+      require code changes. Scan repositories for credential patterns using
+      pre-commit hooks and CI/CD secret scanners.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - hardcoded_credentials
+      - secrets
+      - configuration
+
+  - id: auth012
+    slug: missing_token_rotation
+    title: "Missing Token Rotation"
+    severity: medium
+    description: >
+      Detects long-lived authentication tokens without a rotation mechanism.
+      Tokens that persist for extended periods without rotation increase the
+      window of opportunity for attackers who have obtained a compromised token.
+    risk_explanation: >
+      Without token rotation, a compromised token remains valid for its entire
+      lifetime, which may be weeks, months, or indefinite. The attacker has
+      extended access to the MCP server, and there is no automatic mechanism
+      to invalidate the compromised credential. Long-lived tokens also
+      accumulate exposure through logs and monitoring systems over time.
+    remediation: >
+      Implement automatic token rotation with configurable intervals.
+      Use short-lived access tokens (15-60 minutes) with refresh token rotation.
+      Invalidate the previous token when a new one is issued. Implement sliding
+      window expiration that extends token lifetime on active use while revoking
+      idle tokens.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - token_rotation
+      - credential_lifecycle
+      - refresh_tokens
+
+  - id: auth013
+    slug: insecure_cookie_flags
+    title: "Insecure Cookie Flags"
+    severity: high
+    description: >
+      Detects authentication cookies missing security flags such as Secure,
+      HttpOnly, and SameSite. Cookies without these flags are vulnerable to
+      interception over unencrypted connections, cross-site scripting theft,
+      and cross-site request forgery.
+    risk_explanation: >
+      Missing Secure flag allows cookies to be transmitted over HTTP, enabling
+      network interception. Missing HttpOnly flag exposes cookies to JavaScript,
+      enabling theft via XSS attacks. Missing SameSite flag allows cookies to
+      be sent in cross-origin requests, enabling CSRF attacks. Each missing
+      flag creates a distinct attack vector.
+    remediation: >
+      Set all authentication cookies with Secure, HttpOnly, and
+      SameSite=Strict flags. Use the __Host- cookie prefix to ensure cookies
+      are only sent over HTTPS to the originating host. Set appropriate
+      expiration times and path restrictions to limit cookie scope.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - cookie_security
+      - httponly
+      - samesite
+
+  - id: auth014
+    slug: jwt_algorithm_none
+    title: "JWT Algorithm None Attack"
+    severity: critical
+    description: >
+      Detects JWT tokens that accept the 'none' algorithm, which disables
+      signature verification entirely. An attacker can forge arbitrary JWT
+      tokens by setting the algorithm to 'none' and removing the signature,
+      granting themselves any identity or permission claims.
+    risk_explanation: >
+      The 'none' algorithm vulnerability allows complete JWT forgery. An
+      attacker creates a token with arbitrary claims (admin roles, any user
+      identity) and sets alg to 'none', bypassing all signature verification.
+      This grants unrestricted access to the MCP server with any desired
+      permission level.
+    remediation: >
+      Explicitly allowlist accepted JWT algorithms on the server side. Never
+      accept the 'none' algorithm in production. Use asymmetric algorithms
+      (RS256, ES256) where possible. Validate the 'alg' header against the
+      expected algorithm before verification. Use well-maintained JWT libraries
+      that reject 'none' by default.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - jwt
+      - algorithm_none
+      - token_forgery
+
+  - id: auth015
+    slug: jwt_weak_signing
+    title: "JWT Weak Signing Key"
+    severity: high
+    description: >
+      Detects JWT tokens signed with weak or short symmetric keys that are
+      vulnerable to brute-force or dictionary attacks. Short HMAC secrets can
+      be cracked offline, allowing an attacker to forge valid tokens.
+    risk_explanation: >
+      Weak JWT signing keys can be brute-forced using tools like jwt_tool or
+      hashcat. Once the signing key is recovered, the attacker can forge
+      tokens with arbitrary claims, including admin privileges. Symmetric keys
+      shorter than 256 bits provide insufficient security against modern
+      brute-force attacks.
+    remediation: >
+      Use signing keys with at least 256 bits of entropy for HMAC algorithms.
+      Prefer asymmetric algorithms (RS256, ES256) where the private key never
+      leaves the server. Generate keys using cryptographically secure random
+      generators. Rotate signing keys periodically and implement key ID (kid)
+      header for key management.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - jwt
+      - weak_key
+      - signing
+
+  - id: auth016
+    slug: missing_auth_on_tools
+    title: "Missing Authentication on Sensitive Tools"
+    severity: high
+    description: >
+      Detects MCP tools that perform sensitive operations (file access, database
+      queries, network requests, system commands) without requiring
+      authentication. Unauthenticated access to dangerous tools allows any
+      client to perform privileged operations.
+    risk_explanation: >
+      Sensitive tools without authentication can be invoked by any client that
+      can reach the MCP server. This includes unauthorized users, malicious
+      scripts, and attackers who have gained network access. Tools that modify
+      data, access credentials, or execute commands are especially dangerous
+      without authentication gates.
+    remediation: >
+      Require authentication for all tools that perform sensitive operations.
+      Implement per-tool authorization checks that verify the caller has the
+      necessary permissions. Use the MCP authorization framework to enforce
+      access control at the tool level. Audit all tools to classify their
+      sensitivity and assign appropriate authentication requirements.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - authentication
+      - authorization
+      - sensitive_tools
+      - access_control
+
+  - id: auth017
+    slug: api_key_in_headers_insecure
+    title: "API Key in Insecure Headers"
+    severity: medium
+    description: >
+      Detects API keys transmitted in non-standard or commonly logged HTTP
+      headers. Using headers like X-Api-Key without TLS, or placing keys in
+      headers that proxy servers and load balancers routinely log, exposes
+      credentials to interception.
+    risk_explanation: >
+      API keys in non-standard headers may be logged by web application
+      firewalls, reverse proxies, CDNs, and monitoring tools that capture
+      custom headers. Unlike the standard Authorization header, custom headers
+      are not typically treated as sensitive by infrastructure components,
+      leading to inadvertent credential exposure in logs.
+    remediation: >
+      Use the standard HTTP Authorization header with the Bearer scheme for
+      token transmission. Configure infrastructure components to redact the
+      Authorization header from logs. If custom headers must be used, ensure
+      all intermediaries are configured to treat them as sensitive. Always
+      use TLS for API key transmission.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - api_key
+      - headers
+      - logging_risk
+
+  - id: auth018
+    slug: missing_mutual_tls
+    title: "Missing Mutual TLS"
+    severity: medium
+    description: >
+      Detects MCP servers that do not require client certificate authentication
+      (mutual TLS). Without mTLS, the server cannot cryptographically verify
+      the identity of connecting clients, relying solely on application-layer
+      credentials that may be stolen or forged.
+    risk_explanation: >
+      Without mutual TLS, any client presenting valid application-layer
+      credentials (tokens, API keys) is accepted, even if the client itself
+      is not a trusted entity. Stolen credentials can be used from any machine.
+      mTLS provides an additional layer of assurance that the connecting client
+      possesses a valid certificate issued by a trusted authority.
+    remediation: >
+      Configure mutual TLS on MCP server endpoints for high-security
+      deployments. Issue client certificates from a private CA to authorized
+      MCP clients. Configure the server to require and validate client
+      certificates during TLS handshake. Use certificate-bound access tokens
+      for additional security.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - mutual_tls
+      - client_certificates
+      - transport_auth
+
+  - id: auth019
+    slug: token_scope_too_broad
+    title: "Token Scope Too Broad"
+    severity: high
+    description: >
+      Detects authentication tokens with excessively broad permission scopes
+      that grant access beyond what is required for the token's intended use.
+      Over-scoped tokens violate the principle of least privilege and amplify
+      the impact of token compromise.
+    risk_explanation: >
+      A token with broad scopes (e.g. full admin access when only read access
+      is needed) grants an attacker who compromises the token far more access
+      than the legitimate use case requires. Over-scoped tokens are common when
+      developers request all permissions during development and fail to restrict
+      them for production.
+    remediation: >
+      Issue tokens with the minimum scopes required for their intended use.
+      Implement scope-based access control that maps each tool to its required
+      permissions. Review and restrict token scopes during security audits.
+      Use OAuth 2.0 scope parameters to request only necessary permissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+      - "MCP07:2025"
+    tags:
+      - authentication
+      - token_scope
+      - least_privilege
+      - over_scoped
+
+  - id: auth020
+    slug: missing_auth_header
+    title: "Missing Authorization Header"
+    severity: high
+    description: >
+      Detects MCP servers using HTTP transport without any Authorization header
+      configuration. Servers that do not expect or validate Authorization
+      headers accept all requests as authenticated, providing no access control.
+    risk_explanation: >
+      Without Authorization header validation, the MCP server treats all
+      incoming requests as legitimate. Any client that can reach the server
+      endpoint can invoke tools and access resources. This is equivalent to
+      running the server with no authentication, exposing all capabilities to
+      unauthorized access.
+    remediation: >
+      Configure the MCP server to require and validate an Authorization header
+      on all requests. Implement OAuth 2.1 bearer token validation as
+      recommended by the MCP specification. Reject requests that do not include
+      a valid Authorization header with a 401 Unauthorized response.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - authorization_header
+      - http_transport
+      - missing_auth
+
+  - id: auth021
+    slug: basic_auth_over_http
+    title: "Basic Auth Over HTTP"
+    severity: critical
+    description: >
+      Detects HTTP Basic authentication used over unencrypted HTTP connections.
+      Basic auth transmits credentials as base64-encoded plaintext, which is
+      trivially decoded by any network observer when TLS is not used.
+    risk_explanation: >
+      Basic authentication over HTTP transmits username and password in every
+      request as a base64-encoded string that is equivalent to plaintext. Any
+      network observer, proxy, or man-in-the-middle can decode the credentials
+      instantly. Unlike token-based auth, Basic auth transmits the actual
+      password, making compromise permanent until the password is changed.
+    remediation: >
+      Never use HTTP Basic authentication without TLS. Switch to HTTPS for all
+      endpoints using Basic auth. Preferably, migrate to token-based
+      authentication (OAuth 2.1 Bearer tokens) which limits the exposure window.
+      If Basic auth is required, enforce HSTS to prevent protocol downgrade
+      attacks.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - basic_auth
+      - plaintext
+      - http
+
+  - id: auth022
+    slug: missing_token_revocation
+    title: "Missing Token Revocation"
+    severity: medium
+    description: >
+      Detects MCP server configurations without a mechanism to revoke
+      compromised or unused tokens. Without revocation, compromised tokens
+      remain valid until they expire, which may be a long time or never.
+    risk_explanation: >
+      When a token is compromised, the inability to revoke it means the
+      attacker retains access until natural expiration. For long-lived or
+      non-expiring tokens, this means indefinite unauthorized access. Token
+      revocation is essential for incident response and access management.
+    remediation: >
+      Implement a token revocation endpoint that immediately invalidates
+      compromised tokens. Maintain a revocation list or use short-lived tokens
+      with a token introspection endpoint. Support RFC 7009 token revocation
+      for OAuth-based flows. Include revocation as part of the incident
+      response procedure.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - token_revocation
+      - incident_response
+      - access_management
+
+  - id: auth023
+    slug: shared_secrets_across_servers
+    title: "Shared Secrets Across Servers"
+    severity: high
+    description: >
+      Detects identical credentials or API keys used across multiple MCP
+      servers. Sharing secrets across servers means that a compromise of one
+      server exposes all servers using the same credential.
+    risk_explanation: >
+      When multiple MCP servers share the same authentication secret, a breach
+      of any single server compromises all of them. The attacker gains lateral
+      movement capability across the entire MCP infrastructure. Shared secrets
+      also make it impossible to revoke access to a single server without
+      affecting all others.
+    remediation: >
+      Issue unique credentials for each MCP server. Use a secrets manager to
+      generate and distribute per-server secrets. Implement credential rotation
+      that can target individual servers. Audit credential usage to detect
+      shared secrets across server configurations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - shared_secrets
+      - lateral_movement
+      - credential_isolation
+
+  - id: auth024
+    slug: missing_rate_limit_on_auth
+    title: "Missing Rate Limit on Auth Endpoints"
+    severity: medium
+    description: >
+      Detects authentication endpoints without rate limiting or brute-force
+      protection. Endpoints that accept unlimited authentication attempts allow
+      attackers to perform credential stuffing and brute-force attacks.
+    risk_explanation: >
+      Without rate limiting, an attacker can attempt thousands of credential
+      combinations per second against the authentication endpoint. Credential
+      stuffing attacks using leaked password databases are highly effective
+      against unprotected endpoints. Even strong passwords can eventually be
+      brute-forced given unlimited attempts.
+    remediation: >
+      Implement rate limiting on authentication endpoints with progressive
+      delays. Lock accounts temporarily after a configurable number of failed
+      attempts. Use CAPTCHA or proof-of-work challenges after repeated failures.
+      Monitor and alert on abnormal authentication attempt patterns. Consider
+      IP-based and account-based rate limiting.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - rate_limiting
+      - brute_force
+      - credential_stuffing
+
+  - id: auth025
+    slug: session_fixation_risk
+    title: "Session Fixation Risk"
+    severity: high
+    description: >
+      Detects session management implementations that do not regenerate session
+      IDs after successful authentication. Session fixation allows an attacker
+      to set a known session ID before the user authenticates, then hijack
+      the session after authentication elevates its privileges.
+    risk_explanation: >
+      An attacker who can set or predict the session ID before authentication
+      gains full access to the authenticated session. The attacker waits for
+      the victim to authenticate with the known session ID, then uses that
+      same ID to access the MCP server as the victim. This bypasses all
+      authentication mechanisms.
+    remediation: >
+      Regenerate session IDs immediately after successful authentication.
+      Invalidate the pre-authentication session ID. Use cryptographically
+      random session identifiers. Bind sessions to client properties (IP
+      address, user agent) for additional validation. Implement session
+      timeout and idle expiration.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - session_fixation
+      - session_management
+      - hijacking
+
+  - id: auth026
+    slug: missing_logout_mechanism
+    title: "Missing Logout Mechanism"
+    severity: medium
+    description: >
+      Detects MCP server configurations without a mechanism to invalidate
+      active sessions or tokens on logout. Without logout functionality, users
+      cannot terminate their sessions, leaving them vulnerable to session
+      hijacking and unauthorized reuse.
+    risk_explanation: >
+      Without a logout mechanism, sessions remain active indefinitely or until
+      they expire naturally. Users cannot terminate sessions from compromised
+      devices. Shared workstations retain active sessions for the next user.
+      In incident response scenarios, there is no way to force-terminate a
+      user's active sessions.
+    remediation: >
+      Implement a logout endpoint that invalidates the user's session and
+      associated tokens. Clear session cookies and revoke refresh tokens on
+      logout. Provide a mechanism to terminate all active sessions for a user.
+      Support server-side session invalidation for incident response.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - logout
+      - session_invalidation
+      - access_termination
+
+  - id: auth027
+    slug: weak_password_policy
+    title: "Weak Password Policy"
+    severity: medium
+    description: >
+      Detects MCP server authentication configurations with password
+      requirements below security standards. Weak password policies allow
+      short, simple, or commonly used passwords that are easily guessed or
+      cracked.
+    risk_explanation: >
+      Weak passwords are the primary vector for credential-based attacks.
+      Short passwords can be brute-forced quickly, common passwords appear in
+      dictionary attacks, and passwords without complexity requirements are
+      easily guessed. Password reuse across services amplifies the impact
+      of any single breach.
+    remediation: >
+      Enforce a minimum password length of 12 characters. Check passwords
+      against known breach databases (e.g. Have I Been Pwned). Require a mix
+      of character types. Implement password strength estimation using
+      algorithms like zxcvbn. Support passphrase-based authentication as an
+      alternative.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - password_policy
+      - credential_strength
+      - brute_force
+
+  - id: auth028
+    slug: missing_mfa
+    title: "Missing Multi-Factor Authentication"
+    severity: medium
+    description: >
+      Detects MCP server configurations without support for multi-factor
+      authentication. MFA provides an additional layer of security beyond
+      passwords, significantly reducing the risk of credential-based attacks.
+    risk_explanation: >
+      Single-factor authentication (password only) is vulnerable to phishing,
+      credential stuffing, and brute-force attacks. Without MFA, a compromised
+      password grants immediate full access to the MCP server. MFA adds a
+      second verification step that prevents access even when the primary
+      credential is compromised.
+    remediation: >
+      Implement multi-factor authentication for all MCP server access,
+      especially for administrative and sensitive operations. Support TOTP
+      (RFC 6238) or WebAuthn/FIDO2 as second factors. Require MFA for initial
+      authentication and for privilege escalation events. Provide backup
+      recovery codes for MFA lockout scenarios.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - mfa
+      - two_factor
+      - phishing_resistance
+
+  - id: auth029
+    slug: insecure_auth_redirect
+    title: "Insecure Auth Redirect"
+    severity: high
+    description: >
+      Detects OAuth redirect URI configurations that allow open redirects.
+      When redirect URIs are not strictly validated, an attacker can redirect
+      the authorization code or token to a malicious endpoint under their
+      control.
+    risk_explanation: >
+      Open redirect vulnerabilities in OAuth flows allow an attacker to
+      intercept authorization codes or tokens by redirecting the user to a
+      malicious URI after authentication. The attacker receives the credentials
+      intended for the legitimate application. Wildcard redirect URIs and
+      partial path matching are common sources of this vulnerability.
+    remediation: >
+      Implement strict redirect URI validation using exact string matching.
+      Never allow wildcard patterns in redirect URIs. Register all valid
+      redirect URIs explicitly with the authorization server. Validate the
+      complete URI including scheme, host, port, and path. Reject redirect
+      URIs with open redirect patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - authentication
+      - oauth
+      - open_redirect
+      - redirect_uri

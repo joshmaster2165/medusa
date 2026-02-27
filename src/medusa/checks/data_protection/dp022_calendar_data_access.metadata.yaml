@@ -1,0 +1,28 @@
+check_id: dp022
+title: Calendar Data Access
+category: data_protection
+severity: medium
+description: >
+  Detects MCP tools that access calendar events, schedules, or
+  appointment data. Calendar data reveals meeting participants, topics,
+  locations, and daily routines.
+risk_explanation: >
+  Calendar data exposes meeting schedules, participant lists, meeting
+  topics and agendas, physical locations, and daily routines. This
+  information enables social engineering attacks, reveals business
+  relationships, and can be used to plan physical intrusions when the
+  user is known to be away.
+remediation: >
+  Require explicit user consent before accessing calendar data.
+  Implement granular access that allows sharing specific calendars or
+  date ranges rather than full calendar access. Apply data minimization
+  by only accessing the calendar fields needed for the tool's function.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - calendar
+  - privacy
+  - schedule

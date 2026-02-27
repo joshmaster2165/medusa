@@ -1,0 +1,27 @@
+check_id: err002
+title: Debug Mode Enabled
+category: error_handling
+severity: high
+description: >
+  Detects MCP servers running with debug or development mode flags
+  enabled in production environments. Debug mode typically disables
+  security controls, enables verbose logging, exposes diagnostic
+  endpoints, and may auto-reload code on changes.
+risk_explanation: >
+  Debug mode often disables authentication, enables detailed error pages
+  with interactive debuggers, exposes environment variables, and
+  provides code execution capabilities through debug consoles. An
+  attacker who discovers a debug-mode server can achieve full remote
+  code execution or extract secrets with minimal effort.
+remediation: >
+  Ensure all MCP servers are deployed with debug and development mode
+  flags explicitly set to false or removed entirely. Use environment
+  variable checks to enforce production mode. Implement CI/CD checks
+  that fail deployments containing debug configuration flags.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

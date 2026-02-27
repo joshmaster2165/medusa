@@ -1,0 +1,31 @@
+check_id: mt001
+title: Missing Tenant Isolation
+category: multi_tenant
+severity: critical
+description: >
+  Detects MCP servers that handle multiple tenants without implementing
+  proper isolation between tenant contexts. Missing isolation allows one
+  tenant operations, data, and tool invocations to affect or be visible
+  to other tenants sharing the same server instance.
+risk_explanation: >
+  Without tenant isolation, one tenant can access another tenant data,
+  tool results, and resources. This is a catastrophic security failure
+  in multi-tenant deployments where competing organizations, different
+  security clearance levels, or privacy-regulated data share the same
+  MCP server. A single compromised tenant account can exfiltrate all
+  other tenants data.
+remediation: >
+  Implement strict tenant isolation at every layer of the MCP server
+  including request processing, data access, tool execution, resource
+  access, and response delivery. Use tenant-specific execution contexts
+  that prevent cross-tenant memory access. Enforce tenant boundaries in
+  all database queries and file system operations. Validate tenant
+  context on every request and reject any cross-tenant access attempts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

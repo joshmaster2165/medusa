@@ -1,0 +1,28 @@
+check_id: dp005
+title: Data Leakage via Error Messages
+category: data_protection
+severity: medium
+description: >
+  Detects MCP servers that expose sensitive data in error responses.
+  Stack traces, database connection strings, internal paths, and debug
+  information returned in error messages can reveal implementation
+  details and secrets to untrusted LLM clients.
+risk_explanation: >
+  Error messages containing sensitive data such as internal file paths,
+  database queries, or stack traces give attackers a detailed map of the
+  server's internals. This information accelerates exploitation by
+  revealing software versions, framework details, and data structures
+  that would otherwise require extensive reconnaissance.
+remediation: >
+  Implement structured error handling that returns generic error
+  messages to clients while logging detailed diagnostics server-side.
+  Use error codes instead of raw exception details. Ensure production
+  configurations disable debug mode and stack trace output in responses.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - error_handling
+  - information_disclosure

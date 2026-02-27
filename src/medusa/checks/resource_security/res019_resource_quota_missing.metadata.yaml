@@ -1,0 +1,29 @@
+check_id: res019
+title: Missing Resource Quota
+category: resource_security
+severity: medium
+description: >
+  Detects MCP servers that do not enforce quotas on resource creation,
+  storage, or access frequency per client. Without quotas, a single
+  client can monopolize server resources, starving other clients and
+  causing denial of service through resource exhaustion.
+risk_explanation: >
+  Missing resource quotas enable a single client or attacker to consume
+  all available server resources including storage space, memory for
+  active resources, and processing capacity for resource operations.
+  This prevents legitimate clients from accessing the server and can
+  cause cascading failures across all connected clients.
+remediation: >
+  Implement per-client quotas for resource creation count, total storage
+  size, and access frequency. Set sensible default quotas and allow
+  administrators to configure per-client limits. Return clear error
+  messages when quotas are exceeded. Monitor quota usage and alert on
+  clients approaching their limits.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

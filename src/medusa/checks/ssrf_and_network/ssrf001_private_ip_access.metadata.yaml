@@ -1,0 +1,31 @@
+check_id: ssrf001
+title: Private IP Address Access
+category: ssrf_and_network
+severity: critical
+description: >
+  Detects MCP server tools that allow requests to private IP address
+  ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) without
+  restriction. Tools accepting user-controlled URLs or hostnames can be
+  abused to access internal network resources that should not be
+  reachable from the MCP server.
+risk_explanation: >
+  Access to private IP ranges from MCP tools enables server-side request
+  forgery (SSRF) attacks against internal infrastructure. An attacker
+  can use MCP tool invocations to scan internal networks, access
+  databases, reach administration panels, and interact with internal
+  services that trust requests from the MCP server's network location.
+  This can lead to full internal network compromise.
+remediation: >
+  Implement a URL validation layer that blocks requests to private IP
+  address ranges (RFC 1918) and other reserved ranges. Apply validation
+  after DNS resolution to prevent DNS rebinding bypasses. Use an
+  allowlist of permitted external domains and IP ranges. Deploy network-
+  level egress filtering to enforce restrictions independent of
+  application logic.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

@@ -1,0 +1,30 @@
+check_id: dp029
+title: Missing Right to Deletion
+category: data_protection
+severity: medium
+description: >
+  Checks whether the MCP server provides a mechanism for users to
+  request deletion of their personal data. The right to erasure is a
+  fundamental requirement under GDPR and CCPA.
+risk_explanation: >
+  Without a deletion mechanism, the organisation cannot comply with data
+  erasure requests required by GDPR (right to be forgotten), CCPA (right
+  to delete), and similar regulations. Failure to honour deletion
+  requests results in regulatory fines and continued risk of data
+  exposure for data that should have been removed.
+remediation: >
+  Implement a data deletion mechanism that allows users to request
+  erasure of their personal data. Ensure deletion propagates to all
+  storage locations including backups, caches, logs, and third-party
+  processors. Provide confirmation of deletion and maintain records of
+  deletion requests for compliance purposes.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - deletion
+  - gdpr
+  - ccpa
+  - compliance

@@ -1,0 +1,31 @@
+check_id: sess012
+title: Cross-Site Session Sharing
+category: session_management
+severity: high
+description: >
+  Detects MCP server configurations where session tokens can be shared
+  or reused across different origins, domains, or MCP server instances.
+  Cross-site session sharing violates the principle of session isolation
+  and allows a compromised server to leverage sessions established with
+  a different server.
+risk_explanation: >
+  When MCP session tokens are valid across multiple origins or servers,
+  a compromise of any single server grants access to all servers sharing
+  the session. This dramatically increases the blast radius of a
+  security incident. A malicious MCP server could capture session tokens
+  and replay them against legitimate servers, gaining unauthorized
+  access to tools and resources.
+remediation: >
+  Ensure MCP session tokens are scoped to a single server origin and
+  cannot be reused across different MCP server instances. Include the
+  server identity in session token validation. Use audience-restricted
+  tokens that are bound to a specific MCP server endpoint. Implement
+  session isolation at the transport layer using distinct cookie domains
+  or authorization scopes per server.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

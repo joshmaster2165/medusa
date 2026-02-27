@@ -1,0 +1,33 @@
+check_id: tp022
+title: TOCTOU in Tool Definitions
+category: tool_poisoning
+severity: critical
+description: >
+  Detects time-of-check-time-of-use vulnerabilities where tool
+  definitions can change between the listing phase (when tools are
+  reviewed) and the invocation phase (when tools are executed). A
+  malicious server can present safe definitions during listing but swap
+  them at invocation time.
+risk_explanation: >
+  TOCTOU attacks on tool definitions undermine all security review. The
+  user or automated scanner validates a safe tool definition, but the
+  server returns a different definition when the tool is actually
+  invoked. This allows arbitrary code execution, data exfiltration, and
+  privilege escalation after the security check has passed.
+remediation: >
+  Pin tool definitions at listing time and verify they match at
+  invocation time using cryptographic hashes. Implement tool definition
+  caching on the client side with integrity verification. Reject tool
+  invocations where the server's current definition does not match the
+  previously reviewed definition. Use signed tool manifests where
+  available.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP04:2025"
+tags:
+  - tool_poisoning
+  - toctou
+  - definition_integrity
+  - race_condition

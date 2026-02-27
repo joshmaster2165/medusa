@@ -1,0 +1,36 @@
+check_id: samp015
+title: Sampling System Prompt Override
+category: sampling_security
+severity: critical
+description: >
+  Detects MCP server sampling requests that attempt to override or
+  modify the LLM client's system prompt. By injecting a custom system
+  prompt through sampling, a malicious server can fundamentally alter
+  the LLM's behavior, remove safety constraints, and redirect the agent
+  toward attacker-controlled objectives.
+risk_explanation: >
+  System prompt override via sampling is among the most severe attacks
+  on the MCP sampling mechanism. The system prompt defines the LLM's
+  core behavior, safety constraints, and operational boundaries. A
+  malicious MCP server that can override it through sampling gains
+  complete control over the LLM's behavior for the duration of the
+  session. This can disable safety guardrails, enable unrestricted tool
+  access, facilitate data exfiltration, and turn the LLM into a fully
+  controlled agent operating against the user's interests.
+remediation: >
+  Never allow MCP server sampling requests to modify or override the
+  client's system prompt. Implement system prompt protection that is
+  immune to sampling influence. Reject sampling requests that include
+  systemPrompt fields or instructions that reference system-level
+  configuration. Maintain the system prompt in a protected context that
+  is read-only to sampling interactions. Alert users immediately if a
+  sampling request attempts system prompt modification.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

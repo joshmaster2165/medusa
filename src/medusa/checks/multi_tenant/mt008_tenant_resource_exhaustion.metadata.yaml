@@ -1,0 +1,31 @@
+check_id: mt008
+title: Tenant Resource Exhaustion
+category: multi_tenant
+severity: high
+description: >
+  Detects MCP servers that do not enforce per-tenant resource quotas,
+  allowing a single tenant to monopolize shared server resources
+  including CPU, memory, network bandwidth, storage, and database
+  connections, causing denial of service for other tenants.
+risk_explanation: >
+  Without per-tenant resource limits, a single tenant can consume all
+  available server resources through normal heavy usage or intentional
+  abuse. This causes performance degradation or complete denial of
+  service for all other tenants. In a competitive multi-tenant
+  environment, a malicious tenant can deliberately exhaust resources to
+  disrupt competitor tenants.
+remediation: >
+  Implement per-tenant resource quotas for CPU time, memory usage,
+  storage space, network bandwidth, and concurrent connections. Use fair
+  scheduling algorithms that prevent any single tenant from monopolizing
+  shared resources. Set rate limits per tenant for API calls and tool
+  invocations. Monitor per-tenant resource consumption and alert on
+  abnormal usage patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

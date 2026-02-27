@@ -1,0 +1,30 @@
+check_id: iv028
+title: Excessive Nested Object Depth
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters that allow deeply nested object structures
+  without depth limits. Excessive nesting can hide malicious payloads
+  deep in the structure, evade validation, and cause stack overflow or
+  excessive memory consumption during parsing.
+risk_explanation: >
+  Deeply nested objects can exhaust stack space during recursive
+  parsing, causing denial of service. They also provide hiding places
+  for malicious properties that escape shallow validation. Each nesting
+  level multiplies the complexity of comprehensive validation, making
+  deep structures practical vehicles for smuggling dangerous values.
+remediation: >
+  Set maximum nesting depth limits in JSON Schema using conditional
+  validation. Implement server-side depth checking before processing
+  parameters. Flatten deeply nested structures where possible. Reject
+  requests where parameter objects exceed a configurable depth threshold
+  (e.g. 5 levels).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - nested_objects
+  - depth_limit
+  - denial_of_service

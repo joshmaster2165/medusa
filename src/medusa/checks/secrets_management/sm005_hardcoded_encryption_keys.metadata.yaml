@@ -1,0 +1,31 @@
+check_id: sm005
+title: Hardcoded Encryption Keys
+category: secrets_management
+severity: critical
+description: >
+  Detects MCP server source code or configuration that contains
+  hardcoded encryption keys, initialization vectors, or salt values.
+  Hardcoded cryptographic material makes encryption effectively useless
+  as the keys are available to anyone with code access.
+risk_explanation: >
+  Hardcoded encryption keys mean that every deployment uses the same
+  cryptographic material. Anyone with access to the source code,
+  compiled binary, or a decompiled version can decrypt all data
+  encrypted by any instance of the server. This defeats the purpose of
+  encryption entirely and exposes all encrypted data across all
+  deployments simultaneously.
+remediation: >
+  Generate unique encryption keys per deployment using a
+  cryptographically secure random number generator. Store encryption
+  keys in a hardware security module or secrets management service. Use
+  key derivation functions to generate per-purpose keys from master
+  keys. Implement key management that supports rotation without re-
+  encrypting all data. Remove all hardcoded keys from source code and
+  configuration.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - secrets_management
+  - credentials

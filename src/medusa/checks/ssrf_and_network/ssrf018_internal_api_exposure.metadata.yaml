@@ -1,0 +1,30 @@
+check_id: ssrf018
+title: Internal API Exposure
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that can access internal API endpoints
+  intended only for service-to-service communication. Internal APIs
+  typically lack authentication and authorization controls because they
+  are assumed to be unreachable from external sources.
+risk_explanation: >
+  Internal APIs accessed through MCP tool SSRF often have no
+  authentication because they rely on network isolation for security. An
+  attacker who can reach these APIs through MCP tools gains access to
+  administrative functions, data manipulation endpoints, and service
+  configuration interfaces. This can lead to complete compromise of
+  internal services and the data they manage.
+remediation: >
+  Block MCP tool access to internal API endpoints through URL validation
+  and network segmentation. Require authentication on all internal APIs
+  regardless of network location. Implement service mesh or zero-trust
+  networking that validates identity for every request. Maintain an
+  inventory of internal APIs and ensure they are excluded from the MCP
+  tool egress allowlist.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

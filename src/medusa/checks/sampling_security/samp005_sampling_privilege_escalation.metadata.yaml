@@ -1,0 +1,34 @@
+check_id: samp005
+title: Privilege Escalation via Sampling
+category: sampling_security
+severity: critical
+description: >
+  Detects MCP server implementations where sampling requests can be used
+  to escalate tool access privileges. A server with limited tool access
+  can use sampling to instruct the LLM to invoke tools from other
+  servers or access resources beyond the server's authorized scope.
+risk_explanation: >
+  Sampling-based privilege escalation allows a low-privilege MCP server
+  to leverage the LLM as a proxy for accessing tools and resources it is
+  not authorized to use directly. By crafting sampling prompts that
+  instruct the LLM to invoke other servers' tools, the malicious server
+  effectively bypasses access controls and operates with the full
+  privilege set of the LLM client. This breaks the principle of least
+  privilege for MCP servers.
+remediation: >
+  Enforce tool access isolation during sampling request processing.
+  Prevent sampling responses from triggering tool invocations on other
+  MCP servers. Implement privilege boundaries that restrict the LLM's
+  available tools during sampling to only those belonging to the
+  requesting server. Require explicit user approval for any tool
+  invocations resulting from sampling interactions. Audit sampling
+  interactions for cross-server privilege escalation patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

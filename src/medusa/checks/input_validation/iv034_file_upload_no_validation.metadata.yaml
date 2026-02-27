@@ -1,0 +1,31 @@
+check_id: iv034
+title: File Upload Without Validation
+category: input_validation
+severity: high
+description: >
+  Detects file upload tool parameters without type, size, or content
+  validation constraints. Unrestricted file uploads allow attackers to
+  submit malicious executables, oversized files for denial of service,
+  or files with double extensions to bypass type restrictions.
+risk_explanation: >
+  Unrestricted file uploads can deliver malware, web shells, and
+  exploitable content to the server. An attacker can upload a PHP/Python
+  web shell disguised as an image, overwrite critical files through path
+  manipulation, or exhaust disk space with oversized uploads. File
+  uploads are a primary vector for remote code execution.
+remediation: >
+  Validate file type using content-based detection (magic bytes), not
+  just file extension. Set maximum file size limits in the schema and at
+  the transport layer. Restrict allowed MIME types to an explicit
+  allowlist. Store uploads outside the web root with randomized names.
+  Scan uploaded files for malware before processing.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - file_upload
+  - content_validation
+  - malware

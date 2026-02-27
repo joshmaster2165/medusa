@@ -1,0 +1,33 @@
+check_id: gov003
+title: Missing Terms of Service
+category: governance
+severity: low
+description: >
+  Detects MCP server deployments that lack terms of service defining
+  acceptable use, limitations of liability, and user responsibilities.
+  Terms of service establish the contractual framework for MCP server
+  usage and set expectations for both operators and users.
+risk_explanation: >
+  Without terms of service, MCP server operators have no legal framework
+  for managing user behavior, limiting liability, or enforcing
+  acceptable use policies. Users may misuse the server for purposes it
+  was not designed for, abuse tool access in ways that affect other
+  users, or hold the operator liable for damages caused by tool
+  invocations. The absence of terms creates legal uncertainty for all
+  parties.
+remediation: >
+  Develop terms of service that define acceptable use policies for the
+  MCP server, including permitted and prohibited actions, liability
+  limitations, and service level expectations. Address the unique
+  aspects of MCP server usage including tool invocation
+  responsibilities, data processing consent, and autonomous agent
+  behavior. Have the terms reviewed by legal counsel and require user
+  acceptance before granting access.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

@@ -1,0 +1,30 @@
+check_id: intg013
+title: Typosquatting Risk
+category: integrity
+severity: high
+description: >
+  Detects MCP server dependencies with names that closely resemble
+  popular packages, indicating potential typosquatting. Typosquatting
+  packages contain malicious code disguised as legitimate libraries.
+risk_explanation: >
+  Typosquatting exploits common typing mistakes to trick developers into
+  installing malicious packages. Packages with names like "reqeusts"
+  instead of "requests" or "lodsah" instead of "lodash" contain
+  malicious code that executes during installation or import. A single
+  misspelled dependency in an MCP server configuration compromises the
+  entire host.
+remediation: >
+  Verify all dependency names against official package registries before
+  installation. Use typosquatting detection tools in CI pipelines. Pin
+  dependencies by exact version and hash. Review dependency changes
+  carefully in code review, paying special attention to new package
+  additions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - typosquatting
+  - supply_chain
+  - package_management

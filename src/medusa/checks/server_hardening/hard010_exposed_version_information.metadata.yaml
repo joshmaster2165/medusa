@@ -1,0 +1,30 @@
+check_id: hard010
+title: Exposed Version Information
+category: server_hardening
+severity: low
+description: >
+  Detects MCP servers that expose version information in response
+  headers, error messages, capability declarations, or server metadata.
+  Version information helps attackers identify specific software
+  releases and their known vulnerabilities.
+risk_explanation: >
+  Exposed version information enables targeted attacks by allowing
+  attackers to look up known vulnerabilities for the exact software
+  version in use. Without version information, attackers must attempt
+  exploits blindly which is less efficient and more likely to trigger
+  detection. Version fingerprinting is a standard reconnaissance
+  technique in the early stages of an attack.
+remediation: >
+  Remove version strings from all server responses, headers, and
+  metadata. Configure the MCP server and its HTTP transport to suppress
+  version headers such as Server and X-Powered-By. Review capability
+  declarations and server info responses for version leakage. Use
+  generic identifiers that do not reveal specific version numbers.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

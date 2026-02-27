@@ -1,0 +1,30 @@
+check_id: iv012
+title: Integer Overflow Risk
+category: input_validation
+severity: medium
+description: >
+  Detects numeric tool parameters without explicit range constraints
+  (minimum/maximum values). Unconstrained integer parameters can trigger
+  integer overflow, underflow, or truncation vulnerabilities in server-
+  side processing.
+risk_explanation: >
+  Integer overflow can cause unexpected behaviour including buffer
+  overflows, incorrect calculations, and security check bypasses. A
+  parameter that overflows from a large positive to a negative value can
+  bypass range checks, cause incorrect memory allocation sizes, or lead
+  to array index out-of-bounds access.
+remediation: >
+  Define explicit minimum and maximum constraints for all numeric
+  parameters using JSON Schema's minimum and maximum keywords. Use
+  exclusiveMinimum and exclusiveMaximum where appropriate. Implement
+  server-side range validation independent of schema constraints. Use
+  language-safe integer types that detect overflow.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - integer_overflow
+  - numeric_validation
+  - range_constraint

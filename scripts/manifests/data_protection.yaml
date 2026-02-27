@@ -1,0 +1,741 @@
+category: data_protection
+checks:
+  - id: dp005
+    slug: data_leakage_via_errors
+    title: "Data Leakage via Error Messages"
+    severity: medium
+    description: >
+      Detects MCP servers that expose sensitive data in error responses. Stack
+      traces, database connection strings, internal paths, and debug information
+      returned in error messages can reveal implementation details and secrets
+      to untrusted LLM clients.
+    risk_explanation: >
+      Error messages containing sensitive data such as internal file paths,
+      database queries, or stack traces give attackers a detailed map of the
+      server's internals. This information accelerates exploitation by revealing
+      software versions, framework details, and data structures that would
+      otherwise require extensive reconnaissance.
+    remediation: >
+      Implement structured error handling that returns generic error messages to
+      clients while logging detailed diagnostics server-side. Use error codes
+      instead of raw exception details. Ensure production configurations disable
+      debug mode and stack trace output in responses.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - error_handling
+      - information_disclosure
+
+  - id: dp006
+    slug: unmasked_sensitive_fields
+    title: "Unmasked Sensitive Fields"
+    severity: high
+    description: >
+      Detects MCP tool outputs and resource contents that return PII or secrets
+      (e.g. full SSNs, credit card numbers, API keys) without masking or
+      redaction. Sensitive fields should be partially or fully masked before
+      being sent to LLM clients.
+    risk_explanation: >
+      Unmasked sensitive fields in tool responses are passed directly into the
+      LLM context window, where they may be logged, cached, or inadvertently
+      included in responses to end users. This creates data breach vectors and
+      violates privacy regulations such as GDPR, CCPA, and PCI-DSS.
+    remediation: >
+      Apply field-level masking or tokenisation to all sensitive data before it
+      leaves the MCP server. Use allow-lists for fields that may be returned in
+      full and mask everything else by default. Implement a data classification
+      layer that automatically identifies and redacts PII and secrets.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - pii
+      - masking
+      - secrets
+
+  - id: dp007
+    slug: missing_data_retention_policy
+    title: "Missing Data Retention Policy"
+    severity: medium
+    description: >
+      Checks whether the MCP server defines a data retention and lifecycle
+      policy. Servers that store or cache data without a defined retention
+      period risk accumulating sensitive information indefinitely.
+    risk_explanation: >
+      Without a data retention policy, sensitive data processed by the MCP
+      server may persist in caches, logs, or temporary storage long after it is
+      needed. This increases the blast radius of a data breach and may violate
+      regulatory requirements that mandate data deletion after a defined period.
+    remediation: >
+      Define and enforce a data retention policy for all data processed by the
+      MCP server. Implement automated purging of cached data, logs, and
+      temporary files after the retention period expires. Document the retention
+      policy and make it available for compliance audits.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - retention
+      - compliance
+      - data_lifecycle
+
+  - id: dp008
+    slug: cross_origin_data_sharing
+    title: "Cross-Origin Data Sharing"
+    severity: high
+    description: >
+      Detects MCP servers that share data across origin boundaries without
+      explicit user consent. Data returned by one tool or resource may be
+      forwarded to a different server or domain without the user's knowledge.
+    risk_explanation: >
+      Cross-origin data sharing without consent enables data exfiltration
+      attacks where a malicious MCP server can harvest data produced by
+      legitimate servers in the same client session. This violates the
+      principle of origin isolation and can expose sensitive business data
+      to untrusted third parties.
+    remediation: >
+      Implement origin-aware data boundaries that prevent tool outputs from
+      being forwarded to servers on different origins without explicit user
+      consent. Use data tagging to track the origin of each piece of data and
+      enforce sharing policies at the client level.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - cross_origin
+      - consent
+      - data_isolation
+
+  - id: dp009
+    slug: missing_encryption_at_rest
+    title: "Missing Encryption at Rest"
+    severity: high
+    description: >
+      Detects MCP server configurations where stored data, caches, or
+      persistent state lack encryption at rest. Unencrypted data on disk is
+      vulnerable to theft if the host is compromised.
+    risk_explanation: >
+      Data stored without encryption at rest can be read by anyone with
+      filesystem access. If the MCP server host is compromised, an attacker
+      gains immediate access to all stored data including credentials, PII,
+      and business-critical information without needing to break any
+      cryptographic protections.
+    remediation: >
+      Enable encryption at rest for all persistent storage used by the MCP
+      server. Use platform-provided encryption (e.g. LUKS, FileVault, AWS
+      EBS encryption) or application-level encryption with properly managed
+      keys. Ensure encryption keys are stored separately from the encrypted
+      data.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - encryption
+      - storage
+      - cryptography
+
+  - id: dp010
+    slug: missing_encryption_in_transit
+    title: "Missing Encryption in Transit"
+    severity: high
+    description: >
+      Detects MCP server connections that transmit data without encryption.
+      Unencrypted transport channels expose data to interception via
+      man-in-the-middle attacks on the network.
+    risk_explanation: >
+      Data transmitted in plaintext over the network can be intercepted,
+      read, and modified by any attacker with access to the network path.
+      This includes tool invocation parameters, response data, credentials,
+      and PII. Even localhost connections can be intercepted by malware
+      running on the same host.
+    remediation: >
+      Enforce TLS for all MCP server communications. Use TLS 1.2 or higher
+      with strong cipher suites. For stdio-based servers, ensure any network
+      calls made by the server to backend services also use encrypted
+      transport. Consider mutual TLS for server-to-server communication.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - encryption
+      - transport
+      - tls
+
+  - id: dp011
+    slug: excessive_logging_of_pii
+    title: "Excessive Logging of PII"
+    severity: high
+    description: >
+      Detects MCP server configurations or code patterns that write personally
+      identifiable information to log files. PII in logs creates secondary
+      exposure vectors and complicates regulatory compliance.
+    risk_explanation: >
+      Log files are often stored with weaker access controls than primary data
+      stores and may be shipped to third-party log aggregation services. PII
+      in logs can be exposed through log viewer access, log file backups, or
+      log aggregation platform breaches, creating compliance violations under
+      GDPR, CCPA, and HIPAA.
+    remediation: >
+      Implement log scrubbing that removes or masks PII before writing to log
+      files. Use structured logging with explicit field allow-lists. Configure
+      log frameworks to redact sensitive fields automatically. Audit log
+      outputs regularly for PII leakage.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - logging
+      - pii
+      - compliance
+
+  - id: dp012
+    slug: missing_consent_mechanism
+    title: "Missing Data Consent Mechanism"
+    severity: medium
+    description: >
+      Checks whether the MCP server provides a mechanism for obtaining user
+      consent before processing personal data. Servers that process data
+      without consent violate privacy-by-design principles.
+    risk_explanation: >
+      Processing personal data without user consent violates GDPR, CCPA, and
+      other privacy regulations. Without a consent mechanism, users cannot
+      make informed decisions about how their data is used, and the
+      organisation faces regulatory fines and reputational damage.
+    remediation: >
+      Implement a consent mechanism that informs users about data processing
+      activities and obtains explicit consent before processing begins. Provide
+      granular consent options for different data processing purposes. Record
+      consent decisions for audit purposes and allow users to withdraw consent.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - consent
+      - privacy
+      - compliance
+
+  - id: dp013
+    slug: data_minimization_violation
+    title: "Data Minimization Violation"
+    severity: medium
+    description: >
+      Detects MCP tools that collect or request more data than is necessary
+      for their stated purpose. Data minimization is a core privacy principle
+      that limits the amount of personal data collected and processed.
+    risk_explanation: >
+      Collecting excessive data increases the blast radius of a data breach
+      and violates the principle of data minimization required by GDPR and
+      other regulations. Tools that request unnecessary fields create larger
+      attack surfaces and increase the volume of sensitive data that must be
+      protected.
+    remediation: >
+      Review each tool's input schema and remove fields that are not strictly
+      necessary for the tool's function. Implement purpose limitation by
+      documenting why each field is collected. Use progressive data collection
+      where additional fields are requested only when needed.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - data_minimization
+      - privacy
+      - gdpr
+
+  - id: dp014
+    slug: missing_data_anonymization
+    title: "Missing Data Anonymization"
+    severity: medium
+    description: >
+      Detects MCP servers that handle sensitive datasets without applying
+      anonymization or pseudonymization techniques. Raw sensitive data
+      flowing through the MCP pipeline increases exposure risk.
+    risk_explanation: >
+      Without anonymization, sensitive data retains its full identifying power
+      throughout the processing pipeline. If any component in the chain is
+      compromised, the attacker gains access to fully identifiable data.
+      Anonymization reduces the value of stolen data and limits the scope of
+      privacy breaches.
+    remediation: >
+      Apply anonymization or pseudonymization to sensitive datasets before
+      processing. Use techniques such as k-anonymity, differential privacy, or
+      data masking. Ensure anonymization is applied as early as possible in the
+      data pipeline and that re-identification is not feasible from the
+      anonymised output.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - anonymization
+      - privacy
+      - pseudonymization
+
+  - id: dp015
+    slug: clipboard_data_exposure
+    title: "Clipboard Data Exposure Risk"
+    severity: medium
+    description: >
+      Detects MCP tools with capabilities to read or write clipboard contents
+      without explicit user awareness. Clipboard access can expose passwords,
+      sensitive text, and copied credentials to the MCP server.
+    risk_explanation: >
+      The clipboard frequently contains sensitive data such as passwords, API
+      keys, personal messages, and financial information that users copy during
+      normal workflows. An MCP tool that silently reads clipboard contents can
+      exfiltrate this data without the user's knowledge, creating a covert
+      data theft channel.
+    remediation: >
+      Require explicit user confirmation before any clipboard access. Display
+      clear notifications when clipboard data is read or written. Implement
+      clipboard access as a gated permission that must be explicitly granted
+      by the user. Log all clipboard access events for audit purposes.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - clipboard
+      - privacy
+      - user_awareness
+
+  - id: dp016
+    slug: screenshot_capture_risk
+    title: "Screenshot Capture Risk"
+    severity: high
+    description: >
+      Detects MCP tools with capabilities to capture screen content. Screenshot
+      capture can expose any visible information including private messages,
+      banking details, medical records, and authentication tokens.
+    risk_explanation: >
+      Screen capture provides access to all visible information on the user's
+      display, regardless of the application or context. A malicious MCP tool
+      with screenshot capabilities can capture sensitive information from any
+      application, including banking portals, medical systems, private messages,
+      and authentication screens.
+    remediation: >
+      Restrict screenshot capabilities to explicitly approved use cases. Require
+      user confirmation before each capture. Implement capture region limiting
+      so that only the relevant application window is captured. Apply automatic
+      redaction of detected sensitive content in captured images.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - screenshot
+      - privacy
+      - screen_capture
+
+  - id: dp017
+    slug: keylogger_risk
+    title: "Keylogger Risk"
+    severity: critical
+    description: >
+      Detects MCP tools with keystroke capture capabilities. Keylogging is one
+      of the most invasive forms of surveillance and can capture passwords,
+      private communications, and all user input.
+    risk_explanation: >
+      Keystroke capture records every key pressed by the user, including
+      passwords, credit card numbers, private messages, and authentication
+      codes. A malicious MCP tool with keylogging capabilities has complete
+      access to all user input across all applications, making it one of the
+      most dangerous attack vectors.
+    remediation: >
+      Block all MCP tools that request global keyboard input monitoring
+      capabilities. Only allow keyboard input capture within the scope of the
+      MCP client application itself. Implement operating system-level
+      protections that prevent MCP servers from registering global keyboard
+      hooks.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - keylogger
+      - surveillance
+      - critical_risk
+
+  - id: dp018
+    slug: browser_history_access
+    title: "Browser History Access"
+    severity: high
+    description: >
+      Detects MCP tools that access browser history, bookmarks, or browsing
+      data. Browser history reveals private browsing patterns, visited sites,
+      and user interests.
+    risk_explanation: >
+      Browser history contains a detailed record of user activity including
+      visited websites, search queries, and login pages. Access to this data
+      enables profiling, targeted phishing, and exposure of sensitive browsing
+      patterns such as medical research, financial activities, or personal
+      interests.
+    remediation: >
+      Restrict browser history access to tools that have a clearly documented
+      and justified need. Require explicit user consent before granting
+      browser history access. Implement time-bounded access that only returns
+      history from a specific, user-approved time window. Log all browser
+      data access events.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - browser
+      - privacy
+      - browsing_history
+
+  - id: dp019
+    slug: contact_data_access
+    title: "Contact Data Access"
+    severity: high
+    description: >
+      Detects MCP tools that access contacts, address books, or contact
+      databases. Contact data contains PII of third parties who have not
+      consented to data processing.
+    risk_explanation: >
+      Contact data includes names, phone numbers, email addresses, and
+      physical addresses of the user's contacts. Accessing this data exposes
+      the PII of third parties who have not consented to data processing,
+      creating GDPR violations and enabling social engineering attacks against
+      the user's contacts.
+    remediation: >
+      Require explicit user consent before accessing contact data. Implement
+      granular access controls that allow users to share specific contacts
+      rather than the entire address book. Apply data minimization by only
+      accessing the specific contact fields needed for the tool's function.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - contacts
+      - pii
+      - third_party_data
+
+  - id: dp020
+    slug: location_data_exposure
+    title: "Location Data Exposure"
+    severity: high
+    description: >
+      Detects MCP tools that access or expose geographic location data.
+      Location data can reveal home addresses, workplace locations, travel
+      patterns, and daily routines.
+    risk_explanation: >
+      Location data is classified as sensitive personal data under most privacy
+      regulations. Continuous or historical location access reveals home and
+      work addresses, travel patterns, daily routines, and physical movements.
+      This data can be used for stalking, physical security threats, or
+      targeted attacks.
+    remediation: >
+      Require explicit user consent before accessing location data. Implement
+      precision limiting that reduces location accuracy to the minimum needed
+      (e.g. city-level instead of exact coordinates). Avoid storing location
+      history and implement automatic expiration for any cached location data.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - location
+      - privacy
+      - geolocation
+
+  - id: dp021
+    slug: camera_microphone_access
+    title: "Camera/Microphone Access"
+    severity: critical
+    description: >
+      Detects MCP tools with audio or video capture capabilities. Camera and
+      microphone access enables surveillance of the user's physical environment.
+    risk_explanation: >
+      Camera and microphone access enables real-time surveillance of the user's
+      physical environment. A malicious MCP tool can record conversations,
+      capture video of the user and their surroundings, and observe private
+      activities. This represents one of the most severe privacy violations
+      possible.
+    remediation: >
+      Block all MCP tools that request camera or microphone access unless
+      explicitly required and user-approved. Implement hardware-level
+      indicators (e.g. LED lights) that activate during capture. Require
+      per-session consent and provide immediate revocation capabilities.
+      Log all audio/video capture events.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - camera
+      - microphone
+      - surveillance
+      - critical_risk
+
+  - id: dp022
+    slug: calendar_data_access
+    title: "Calendar Data Access"
+    severity: medium
+    description: >
+      Detects MCP tools that access calendar events, schedules, or
+      appointment data. Calendar data reveals meeting participants, topics,
+      locations, and daily routines.
+    risk_explanation: >
+      Calendar data exposes meeting schedules, participant lists, meeting
+      topics and agendas, physical locations, and daily routines. This
+      information enables social engineering attacks, reveals business
+      relationships, and can be used to plan physical intrusions when the
+      user is known to be away.
+    remediation: >
+      Require explicit user consent before accessing calendar data. Implement
+      granular access that allows sharing specific calendars or date ranges
+      rather than full calendar access. Apply data minimization by only
+      accessing the calendar fields needed for the tool's function.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - calendar
+      - privacy
+      - schedule
+
+  - id: dp023
+    slug: message_data_access
+    title: "Message/Chat Data Access"
+    severity: high
+    description: >
+      Detects MCP tools that access messaging history, chat logs, email
+      content, or other communication data. Message data contains private
+      conversations and potentially sensitive information.
+    risk_explanation: >
+      Messaging and chat data contains private conversations, shared files,
+      business discussions, and personal communications. Access to this data
+      exposes confidential information, trade secrets, personal relationships,
+      and sensitive topics that users reasonably expect to remain private.
+    remediation: >
+      Require explicit user consent before accessing any messaging data.
+      Implement conversation-level access controls rather than blanket access
+      to all messages. Apply time-bounded access windows and log all message
+      data access events. Never cache or persist accessed message content
+      beyond the immediate processing need.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - messaging
+      - privacy
+      - communications
+
+  - id: dp024
+    slug: biometric_data_handling
+    title: "Biometric Data Handling"
+    severity: critical
+    description: >
+      Detects MCP tools that process biometric data such as fingerprints,
+      facial features, voice prints, or iris scans. Biometric data is
+      immutable and cannot be changed if compromised.
+    risk_explanation: >
+      Biometric data is uniquely sensitive because it is immutable. Unlike
+      passwords or tokens, compromised biometric data cannot be reset or
+      rotated. A breach of biometric data creates permanent identity theft
+      risks and violates biometric privacy laws such as BIPA, GDPR special
+      categories, and state-level biometric legislation.
+    remediation: >
+      Avoid processing raw biometric data through MCP tools whenever possible.
+      If biometric processing is required, use one-way hashing or template-
+      based matching that prevents reconstruction of the original biometric.
+      Implement strict access controls, encryption, and audit logging for
+      all biometric data handling. Obtain explicit informed consent.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - biometric
+      - privacy
+      - critical_risk
+      - compliance
+
+  - id: dp025
+    slug: health_data_exposure
+    title: "Health Data Exposure"
+    severity: critical
+    description: >
+      Detects MCP tools that handle health or medical data without appropriate
+      safeguards. Health data is subject to strict regulatory requirements
+      including HIPAA, HITECH, and GDPR special categories.
+    risk_explanation: >
+      Health and medical data is among the most sensitive categories of personal
+      information. Exposure of health records, diagnoses, prescriptions, or
+      treatment plans can lead to discrimination, insurance denial, social
+      stigma, and identity theft. Violations of health data regulations carry
+      severe penalties including criminal prosecution.
+    remediation: >
+      Implement HIPAA-compliant data handling for all health-related MCP tools.
+      Apply end-to-end encryption, strict access controls, and comprehensive
+      audit logging. Ensure business associate agreements are in place with
+      all data processors. Use de-identification techniques compliant with
+      HIPAA Safe Harbor or Expert Determination methods.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - health_data
+      - hipaa
+      - compliance
+      - critical_risk
+
+  - id: dp026
+    slug: financial_data_exposure
+    title: "Financial Data Exposure"
+    severity: critical
+    description: >
+      Detects MCP tools that handle financial records, banking data, or
+      payment information without appropriate protection. Financial data
+      requires PCI-DSS compliance and strong security controls.
+    risk_explanation: >
+      Exposure of financial data including account numbers, transaction
+      histories, credit card details, and banking credentials enables direct
+      financial fraud. Financial data breaches trigger regulatory penalties
+      under PCI-DSS, SOX, and financial services regulations, and cause
+      immediate monetary harm to affected individuals.
+    remediation: >
+      Implement PCI-DSS compliant data handling for all financial MCP tools.
+      Never store full credit card numbers or CVVs. Use tokenisation for
+      payment data and ensure all financial data is encrypted in transit and
+      at rest. Implement transaction monitoring and anomaly detection for
+      financial operations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - financial
+      - pci_dss
+      - compliance
+      - critical_risk
+
+  - id: dp027
+    slug: child_data_protection
+    title: "Child Data Protection (COPPA)"
+    severity: critical
+    description: >
+      Detects MCP tools that may process children's data without implementing
+      COPPA-required protections. Tools accessible to children or processing
+      data about minors must comply with enhanced privacy requirements.
+    risk_explanation: >
+      Processing children's data without COPPA compliance exposes the
+      organisation to federal enforcement actions and significant fines.
+      Children are especially vulnerable to data exploitation, and their data
+      requires enhanced protections including verifiable parental consent,
+      data minimization, and strict purpose limitation.
+    remediation: >
+      Implement age verification mechanisms for MCP tools that may be accessed
+      by children. Obtain verifiable parental consent before processing any
+      data from users under 13. Apply strict data minimization and purpose
+      limitation. Provide parents with access to and deletion of their
+      children's data. Ensure compliance with COPPA, GDPR Article 8, and
+      applicable state laws.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - coppa
+      - children
+      - compliance
+      - critical_risk
+
+  - id: dp028
+    slug: data_portability_missing
+    title: "Missing Data Portability"
+    severity: low
+    description: >
+      Checks whether the MCP server provides a mechanism for users to export
+      their data in a portable format. Data portability is a right under GDPR
+      and similar regulations.
+    risk_explanation: >
+      Without data portability, users are locked into a specific MCP server or
+      platform and cannot exercise their right to receive their data in a
+      structured, commonly used, and machine-readable format. This creates
+      vendor lock-in and violates GDPR Article 20 data portability
+      requirements.
+    remediation: >
+      Implement a data export mechanism that allows users to download their
+      data in standard formats such as JSON, CSV, or XML. Ensure the export
+      includes all user-provided data and any derived data that is subject to
+      portability rights. Provide the export capability through a documented
+      API endpoint or user interface.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - portability
+      - gdpr
+      - compliance
+
+  - id: dp029
+    slug: right_to_deletion_missing
+    title: "Missing Right to Deletion"
+    severity: medium
+    description: >
+      Checks whether the MCP server provides a mechanism for users to request
+      deletion of their personal data. The right to erasure is a fundamental
+      requirement under GDPR and CCPA.
+    risk_explanation: >
+      Without a deletion mechanism, the organisation cannot comply with data
+      erasure requests required by GDPR (right to be forgotten), CCPA (right
+      to delete), and similar regulations. Failure to honour deletion requests
+      results in regulatory fines and continued risk of data exposure for
+      data that should have been removed.
+    remediation: >
+      Implement a data deletion mechanism that allows users to request erasure
+      of their personal data. Ensure deletion propagates to all storage
+      locations including backups, caches, logs, and third-party processors.
+      Provide confirmation of deletion and maintain records of deletion
+      requests for compliance purposes.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP10:2025"
+    tags:
+      - data_protection
+      - deletion
+      - gdpr
+      - ccpa
+      - compliance

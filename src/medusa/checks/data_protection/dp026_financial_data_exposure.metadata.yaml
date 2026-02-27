@@ -1,0 +1,30 @@
+check_id: dp026
+title: Financial Data Exposure
+category: data_protection
+severity: critical
+description: >
+  Detects MCP tools that handle financial records, banking data, or
+  payment information without appropriate protection. Financial data
+  requires PCI-DSS compliance and strong security controls.
+risk_explanation: >
+  Exposure of financial data including account numbers, transaction
+  histories, credit card details, and banking credentials enables direct
+  financial fraud. Financial data breaches trigger regulatory penalties
+  under PCI-DSS, SOX, and financial services regulations, and cause
+  immediate monetary harm to affected individuals.
+remediation: >
+  Implement PCI-DSS compliant data handling for all financial MCP tools.
+  Never store full credit card numbers or CVVs. Use tokenisation for
+  payment data and ensure all financial data is encrypted in transit and
+  at rest. Implement transaction monitoring and anomaly detection for
+  financial operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - financial
+  - pci_dss
+  - compliance
+  - critical_risk

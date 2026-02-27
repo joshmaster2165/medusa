@@ -1,0 +1,31 @@
+check_id: hard001
+title: Unnecessary Services Enabled
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers that expose capabilities, endpoints, or protocol
+  features beyond what is required for their intended function. Each
+  unnecessary service increases the attack surface and provides
+  additional vectors for exploitation.
+risk_explanation: >
+  Every enabled service or capability is a potential attack vector.
+  Unnecessary MCP capabilities such as unused tool handlers, resource
+  endpoints, or prompt definitions provide attackers with additional
+  entry points to probe for vulnerabilities. Services that are enabled
+  but not actively maintained are especially dangerous as they may
+  contain unpatched security issues.
+remediation: >
+  Audit all enabled MCP server capabilities and disable any that are not
+  required for the server intended function. Remove unused tool
+  definitions, resource handlers, and prompt endpoints. Apply the
+  principle of least functionality by only enabling the minimum set of
+  capabilities needed. Regularly review enabled services against actual
+  usage patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

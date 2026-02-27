@@ -1,0 +1,32 @@
+check_id: pmt009
+title: Dangerous Default Prompt Arguments
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt definitions with default argument values that
+  contain sensitive information, overly permissive instructions, or
+  dangerous operational parameters. Default values are used when clients
+  do not explicitly provide arguments, making them implicit and easy to
+  overlook during security review.
+risk_explanation: >
+  Dangerous default arguments create hidden risks because they apply
+  automatically when not overridden. Default values containing elevated
+  permissions, broad access scopes, or sensitive configuration create
+  security exposures that users are unaware of. Attackers who discover
+  dangerous defaults can exploit them by simply omitting arguments
+  rather than injecting values, bypassing input validation entirely.
+remediation: >
+  Review all prompt argument defaults for security implications. Apply
+  the principle of least privilege to default values, using the most
+  restrictive safe defaults. Avoid embedding sensitive information,
+  credentials, or broad access scopes in default values. Document all
+  default values and their security implications. Require explicit
+  argument values for security-sensitive parameters.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

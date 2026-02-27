@@ -1,0 +1,29 @@
+check_id: sc003
+title: Abandoned Dependencies
+category: supply_chain
+severity: medium
+description: >
+  Detects MCP server dependencies that have not been maintained for an
+  extended period. Abandoned packages no longer receive security patches
+  and may contain unaddressed vulnerabilities.
+risk_explanation: >
+  Dependencies that are no longer actively maintained do not receive
+  security patches for newly discovered vulnerabilities. As the software
+  ecosystem evolves, unmaintained packages become increasingly
+  vulnerable and incompatible. Depending on abandoned packages creates a
+  ticking time bomb where future vulnerabilities will never be patched.
+remediation: >
+  Audit dependencies for maintenance status regularly. Replace abandoned
+  packages with actively maintained alternatives. Monitor package
+  repositories for maintenance indicators such as last commit date, open
+  issue count, and release frequency. Set thresholds for acceptable
+  maintenance activity (e.g. no updates in 12 months triggers review).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - supply_chain
+  - maintenance
+  - abandoned
+  - dependencies

@@ -1,0 +1,31 @@
+check_id: sess015
+title: Session Hijacking via XSS
+category: session_management
+severity: high
+description: >
+  Detects MCP server configurations where session tokens are accessible
+  to client-side JavaScript, making them vulnerable to exfiltration via
+  cross-site scripting (XSS) attacks. If an attacker injects malicious
+  scripts into the LLM client interface, they can steal session tokens
+  and hijack the MCP session.
+risk_explanation: >
+  JavaScript-accessible session tokens can be stolen by XSS payloads
+  injected into the LLM client interface or tool output rendering. Once
+  stolen, the attacker can use the session token from any location to
+  invoke MCP tools, access resources, and impersonate the legitimate
+  user. MCP servers are particularly vulnerable because tool outputs may
+  contain attacker-controlled content that is rendered in the client.
+remediation: >
+  Set the HttpOnly flag on all session cookies to prevent JavaScript
+  access. Implement Content Security Policy (CSP) headers to mitigate
+  XSS attacks. Sanitize and escape all tool output before rendering in
+  the client. Avoid storing session tokens in localStorage or
+  sessionStorage where they are accessible to scripts. Use subresource
+  integrity (SRI) for loaded scripts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

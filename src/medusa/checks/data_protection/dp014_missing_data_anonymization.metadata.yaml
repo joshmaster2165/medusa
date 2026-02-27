@@ -1,0 +1,29 @@
+check_id: dp014
+title: Missing Data Anonymization
+category: data_protection
+severity: medium
+description: >
+  Detects MCP servers that handle sensitive datasets without applying
+  anonymization or pseudonymization techniques. Raw sensitive data
+  flowing through the MCP pipeline increases exposure risk.
+risk_explanation: >
+  Without anonymization, sensitive data retains its full identifying
+  power throughout the processing pipeline. If any component in the
+  chain is compromised, the attacker gains access to fully identifiable
+  data. Anonymization reduces the value of stolen data and limits the
+  scope of privacy breaches.
+remediation: >
+  Apply anonymization or pseudonymization to sensitive datasets before
+  processing. Use techniques such as k-anonymity, differential privacy,
+  or data masking. Ensure anonymization is applied as early as possible
+  in the data pipeline and that re-identification is not feasible from
+  the anonymised output.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - anonymization
+  - privacy
+  - pseudonymization

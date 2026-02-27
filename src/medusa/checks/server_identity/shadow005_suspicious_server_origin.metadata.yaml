@@ -1,0 +1,32 @@
+check_id: shadow005
+title: Suspicious Server Origin
+category: server_identity
+severity: high
+description: >
+  Detects MCP server binaries loaded from untrusted or unusual file
+  system locations. Legitimate servers should be installed in standard
+  locations, not loaded from temporary directories, downloads folders,
+  or user-writable system paths.
+risk_explanation: >
+  Server binaries loaded from untrusted locations such as /tmp,
+  ~/Downloads, or world-writable directories may have been placed there
+  by malware or social engineering attacks. An attacker can trick users
+  into running a malicious MCP server disguised as a legitimate tool by
+  placing it in an unexpected location where it gets automatically
+  discovered or manually configured.
+remediation: >
+  Restrict MCP server binary locations to trusted installation paths.
+  Implement path allowlisting in client configurations that rejects
+  servers loaded from temporary, download, or world-writable
+  directories. Verify server binary integrity using code signing before
+  execution. Alert users when a server is loaded from an unusual
+  location.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - server_identity
+  - origin_verification
+  - binary_location
+  - trust

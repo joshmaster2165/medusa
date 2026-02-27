@@ -1,0 +1,30 @@
+check_id: hard003
+title: Missing Security Headers
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers using HTTP-based transports that do not set
+  security-relevant response headers such as Content-Security-Policy,
+  X-Content-Type-Options, Strict-Transport-Security, X-Frame-Options,
+  and Cache-Control for sensitive responses.
+risk_explanation: >
+  Missing security headers leave MCP clients vulnerable to content type
+  sniffing attacks, clickjacking through iframe embedding, and insecure
+  caching of sensitive responses. Without HSTS, connections can be
+  downgraded from HTTPS to HTTP. Missing CSP allows injection of
+  malicious scripts if MCP responses are rendered in web contexts.
+remediation: >
+  Configure the MCP server HTTP transport to include all recommended
+  security headers. Set Content-Security-Policy with a restrictive
+  policy. Enable Strict-Transport-Security with a long max-age. Set
+  X-Content-Type-Options to nosniff. Set Cache-Control to no-store for
+  sensitive responses. Implement a security header middleware that
+  applies headers consistently to all responses.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

@@ -1,0 +1,32 @@
+check_id: tp011
+title: Invisible Unicode Characters in Tool Descriptions
+category: tool_poisoning
+severity: high
+description: >
+  Detects zero-width characters, bidirectional override markers, and
+  other invisible Unicode codepoints hidden within tool descriptions.
+  These characters can conceal malicious instructions that are invisible
+  in UIs but processed by LLMs, enabling covert prompt injection.
+risk_explanation: >
+  Invisible Unicode characters allow attackers to embed instructions
+  that are completely hidden from human reviewers. Zero-width spaces,
+  joiners, and bidirectional text markers can encode hidden messages or
+  alter the visual ordering of text to disguise malicious content. LLMs
+  process the full Unicode string, following instructions that users
+  cannot see.
+remediation: >
+  Strip all zero-width and invisible Unicode characters from tool
+  descriptions before processing. Implement a Unicode allowlist that
+  permits only visible, printable characters in tool metadata. Flag
+  descriptions containing bidirectional override characters
+  (U+202A-U+202E, U+2066-U+2069) or zero-width codepoints
+  (U+200B-U+200F, U+FEFF).
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - invisible_unicode
+  - zero_width
+  - bidirectional

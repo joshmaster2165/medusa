@@ -1,0 +1,29 @@
+check_id: sess003
+title: Weak Session ID Entropy
+category: session_management
+severity: high
+description: >
+  Detects MCP server session identifiers generated with insufficient
+  randomness or entropy. Weak session IDs that use predictable patterns,
+  sequential numbers, or low-entropy random sources can be guessed or
+  brute-forced by attackers to hijack active LLM client connections.
+risk_explanation: >
+  Session IDs with weak entropy can be predicted or brute-forced,
+  allowing an attacker to hijack active MCP sessions. This grants
+  unauthorized access to all tools and resources available in the
+  compromised session, enabling data exfiltration, tool misuse, and
+  privilege escalation through the connected LLM client.
+remediation: >
+  Use a cryptographically secure random number generator (CSPRNG) to
+  produce session IDs with at least 128 bits of entropy. Avoid
+  sequential, timestamp- based, or hash-based session ID schemes. Use
+  standard session management libraries that have been audited for
+  secure ID generation. Regularly test session ID randomness using
+  statistical analysis tools.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

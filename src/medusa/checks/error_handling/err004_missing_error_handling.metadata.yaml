@@ -1,0 +1,28 @@
+check_id: err004
+title: Missing Error Handling
+category: error_handling
+severity: medium
+description: >
+  Detects MCP tool implementations that lack error handling for
+  operations that may fail, such as file I/O, network requests, database
+  queries, or external API calls. Unhandled errors cause unpredictable
+  behavior including crashes and data corruption.
+risk_explanation: >
+  When tool execution fails without proper error handling, the server
+  may crash, leak partial results, leave resources in an inconsistent
+  state, or expose raw exception data to the LLM client. An attacker can
+  intentionally trigger failures to cause denial of service or extract
+  sensitive information from unhandled error paths.
+remediation: >
+  Wrap all tool execution logic in try-catch blocks with specific
+  exception types. Return structured MCP error responses with
+  appropriate error codes for each failure mode. Implement resource
+  cleanup in finally blocks to prevent leaks on failure. Add timeout
+  handling for all external calls.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

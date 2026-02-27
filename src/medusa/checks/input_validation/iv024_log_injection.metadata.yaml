@@ -1,0 +1,31 @@
+check_id: iv024
+title: Log Injection Risk
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters that may be included in server log output
+  without sanitization. User input in logs can inject fake log entries,
+  manipulate log analysis tools, or exploit log viewers through format
+  string attacks.
+risk_explanation: >
+  Log injection allows attackers to forge log entries that mask
+  malicious activity or trigger false alerts. Injected newlines create
+  fake entries that mislead incident response. ANSI escape codes in logs
+  can exploit terminal-based log viewers. Log injection can also be a
+  stepping stone for log-based code execution in log processing
+  pipelines.
+remediation: >
+  Sanitize all user input before including it in log messages. Encode or
+  strip newlines, carriage returns, and control characters. Use
+  structured logging (JSON format) that separates user data from log
+  metadata. Escape ANSI control sequences in log output. Never log raw
+  user input without encoding.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - log_injection
+  - log_forgery
+  - monitoring

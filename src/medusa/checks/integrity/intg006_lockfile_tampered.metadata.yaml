@@ -1,0 +1,30 @@
+check_id: intg006
+title: Lockfile Integrity Tampered
+category: integrity
+severity: critical
+description: >
+  Detects lockfiles with hash mismatches, unexpected modifications, or
+  signs of corruption. A tampered lockfile can silently redirect
+  dependency resolution to malicious packages.
+risk_explanation: >
+  A tampered lockfile is a strong indicator of a supply-chain attack. By
+  modifying lockfile hashes or package URLs, an attacker can redirect
+  dependency resolution to malicious packages while the lockfile appears
+  legitimate. This bypasses the integrity guarantees that lockfiles are
+  designed to provide.
+remediation: >
+  Verify lockfile integrity by comparing hashes against known-good
+  values. Use lockfile linting tools to detect inconsistencies.
+  Implement CI checks that flag lockfile changes for manual review.
+  Consider signing lockfiles or using tools that verify lockfile
+  authenticity.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - lockfile
+  - tampering
+  - supply_chain
+  - critical_risk

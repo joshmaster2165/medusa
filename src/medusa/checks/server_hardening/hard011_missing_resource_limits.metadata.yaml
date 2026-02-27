@@ -1,0 +1,31 @@
+check_id: hard011
+title: Missing Server Resource Limits
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers that do not enforce limits on system resource
+  consumption including memory usage, CPU time, file descriptor count,
+  disk space, and network connections. Without resource limits, a single
+  request can consume all available server resources.
+risk_explanation: >
+  Missing resource limits enable denial-of-service attacks where a
+  single crafted request or a small number of concurrent requests
+  exhaust all available server resources. Memory exhaustion crashes the
+  server, CPU exhaustion makes it unresponsive, file descriptor
+  exhaustion prevents new connections, and disk exhaustion blocks
+  logging and data persistence.
+remediation: >
+  Configure operating system-level resource limits for the MCP server
+  process using cgroups, ulimits, or container resource constraints.
+  Implement application-level limits for request processing time,
+  response size, and concurrent operation count. Set per-client resource
+  quotas. Monitor resource usage and alert on abnormal consumption
+  patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

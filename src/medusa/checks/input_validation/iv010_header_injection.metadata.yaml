@@ -1,0 +1,31 @@
+check_id: iv010
+title: HTTP Header Injection Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters used in HTTP header construction without
+  proper validation. Parameters whose values are placed into HTTP
+  response or request headers can inject additional headers via CRLF
+  sequences, enabling response splitting and cache poisoning.
+risk_explanation: >
+  Header injection allows an attacker to inject arbitrary HTTP headers
+  into responses, enabling cache poisoning, session fixation, XSS via
+  injected content-type headers, and response splitting attacks. An
+  attacker can set cookies, redirect responses, or inject malicious
+  content by controlling header values.
+remediation: >
+  Validate all parameters used in HTTP headers against strict
+  allowlists. Reject values containing CRLF characters (\\r\\n). Use
+  framework-provided header setting functions that automatically escape
+  dangerous characters. Implement input validation patterns that
+  restrict header values to expected formats.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - header_injection
+  - crlf
+  - response_splitting

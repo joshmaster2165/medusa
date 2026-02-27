@@ -1,0 +1,31 @@
+check_id: tp018
+title: JSON Injection in Parameter Defaults
+category: tool_poisoning
+severity: high
+description: >
+  Detects serialized JSON objects embedded in parameter default values.
+  Complex JSON defaults can encode instructions, configuration
+  overrides, or nested command structures that alter tool behaviour in
+  ways not apparent from the schema surface.
+risk_explanation: >
+  JSON objects in parameter defaults can carry structured payloads that
+  override tool configuration, inject additional parameters, or encode
+  command sequences. When the LLM does not supply a value for the
+  parameter, the malicious default takes effect, potentially altering
+  the tool's target, scope, or permissions without user awareness.
+remediation: >
+  Reject parameter defaults that contain serialized JSON objects,
+  arrays, or complex nested structures. Restrict defaults to simple
+  scalar values (strings, numbers, booleans). Implement schema
+  validation that flags defaults containing curly braces, brackets, or
+  JSON-parseable content. Require explicit user confirmation for
+  parameters with non-trivial defaults.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - json_injection
+  - default_values
+  - parameter_manipulation

@@ -1,0 +1,624 @@
+category: privilege_scope
+checks:
+  - id: priv004
+    slug: cloud_metadata_access
+    title: "Cloud Metadata Service Access"
+    severity: critical
+    description: >
+      Detects MCP tools that can access cloud instance metadata endpoints
+      (e.g. http://169.254.169.254). Cloud metadata services expose instance
+      credentials, network configuration, and user data without authentication,
+      making them high-value SSRF targets.
+    risk_explanation: >
+      Cloud metadata endpoints return IAM credentials, instance identity
+      tokens, network configuration, and user-data scripts without
+      authentication. An attacker exploiting an MCP tool to access the
+      metadata service obtains temporary cloud credentials that can be used
+      to access S3 buckets, databases, and other cloud resources. This is
+      the most common cloud privilege escalation vector.
+    remediation: >
+      Block access to metadata IP ranges (169.254.169.254, fd00:ec2::254)
+      from MCP server processes. Use IMDSv2 with hop limit 1 to prevent
+      SSRF-based metadata access. Implement network-level firewall rules
+      blocking metadata endpoints. Validate all URLs in tool parameters
+      against internal IP blocklists.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - cloud_metadata
+      - ssrf
+      - credential_theft
+
+  - id: priv005
+    slug: destructive_ops_no_confirm
+    title: "Destructive Operations Without Confirmation"
+    severity: high
+    description: >
+      Detects MCP tools that perform destructive operations (delete, drop,
+      truncate, purge, destroy) without requiring explicit user confirmation.
+      Destructive operations executed without consent can cause irreversible
+      data loss.
+    risk_explanation: >
+      Destructive tools without confirmation gates can be triggered by prompt
+      injection or LLM misinterpretation, causing permanent data loss. An
+      attacker who manipulates the LLM can delete files, drop database tables,
+      or destroy cloud resources without the user ever being asked to confirm.
+      The lack of confirmation makes destructive operations indistinguishable
+      from read operations in the invocation flow.
+    remediation: >
+      Implement human-in-the-loop confirmation for all destructive operations.
+      Use the MCP tool annotation destructiveHint=true to signal clients that
+      confirmation is required. Add a confirmation parameter to destructive
+      tools that requires a specific value. Implement soft-delete patterns
+      with recovery windows instead of hard deletes.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - destructive_operations
+      - confirmation
+      - data_loss
+
+  - id: priv006
+    slug: rbac_bypass_risk
+    title: "RBAC Bypass Risk"
+    severity: high
+    description: >
+      Detects missing role-based access control on tool invocations. MCP
+      servers that do not implement RBAC allow any authenticated user to
+      invoke any tool, regardless of their role or the sensitivity of the
+      operation.
+    risk_explanation: >
+      Without RBAC, a low-privilege user can invoke administrative tools
+      such as user management, configuration changes, and data export. The
+      absence of role differentiation means that a single compromised
+      credential grants access to all server capabilities. RBAC is essential
+      for limiting the blast radius of credential compromise.
+    remediation: >
+      Implement role-based access control that maps user roles to permitted
+      tool sets. Define roles with the minimum required tool access (viewer,
+      editor, admin). Validate the caller's role before executing each tool
+      invocation. Use the MCP authorization framework to enforce per-tool
+      access policies.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - rbac
+      - access_control
+      - role_management
+
+  - id: priv007
+    slug: sudo_elevation
+    title: "Sudo/Root Elevation"
+    severity: critical
+    description: >
+      Detects MCP tools that execute commands with elevated privileges using
+      sudo, su, runas, or equivalent mechanisms. Tools running as root or
+      with elevated privileges can modify any system resource and bypass
+      all OS-level access controls.
+    risk_explanation: >
+      Tools executing with root or elevated privileges have unrestricted
+      access to the entire system, including all files, processes, network
+      interfaces, and kernel settings. An attacker exploiting a root-level
+      tool can install rootkits, modify system configuration, access any
+      user's data, and establish persistent backdoors that survive reboots.
+    remediation: >
+      Never run MCP tools with elevated privileges. Use dedicated service
+      accounts with the minimum required permissions. Implement capability-based
+      security (Linux capabilities) instead of full root access. Run MCP
+      servers in unprivileged containers with dropped capabilities. Audit
+      all tools for sudo or elevation commands.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - sudo
+      - root
+      - privilege_escalation
+
+  - id: priv008
+    slug: container_escape_risk
+    title: "Container Escape Risk"
+    severity: critical
+    description: >
+      Detects MCP tools with access to the host filesystem, Docker socket,
+      or container runtime that could enable container escape. Tools that
+      can mount host paths or communicate with the Docker daemon can break
+      out of container isolation.
+    risk_explanation: >
+      Container escape gives an attacker access to the host system and all
+      other containers running on it. Mounting the Docker socket allows
+      creating privileged containers with host access. Host filesystem
+      mounts bypass container isolation entirely. Container escape from an
+      MCP server compromises the entire host infrastructure.
+    remediation: >
+      Never mount the Docker socket into MCP server containers. Restrict
+      host filesystem mounts to specific required paths with read-only
+      access. Use rootless containers and user namespace mapping. Drop all
+      unnecessary Linux capabilities. Implement seccomp profiles to restrict
+      system calls.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - container_escape
+      - docker
+      - host_access
+
+  - id: priv009
+    slug: process_spawning
+    title: "Unrestricted Process Spawning"
+    severity: high
+    description: >
+      Detects MCP tools that can spawn arbitrary processes without
+      restrictions. Tools with unconstrained process execution capabilities
+      allow running any command on the host system, effectively providing
+      a remote shell.
+    risk_explanation: >
+      Unrestricted process spawning is equivalent to remote code execution.
+      An attacker can run any command on the host system, including reverse
+      shells, cryptocurrency miners, data exfiltration scripts, and lateral
+      movement tools. Process spawning is the most common path from tool
+      invocation to full system compromise.
+    remediation: >
+      Restrict process spawning to a predefined allowlist of safe commands.
+      Use sandboxed execution environments for tool processes. Implement
+      command-line argument validation and rejection of shell metacharacters.
+      Run tools in isolated environments with restricted process capabilities
+      (seccomp, AppArmor).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - process_spawning
+      - code_execution
+      - sandboxing
+
+  - id: priv010
+    slug: environment_modification
+    title: "Environment Variable Modification"
+    severity: high
+    description: >
+      Detects MCP tools that can modify the process environment variables.
+      Environment modification allows changing security-critical settings
+      such as PATH, library loading paths, and application configuration.
+    risk_explanation: >
+      Environment variable modification enables privilege escalation through
+      PATH hijacking, library injection via LD_PRELOAD, and configuration
+      override through application-specific variables. Changes persist for
+      the lifetime of the process and affect all subsequently spawned
+      commands. Environment modification is a precursor to many other attacks.
+    remediation: >
+      Prevent MCP tools from modifying environment variables. Use immutable
+      environment configurations set at server startup. Implement allowlists
+      for any environment variables that tools must read. Isolate tool
+      execution in separate process contexts with clean environments.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - environment_variables
+      - path_hijacking
+      - configuration_override
+
+  - id: priv011
+    slug: registry_access
+    title: "System Registry Access"
+    severity: high
+    description: >
+      Detects MCP tools with access to system registry (Windows) or global
+      configuration files (Linux /etc/). System-level configuration access
+      allows modifying OS behaviour, security settings, and service
+      configurations.
+    risk_explanation: >
+      System registry or global configuration access allows an attacker to
+      disable security features, modify startup programs, change network
+      settings, or alter service configurations. On Windows, registry
+      modifications can install persistence mechanisms, disable antivirus,
+      or modify authentication settings. On Linux, modifying /etc/ files
+      can alter PAM, sudoers, or SSH configurations.
+    remediation: >
+      Restrict MCP tools from accessing system-level configuration. Use
+      read-only access where system information must be read. Implement
+      file integrity monitoring on critical system configuration. Run MCP
+      servers in containers that do not mount system configuration
+      directories.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - system_registry
+      - global_config
+      - os_security
+
+  - id: priv012
+    slug: kernel_module_loading
+    title: "Kernel Module Loading"
+    severity: critical
+    description: >
+      Detects MCP tools that can load kernel modules or interact with kernel
+      interfaces. Kernel module loading provides the highest level of system
+      access, operating in ring 0 with complete control over the operating
+      system.
+    risk_explanation: >
+      Kernel module loading allows installation of rootkits that operate
+      below the operating system's security mechanisms. Kernel modules can
+      hide processes, intercept system calls, modify network traffic, and
+      access any memory location. A malicious kernel module is effectively
+      undetectable by user-space security tools.
+    remediation: >
+      Never grant MCP tools kernel module loading capabilities. Use Secure
+      Boot with module signing to prevent unsigned module loading. Run MCP
+      servers in unprivileged containers with dropped CAP_SYS_MODULE. Lock
+      down the kernel module loading interface using sysctl settings.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - kernel_module
+      - rootkit
+      - ring_zero
+
+  - id: priv013
+    slug: cron_job_creation
+    title: "Cron/Scheduled Task Creation"
+    severity: high
+    description: >
+      Detects MCP tools that can create cron jobs, scheduled tasks, or
+      systemd timers. Scheduled task creation is a common persistence
+      mechanism that allows an attacker to maintain access and execute
+      commands at regular intervals.
+    risk_explanation: >
+      Cron jobs and scheduled tasks provide persistent code execution that
+      survives reboots and user logouts. An attacker can install scheduled
+      tasks that periodically exfiltrate data, maintain reverse shells, or
+      re-establish compromised access. Scheduled tasks run without user
+      interaction and are often overlooked during security reviews.
+    remediation: >
+      Restrict MCP tools from creating scheduled tasks. Implement monitoring
+      for changes to cron directories, crontab files, and systemd timer
+      units. Run MCP servers in containers without access to scheduling
+      services. Audit existing scheduled tasks regularly for unauthorized
+      entries.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - cron
+      - scheduled_tasks
+      - persistence
+
+  - id: priv014
+    slug: user_management
+    title: "User Management Operations"
+    severity: high
+    description: >
+      Detects MCP tools that can create, modify, or delete system users
+      and groups. User management capabilities allow an attacker to create
+      backdoor accounts, modify group memberships, and escalate privileges.
+    risk_explanation: >
+      User management tools allow creating administrative accounts that
+      provide persistent backdoor access. Modifying group memberships can
+      escalate privileges by adding users to sudo, docker, or admin groups.
+      Deleting users can cause denial of service and data loss. User
+      management is a critical administrative function that should never
+      be exposed through MCP tools.
+    remediation: >
+      Remove user management capabilities from MCP tools. Use dedicated
+      identity management systems for user provisioning. Implement monitoring
+      for unauthorized user and group changes. Run MCP servers with
+      service accounts that lack user management permissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - user_management
+      - account_creation
+      - group_membership
+
+  - id: priv015
+    slug: firewall_modification
+    title: "Firewall Rule Modification"
+    severity: critical
+    description: >
+      Detects MCP tools that can modify network firewall rules (iptables,
+      nftables, Windows Firewall, cloud security groups). Firewall
+      modification can expose internal services, disable network security
+      controls, and enable lateral movement.
+    risk_explanation: >
+      Firewall rule modification allows an attacker to open network ports,
+      exposing internal services to the internet. Disabling firewall rules
+      removes network-level security controls, enabling unrestricted
+      lateral movement. In cloud environments, security group modifications
+      can expose databases and internal APIs to the public internet.
+    remediation: >
+      Never grant MCP tools firewall modification capabilities. Use
+      infrastructure-as-code for firewall management with proper change
+      control. Implement firewall rule monitoring and alerting for
+      unauthorized changes. Run MCP servers in network segments that
+      cannot reach firewall management interfaces.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - firewall
+      - network_security
+      - security_groups
+
+  - id: priv016
+    slug: package_installation
+    title: "Package Installation Rights"
+    severity: high
+    description: >
+      Detects MCP tools that can install system packages (apt, yum, brew,
+      pip install, npm install -g). Package installation allows adding
+      arbitrary software to the system, including malicious packages from
+      compromised registries.
+    risk_explanation: >
+      Package installation enables supply chain attacks where malicious
+      packages execute code during installation. System-level package
+      installation modifies the OS installation, potentially overwriting
+      existing binaries with trojanized versions. Global package
+      installations persist across reboots and affect all users of the
+      system.
+    remediation: >
+      Restrict MCP tools from installing packages. Use pre-built container
+      images with all required dependencies. Implement package allowlists
+      for environments where installation is required. Use package signing
+      verification and hash pinning for any packages that must be installed.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - package_installation
+      - supply_chain
+      - system_modification
+
+  - id: priv017
+    slug: service_management
+    title: "System Service Management"
+    severity: high
+    description: >
+      Detects MCP tools that can start, stop, enable, or modify system
+      services (systemd, init.d, Windows Services). Service management
+      allows disrupting critical system functions and installing persistent
+      backdoor services.
+    risk_explanation: >
+      Service management capabilities allow an attacker to stop security
+      services (antivirus, logging, monitoring), install new malicious
+      services for persistence, and modify existing service configurations
+      to execute attacker code. Stopping critical services causes denial of
+      service, while installing new services provides persistent access.
+    remediation: >
+      Remove system service management capabilities from MCP tools. Use
+      dedicated orchestration tools for service management. Implement
+      monitoring for unauthorized service changes. Run MCP servers in
+      containers that cannot access the host's service management interfaces.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - service_management
+      - systemd
+      - persistence
+
+  - id: priv018
+    slug: database_admin
+    title: "Database Admin Operations"
+    severity: high
+    description: >
+      Detects MCP tools with DDL (Data Definition Language) or administrative
+      database privileges. Tools that can CREATE, ALTER, DROP, GRANT, or
+      TRUNCATE have capabilities far beyond data query and manipulation.
+    risk_explanation: >
+      Database admin privileges allow an attacker to drop tables (data
+      destruction), create new administrative users (persistence), modify
+      schemas (data corruption), and grant themselves additional permissions
+      (escalation). Admin operations bypass row-level security and can
+      affect the entire database instance.
+    remediation: >
+      Restrict MCP tools to the minimum required database privileges (SELECT,
+      INSERT, UPDATE on specific tables). Use separate database accounts for
+      DDL and DML operations. Implement database audit logging for all DDL
+      operations. Never grant GRANT or SUPERUSER privileges to MCP tool
+      database accounts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - database_admin
+      - ddl
+      - privilege_escalation
+
+  - id: priv019
+    slug: idor_in_resources
+    title: "IDOR in Resource Access"
+    severity: high
+    description: >
+      Detects MCP resources accessible via sequential or easily guessable
+      identifiers without proper authorization. Insecure Direct Object
+      References allow users to access resources belonging to other users
+      by manipulating ID values.
+    risk_explanation: >
+      IDOR vulnerabilities allow an attacker to enumerate and access all
+      resources by iterating through sequential IDs. A user who accesses
+      /resource/123 can access /resource/124 and all other resources without
+      authorization checks. This exposes other users' data, including
+      personal information, documents, and configuration.
+    remediation: >
+      Implement authorization checks on every resource access, not just
+      authentication. Use UUIDs or opaque identifiers instead of sequential
+      IDs. Verify that the requesting user has permission to access the
+      specific resource. Implement resource-level access control lists that
+      enforce ownership and sharing rules.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - privilege_scope
+      - idor
+      - resource_access
+      - authorization
+
+  - id: priv020
+    slug: missing_resource_authorization
+    title: "Missing Resource Authorization"
+    severity: high
+    description: >
+      Detects MCP resources that can be accessed without authorization checks.
+      Resources without access control allow any authenticated user to read,
+      modify, or delete any resource regardless of ownership or permissions.
+    risk_explanation: >
+      Missing resource authorization means that authentication alone is
+      considered sufficient for access. Any authenticated user can access all
+      resources, including other users' private data, administrative
+      configurations, and sensitive documents. This violates the principle
+      of least privilege and enables data breaches through compromised
+      low-privilege accounts.
+    remediation: >
+      Implement authorization checks on all resource access operations.
+      Verify that the requesting user has the specific permission required
+      for the operation (read, write, delete) on the specific resource.
+      Use attribute-based access control (ABAC) or role-based access control
+      (RBAC) to define and enforce resource access policies.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - privilege_scope
+      - authorization
+      - resource_access
+      - access_control
+
+  - id: priv021
+    slug: horizontal_privilege_escalation
+    title: "Horizontal Privilege Escalation"
+    severity: high
+    description: >
+      Detects MCP tools that allow accessing other users' data without
+      proper authorization boundaries. Horizontal escalation occurs when
+      a user at the same privilege level can access another user's resources
+      by manipulating user identifiers or context.
+    risk_explanation: >
+      Horizontal privilege escalation allows a regular user to access any
+      other user's data by substituting user IDs, email addresses, or other
+      user identifiers in tool parameters. Unlike vertical escalation (gaining
+      admin rights), horizontal escalation operates within the same privilege
+      level but crosses user boundaries, exposing personal data across the
+      entire user base.
+    remediation: >
+      Derive the user identity from the authenticated session, never from
+      user-supplied parameters. Implement per-user data isolation at the
+      query level. Validate that the authenticated user owns or has
+      permission to access the requested resources. Use server-side session
+      context for user identification.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP09:2025"
+    tags:
+      - privilege_scope
+      - horizontal_escalation
+      - user_isolation
+      - data_boundary
+
+  - id: priv022
+    slug: missing_least_privilege
+    title: "Missing Least Privilege"
+    severity: medium
+    description: >
+      Detects MCP servers requesting more permissions than their tools
+      require. Servers that request broad filesystem, network, or system
+      access when their tools only need narrow capabilities violate the
+      principle of least privilege.
+    risk_explanation: >
+      Over-privileged servers amplify the impact of any vulnerability. A
+      tool that only needs to read a single configuration file but has
+      full filesystem access allows exploitation to read any file on the
+      system. Excess permissions are dormant attack surface that becomes
+      exploitable through any vulnerability in the server's tools.
+    remediation: >
+      Audit all server permissions against actual tool requirements. Remove
+      permissions that are not actively used by any tool. Implement
+      capability-based security where each tool declares its required
+      permissions. Use the MCP tool annotations to document required
+      capabilities and validate them against actual server permissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - privilege_scope
+      - least_privilege
+      - over_privileged
+      - capability_audit
+
+  - id: priv023
+    slug: cross_tenant_access
+    title: "Cross-Tenant Data Access"
+    severity: critical
+    description: >
+      Detects MCP tools that can access data across tenant boundaries in
+      multi-tenant environments. Cross-tenant access breaks the fundamental
+      isolation guarantee of multi-tenant systems, exposing one tenant's
+      data to another.
+    risk_explanation: >
+      Cross-tenant data access is the most severe authorization failure in
+      multi-tenant systems. An attacker in one tenant can read, modify, or
+      delete another tenant's data, including confidential business data,
+      personal information, and application configuration. Cross-tenant
+      access often results in regulatory violations and breach notification
+      requirements.
+    remediation: >
+      Implement mandatory tenant isolation at the data access layer. Use
+      tenant-scoped database connections or row-level security with tenant
+      ID filtering. Validate tenant context on every data access operation.
+      Implement database-level policies that enforce tenant isolation
+      independent of application code. Conduct regular cross-tenant access
+      testing.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+      - "MCP09:2025"
+    tags:
+      - privilege_scope
+      - cross_tenant
+      - multi_tenant
+      - data_isolation

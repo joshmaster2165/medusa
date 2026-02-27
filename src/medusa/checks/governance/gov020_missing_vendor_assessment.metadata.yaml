@@ -1,0 +1,36 @@
+check_id: gov020
+title: Missing Vendor Security Assessment
+category: governance
+severity: high
+description: >
+  Detects MCP server deployments that use third-party MCP servers,
+  tools, or LLM providers without conducting vendor security
+  assessments. Third-party vendors that process data through MCP
+  integrations must meet security requirements commensurate with the
+  sensitivity of the data they handle.
+risk_explanation: >
+  Third-party MCP server vendors and tool providers have direct access
+  to data flowing through tool invocations and may store, process, or
+  transmit this data in ways the organization cannot control. Without
+  vendor security assessments, organizations trust vendors with
+  sensitive data based on marketing claims rather than verified security
+  practices. A vendor security breach can expose all data processed
+  through their MCP servers or tools, and the organization bears the
+  regulatory and reputational consequences.
+remediation: >
+  Conduct security assessments for all third-party MCP server vendors,
+  tool providers, and LLM service providers. Request SOC 2 Type II
+  reports, penetration test summaries, and security certifications.
+  Evaluate vendors against your organization's security requirements.
+  Include security requirements in vendor contracts and service
+  agreements. Conduct annual vendor security reviews and require breach
+  notification commitments. Maintain a vendor risk register that tracks
+  assessment status and findings.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

@@ -1,0 +1,30 @@
+check_id: iv026
+title: Wildcard Parameter Matching
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters that accept wildcard patterns (*, ?, **)
+  without restrictions. Unrestricted glob or wildcard parameters can
+  match unintended files, directories, or resources, expanding the
+  operation scope beyond user intent.
+risk_explanation: >
+  Wildcard parameters can be exploited to operate on more resources than
+  intended. A parameter accepting * in a file deletion tool can match
+  all files in a directory. Recursive wildcards (**) can traverse entire
+  directory trees. The attacker leverages wildcards to escalate the
+  scope of an operation from a single resource to many.
+remediation: >
+  Restrict wildcard patterns to specific directories or resource sets.
+  Implement maximum match limits for wildcard expansion. Require
+  explicit confirmation when wildcards match more than a threshold
+  number of resources. Validate wildcard patterns against an allowlist
+  of safe matching contexts.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - wildcard
+  - glob_pattern
+  - scope_expansion

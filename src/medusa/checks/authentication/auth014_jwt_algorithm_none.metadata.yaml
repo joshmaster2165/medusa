@@ -1,0 +1,31 @@
+check_id: auth014
+title: JWT Algorithm None Attack
+category: authentication
+severity: critical
+description: >
+  Detects JWT tokens that accept the 'none' algorithm, which disables
+  signature verification entirely. An attacker can forge arbitrary JWT
+  tokens by setting the algorithm to 'none' and removing the signature,
+  granting themselves any identity or permission claims.
+risk_explanation: >
+  The 'none' algorithm vulnerability allows complete JWT forgery. An
+  attacker creates a token with arbitrary claims (admin roles, any user
+  identity) and sets alg to 'none', bypassing all signature
+  verification. This grants unrestricted access to the MCP server with
+  any desired permission level.
+remediation: >
+  Explicitly allowlist accepted JWT algorithms on the server side. Never
+  accept the 'none' algorithm in production. Use asymmetric algorithms
+  (RS256, ES256) where possible. Validate the 'alg' header against the
+  expected algorithm before verification. Use well-maintained JWT
+  libraries that reject 'none' by default.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - jwt
+  - algorithm_none
+  - token_forgery

@@ -1,0 +1,34 @@
+check_id: dos006
+title: Missing Timeout Configuration
+category: rate_limiting
+severity: medium
+description: >
+  Detects MCP server tools that execute without configured timeouts.
+  Missing timeouts allow tool invocations to run indefinitely, consuming
+  server resources and blocking processing capacity for other requests.
+  Long-running tools can be intentionally triggered as a denial-of-
+  service technique.
+risk_explanation: >
+  Tool invocations without timeouts can run indefinitely, tying up
+  server threads, connections, and processing capacity. An attacker can
+  intentionally trigger long-running operations such as complex queries,
+  large file processing, or requests to slow external services to
+  consume all available server capacity. Accumulated long-running
+  requests progressively degrade performance until the server becomes
+  completely unresponsive.
+remediation: >
+  Configure explicit execution timeouts for all MCP tool invocations.
+  Set default timeouts appropriate for each tool's expected execution
+  time, typically 30-60 seconds for synchronous operations. Implement
+  timeout enforcement at the process level to ensure runaway tools are
+  terminated. Provide timeout override configuration for tools that
+  legitimately require longer execution. Log timeout events for
+  monitoring and capacity planning.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

@@ -1,0 +1,31 @@
+check_id: tp020
+title: Conflicting Parameter Descriptions
+category: tool_poisoning
+severity: medium
+description: >
+  Detects tool parameters whose descriptions contradict the stated
+  purpose of the tool. For example, a tool described as "read-only file
+  viewer" with a parameter described as "path to write output" indicates
+  a mismatch that may signal deceptive intent.
+risk_explanation: >
+  Conflicting parameter descriptions can mislead the LLM into passing
+  sensitive data to parameters that perform unintended operations. A
+  tool claiming to be read-only while accepting write-oriented
+  parameters can trick the LLM into authorizing destructive operations.
+  The contradiction between tool purpose and parameter intent is a
+  strong indicator of deception.
+remediation: >
+  Implement semantic analysis to detect contradictions between tool-
+  level descriptions and parameter-level descriptions. Flag parameters
+  whose descriptions suggest capabilities not mentioned in the tool
+  description. Require consistent terminology between tool descriptions
+  and their parameter documentation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - conflicting_descriptions
+  - semantic_analysis
+  - deception_detection

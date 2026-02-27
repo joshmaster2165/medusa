@@ -1,0 +1,32 @@
+check_id: mt010
+title: Missing Tenant Configuration Isolation
+category: multi_tenant
+severity: high
+description: >
+  Detects MCP servers where tenant-specific configuration such as
+  security policies, feature flags, access controls, and operational
+  parameters is stored in shared configuration without proper isolation.
+  Configuration bleed between tenants can alter security posture
+  unexpectedly.
+risk_explanation: >
+  Shared configuration without tenant isolation means that a
+  configuration change for one tenant can inadvertently affect other
+  tenants. Security policy changes, feature flag modifications, and
+  access control updates for one tenant may be applied to others. An
+  attacker who gains configuration access for one tenant can weaken
+  security settings for all tenants on the server.
+remediation: >
+  Implement tenant-isolated configuration storage with independent
+  configuration contexts per tenant. Validate that configuration changes
+  are scoped to the requesting tenant. Use configuration inheritance
+  hierarchies where tenant-specific settings override shared defaults
+  without affecting other tenants. Audit all configuration changes with
+  tenant context for traceability.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

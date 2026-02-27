@@ -1,0 +1,31 @@
+check_id: audit007
+title: Sensitive Data in Logs
+category: audit_logging
+severity: high
+description: >
+  Detects MCP server logging configurations or patterns that write
+  sensitive data such as PII, credentials, or API keys to log files.
+  Sensitive data in logs creates secondary exposure vectors.
+risk_explanation: >
+  Log files are frequently stored with less restrictive access controls
+  than primary data stores and are often aggregated in third-party
+  logging platforms. Credentials in logs can be used for lateral
+  movement, PII in logs violates privacy regulations, and API keys in
+  logs can be exploited for unauthorized access to external services.
+remediation: >
+  Implement log scrubbing that automatically detects and redacts
+  sensitive data patterns (API keys, passwords, SSNs, credit card
+  numbers) before writing to logs. Use structured logging with explicit
+  field allow-lists. Configure log frameworks to mask sensitive
+  parameter values. Regularly audit log output for sensitive data
+  leakage.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - sensitive_data
+  - pii
+  - credentials
+  - log_hygiene

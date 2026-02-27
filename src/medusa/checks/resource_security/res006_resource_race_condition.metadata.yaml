@@ -1,0 +1,30 @@
+check_id: res006
+title: Resource Race Condition
+category: resource_security
+severity: high
+description: >
+  Detects MCP resource handlers that are vulnerable to time-of-check to
+  time-of-use (TOCTOU) race conditions. When access control checks and
+  resource reads are not atomic, an attacker can manipulate the resource
+  between the check and the read operation.
+risk_explanation: >
+  Race conditions in resource access allow attackers to bypass access
+  controls by timing their requests to coincide with legitimate access
+  checks. Symlink races can redirect file-based resources to sensitive
+  files after the access check passes. Concurrent modifications can
+  cause data corruption or expose intermediate states containing
+  sensitive information.
+remediation: >
+  Implement atomic check-and-read operations for all resources. Use file
+  locks or database transactions to prevent concurrent access race
+  conditions. Verify resource identity and permissions at the point of
+  use, not just at the point of request. Use immutable resource
+  snapshots for time-sensitive operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

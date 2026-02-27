@@ -1,0 +1,31 @@
+check_id: auth025
+title: Session Fixation Risk
+category: authentication
+severity: high
+description: >
+  Detects session management implementations that do not regenerate
+  session IDs after successful authentication. Session fixation allows
+  an attacker to set a known session ID before the user authenticates,
+  then hijack the session after authentication elevates its privileges.
+risk_explanation: >
+  An attacker who can set or predict the session ID before
+  authentication gains full access to the authenticated session. The
+  attacker waits for the victim to authenticate with the known session
+  ID, then uses that same ID to access the MCP server as the victim.
+  This bypasses all authentication mechanisms.
+remediation: >
+  Regenerate session IDs immediately after successful authentication.
+  Invalidate the pre-authentication session ID. Use cryptographically
+  random session identifiers. Bind sessions to client properties (IP
+  address, user agent) for additional validation. Implement session
+  timeout and idle expiration.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - session_fixation
+  - session_management
+  - hijacking

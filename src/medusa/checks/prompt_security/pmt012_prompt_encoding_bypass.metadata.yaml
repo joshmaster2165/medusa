@@ -1,0 +1,30 @@
+check_id: pmt012
+title: Prompt Encoding Bypass
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt arguments that use encoding schemes such as Base64,
+  URL encoding, hex encoding, or Unicode escapes to smuggle injection
+  payloads past content filters. Encoded payloads are decoded by the LLM
+  or processing pipeline after security checks.
+risk_explanation: >
+  Encoding bypass attacks exploit the processing order where security
+  filters see encoded content that appears benign, but the LLM or a
+  decoding step later in the pipeline reconstructs the malicious
+  payload. Modern LLMs can decode Base64 and other common encodings
+  natively, meaning encoded injection payloads are effectively invisible
+  to pre-processing security filters but fully functional.
+remediation: >
+  Decode all encoded content in prompt arguments before applying
+  security filters. Detect and handle multiple layers of encoding.
+  Implement recursive decoding that continues until no more encoding is
+  detected. Reject arguments with suspicious encoding patterns. Apply
+  security filters after all decoding stages, not before.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

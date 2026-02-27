@@ -1,0 +1,30 @@
+check_id: dp021
+title: Camera/Microphone Access
+category: data_protection
+severity: critical
+description: >
+  Detects MCP tools with audio or video capture capabilities. Camera and
+  microphone access enables surveillance of the user's physical
+  environment.
+risk_explanation: >
+  Camera and microphone access enables real-time surveillance of the
+  user's physical environment. A malicious MCP tool can record
+  conversations, capture video of the user and their surroundings, and
+  observe private activities. This represents one of the most severe
+  privacy violations possible.
+remediation: >
+  Block all MCP tools that request camera or microphone access unless
+  explicitly required and user-approved. Implement hardware-level
+  indicators (e.g. LED lights) that activate during capture. Require
+  per-session consent and provide immediate revocation capabilities. Log
+  all audio/video capture events.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - camera
+  - microphone
+  - surveillance
+  - critical_risk

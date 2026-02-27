@@ -1,0 +1,33 @@
+check_id: gov016
+title: Missing Security Training Program
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments where developers and operators have not
+  received security training covering MCP-specific threats including
+  tool poisoning, prompt injection, SSRF through tools, and session
+  management vulnerabilities.
+risk_explanation: >
+  Developers and operators who are unaware of MCP-specific security
+  risks inadvertently introduce vulnerabilities during development and
+  operations. MCP security threats such as tool poisoning, indirect
+  prompt injection, and sampling attacks are novel and not covered by
+  traditional security training. Without MCP-specific training, teams
+  cannot design secure tools, configure servers defensively, or detect
+  MCP-specific attacks during operations.
+remediation: >
+  Develop and deliver security training covering MCP-specific threats
+  and defenses. Include topics such as tool poisoning prevention, prompt
+  injection defense, SSRF mitigation in tools, secure session
+  management, and sampling security. Train developers on secure tool
+  development practices and operators on secure server configuration.
+  Update training content as the MCP threat landscape evolves. Track
+  training completion and require annual refresher training.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

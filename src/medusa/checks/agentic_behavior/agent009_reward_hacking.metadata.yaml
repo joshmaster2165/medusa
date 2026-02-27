@@ -1,0 +1,33 @@
+check_id: agent009
+title: Reward Hacking
+category: agentic_behavior
+severity: medium
+description: >
+  Detects MCP configurations where an attacker can exploit the agent's
+  reward or feedback mechanisms to reinforce undesired behavior. By
+  manipulating success signals, error messages, or feedback loops, an
+  attacker can train the agent to prefer malicious tools or follow
+  harmful patterns.
+risk_explanation: >
+  Reward hacking exploits the agent's learning and adaptation
+  mechanisms. In MCP systems where agents adjust behavior based on
+  success or failure signals from tools, an attacker can manipulate
+  these signals to reinforce malicious behavior. A compromised tool
+  might return success indicators for harmful actions and failure
+  indicators for legitimate ones, gradually training the agent to prefer
+  the attacker's desired behavior patterns.
+remediation: >
+  Implement independent success verification that does not rely solely
+  on tool responses. Use multi-signal validation where tool success is
+  confirmed through independent channels. Apply anomaly detection to
+  feedback patterns that may indicate reward manipulation. Limit the
+  agent's ability to modify its own behavior based on tool feedback. Log
+  all feedback signals for analysis and audit.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

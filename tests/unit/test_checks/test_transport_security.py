@@ -10,6 +10,29 @@ from medusa.checks.transport_security.ts002_missing_cert_validation import (
 )
 from medusa.checks.transport_security.ts003_insecure_tls_config import InsecureTlsConfigCheck
 from medusa.checks.transport_security.ts004_missing_transport_auth import MissingTransportAuthCheck
+from medusa.checks.transport_security.ts005_mixed_content import MixedContentCheck
+from medusa.checks.transport_security.ts006_weak_cipher_suites import WeakCipherSuitesCheck
+from medusa.checks.transport_security.ts007_missing_hsts import MissingHstsCheck
+from medusa.checks.transport_security.ts008_certificate_pinning_absent import (
+    CertificatePinningAbsentCheck,
+)
+from medusa.checks.transport_security.ts009_self_signed_certificate import (
+    SelfSignedCertificateCheck,
+)
+from medusa.checks.transport_security.ts010_expired_certificate import ExpiredCertificateCheck
+from medusa.checks.transport_security.ts011_wildcard_certificate import WildcardCertificateCheck
+from medusa.checks.transport_security.ts012_missing_cors_headers import MissingCorsHeadersCheck
+from medusa.checks.transport_security.ts013_overly_permissive_cors import OverlyPermissiveCorsCheck
+from medusa.checks.transport_security.ts014_websocket_without_tls import WebsocketWithoutTlsCheck
+from medusa.checks.transport_security.ts015_sse_without_tls import SseWithoutTlsCheck
+from medusa.checks.transport_security.ts016_missing_content_security_policy import (
+    MissingContentSecurityPolicyCheck,
+)
+from medusa.checks.transport_security.ts017_dns_over_http import DnsOverHttpCheck
+from medusa.checks.transport_security.ts018_proxy_without_tls import ProxyWithoutTlsCheck
+from medusa.checks.transport_security.ts019_missing_certificate_transparency import (
+    MissingCertificateTransparencyCheck,
+)
 from medusa.core.check import ServerSnapshot
 from medusa.core.models import Severity, Status
 from tests.conftest import make_snapshot
@@ -279,3 +302,275 @@ class TestTS004MissingTransportAuth:
         findings = await check.execute(snapshot)
         assert len(findings) == 1
         assert findings[0].status == Status.FAIL
+
+
+class TestMixedContentCheck:
+    """Tests for MixedContentCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MixedContentCheck:
+        return MixedContentCheck()
+
+    async def test_metadata_loads_correctly(self, check: MixedContentCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts005"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: MixedContentCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestWeakCipherSuitesCheck:
+    """Tests for WeakCipherSuitesCheck."""
+
+    @pytest.fixture()
+    def check(self) -> WeakCipherSuitesCheck:
+        return WeakCipherSuitesCheck()
+
+    async def test_metadata_loads_correctly(self, check: WeakCipherSuitesCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts006"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: WeakCipherSuitesCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingHstsCheck:
+    """Tests for MissingHstsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingHstsCheck:
+        return MissingHstsCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingHstsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts007"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: MissingHstsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestCertificatePinningAbsentCheck:
+    """Tests for CertificatePinningAbsentCheck."""
+
+    @pytest.fixture()
+    def check(self) -> CertificatePinningAbsentCheck:
+        return CertificatePinningAbsentCheck()
+
+    async def test_metadata_loads_correctly(self, check: CertificatePinningAbsentCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts008"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: CertificatePinningAbsentCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestSelfSignedCertificateCheck:
+    """Tests for SelfSignedCertificateCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SelfSignedCertificateCheck:
+        return SelfSignedCertificateCheck()
+
+    async def test_metadata_loads_correctly(self, check: SelfSignedCertificateCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts009"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: SelfSignedCertificateCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestExpiredCertificateCheck:
+    """Tests for ExpiredCertificateCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ExpiredCertificateCheck:
+        return ExpiredCertificateCheck()
+
+    async def test_metadata_loads_correctly(self, check: ExpiredCertificateCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts010"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: ExpiredCertificateCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestWildcardCertificateCheck:
+    """Tests for WildcardCertificateCheck."""
+
+    @pytest.fixture()
+    def check(self) -> WildcardCertificateCheck:
+        return WildcardCertificateCheck()
+
+    async def test_metadata_loads_correctly(self, check: WildcardCertificateCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts011"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: WildcardCertificateCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingCorsHeadersCheck:
+    """Tests for MissingCorsHeadersCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingCorsHeadersCheck:
+        return MissingCorsHeadersCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingCorsHeadersCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts012"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: MissingCorsHeadersCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestOverlyPermissiveCorsCheck:
+    """Tests for OverlyPermissiveCorsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> OverlyPermissiveCorsCheck:
+        return OverlyPermissiveCorsCheck()
+
+    async def test_metadata_loads_correctly(self, check: OverlyPermissiveCorsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts013"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: OverlyPermissiveCorsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestWebsocketWithoutTlsCheck:
+    """Tests for WebsocketWithoutTlsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> WebsocketWithoutTlsCheck:
+        return WebsocketWithoutTlsCheck()
+
+    async def test_metadata_loads_correctly(self, check: WebsocketWithoutTlsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts014"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: WebsocketWithoutTlsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestSseWithoutTlsCheck:
+    """Tests for SseWithoutTlsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SseWithoutTlsCheck:
+        return SseWithoutTlsCheck()
+
+    async def test_metadata_loads_correctly(self, check: SseWithoutTlsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts015"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: SseWithoutTlsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingContentSecurityPolicyCheck:
+    """Tests for MissingContentSecurityPolicyCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingContentSecurityPolicyCheck:
+        return MissingContentSecurityPolicyCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingContentSecurityPolicyCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts016"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: MissingContentSecurityPolicyCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestDnsOverHttpCheck:
+    """Tests for DnsOverHttpCheck."""
+
+    @pytest.fixture()
+    def check(self) -> DnsOverHttpCheck:
+        return DnsOverHttpCheck()
+
+    async def test_metadata_loads_correctly(self, check: DnsOverHttpCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts017"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: DnsOverHttpCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestProxyWithoutTlsCheck:
+    """Tests for ProxyWithoutTlsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ProxyWithoutTlsCheck:
+        return ProxyWithoutTlsCheck()
+
+    async def test_metadata_loads_correctly(self, check: ProxyWithoutTlsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts018"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: ProxyWithoutTlsCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+
+class TestMissingCertificateTransparencyCheck:
+    """Tests for MissingCertificateTransparencyCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingCertificateTransparencyCheck:
+        return MissingCertificateTransparencyCheck()
+
+    async def test_metadata_loads_correctly(
+        self, check: MissingCertificateTransparencyCheck
+    ) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "ts019"
+        assert meta.category == "transport_security"
+
+    async def test_stub_returns_empty(self, check: MissingCertificateTransparencyCheck) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)

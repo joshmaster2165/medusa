@@ -1,0 +1,30 @@
+check_id: pmt003
+title: Role Reassignment in Prompts
+category: prompt_security
+severity: high
+description: >
+  Detects MCP prompt definitions that attempt to reassign the LLM role,
+  override system instructions, or establish new behavioral constraints.
+  Prompts containing phrases like "you are now" or "ignore previous
+  instructions" can manipulate LLM identity.
+risk_explanation: >
+  Role reassignment in prompts enables an MCP server to take control of
+  the LLM behavior by overriding the system-level identity and
+  instructions set by the client application. This can make the LLM act
+  as a different persona with fewer restrictions, bypass safety
+  controls, or perform actions contrary to the user original intent and
+  the host application security policies.
+remediation: >
+  Implement prompt analysis that detects role reassignment patterns such
+  as identity overrides, system prompt references, and instruction reset
+  commands. Reject prompts that attempt to modify the LLM role or
+  override previous instructions. Enforce a strict prompt hierarchy
+  where server prompts cannot override client-level system instructions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

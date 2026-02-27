@@ -1,0 +1,31 @@
+check_id: auth024
+title: Missing Rate Limit on Auth Endpoints
+category: authentication
+severity: medium
+description: >
+  Detects authentication endpoints without rate limiting or brute-force
+  protection. Endpoints that accept unlimited authentication attempts
+  allow attackers to perform credential stuffing and brute-force
+  attacks.
+risk_explanation: >
+  Without rate limiting, an attacker can attempt thousands of credential
+  combinations per second against the authentication endpoint.
+  Credential stuffing attacks using leaked password databases are highly
+  effective against unprotected endpoints. Even strong passwords can
+  eventually be brute-forced given unlimited attempts.
+remediation: >
+  Implement rate limiting on authentication endpoints with progressive
+  delays. Lock accounts temporarily after a configurable number of
+  failed attempts. Use CAPTCHA or proof-of-work challenges after
+  repeated failures. Monitor and alert on abnormal authentication
+  attempt patterns. Consider IP-based and account-based rate limiting.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - rate_limiting
+  - brute_force
+  - credential_stuffing

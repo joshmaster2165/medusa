@@ -1,0 +1,29 @@
+check_id: audit008
+title: Missing Access Logging
+category: audit_logging
+severity: medium
+description: >
+  Checks whether the MCP server logs resource access events. Without
+  access logging, there is no record of which resources were accessed,
+  by whom, or when.
+risk_explanation: >
+  Without access logging, unauthorized data access leaves no trace.
+  Security teams cannot detect data exfiltration, identify compromised
+  accounts accessing sensitive resources, or demonstrate compliance with
+  access control requirements during audits. Access logs are essential
+  for detecting insider threats and external intrusions.
+remediation: >
+  Log all resource access events including the resource identifier, the
+  accessor's identity, the access type (read/write/delete), the
+  timestamp, and the outcome (success/failure). Implement access log
+  analysis to detect anomalous access patterns. Retain access logs for
+  the period required by applicable regulations and security policies.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - audit_logging
+  - access_logging
+  - monitoring
+  - compliance

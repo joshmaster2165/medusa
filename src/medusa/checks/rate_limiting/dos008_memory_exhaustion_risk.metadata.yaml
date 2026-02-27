@@ -1,0 +1,33 @@
+check_id: dos008
+title: Memory Exhaustion Risk
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server tools that can cause memory exhaustion through
+  processing large datasets, accumulating results in memory, or
+  triggering memory leaks. Memory exhaustion crashes the server process
+  and terminates all active sessions.
+risk_explanation: >
+  Memory exhaustion in MCP servers is catastrophic because it crashes
+  the server process, terminating all active sessions simultaneously. An
+  attacker can trigger memory exhaustion through tools that load large
+  files into memory, accumulate unbounded result sets, process data with
+  memory-intensive algorithms, or exploit memory leaks through repeated
+  invocations. Unlike CPU exhaustion which causes degradation, memory
+  exhaustion causes immediate and complete service failure.
+remediation: >
+  Implement memory limits for tool invocations using process isolation
+  or container memory limits. Use streaming processing for large
+  datasets rather than loading entire datasets into memory. Implement
+  pagination for result sets and enforce maximum result sizes. Monitor
+  server memory usage and implement graceful degradation when memory
+  pressure increases. Deploy automatic scaling that adds capacity before
+  memory limits are reached.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

@@ -1,0 +1,28 @@
+check_id: err007
+title: Error Message Injection
+category: error_handling
+severity: high
+description: >
+  Detects MCP server error messages that directly include unsanitized
+  user input. When user-supplied data is reflected in error responses
+  without encoding or escaping, it creates injection vectors that can
+  manipulate LLM behavior or exploit downstream consumers.
+risk_explanation: >
+  User input reflected in error messages can be crafted to inject
+  instructions that the LLM interprets as legitimate server guidance.
+  This enables prompt injection through error channels, cross-site
+  scripting if errors are rendered in web UIs, and log injection that
+  can corrupt audit trails or trigger log processing vulnerabilities.
+remediation: >
+  Never include raw user input in error messages. Sanitize and encode
+  all user-supplied values before including them in error responses. Use
+  parameterized error message templates with placeholder values that are
+  escaped for the output context. Validate and truncate user input
+  before any error message interpolation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

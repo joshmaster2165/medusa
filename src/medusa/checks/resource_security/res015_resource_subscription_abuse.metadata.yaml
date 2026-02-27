@@ -1,0 +1,30 @@
+check_id: res015
+title: Resource Subscription Abuse
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resource subscription endpoints that lack rate limiting,
+  maximum subscription counts, or client validation. Uncontrolled
+  subscriptions can exhaust server resources through notification
+  flooding or enable unauthorized real-time data monitoring.
+risk_explanation: >
+  Without subscription controls, an attacker can create thousands of
+  subscriptions to resource updates, overwhelming the server with
+  notification processing. Excessive subscriptions consume memory, CPU,
+  and network bandwidth. Unrestricted subscriptions also allow attackers
+  to monitor all resource changes in real-time, enabling data
+  surveillance and timing attacks.
+remediation: >
+  Implement per-client subscription limits with configurable maximums.
+  Add rate limiting on subscription creation and notification delivery.
+  Require authorization for subscribing to sensitive resources. Monitor
+  subscription counts and alert on anomalous patterns. Clean up stale
+  subscriptions automatically.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

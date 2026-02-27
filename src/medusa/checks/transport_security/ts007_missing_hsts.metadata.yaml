@@ -1,0 +1,31 @@
+check_id: ts007
+title: Missing HSTS Header
+category: transport_security
+severity: medium
+description: >
+  Detects HTTP endpoints served without the Strict-Transport-Security
+  (HSTS) header. Without HSTS, browsers and clients may connect over
+  HTTP before being redirected to HTTPS, creating a window for man-in-
+  the-middle attacks.
+risk_explanation: >
+  Without HSTS, the initial connection to the server may be made over
+  HTTP, which an attacker can intercept to perform SSL stripping. The
+  attacker maintains an HTTP connection with the client while connecting
+  to the server over HTTPS, transparently intercepting all traffic. HSTS
+  prevents this by instructing clients to always use HTTPS.
+remediation: >
+  Add the Strict-Transport-Security header to all HTTPS responses with a
+  minimum max-age of 31536000 (one year). Include the includeSubDomains
+  directive to protect all subdomains. Consider HSTS preloading by
+  adding the preload directive and submitting to the browser preload
+  list.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - hsts
+  - ssl_stripping
+  - http_headers

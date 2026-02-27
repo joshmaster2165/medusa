@@ -1,0 +1,31 @@
+check_id: ssrf005
+title: Localhost Access
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that allow requests to localhost addresses
+  including 127.0.0.1, ::1, and the localhost hostname. Localhost access
+  from MCP tools enables exploitation of services running on the same
+  host as the MCP server, including databases, admin interfaces, and
+  debugging endpoints.
+risk_explanation: >
+  Services bound to localhost are typically configured without
+  authentication because they are assumed to be inaccessible from the
+  network. MCP tools that can access 127.0.0.1 or localhost bypass this
+  assumption, reaching databases, caches, admin panels, and debugging
+  endpoints that are not designed for external access. This can lead to
+  data theft, configuration modification, and remote code execution.
+remediation: >
+  Block all MCP tool requests to loopback addresses including
+  127.0.0.0/8, ::1, and the localhost hostname. Apply this restriction
+  at both the application and network levels. Validate resolved IP
+  addresses against the loopback range after DNS resolution. If specific
+  localhost services must be accessed, use a tightly scoped allowlist
+  with authentication requirements.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

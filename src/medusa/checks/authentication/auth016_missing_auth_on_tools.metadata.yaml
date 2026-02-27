@@ -1,0 +1,32 @@
+check_id: auth016
+title: Missing Authentication on Sensitive Tools
+category: authentication
+severity: high
+description: >
+  Detects MCP tools that perform sensitive operations (file access,
+  database queries, network requests, system commands) without requiring
+  authentication. Unauthenticated access to dangerous tools allows any
+  client to perform privileged operations.
+risk_explanation: >
+  Sensitive tools without authentication can be invoked by any client
+  that can reach the MCP server. This includes unauthorized users,
+  malicious scripts, and attackers who have gained network access. Tools
+  that modify data, access credentials, or execute commands are
+  especially dangerous without authentication gates.
+remediation: >
+  Require authentication for all tools that perform sensitive
+  operations. Implement per-tool authorization checks that verify the
+  caller has the necessary permissions. Use the MCP authorization
+  framework to enforce access control at the tool level. Audit all tools
+  to classify their sensitivity and assign appropriate authentication
+  requirements.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - authentication
+  - authorization
+  - sensitive_tools
+  - access_control

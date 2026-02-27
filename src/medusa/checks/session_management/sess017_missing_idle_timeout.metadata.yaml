@@ -1,0 +1,31 @@
+check_id: sess017
+title: Missing Idle Session Timeout
+category: session_management
+severity: medium
+description: >
+  Detects MCP server sessions that lack idle timeout configuration.
+  Without idle timeouts, sessions remain active even when no tool
+  invocations or client interactions have occurred for extended periods.
+  This leaves sessions open for exploitation during periods of user
+  inactivity.
+risk_explanation: >
+  MCP sessions without idle timeouts remain active during extended
+  periods of inactivity, creating unnecessary exposure windows. If a
+  user steps away from their LLM client or loses connectivity, the
+  session remains valid and can be hijacked. In enterprise environments,
+  idle sessions represent unmonitored access points that accumulate over
+  time, increasing the overall attack surface.
+remediation: >
+  Configure an idle session timeout on the MCP server that terminates
+  sessions after a period of inactivity. Set the idle timeout to a value
+  appropriate for your use case, typically 15-30 minutes. Implement
+  server-side tracking of last activity time per session. Provide a
+  warning to the LLM client before session expiry to allow the user to
+  extend the session if needed.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

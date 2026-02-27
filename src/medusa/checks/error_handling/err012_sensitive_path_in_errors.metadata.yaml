@@ -1,0 +1,29 @@
+check_id: err012
+title: Sensitive File Paths in Errors
+category: error_handling
+severity: high
+description: >
+  Detects MCP server error messages that include absolute file paths,
+  revealing the server installation directory, configuration file
+  locations, temporary file paths, or source code directory structure on
+  the host system.
+risk_explanation: >
+  Exposed file paths reveal the server deployment layout, operating
+  system type, user account names embedded in home directory paths, and
+  the locations of sensitive files such as configuration and credential
+  stores. Attackers use this information to target path traversal
+  attacks, locate configuration files for extraction, and identify
+  writable directories for payload placement.
+remediation: >
+  Configure the server runtime to strip absolute file paths from all
+  error messages. Use relative paths or symbolic identifiers in error
+  messages where file references are necessary. Implement an error
+  sanitization filter that detects and removes path patterns from
+  outgoing error responses.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

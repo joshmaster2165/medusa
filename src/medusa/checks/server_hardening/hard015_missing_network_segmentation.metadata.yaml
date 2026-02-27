@@ -1,0 +1,31 @@
+check_id: hard015
+title: Missing Network Segmentation
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers deployed without network segmentation between
+  client-facing interfaces and backend services. Without segmentation, a
+  compromised MCP server has direct network access to databases,
+  internal APIs, and other sensitive backend services.
+risk_explanation: >
+  Missing network segmentation means that a compromised MCP server can
+  directly access all backend services on the same network. This
+  eliminates the defense-in-depth benefit of network isolation and
+  allows an attacker who compromises the MCP server to pivot to
+  databases, internal APIs, credential stores, and other servers without
+  additional network-level barriers.
+remediation: >
+  Deploy the MCP server in a DMZ or dedicated network segment with
+  firewall rules restricting access to only required backend services on
+  specific ports. Use network policies to prevent lateral movement.
+  Implement service mesh or zero-trust networking for internal
+  communication. Monitor network traffic between segments for anomalous
+  patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

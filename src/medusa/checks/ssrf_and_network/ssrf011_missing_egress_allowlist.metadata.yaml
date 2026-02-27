@@ -1,0 +1,31 @@
+check_id: ssrf011
+title: Missing Egress Allowlist
+category: ssrf_and_network
+severity: medium
+description: >
+  Detects MCP server deployments that lack an explicit allowlist of
+  permitted external destinations for tool-initiated network requests.
+  Without an egress allowlist, tools can contact any external service,
+  making it difficult to detect and prevent data exfiltration or
+  unauthorized API calls.
+risk_explanation: >
+  Without an egress allowlist, MCP tools can communicate with any
+  external endpoint. This makes data exfiltration trivial since a
+  compromised tool can send sensitive data to any attacker-controlled
+  server. It also prevents organizations from maintaining an inventory
+  of external dependencies and makes it impossible to detect anomalous
+  outbound traffic from MCP tools.
+remediation: >
+  Define and enforce an explicit egress allowlist for all MCP tool
+  network requests. The allowlist should specify permitted domains, IP
+  ranges, and ports. Implement the allowlist at both the application
+  level (URL validation) and the network level (firewall rules or proxy
+  configuration). Review and update the allowlist regularly. Log all
+  blocked egress attempts for security monitoring.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

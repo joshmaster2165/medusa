@@ -1,0 +1,30 @@
+check_id: ctx006
+title: System Prompt Leakage Risk
+category: context_security
+severity: high
+description: >
+  Detects MCP tool behaviors or output patterns that could cause the LLM
+  to reveal its system prompt or internal instructions. System prompt
+  leakage exposes security controls and business logic.
+risk_explanation: >
+  System prompts contain security directives, behavioral constraints,
+  and business logic that should remain confidential. If a tool can
+  trick the LLM into revealing its system prompt, attackers learn the
+  exact safety measures in place and can craft targeted bypass
+  techniques. This is often the first step in a more sophisticated
+  attack chain.
+remediation: >
+  Implement system prompt protection that prevents the LLM from
+  including system prompt content in responses. Filter tool outputs for
+  content that could elicit prompt disclosure. Add explicit system
+  prompt protection directives. Monitor for prompt leakage attempts and
+  alert on suspicious extraction patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - context_security
+  - prompt_leakage
+  - confidentiality
+  - system_prompt

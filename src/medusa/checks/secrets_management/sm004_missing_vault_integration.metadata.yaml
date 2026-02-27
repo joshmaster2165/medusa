@@ -1,0 +1,30 @@
+check_id: sm004
+title: Missing Vault Integration
+category: secrets_management
+severity: medium
+description: >
+  Detects MCP servers that manage secrets directly rather than using a
+  dedicated secrets management service or vault. Direct secret
+  management lacks the encryption, access control, audit logging, and
+  rotation capabilities that purpose-built vault systems provide.
+risk_explanation: >
+  Without a secrets vault, the MCP server must handle encryption, access
+  control, audit logging, and rotation of secrets using ad-hoc
+  implementations that are typically less secure than purpose-built
+  solutions. Custom secret management is prone to implementation errors
+  such as weak encryption, missing access controls, and incomplete audit
+  trails that leave secrets vulnerable to exposure.
+remediation: >
+  Integrate the MCP server with a secrets management service such as
+  HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, or Google
+  Secret Manager. Configure the server to retrieve secrets at runtime
+  from the vault rather than storing them locally. Use vault-native
+  features for encryption, access control, audit logging, and automatic
+  rotation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - secrets_management
+  - credentials

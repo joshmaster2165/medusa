@@ -1,0 +1,33 @@
+check_id: agent007
+title: Agent Memory Poisoning
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where agent memory, state, or context can
+  be corrupted through tool outputs, sampling responses, or direct state
+  manipulation. Poisoned agent memory leads to incorrect decisions in
+  subsequent interactions and can persist across conversation turns.
+risk_explanation: >
+  Agent memory poisoning corrupts the information the LLM agent relies
+  on for decision-making. By injecting false information into the
+  agent's context through carefully crafted tool outputs, an attacker
+  can cause the agent to believe false facts, trust malicious servers,
+  ignore warnings, or follow attacker-supplied instructions. Poisoned
+  memory persists across conversation turns, making the effects
+  cumulative and increasingly severe over time.
+remediation: >
+  Implement memory integrity checks that validate agent context against
+  known facts and user-confirmed information. Isolate tool outputs from
+  the agent's core memory using trust boundaries. Apply content
+  filtering to tool outputs before they are incorporated into agent
+  context. Provide users with visibility into the agent's current
+  context and memory state. Implement periodic memory validation and
+  cleanup.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

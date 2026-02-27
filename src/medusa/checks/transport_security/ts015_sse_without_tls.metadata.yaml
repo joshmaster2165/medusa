@@ -1,0 +1,31 @@
+check_id: ts015
+title: SSE Without TLS
+category: transport_security
+severity: high
+description: >
+  Detects Server-Sent Events (SSE) connections over unencrypted HTTP.
+  MCP servers using SSE transport over HTTP expose the event stream to
+  network interception, including tool results, notifications, and
+  potentially sensitive server-pushed data.
+risk_explanation: >
+  SSE connections over HTTP transmit server-pushed events in plaintext.
+  Since SSE is a primary MCP transport mechanism, unencrypted SSE
+  exposes the entire server-to-client communication channel. A network
+  observer can read all tool execution results, resource updates, and
+  notification content. The long-lived nature of SSE connections
+  provides persistent visibility into server operations.
+remediation: >
+  Configure all SSE endpoints to require HTTPS. Use TLS-encrypted
+  connections for the SSE event stream. Implement the same security
+  headers (HSTS, CSP) on SSE endpoints as on regular HTTPS endpoints.
+  Reject unencrypted HTTP connections to SSE endpoints.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - sse
+  - tls
+  - event_stream

@@ -1,0 +1,31 @@
+check_id: sess007
+title: Session Replay Attack Risk
+category: session_management
+severity: high
+description: >
+  Detects MCP server configurations vulnerable to session replay attacks
+  where captured session tokens or authenticated requests can be
+  retransmitted to gain unauthorized access. Without replay protections
+  such as nonces or timestamp validation, intercepted tool invocation
+  requests can be replayed by an attacker.
+risk_explanation: >
+  Session replay attacks allow an attacker to capture and retransmit
+  valid MCP requests including tool invocations, resource access, and
+  administrative commands. Without anti-replay mechanisms, the server
+  cannot distinguish between legitimate and replayed requests, enabling
+  attackers to duplicate actions, exfiltrate data, or escalate
+  privileges by replaying privileged operations.
+remediation: >
+  Implement anti-replay protections in the MCP server transport layer.
+  Use unique nonces or request IDs that are validated and rejected on
+  reuse. Include timestamps in requests and enforce a maximum clock skew
+  tolerance. Consider implementing sequence numbers for tool invocation
+  requests within a session. Use TLS to protect against network-level
+  capture of session data.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

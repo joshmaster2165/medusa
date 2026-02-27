@@ -1,0 +1,242 @@
+category: audit_logging
+checks:
+  - id: audit003
+    slug: insufficient_log_detail
+    title: "Insufficient Log Detail"
+    severity: medium
+    description: >
+      Detects MCP server logging configurations that lack essential detail
+      such as caller identity, tool invocation parameters, timestamps, or
+      request correlation IDs. Incomplete logs hinder security investigations.
+    risk_explanation: >
+      Logs without sufficient detail cannot support effective incident
+      response. Missing caller identity prevents attribution of malicious
+      actions, missing parameters prevent reconstruction of attack payloads,
+      and missing correlation IDs prevent tracing of multi-step attacks across
+      distributed components.
+    remediation: >
+      Configure structured logging that includes caller identity, tool name,
+      invocation parameters, timestamps, correlation IDs, and response status
+      for every tool invocation. Use a logging framework that enforces a
+      minimum set of required fields. Regularly audit log completeness.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - log_detail
+      - observability
+      - incident_response
+
+  - id: audit004
+    slug: log_tampering_risk
+    title: "Log Tampering Risk"
+    severity: high
+    description: >
+      Detects MCP server log storage configurations where logs are stored in
+      writable locations without integrity protections. Attackers who
+      compromise the server can modify or delete logs to cover their tracks.
+    risk_explanation: >
+      If logs are stored in locations writable by the MCP server process, an
+      attacker who compromises the server can delete or modify log entries to
+      erase evidence of their activities. This defeats the purpose of audit
+      logging and allows attackers to operate undetected for extended periods.
+    remediation: >
+      Ship logs to a write-only remote destination that the MCP server cannot
+      modify or delete. Use append-only log storage with cryptographic
+      chaining to detect tampering. Implement log integrity verification
+      using hash chains or digital signatures. Separate log storage
+      permissions from the server's runtime permissions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - log_integrity
+      - tampering
+      - security
+
+  - id: audit005
+    slug: missing_log_rotation
+    title: "Missing Log Rotation"
+    severity: low
+    description: >
+      Checks whether the MCP server has a log rotation policy configured.
+      Without log rotation, log files grow unbounded, eventually exhausting
+      disk space and causing service disruption.
+    risk_explanation: >
+      Without log rotation, log files grow indefinitely and can exhaust
+      available disk space, causing the MCP server or the entire host to
+      fail. Additionally, excessively large log files are difficult to search
+      and analyze during incident response, reducing the effectiveness of
+      security investigations.
+    remediation: >
+      Configure log rotation based on file size and time intervals. Use
+      logrotate or equivalent tools to automatically rotate, compress, and
+      archive old log files. Set a maximum retention period aligned with the
+      organisation's data retention policy. Monitor disk usage for log
+      directories.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - log_rotation
+      - operations
+      - disk_management
+
+  - id: audit006
+    slug: missing_alerting
+    title: "Missing Security Alerting"
+    severity: medium
+    description: >
+      Checks whether the MCP server has alerting configured for security-
+      relevant events. Without alerting, security incidents are only
+      discovered during manual log review, which may be too late.
+    risk_explanation: >
+      Without automated alerting, security events such as repeated
+      authentication failures, privilege escalation attempts, unusual data
+      access patterns, or tool invocation anomalies go unnoticed until
+      manual log review occurs. This delay gives attackers extended dwell
+      time to achieve their objectives before detection.
+    remediation: >
+      Configure automated alerts for security-relevant events including
+      authentication failures, privilege escalation, anomalous tool
+      invocations, and data access spikes. Use a SIEM or log aggregation
+      platform with alerting capabilities. Define alert thresholds and
+      escalation procedures. Test alerting regularly to ensure it functions
+      correctly.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - alerting
+      - monitoring
+      - incident_detection
+
+  - id: audit007
+    slug: sensitive_data_in_logs
+    title: "Sensitive Data in Logs"
+    severity: high
+    description: >
+      Detects MCP server logging configurations or patterns that write
+      sensitive data such as PII, credentials, or API keys to log files.
+      Sensitive data in logs creates secondary exposure vectors.
+    risk_explanation: >
+      Log files are frequently stored with less restrictive access controls
+      than primary data stores and are often aggregated in third-party logging
+      platforms. Credentials in logs can be used for lateral movement, PII in
+      logs violates privacy regulations, and API keys in logs can be exploited
+      for unauthorized access to external services.
+    remediation: >
+      Implement log scrubbing that automatically detects and redacts sensitive
+      data patterns (API keys, passwords, SSNs, credit card numbers) before
+      writing to logs. Use structured logging with explicit field allow-lists.
+      Configure log frameworks to mask sensitive parameter values. Regularly
+      audit log output for sensitive data leakage.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - sensitive_data
+      - pii
+      - credentials
+      - log_hygiene
+
+  - id: audit008
+    slug: missing_access_logging
+    title: "Missing Access Logging"
+    severity: medium
+    description: >
+      Checks whether the MCP server logs resource access events. Without
+      access logging, there is no record of which resources were accessed,
+      by whom, or when.
+    risk_explanation: >
+      Without access logging, unauthorized data access leaves no trace.
+      Security teams cannot detect data exfiltration, identify compromised
+      accounts accessing sensitive resources, or demonstrate compliance with
+      access control requirements during audits. Access logs are essential
+      for detecting insider threats and external intrusions.
+    remediation: >
+      Log all resource access events including the resource identifier, the
+      accessor's identity, the access type (read/write/delete), the timestamp,
+      and the outcome (success/failure). Implement access log analysis to
+      detect anomalous access patterns. Retain access logs for the period
+      required by applicable regulations and security policies.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - access_logging
+      - monitoring
+      - compliance
+
+  - id: audit009
+    slug: log_injection_risk
+    title: "Log Injection Risk"
+    severity: high
+    description: >
+      Detects MCP server logging patterns that write user-supplied input
+      to log files without sanitization. Unsanitized log entries enable
+      log injection attacks that corrupt log integrity.
+    risk_explanation: >
+      Log injection allows attackers to forge log entries by embedding
+      newlines, control characters, or structured log syntax in user input.
+      Forged log entries can hide malicious activity, create false audit
+      trails, and exploit log processing systems that parse log content as
+      commands or queries (e.g. SIEM injection, log4shell-style attacks).
+    remediation: >
+      Sanitize all user input before writing to logs. Escape or strip newline
+      characters, control characters, and structured log delimiters. Use
+      structured logging formats (JSON) that properly encode user input as
+      string values. Validate that log entries conform to the expected format
+      before ingestion into log processing systems.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - log_injection
+      - input_sanitization
+      - security
+
+  - id: audit010
+    slug: missing_forensic_capability
+    title: "Missing Forensic Capability"
+    severity: medium
+    description: >
+      Checks whether the MCP server's logging and data retention provide
+      sufficient information for security forensic investigations. Incomplete
+      forensic data prevents root cause analysis after security incidents.
+    risk_explanation: >
+      After a security incident, forensic investigators need detailed data
+      to determine the attack vector, scope of compromise, data accessed,
+      and timeline of events. Without sufficient forensic capability,
+      organizations cannot determine the root cause, assess the full impact,
+      or implement effective countermeasures to prevent recurrence.
+    remediation: >
+      Ensure logging captures sufficient detail for forensic analysis
+      including full request/response payloads for sensitive operations,
+      network connection metadata, process execution details, and file
+      access events. Implement log correlation across MCP components.
+      Maintain log retention for a minimum period required for forensic
+      investigations (typically 90 days to 1 year).
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP08:2025"
+    tags:
+      - audit_logging
+      - forensics
+      - incident_response
+      - data_retention

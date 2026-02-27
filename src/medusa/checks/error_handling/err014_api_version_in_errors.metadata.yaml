@@ -1,0 +1,28 @@
+check_id: err014
+title: API Version in Error Messages
+category: error_handling
+severity: low
+description: >
+  Detects MCP server error messages that include API version numbers,
+  protocol version identifiers, or internal build version strings.
+  Version information helps attackers identify specific software
+  releases and their known vulnerabilities.
+risk_explanation: >
+  Version information in error messages allows attackers to precisely
+  identify the software version running on the server and cross-
+  reference it against public vulnerability databases. This targeted
+  approach is more efficient than blind exploitation and increases the
+  success rate of attacks against known CVEs.
+remediation: >
+  Remove version strings from all error response messages and headers.
+  If version information must be communicated, use the MCP protocol
+  negotiation phase rather than error messages. Implement build
+  processes that strip version identifiers from production error message
+  templates.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

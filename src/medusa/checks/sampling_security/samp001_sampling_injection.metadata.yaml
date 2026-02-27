@@ -1,0 +1,34 @@
+check_id: samp001
+title: Sampling Request Injection
+category: sampling_security
+severity: critical
+description: >
+  Detects MCP server implementations where malicious prompts can be
+  injected into sampling requests sent to LLM clients. A compromised or
+  malicious MCP server can craft sampling requests containing hidden
+  instructions that manipulate the LLM into performing unauthorized
+  actions, exfiltrating data, or bypassing safety guardrails.
+risk_explanation: >
+  Sampling request injection allows a malicious MCP server to embed
+  attacker- controlled instructions directly into the prompts sent to
+  the LLM for processing. Since the LLM treats sampling requests as
+  trusted input, injected instructions are followed without user
+  awareness. This can lead to data exfiltration, unauthorized tool
+  invocations, and complete compromise of the LLM agent's actions within
+  the user's session.
+remediation: >
+  Implement strict input validation and sanitization for all sampling
+  requests before they are forwarded to the LLM. Display sampling
+  request contents to the user for review and approval before execution.
+  Apply content filtering that detects and blocks known injection
+  patterns in sampling prompts. Use a separate execution context for
+  sampling requests that limits available tools and data access.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

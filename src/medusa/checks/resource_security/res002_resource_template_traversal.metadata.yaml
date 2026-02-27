@@ -1,0 +1,29 @@
+check_id: res002
+title: Resource Template Path Traversal
+category: resource_security
+severity: high
+description: >
+  Detects MCP resource templates that accept user-controlled path
+  segments without validation, enabling directory traversal attacks.
+  Templates using patterns like {path} or {filename} in URI templates
+  can be exploited with ../ sequences to access arbitrary files.
+risk_explanation: >
+  Path traversal through resource templates allows attackers to read
+  files outside the intended resource scope, including system files such
+  as /etc/passwd, application configuration containing secrets, source
+  code, and other sensitive data. This can lead to full server
+  compromise through credential extraction.
+remediation: >
+  Validate all resource template parameters against an allowlist of
+  permitted values or patterns. Canonicalize paths and reject any
+  containing ../ or other traversal sequences. Implement a resource root
+  directory and verify all resolved paths remain within it. Use chroot
+  or similar sandboxing for file-based resources.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

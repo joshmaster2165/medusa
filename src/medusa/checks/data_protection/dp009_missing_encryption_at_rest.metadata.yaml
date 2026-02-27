@@ -1,0 +1,29 @@
+check_id: dp009
+title: Missing Encryption at Rest
+category: data_protection
+severity: high
+description: >
+  Detects MCP server configurations where stored data, caches, or
+  persistent state lack encryption at rest. Unencrypted data on disk is
+  vulnerable to theft if the host is compromised.
+risk_explanation: >
+  Data stored without encryption at rest can be read by anyone with
+  filesystem access. If the MCP server host is compromised, an attacker
+  gains immediate access to all stored data including credentials, PII,
+  and business-critical information without needing to break any
+  cryptographic protections.
+remediation: >
+  Enable encryption at rest for all persistent storage used by the MCP
+  server. Use platform-provided encryption (e.g. LUKS, FileVault, AWS
+  EBS encryption) or application-level encryption with properly managed
+  keys. Ensure encryption keys are stored separately from the encrypted
+  data.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - encryption
+  - storage
+  - cryptography

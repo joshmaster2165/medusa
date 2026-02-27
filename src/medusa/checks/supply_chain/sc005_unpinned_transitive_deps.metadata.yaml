@@ -1,0 +1,30 @@
+check_id: sc005
+title: Unpinned Transitive Dependencies
+category: supply_chain
+severity: high
+description: >
+  Detects MCP server dependency configurations where transitive
+  dependencies are not version-constrained. Unpinned transitive
+  dependencies can silently update to malicious versions.
+risk_explanation: >
+  When transitive dependencies lack version constraints, package
+  managers resolve them to the latest available version at install time.
+  An attacker who publishes a malicious version of a transitive
+  dependency can have their code installed silently without any change
+  to the MCP server's direct dependency specifications. This is a common
+  supply- chain attack vector.
+remediation: >
+  Use lockfiles to pin all transitive dependencies to specific versions.
+  Enable hash verification for installed packages (e.g. pip --require-
+  hashes, npm integrity checks). Review transitive dependency updates
+  explicitly. Consider using tools that flatten and pin the entire
+  dependency tree.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - supply_chain
+  - version_pinning
+  - transitive_dependencies
+  - integrity

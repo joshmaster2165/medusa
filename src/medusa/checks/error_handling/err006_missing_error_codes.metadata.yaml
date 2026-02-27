@@ -1,0 +1,28 @@
+check_id: err006
+title: Missing Error Codes
+category: error_handling
+severity: low
+description: >
+  Detects MCP server error responses that lack standardized error codes,
+  relying solely on free-text error messages. Without consistent error
+  codes, clients cannot programmatically handle different error
+  conditions or implement proper retry logic.
+risk_explanation: >
+  Missing error codes force LLM clients to parse free-text error
+  messages, which is unreliable and may lead to incorrect error handling
+  decisions. Clients may retry non-retryable errors, ignore critical
+  failures, or misinterpret error severity. This can result in data
+  loss, infinite retry loops, or silent security failures.
+remediation: >
+  Define a standardized error code taxonomy for the MCP server that
+  covers authentication errors, authorization errors, validation errors,
+  rate limiting, and internal errors. Return a machine-readable error
+  code alongside every error message. Document the error codes and their
+  meanings for client developers.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

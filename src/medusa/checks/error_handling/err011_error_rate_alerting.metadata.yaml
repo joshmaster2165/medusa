@@ -1,0 +1,28 @@
+check_id: err011
+title: Missing Error Rate Alerting
+category: error_handling
+severity: low
+description: >
+  Detects MCP server deployments that lack monitoring and alerting for
+  elevated error rates. Without error rate tracking, attacks that
+  trigger errors such as brute force, fuzzing, or denial of service go
+  undetected until major damage occurs.
+risk_explanation: >
+  Elevated error rates are often the first signal of an active attack.
+  Without alerting, brute-force authentication attempts, input fuzzing
+  campaigns, and resource exhaustion attacks proceed undetected. By the
+  time the impact is noticed, the attacker may have already achieved
+  their objective or moved laterally.
+remediation: >
+  Implement error rate monitoring with configurable thresholds and
+  alerting for the MCP server. Track error rates by category, tool, and
+  client. Set up alerts for sudden error rate spikes that may indicate
+  attacks. Integrate error monitoring with the security incident
+  response workflow.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

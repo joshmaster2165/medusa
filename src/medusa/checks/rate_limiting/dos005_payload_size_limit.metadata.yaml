@@ -1,0 +1,33 @@
+check_id: dos005
+title: Missing Payload Size Limit
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server configurations that do not enforce size limits on
+  request and response payloads. Without size limits, attackers can send
+  oversized requests that consume memory during parsing or trigger tools
+  to generate massive responses that exhaust server resources.
+risk_explanation: >
+  Missing payload size limits expose MCP servers to memory exhaustion
+  attacks. An attacker can send tool invocation requests with extremely
+  large parameters that consume excessive memory during parsing and
+  processing. Conversely, tool invocations can be crafted to generate
+  oversized responses that exhaust server memory during serialization.
+  Large payloads also consume network bandwidth and can degrade
+  performance for all connected clients.
+remediation: >
+  Enforce maximum payload size limits for all MCP requests and
+  responses. Set request body size limits at the transport layer (web
+  server or reverse proxy) to prevent oversized requests from reaching
+  the application. Implement per-parameter size limits for tool
+  invocation arguments. Set maximum response sizes for tool outputs.
+  Implement streaming for large responses rather than buffering entire
+  payloads in memory.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

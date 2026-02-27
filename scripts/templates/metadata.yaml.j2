@@ -1,0 +1,22 @@
+check_id: {{ check_id }}
+title: {{ title }}
+category: {{ category }}
+severity: {{ severity }}
+description: >
+  {{ description | wordwrap(70) | indent(2) }}
+risk_explanation: >
+  {{ risk_explanation | wordwrap(70) | indent(2) }}
+remediation: >
+  {{ remediation | wordwrap(70) | indent(2) }}
+references:
+{% for ref in references %}
+  - "{{ ref }}"
+{% endfor %}
+owasp_mcp:
+{% for owasp in owasp_mcp %}
+  - "{{ owasp }}"
+{% endfor %}
+tags:
+{% for tag in tags %}
+  - {{ tag }}
+{% endfor %}

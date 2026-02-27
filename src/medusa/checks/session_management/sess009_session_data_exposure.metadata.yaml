@@ -1,0 +1,31 @@
+check_id: sess009
+title: Session Data Exposure
+category: session_management
+severity: high
+description: >
+  Detects MCP server implementations that store sensitive data directly
+  in session objects or transmit session contents to the client. Session
+  data may include tool invocation history, user credentials, resource
+  URIs, or intermediate computation results that should not be exposed
+  to the LLM client or stored in client-accessible session storage.
+risk_explanation: >
+  Exposed session data can reveal sensitive information about MCP tool
+  invocations, user credentials, internal resource URIs, and server-side
+  state. Attackers can extract this data to map internal infrastructure,
+  harvest credentials, or understand tool behavior for crafting more
+  sophisticated attacks. Client-side session storage is particularly
+  dangerous as it persists beyond the session lifetime.
+remediation: >
+  Store all sensitive session data server-side in a secure session
+  store. Never include credentials, internal URIs, or sensitive tool
+  outputs in client-visible session data. Encrypt server-side session
+  storage at rest. Minimize the data stored in sessions to only what is
+  required for session management. Implement session data classification
+  and enforce storage policies based on sensitivity.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

@@ -1,0 +1,35 @@
+check_id: gov012
+title: Missing Disaster Recovery Plan
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a disaster recovery plan for
+  restoring service after catastrophic events including data center
+  failures, ransomware attacks, and data corruption. Disaster recovery
+  ensures the ability to restore MCP server operations from a known good
+  state.
+risk_explanation: >
+  Without disaster recovery planning, catastrophic events affecting the
+  MCP server infrastructure can result in permanent data loss, extended
+  outages, and inability to restore service. MCP servers may store
+  critical configuration, tool definitions, user data, and audit logs
+  that must be recoverable. Ransomware attacks targeting MCP
+  infrastructure can encrypt all server data and configurations,
+  requiring restoration from backups that may not exist without a
+  disaster recovery plan.
+remediation: >
+  Develop a disaster recovery plan that includes backup and restoration
+  procedures for all MCP server components including configurations,
+  tool definitions, user data, and audit logs. Define recovery time
+  objectives (RTO) and recovery point objectives (RPO). Implement
+  automated backups with off-site storage. Test disaster recovery
+  procedures regularly through restoration drills. Maintain runbooks for
+  common disaster scenarios.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

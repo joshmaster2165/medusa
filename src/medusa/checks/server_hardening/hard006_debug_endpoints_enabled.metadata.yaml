@@ -1,0 +1,31 @@
+check_id: hard006
+title: Debug Endpoints Enabled
+category: server_hardening
+severity: high
+description: >
+  Detects MCP servers that expose debug or diagnostic endpoints in
+  production deployments. Debug endpoints may include health checks with
+  internal details, profiling endpoints, memory dumps, or configuration
+  inspection endpoints that reveal sensitive internals.
+risk_explanation: >
+  Debug endpoints expose internal server state, performance metrics,
+  configuration details, memory contents, and execution traces.
+  Attackers use this information to understand the server architecture,
+  identify vulnerable components, extract secrets from memory dumps, and
+  time attacks using profiling data. Some debug endpoints may even allow
+  arbitrary code execution or configuration modification.
+remediation: >
+  Disable all debug and diagnostic endpoints in production deployments.
+  Implement environment checks that prevent debug endpoints from being
+  registered in production mode. If health check endpoints are needed,
+  limit them to basic availability status without internal details.
+  Protect any remaining diagnostic endpoints with strong authentication
+  and network-level restrictions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

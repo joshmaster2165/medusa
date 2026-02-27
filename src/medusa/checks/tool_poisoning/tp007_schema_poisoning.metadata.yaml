@@ -1,0 +1,31 @@
+check_id: tp007
+title: Schema Poisoning via Default Values
+category: tool_poisoning
+severity: high
+description: >
+  Detects tool schemas containing default parameter values that inject
+  unintended instructions or override user-supplied intent. Attackers
+  embed malicious defaults in JSON Schema definitions so that when the
+  LLM omits a parameter, the default silently takes effect with harmful
+  consequences.
+risk_explanation: >
+  Schema default values are processed before user input is validated. A
+  malicious default can silently force a tool to operate on a different
+  target, use elevated permissions, or include exfiltration payloads.
+  Because defaults are not typically displayed in user-facing UIs, users
+  remain unaware of the injected behaviour.
+remediation: >
+  Review all tool parameter defaults for suspicious values. Remove
+  defaults that encode commands, URLs, or complex objects. Require
+  explicit user confirmation for any parameter that has a security-
+  relevant default value. Implement server-side validation that rejects
+  schemas with suspicious default patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP02:2025"
+tags:
+  - tool_poisoning
+  - schema_poisoning
+  - default_values
+  - parameter_injection

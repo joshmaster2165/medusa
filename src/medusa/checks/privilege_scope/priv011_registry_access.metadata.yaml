@@ -1,0 +1,30 @@
+check_id: priv011
+title: System Registry Access
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP tools with access to system registry (Windows) or global
+  configuration files (Linux /etc/). System-level configuration access
+  allows modifying OS behaviour, security settings, and service
+  configurations.
+risk_explanation: >
+  System registry or global configuration access allows an attacker to
+  disable security features, modify startup programs, change network
+  settings, or alter service configurations. On Windows, registry
+  modifications can install persistence mechanisms, disable antivirus,
+  or modify authentication settings. On Linux, modifying /etc/ files can
+  alter PAM, sudoers, or SSH configurations.
+remediation: >
+  Restrict MCP tools from accessing system-level configuration. Use
+  read-only access where system information must be read. Implement file
+  integrity monitoring on critical system configuration. Run MCP servers
+  in containers that do not mount system configuration directories.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - system_registry
+  - global_config
+  - os_security

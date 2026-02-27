@@ -1,0 +1,29 @@
+check_id: dp015
+title: Clipboard Data Exposure Risk
+category: data_protection
+severity: medium
+description: >
+  Detects MCP tools with capabilities to read or write clipboard
+  contents without explicit user awareness. Clipboard access can expose
+  passwords, sensitive text, and copied credentials to the MCP server.
+risk_explanation: >
+  The clipboard frequently contains sensitive data such as passwords,
+  API keys, personal messages, and financial information that users copy
+  during normal workflows. An MCP tool that silently reads clipboard
+  contents can exfiltrate this data without the user's knowledge,
+  creating a covert data theft channel.
+remediation: >
+  Require explicit user confirmation before any clipboard access.
+  Display clear notifications when clipboard data is read or written.
+  Implement clipboard access as a gated permission that must be
+  explicitly granted by the user. Log all clipboard access events for
+  audit purposes.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - clipboard
+  - privacy
+  - user_awareness

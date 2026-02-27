@@ -1,0 +1,30 @@
+check_id: sc004
+title: Excessive Dependency Count
+category: supply_chain
+severity: medium
+description: >
+  Detects MCP servers with an excessive number of transitive
+  dependencies. Each additional dependency increases the attack surface
+  and the likelihood of including a compromised package.
+risk_explanation: >
+  Every dependency in the dependency tree is a potential attack vector.
+  Projects with hundreds of transitive dependencies have a statistically
+  higher chance of including a compromised, vulnerable, or abandoned
+  package. The complexity of large dependency trees also makes security
+  auditing impractical and increases the risk of dependency confusion
+  attacks.
+remediation: >
+  Audit the dependency tree and remove unnecessary dependencies. Prefer
+  packages with minimal transitive dependencies. Consider implementing
+  critical functionality directly rather than importing large libraries
+  for small features. Use dependency analysis tools to identify and
+  eliminate redundant or overlapping dependencies.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - supply_chain
+  - dependencies
+  - attack_surface
+  - dependency_management

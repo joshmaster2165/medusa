@@ -1,0 +1,28 @@
+check_id: err013
+title: Database Errors Exposed
+category: error_handling
+severity: high
+description: >
+  Detects MCP server error responses that include raw database error
+  messages, SQL statements, connection strings, or database engine error
+  codes. These details reveal database type, schema structure, and query
+  logic to potential attackers.
+risk_explanation: >
+  Raw database errors can reveal table names, column names, SQL query
+  structure, database engine version, and connection details. This
+  information directly enables SQL injection attacks by showing
+  attackers the exact query context. Connection strings may contain
+  credentials. Database version information identifies known CVEs.
+remediation: >
+  Catch all database exceptions at the data access layer and translate
+  them into generic application-level errors. Never expose raw SQL
+  errors, connection strings, or database engine details to MCP clients.
+  Log database errors server-side with full context for debugging. Use
+  parameterized queries to prevent SQL injection.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

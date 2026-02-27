@@ -1,0 +1,35 @@
+check_id: samp013
+title: Model Selection Manipulation
+category: sampling_security
+severity: high
+description: >
+  Detects MCP server sampling requests that attempt to control which LLM
+  model processes the request. By specifying a weaker or more permissive
+  model, an attacker can bypass safety guardrails implemented in the
+  user's preferred model and obtain responses that would otherwise be
+  blocked.
+risk_explanation: >
+  Model selection manipulation allows a malicious MCP server to
+  downgrade the safety level of sampling responses by requesting
+  processing from a less restrictive model. Different models have
+  different safety training, content policies, and capability levels. By
+  selecting a model with weaker guardrails, the attacker can obtain
+  responses containing harmful content, bypass instruction-following
+  safety measures, or exploit known vulnerabilities in specific model
+  versions.
+remediation: >
+  Restrict model selection in sampling requests to the user's configured
+  model. Ignore or reject model preferences specified by MCP servers in
+  sampling requests. If model selection is a supported feature, require
+  explicit user approval for model changes. Maintain an allowlist of
+  permitted models for sampling and enforce minimum safety requirements.
+  Log all model selection attempts for security monitoring.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

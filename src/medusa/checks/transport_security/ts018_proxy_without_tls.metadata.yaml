@@ -1,0 +1,31 @@
+check_id: ts018
+title: Proxy Without TLS
+category: transport_security
+severity: high
+description: >
+  Detects MCP server proxy configurations that do not use TLS
+  encryption. Proxies without TLS decrypt and re-encrypt traffic,
+  creating a plaintext exposure point. Unencrypted proxy connections
+  expose all traffic to interception at the proxy hop.
+risk_explanation: >
+  An unencrypted proxy connection creates a plaintext segment in the
+  communication path where all traffic, including authentication tokens
+  and sensitive data, is exposed. Even if the origin and destination use
+  HTTPS, an unencrypted proxy hop exposes the decrypted traffic to the
+  proxy operator and any attacker who can intercept the proxy
+  connection.
+remediation: >
+  Configure TLS encryption for all proxy connections (HTTPS proxy). Use
+  CONNECT tunnelling for end-to-end encryption through proxies. Verify
+  proxy certificate authenticity. Avoid HTTP proxy configurations in
+  production environments. Implement proxy authentication to prevent
+  unauthorized proxy usage.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - proxy
+  - tls
+  - interception

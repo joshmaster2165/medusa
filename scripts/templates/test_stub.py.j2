@@ -1,0 +1,17 @@
+
+class Test{{ class_name }}:
+    """Tests for {{ class_name }}."""
+
+    @pytest.fixture()
+    def check(self) -> {{ class_name }}:
+        return {{ class_name }}()
+
+    async def test_metadata_loads_correctly(self, check: {{ class_name }}) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "{{ check_id }}"
+        assert meta.category == "{{ category }}"
+
+    async def test_stub_returns_empty(self, check: {{ class_name }}) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)

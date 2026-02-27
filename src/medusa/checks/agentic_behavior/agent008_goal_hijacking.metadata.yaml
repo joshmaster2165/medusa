@@ -1,0 +1,34 @@
+check_id: agent008
+title: Goal Hijacking
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations where the agent's primary goal or task can
+  be redirected through prompt injection in tool outputs, resource
+  contents, or sampling responses. Goal hijacking causes the agent to
+  abandon the user's intended task and pursue an attacker-defined
+  objective.
+risk_explanation: >
+  Goal hijacking is one of the most impactful agentic attacks because it
+  redirects the agent's entire action sequence toward attacker-defined
+  objectives. Once hijacked, the agent uses all of its available tools
+  and resources to accomplish the attacker's goal rather than the
+  user's. The agent may exfiltrate data, modify systems, or take
+  destructive actions while appearing to operate normally. Users may not
+  notice the hijacking until significant damage has occurred.
+remediation: >
+  Implement goal tracking that monitors the agent's actions for
+  consistency with the user's stated objective. Detect abrupt changes in
+  action patterns that suggest goal hijacking. Require periodic user
+  confirmation that the agent is on the correct task. Apply instruction
+  hierarchy that prioritizes user instructions over tool-provided
+  instructions. Implement guardrails that prevent the agent from taking
+  actions unrelated to the stated goal.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

@@ -1,0 +1,35 @@
+check_id: gov006
+title: Missing Change Management Process
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a formal change management
+  process for tool modifications, server configuration changes, and
+  security policy updates. Uncontrolled changes can introduce security
+  vulnerabilities, break existing security controls, or disrupt service
+  availability.
+risk_explanation: >
+  Without change management, modifications to MCP server tools,
+  configurations, and policies are made without review, testing, or
+  approval. This allows security vulnerabilities to be introduced
+  through code changes, misconfig- urations to weaken security controls,
+  and untested changes to cause service disruptions. In MCP
+  environments, a single tool change can affect all connected LLM
+  clients and create new attack vectors for prompt injection or data
+  exfiltration.
+remediation: >
+  Implement a change management process that requires review and
+  approval for all changes to MCP server tools, configurations, and
+  security policies. Include security review in the change approval
+  process. Test changes in a staging environment before production
+  deployment. Maintain a change log with rollback procedures. Implement
+  automated testing that validates security controls after changes are
+  applied.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

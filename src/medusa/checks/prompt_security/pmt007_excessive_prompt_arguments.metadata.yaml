@@ -1,0 +1,30 @@
+check_id: pmt007
+title: Excessive Prompt Arguments
+category: prompt_security
+severity: medium
+description: >
+  Detects MCP prompt definitions that accept an excessive number of
+  arguments, creating a large attack surface for injection through any
+  of the argument slots. Prompts with many arguments are harder to
+  validate and more likely to have overlooked injection vectors.
+risk_explanation: >
+  Each prompt argument is a potential injection vector. Prompts with
+  many arguments increase the probability that at least one argument
+  lacks proper validation. Complex argument schemas are difficult to
+  audit and test comprehensively. Excessive arguments also increase the
+  total user-controlled content in the prompt, making injection payloads
+  easier to disguise among legitimate values.
+remediation: >
+  Limit the number of arguments per prompt to the minimum necessary.
+  Consolidate related arguments into structured objects with schemas.
+  Implement strict validation for every argument regardless of count.
+  Review prompts with many arguments for potential simplification. Set a
+  configurable maximum argument count policy.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

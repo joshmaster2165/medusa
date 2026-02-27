@@ -1,0 +1,32 @@
+check_id: ts005
+title: Mixed Content Transport
+category: transport_security
+severity: high
+description: >
+  Detects MCP servers that mix HTTP and HTTPS connections in their
+  transport configuration. Mixed content downgrades the security of the
+  entire communication channel, as any unencrypted connection can be
+  intercepted to steal credentials or modify traffic.
+risk_explanation: >
+  Mixed content transport allows a network attacker to intercept the
+  unencrypted HTTP connections while the user believes the session is
+  secure due to the HTTPS connections. The attacker can steal tokens
+  transmitted over HTTP, inject malicious content, or downgrade the
+  entire session to plaintext. A single HTTP request is sufficient to
+  compromise authentication credentials.
+remediation: >
+  Ensure all MCP server connections use HTTPS exclusively. Configure
+  HTTP-to-HTTPS redirects for any endpoints that still accept HTTP.
+  Implement HSTS to prevent protocol downgrade attacks. Audit all
+  connection URLs in server configuration for http:// references and
+  update them to https://.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - mixed_content
+  - https
+  - protocol_downgrade

@@ -1,0 +1,31 @@
+check_id: sess006
+title: Missing Concurrent Session Limit
+category: session_management
+severity: medium
+description: >
+  Detects MCP server configurations that allow unlimited concurrent
+  sessions for a single user or identity. Without concurrent session
+  limits, a compromised credential can be used to establish multiple
+  parallel sessions across different LLM clients without the legitimate
+  user being aware.
+risk_explanation: >
+  Without concurrent session limits, an attacker who obtains valid
+  credentials can open additional MCP sessions alongside the legitimate
+  user's session. This enables silent, parallel exploitation of tools
+  and resources while the legitimate user continues operating normally,
+  making detection difficult. It also creates resource exhaustion risks
+  on the MCP server.
+remediation: >
+  Enforce a maximum number of concurrent sessions per user identity on
+  the MCP server. Implement a policy for handling session limit
+  violations, such as terminating the oldest session or rejecting new
+  session requests. Notify users when concurrent session limits are
+  reached or when sessions are created from new locations. Log all
+  session creation events for audit.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

@@ -1,0 +1,483 @@
+category: transport_security
+checks:
+  - id: ts005
+    slug: mixed_content
+    title: "Mixed Content Transport"
+    severity: high
+    description: >
+      Detects MCP servers that mix HTTP and HTTPS connections in their
+      transport configuration. Mixed content downgrades the security of
+      the entire communication channel, as any unencrypted connection
+      can be intercepted to steal credentials or modify traffic.
+    risk_explanation: >
+      Mixed content transport allows a network attacker to intercept the
+      unencrypted HTTP connections while the user believes the session is
+      secure due to the HTTPS connections. The attacker can steal tokens
+      transmitted over HTTP, inject malicious content, or downgrade the
+      entire session to plaintext. A single HTTP request is sufficient to
+      compromise authentication credentials.
+    remediation: >
+      Ensure all MCP server connections use HTTPS exclusively. Configure
+      HTTP-to-HTTPS redirects for any endpoints that still accept HTTP.
+      Implement HSTS to prevent protocol downgrade attacks. Audit all
+      connection URLs in server configuration for http:// references and
+      update them to https://.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - mixed_content
+      - https
+      - protocol_downgrade
+
+  - id: ts006
+    slug: weak_cipher_suites
+    title: "Weak TLS Cipher Suites"
+    severity: high
+    description: >
+      Detects MCP servers configured with weak or deprecated TLS cipher
+      suites. Weak ciphers such as RC4, DES, 3DES, and export-grade ciphers
+      can be broken by modern attacks, compromising the confidentiality of
+      encrypted communications.
+    risk_explanation: >
+      Weak cipher suites allow an attacker to decrypt TLS-encrypted traffic
+      through known cryptographic attacks. RC4 has practical biases enabling
+      plaintext recovery, DES and 3DES are vulnerable to Sweet32 attacks,
+      and export ciphers use intentionally weakened key sizes. Servers
+      supporting weak ciphers are vulnerable even if they also support strong
+      ciphers due to downgrade attacks.
+    remediation: >
+      Configure TLS to use only strong cipher suites. Prefer AEAD ciphers
+      (AES-GCM, ChaCha20-Poly1305). Disable all CBC-mode ciphers, RC4, DES,
+      3DES, and export ciphers. Set TLS minimum version to 1.2, preferring
+      TLS 1.3 which eliminates weak cipher negotiation. Use tools like
+      testssl.sh to audit cipher configuration.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/TLS_Cipher_String_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - cipher_suites
+      - tls
+      - cryptography
+
+  - id: ts007
+    slug: missing_hsts
+    title: "Missing HSTS Header"
+    severity: medium
+    description: >
+      Detects HTTP endpoints served without the Strict-Transport-Security
+      (HSTS) header. Without HSTS, browsers and clients may connect over
+      HTTP before being redirected to HTTPS, creating a window for
+      man-in-the-middle attacks.
+    risk_explanation: >
+      Without HSTS, the initial connection to the server may be made over
+      HTTP, which an attacker can intercept to perform SSL stripping. The
+      attacker maintains an HTTP connection with the client while connecting
+      to the server over HTTPS, transparently intercepting all traffic.
+      HSTS prevents this by instructing clients to always use HTTPS.
+    remediation: >
+      Add the Strict-Transport-Security header to all HTTPS responses with
+      a minimum max-age of 31536000 (one year). Include the includeSubDomains
+      directive to protect all subdomains. Consider HSTS preloading by adding
+      the preload directive and submitting to the browser preload list.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - hsts
+      - ssl_stripping
+      - http_headers
+
+  - id: ts008
+    slug: certificate_pinning_absent
+    title: "Certificate Pinning Absent"
+    severity: medium
+    description: >
+      Detects MCP connections without certificate pinning for critical
+      communication channels. Without pinning, any certificate authority
+      can issue a certificate for the server's domain, enabling
+      man-in-the-middle attacks by compromised or coerced CAs.
+    risk_explanation: >
+      Without certificate pinning, an attacker who compromises any trusted
+      certificate authority (or obtains a misissued certificate) can
+      intercept TLS connections to the MCP server. There are hundreds of
+      trusted CAs, and several have been compromised historically. Pinning
+      restricts accepted certificates to a known set, mitigating CA
+      compromise.
+    remediation: >
+      Implement certificate pinning for connections to critical MCP servers.
+      Pin the server's public key or a trusted intermediate CA certificate.
+      Use HTTP Public Key Pinning (HPKP) headers or application-level
+      pinning. Maintain backup pins for key rotation. Monitor Certificate
+      Transparency logs for unauthorized certificate issuance.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - certificate_pinning
+      - ca_compromise
+      - tls
+
+  - id: ts009
+    slug: self_signed_certificate
+    title: "Self-Signed Certificate Usage"
+    severity: high
+    description: >
+      Detects MCP servers using self-signed TLS certificates. Self-signed
+      certificates cannot be verified against a trusted certificate authority
+      chain, requiring clients to disable certificate validation and making
+      them vulnerable to man-in-the-middle attacks.
+    risk_explanation: >
+      Self-signed certificates force clients to either reject the connection
+      or disable certificate validation. When validation is disabled, any
+      attacker can present their own self-signed certificate and intercept
+      the connection. Self-signed certificates provide encryption but no
+      authentication, meaning the client cannot verify it is communicating
+      with the intended server.
+    remediation: >
+      Replace self-signed certificates with certificates from a trusted CA.
+      Use Let's Encrypt for free automated certificate issuance. For
+      internal services, establish a private CA and distribute its root
+      certificate to clients. If self-signed certificates are temporarily
+      required, implement certificate pinning to prevent MITM attacks.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - self_signed
+      - certificate_validation
+      - mitm
+
+  - id: ts010
+    slug: expired_certificate
+    title: "Expired TLS Certificate"
+    severity: critical
+    description: >
+      Detects MCP servers with expired TLS certificates. Expired certificates
+      cause connection errors in properly configured clients and may lead
+      administrators to disable certificate validation to restore service,
+      removing all TLS authentication guarantees.
+    risk_explanation: >
+      Expired certificates indicate a failure in certificate lifecycle
+      management. Clients that accept expired certificates lose the guarantee
+      that the certificate was issued to the legitimate server operator. The
+      most dangerous consequence is that operators disable certificate
+      validation to work around the expiration, leaving the connection
+      vulnerable to interception indefinitely.
+    remediation: >
+      Implement automated certificate renewal using ACME (Let's Encrypt) or
+      certificate management platforms. Set up monitoring and alerting for
+      certificate expiration at least 30 days before expiry. Use certificate
+      management tools that automatically rotate certificates. Never disable
+      certificate validation to work around expired certificates.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - expired_certificate
+      - certificate_management
+      - lifecycle
+
+  - id: ts011
+    slug: wildcard_certificate
+    title: "Wildcard Certificate Usage"
+    severity: low
+    description: >
+      Detects MCP servers using wildcard TLS certificates (*.example.com).
+      Wildcard certificates cover all subdomains, meaning a private key
+      compromise on any subdomain's server exposes all subdomains to
+      impersonation.
+    risk_explanation: >
+      Wildcard certificates share a single private key across all subdomains.
+      If the key is compromised on any server hosting any subdomain, the
+      attacker can impersonate every subdomain. This is especially risky
+      when the wildcard certificate is deployed to development, staging, and
+      production servers, as the weakest server's security determines the
+      entire domain's security.
+    remediation: >
+      Use specific certificates for each subdomain or service instead of
+      wildcard certificates. If wildcards are necessary, restrict their
+      deployment to trusted servers with strong key protection. Use
+      separate certificates for different security zones (production,
+      staging, development). Implement key isolation using HSMs.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - wildcard_certificate
+      - key_compromise
+      - subdomain_security
+
+  - id: ts012
+    slug: missing_cors_headers
+    title: "Missing CORS Headers"
+    severity: medium
+    description: >
+      Detects HTTP endpoints without Cross-Origin Resource Sharing (CORS)
+      configuration. Missing CORS headers can either block legitimate
+      cross-origin requests or indicate that no cross-origin access policy
+      has been considered, potentially defaulting to an insecure state.
+    risk_explanation: >
+      Missing CORS configuration means the server has not explicitly defined
+      which origins can access its resources. Without CORS headers, browsers
+      block cross-origin requests by default, but server-side requests are
+      not restricted. The lack of explicit CORS policy indicates missing
+      security consideration for cross-origin access, which may lead to
+      overly permissive configuration when CORS is eventually needed.
+    remediation: >
+      Configure explicit CORS headers on all HTTP endpoints. Set
+      Access-Control-Allow-Origin to specific trusted origins, never use
+      wildcards for authenticated endpoints. Define allowed methods and
+      headers explicitly. Implement CORS preflight caching with appropriate
+      max-age values.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - cors
+      - cross_origin
+      - http_headers
+
+  - id: ts013
+    slug: overly_permissive_cors
+    title: "Overly Permissive CORS"
+    severity: high
+    description: >
+      Detects MCP servers with CORS configuration that allows all origins
+      (Access-Control-Allow-Origin: *) or reflects the request origin.
+      Overly permissive CORS enables any website to make authenticated
+      requests to the MCP server.
+    risk_explanation: >
+      CORS with Access-Control-Allow-Origin: * allows any website to make
+      cross-origin requests to the MCP server. When combined with
+      Access-Control-Allow-Credentials: true, any malicious website can
+      make authenticated requests using the user's cookies. The attacker's
+      website can invoke MCP tools, read responses, and exfiltrate data
+      through the user's authenticated session.
+    remediation: >
+      Restrict Access-Control-Allow-Origin to specific trusted domains. Never
+      use wildcards (*) for endpoints that accept authentication. Validate
+      the Origin header against an allowlist before reflecting it. Do not
+      combine Access-Control-Allow-Origin: * with
+      Access-Control-Allow-Credentials: true.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - cors
+      - permissive_origin
+      - cross_site
+
+  - id: ts014
+    slug: websocket_without_tls
+    title: "WebSocket Without TLS"
+    severity: high
+    description: >
+      Detects MCP server WebSocket connections using ws:// instead of wss://.
+      Unencrypted WebSocket connections expose all bidirectional communication
+      to network-level interception, including tool invocations, responses,
+      and authentication tokens.
+    risk_explanation: >
+      WebSocket connections over ws:// transmit all data in plaintext,
+      including authentication handshakes, tool invocations, and server
+      responses. A network attacker can intercept, read, and modify WebSocket
+      frames in real time. Unlike HTTP where each request is independent,
+      WebSocket connections are long-lived, giving the attacker sustained
+      access to the communication stream.
+    remediation: >
+      Switch all WebSocket connections from ws:// to wss://. Configure TLS
+      certificates for the WebSocket server. Implement the same TLS
+      configuration standards (cipher suites, protocol versions) for
+      WebSocket as for HTTPS endpoints. Reject ws:// connection attempts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - websocket
+      - tls
+      - encryption
+
+  - id: ts015
+    slug: sse_without_tls
+    title: "SSE Without TLS"
+    severity: high
+    description: >
+      Detects Server-Sent Events (SSE) connections over unencrypted HTTP.
+      MCP servers using SSE transport over HTTP expose the event stream to
+      network interception, including tool results, notifications, and
+      potentially sensitive server-pushed data.
+    risk_explanation: >
+      SSE connections over HTTP transmit server-pushed events in plaintext.
+      Since SSE is a primary MCP transport mechanism, unencrypted SSE
+      exposes the entire server-to-client communication channel. A network
+      observer can read all tool execution results, resource updates, and
+      notification content. The long-lived nature of SSE connections
+      provides persistent visibility into server operations.
+    remediation: >
+      Configure all SSE endpoints to require HTTPS. Use TLS-encrypted
+      connections for the SSE event stream. Implement the same security
+      headers (HSTS, CSP) on SSE endpoints as on regular HTTPS endpoints.
+      Reject unencrypted HTTP connections to SSE endpoints.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://modelcontextprotocol.io/specification/2025-03-26/basic/transports"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - sse
+      - tls
+      - event_stream
+
+  - id: ts016
+    slug: missing_content_security_policy
+    title: "Missing Content Security Policy"
+    severity: medium
+    description: >
+      Detects MCP server HTTP responses without Content-Security-Policy
+      headers. CSP headers prevent cross-site scripting, clickjacking, and
+      other code injection attacks by restricting the sources from which
+      content can be loaded.
+    risk_explanation: >
+      Without CSP headers, browsers allow loading scripts, styles, and other
+      resources from any origin. This enables XSS attacks where injected
+      scripts execute with the page's full privileges. Missing CSP also
+      allows framing attacks (clickjacking) where the MCP server's UI is
+      embedded in a malicious page to trick users into performing unintended
+      actions.
+    remediation: >
+      Add Content-Security-Policy headers to all HTTP responses. Start with
+      a restrictive policy (default-src 'self') and add exceptions as
+      needed. Include frame-ancestors 'none' to prevent clickjacking. Use
+      CSP reporting (report-uri or report-to) to monitor policy violations.
+      Avoid using 'unsafe-inline' and 'unsafe-eval' directives.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - csp
+      - xss_prevention
+      - http_headers
+
+  - id: ts017
+    slug: dns_over_http
+    title: "DNS Over HTTP"
+    severity: medium
+    description: >
+      Detects MCP server DNS resolution performed over unencrypted HTTP
+      instead of DNS-over-HTTPS (DoH) or DNS-over-TLS (DoT). Unencrypted
+      DNS queries expose the server's communication targets to network
+      observers and are vulnerable to DNS spoofing.
+    risk_explanation: >
+      Unencrypted DNS queries reveal which services the MCP server
+      communicates with, enabling traffic analysis. DNS responses can be
+      spoofed by network-level attackers to redirect the server's
+      connections to malicious endpoints. DNS spoofing can redirect API
+      calls, webhook deliveries, and data transmissions to attacker-
+      controlled servers.
+    remediation: >
+      Configure DNS-over-HTTPS (DoH) or DNS-over-TLS (DoT) for the MCP
+      server's DNS resolution. Use DNSSEC validation to detect DNS response
+      tampering. Pin DNS resolver addresses to prevent resolver redirection.
+      Implement certificate-based server authentication independent of DNS
+      for critical connections.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - dns
+      - dns_over_https
+      - dns_spoofing
+
+  - id: ts018
+    slug: proxy_without_tls
+    title: "Proxy Without TLS"
+    severity: high
+    description: >
+      Detects MCP server proxy configurations that do not use TLS encryption.
+      Proxies without TLS decrypt and re-encrypt traffic, creating a plaintext
+      exposure point. Unencrypted proxy connections expose all traffic to
+      interception at the proxy hop.
+    risk_explanation: >
+      An unencrypted proxy connection creates a plaintext segment in the
+      communication path where all traffic, including authentication tokens
+      and sensitive data, is exposed. Even if the origin and destination use
+      HTTPS, an unencrypted proxy hop exposes the decrypted traffic to the
+      proxy operator and any attacker who can intercept the proxy connection.
+    remediation: >
+      Configure TLS encryption for all proxy connections (HTTPS proxy). Use
+      CONNECT tunnelling for end-to-end encryption through proxies. Verify
+      proxy certificate authenticity. Avoid HTTP proxy configurations in
+      production environments. Implement proxy authentication to prevent
+      unauthorized proxy usage.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - proxy
+      - tls
+      - interception
+
+  - id: ts019
+    slug: missing_certificate_transparency
+    title: "Missing Certificate Transparency"
+    severity: low
+    description: >
+      Detects absence of Certificate Transparency (CT) log monitoring for
+      MCP server certificates. Without CT monitoring, unauthorized certificate
+      issuance for the server's domain goes undetected, enabling unnoticed
+      man-in-the-middle attacks.
+    risk_explanation: >
+      Certificate Transparency logs provide a public, auditable record of
+      all certificates issued for a domain. Without CT monitoring, a
+      certificate authority can issue a certificate for the server's domain
+      to an attacker without detection. The attacker uses this certificate
+      for MITM attacks that pass standard certificate validation. CT
+      monitoring is the primary mechanism for detecting unauthorized
+      certificate issuance.
+    remediation: >
+      Implement Certificate Transparency monitoring for all domains used by
+      MCP servers. Use CT monitoring services (e.g. crt.sh, Facebook CT
+      Monitor, SSLMate Cert Spotter) to receive alerts on new certificate
+      issuance. Configure Expect-CT headers on server responses. Require
+      SCT (Signed Certificate Timestamp) inclusion in server certificates.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP03:2025"
+    tags:
+      - transport_security
+      - certificate_transparency
+      - ct_logs
+      - monitoring

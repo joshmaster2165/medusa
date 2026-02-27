@@ -1,0 +1,29 @@
+check_id: dp023
+title: Message/Chat Data Access
+category: data_protection
+severity: high
+description: >
+  Detects MCP tools that access messaging history, chat logs, email
+  content, or other communication data. Message data contains private
+  conversations and potentially sensitive information.
+risk_explanation: >
+  Messaging and chat data contains private conversations, shared files,
+  business discussions, and personal communications. Access to this data
+  exposes confidential information, trade secrets, personal
+  relationships, and sensitive topics that users reasonably expect to
+  remain private.
+remediation: >
+  Require explicit user consent before accessing any messaging data.
+  Implement conversation-level access controls rather than blanket
+  access to all messages. Apply time-bounded access windows and log all
+  message data access events. Never cache or persist accessed message
+  content beyond the immediate processing need.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - messaging
+  - privacy
+  - communications

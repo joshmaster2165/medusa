@@ -1,0 +1,32 @@
+check_id: ts016
+title: Missing Content Security Policy
+category: transport_security
+severity: medium
+description: >
+  Detects MCP server HTTP responses without Content-Security-Policy
+  headers. CSP headers prevent cross-site scripting, clickjacking, and
+  other code injection attacks by restricting the sources from which
+  content can be loaded.
+risk_explanation: >
+  Without CSP headers, browsers allow loading scripts, styles, and other
+  resources from any origin. This enables XSS attacks where injected
+  scripts execute with the page's full privileges. Missing CSP also
+  allows framing attacks (clickjacking) where the MCP server's UI is
+  embedded in a malicious page to trick users into performing unintended
+  actions.
+remediation: >
+  Add Content-Security-Policy headers to all HTTP responses. Start with
+  a restrictive policy (default-src 'self') and add exceptions as
+  needed. Include frame-ancestors 'none' to prevent clickjacking. Use
+  CSP reporting (report-uri or report-to) to monitor policy violations.
+  Avoid using 'unsafe-inline' and 'unsafe-eval' directives.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - csp
+  - xss_prevention
+  - http_headers

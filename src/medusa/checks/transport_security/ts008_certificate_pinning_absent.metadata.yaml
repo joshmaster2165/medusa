@@ -1,0 +1,31 @@
+check_id: ts008
+title: Certificate Pinning Absent
+category: transport_security
+severity: medium
+description: >
+  Detects MCP connections without certificate pinning for critical
+  communication channels. Without pinning, any certificate authority can
+  issue a certificate for the server's domain, enabling man-in-the-
+  middle attacks by compromised or coerced CAs.
+risk_explanation: >
+  Without certificate pinning, an attacker who compromises any trusted
+  certificate authority (or obtains a misissued certificate) can
+  intercept TLS connections to the MCP server. There are hundreds of
+  trusted CAs, and several have been compromised historically. Pinning
+  restricts accepted certificates to a known set, mitigating CA
+  compromise.
+remediation: >
+  Implement certificate pinning for connections to critical MCP servers.
+  Pin the server's public key or a trusted intermediate CA certificate.
+  Use HTTP Public Key Pinning (HPKP) headers or application-level
+  pinning. Maintain backup pins for key rotation. Monitor Certificate
+  Transparency logs for unauthorized certificate issuance.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+tags:
+  - transport_security
+  - certificate_pinning
+  - ca_compromise
+  - tls

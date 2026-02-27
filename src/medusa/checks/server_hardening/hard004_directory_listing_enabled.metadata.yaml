@@ -1,0 +1,32 @@
+check_id: hard004
+title: Directory Listing Enabled
+category: server_hardening
+severity: medium
+description: >
+  Detects MCP servers with file-based resource handlers that enable
+  directory listing, allowing clients to enumerate all files and
+  subdirectories within served paths. Directory listings reveal the
+  server file structure and expose files that may not be intended for
+  access.
+risk_explanation: >
+  Directory listings expose the complete file structure of served
+  directories, revealing configuration files, backup files, temporary
+  files, and other resources that were not intended to be publicly
+  accessible. Attackers use directory listings to discover sensitive
+  files such as .env files, database backups, log files with
+  credentials, and source code.
+remediation: >
+  Disable directory listing in all MCP server file-serving
+  configurations. Return 403 Forbidden or 404 Not Found for directory
+  access requests. If directory listing is required for functionality,
+  implement it through an explicit resource handler with access controls
+  rather than automatic file system directory listing. Exclude sensitive
+  file patterns from any listing results.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - defense_in_depth

@@ -1,0 +1,30 @@
+check_id: iv027
+title: Missing Enum Constraint on Action Parameters
+category: input_validation
+severity: low
+description: >
+  Detects action, operation, or type parameters that accept free-form
+  strings instead of being restricted to an enumerated set of valid
+  values. Parameters that determine the tool's behaviour mode should use
+  enum constraints to prevent unexpected operations.
+risk_explanation: >
+  Action parameters without enum constraints allow attackers to invoke
+  undocumented or dangerous operations. A 'mode' parameter that accepts
+  any string instead of ["read", "write"] could accept "delete" or
+  "admin". Free-form action parameters increase the attack surface by
+  allowing the LLM to pass unexpected operation types.
+remediation: >
+  Add enum constraints to all parameters that control tool behaviour
+  modes, action types, or operation selection. Restrict values to the
+  documented set of valid operations. Implement server-side validation
+  that rejects values not in the enum set, independent of schema
+  validation.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - enum_constraint
+  - action_parameter
+  - schema_validation

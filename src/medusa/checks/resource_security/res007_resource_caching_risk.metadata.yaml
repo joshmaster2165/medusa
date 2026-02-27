@@ -1,0 +1,29 @@
+check_id: res007
+title: Resource Caching Security Risk
+category: resource_security
+severity: medium
+description: >
+  Detects MCP resources that are cached without considering security
+  implications. Cached resources may be served to unauthorized clients,
+  retain stale access control decisions, or persist sensitive data
+  beyond its intended lifetime in cache storage.
+risk_explanation: >
+  Improper caching of resources can serve sensitive content to clients
+  who should not have access after permission changes. Cached resources
+  may persist in shared memory or on disk after the user session ends,
+  enabling later extraction. Cache poisoning attacks can inject
+  malicious content that is then served to legitimate clients.
+remediation: >
+  Implement cache-aware access control that validates permissions on
+  cache hits, not just cache misses. Set appropriate cache expiration
+  times for sensitive resources. Use per-user cache keys to prevent
+  cross-user cache leaks. Mark sensitive resources as non-cacheable.
+  Clear cached resources when access permissions change.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+  - "MCP10:2025"
+tags:
+  - resource_security
+  - access_control

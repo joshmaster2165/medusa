@@ -1,0 +1,31 @@
+check_id: pmt008
+title: Prompt Argument Type Coercion
+category: prompt_security
+severity: medium
+description: >
+  Detects MCP prompt arguments that undergo implicit type coercion when
+  processed, potentially changing their meaning or enabling type
+  confusion attacks. Arguments expected as numbers may be supplied as
+  strings containing injection payloads.
+risk_explanation: >
+  Type coercion in prompt arguments allows attackers to bypass type-
+  based validation by supplying values in unexpected types. A numeric
+  argument supplied as a string can contain injection payloads that
+  survive numeric validation checks. Object arguments coerced to strings
+  may serialize in ways that inject template directives or prompt
+  instructions into the final prompt text.
+remediation: >
+  Implement strict type checking for all prompt arguments that rejects
+  values of incorrect types rather than coercing them. Validate argument
+  types before any processing or interpolation. Use typed schema
+  validation that enforces exact type matching. Convert arguments to
+  their expected types explicitly with error handling for invalid
+  conversions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

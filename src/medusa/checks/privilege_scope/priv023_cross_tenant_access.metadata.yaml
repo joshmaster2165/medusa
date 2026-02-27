@@ -1,0 +1,33 @@
+check_id: priv023
+title: Cross-Tenant Data Access
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools that can access data across tenant boundaries in
+  multi-tenant environments. Cross-tenant access breaks the fundamental
+  isolation guarantee of multi-tenant systems, exposing one tenant's
+  data to another.
+risk_explanation: >
+  Cross-tenant data access is the most severe authorization failure in
+  multi-tenant systems. An attacker in one tenant can read, modify, or
+  delete another tenant's data, including confidential business data,
+  personal information, and application configuration. Cross-tenant
+  access often results in regulatory violations and breach notification
+  requirements.
+remediation: >
+  Implement mandatory tenant isolation at the data access layer. Use
+  tenant-scoped database connections or row-level security with tenant
+  ID filtering. Validate tenant context on every data access operation.
+  Implement database-level policies that enforce tenant isolation
+  independent of application code. Conduct regular cross-tenant access
+  testing.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+  - "MCP09:2025"
+tags:
+  - privilege_scope
+  - cross_tenant
+  - multi_tenant
+  - data_isolation

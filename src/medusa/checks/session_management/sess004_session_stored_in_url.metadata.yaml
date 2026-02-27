@@ -1,0 +1,31 @@
+check_id: sess004
+title: Session ID Stored in URL
+category: session_management
+severity: high
+description: >
+  Detects MCP server configurations where session identifiers are
+  transmitted or stored in URL parameters rather than secure headers or
+  cookies. Session IDs in URLs are exposed in browser history, server
+  logs, referrer headers, and proxy logs, making them trivially
+  accessible to attackers.
+risk_explanation: >
+  When MCP session tokens appear in URLs, they are recorded in multiple
+  locations including web server logs, proxy caches, browser history,
+  and HTTP Referer headers. This dramatically increases the attack
+  surface for session hijacking. An attacker with access to any of these
+  log sources can extract valid session tokens and invoke MCP tools on
+  behalf of legitimate users.
+remediation: >
+  Transmit session identifiers exclusively via HTTP headers such as the
+  Authorization header or secure cookies with HttpOnly and Secure flags.
+  Never include session tokens in URL query parameters or path segments.
+  Configure MCP server transport to strip session tokens from any logged
+  URLs. Review server and proxy logging configurations to ensure session
+  data is not inadvertently captured.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

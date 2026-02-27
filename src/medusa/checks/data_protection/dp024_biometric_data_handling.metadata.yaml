@@ -1,0 +1,31 @@
+check_id: dp024
+title: Biometric Data Handling
+category: data_protection
+severity: critical
+description: >
+  Detects MCP tools that process biometric data such as fingerprints,
+  facial features, voice prints, or iris scans. Biometric data is
+  immutable and cannot be changed if compromised.
+risk_explanation: >
+  Biometric data is uniquely sensitive because it is immutable. Unlike
+  passwords or tokens, compromised biometric data cannot be reset or
+  rotated. A breach of biometric data creates permanent identity theft
+  risks and violates biometric privacy laws such as BIPA, GDPR special
+  categories, and state-level biometric legislation.
+remediation: >
+  Avoid processing raw biometric data through MCP tools whenever
+  possible. If biometric processing is required, use one-way hashing or
+  template- based matching that prevents reconstruction of the original
+  biometric. Implement strict access controls, encryption, and audit
+  logging for all biometric data handling. Obtain explicit informed
+  consent.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - data_protection
+  - biometric
+  - privacy
+  - critical_risk
+  - compliance

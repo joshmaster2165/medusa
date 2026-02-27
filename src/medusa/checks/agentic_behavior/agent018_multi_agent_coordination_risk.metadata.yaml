@@ -1,0 +1,35 @@
+check_id: agent018
+title: Multi-Agent Coordination Risk
+category: agentic_behavior
+severity: high
+description: >
+  Detects MCP configurations involving multiple agents that communicate
+  or coordinate without adequate security controls. In multi-agent
+  systems, one compromised agent can influence, manipulate, or attack
+  other agents through inter-agent communication channels.
+risk_explanation: >
+  Multi-agent coordination introduces risks where a single compromised
+  agent can propagate attacks to other agents in the system. Through
+  inter-agent communication, a malicious agent can inject prompts into
+  other agents' contexts, manipulate shared state, coordinate
+  distributed attacks, and create a network of compromised agents. The
+  trust relationships between agents amplify the impact because agents
+  may accept instructions from peers without the same scrutiny applied
+  to external inputs.
+remediation: >
+  Implement authentication and authorization for all inter-agent
+  communication. Apply the same security scrutiny to messages from other
+  agents as to external inputs. Use message signing to verify the
+  identity and integrity of inter-agent messages. Implement isolation
+  between agents that prevents one agent from accessing another's
+  context or tools. Monitor inter-agent communication for anomalous
+  patterns. Limit the scope of actions agents can request from each
+  other.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - agentic
+  - autonomous
+  - safety

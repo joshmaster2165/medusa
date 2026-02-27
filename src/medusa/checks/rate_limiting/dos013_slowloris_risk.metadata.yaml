@@ -1,0 +1,34 @@
+check_id: dos013
+title: Slowloris Attack Risk
+category: rate_limiting
+severity: medium
+description: >
+  Detects MCP server configurations vulnerable to slowloris-style
+  attacks where clients send requests extremely slowly, holding
+  connections open for extended periods. Slow connections consume server
+  connection slots without generating meaningful load, exhausting the
+  server's ability to accept new connections.
+risk_explanation: >
+  Slowloris attacks are particularly effective against MCP servers
+  because they require minimal attacker resources while consuming
+  maximum server resources. By sending HTTP headers or WebSocket frames
+  one byte at a time, an attacker can hold hundreds of connections open
+  simultaneously, each consuming a server connection slot. This prevents
+  legitimate LLM clients from connecting to the server, creating a
+  denial of service without generating suspicious traffic volumes.
+remediation: >
+  Configure minimum request rate thresholds that close connections not
+  making sufficient progress. Set request header and body read timeouts
+  that terminate slow connections. Deploy a reverse proxy or load
+  balancer that buffers incoming requests and only forwards complete
+  requests to the MCP server. Implement connection limits per IP
+  address. Use async I/O server implementations that handle slow
+  connections efficiently without blocking threads.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

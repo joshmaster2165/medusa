@@ -1,0 +1,31 @@
+check_id: mt005
+title: Tenant Impersonation Risk
+category: multi_tenant
+severity: critical
+description: >
+  Detects MCP server configurations that allow one tenant to impersonate
+  another through token manipulation, session hijacking, or exploitation
+  of tenant switching mechanisms. Impersonation enables full access to
+  the target tenant data and operations.
+risk_explanation: >
+  Tenant impersonation is the most severe multi-tenant vulnerability as
+  it grants an attacker complete access to the target tenant
+  environment. The attacker can read all data, invoke all tools, modify
+  resources, and perform actions attributed to the impersonated tenant.
+  This can go undetected if audit logs record the forged tenant identity
+  rather than the actual source.
+remediation: >
+  Implement cryptographically secure tenant identity that cannot be
+  forged or manipulated. Use server-side session management that binds
+  tenant identity to the authenticated principal. Remove any tenant
+  switching functionality unless absolutely required, and if required,
+  implement it with additional authentication and comprehensive audit
+  logging. Monitor for anomalous tenant access patterns.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

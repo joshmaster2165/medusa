@@ -1,0 +1,31 @@
+check_id: iv023
+title: Prototype Pollution Risk
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters that could enable JavaScript prototype
+  pollution through __proto__, constructor, or prototype property
+  injection. Parameters accepting nested objects without property name
+  validation can modify object prototypes globally.
+risk_explanation: >
+  Prototype pollution modifies the prototype chain of JavaScript
+  objects, affecting all instances globally. An attacker injecting
+  {"__proto__": {"isAdmin": true}} can make every object in the
+  application appear to have admin privileges. This can lead to
+  authentication bypass, privilege escalation, and remote code
+  execution.
+remediation: >
+  Validate all object property names against an allowlist before
+  processing. Reject objects containing __proto__, constructor, or
+  prototype properties. Use Object.create(null) for lookup objects that
+  should not inherit prototype properties. Use schema validation to
+  restrict allowed property names.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - prototype_pollution
+  - javascript
+  - object_injection

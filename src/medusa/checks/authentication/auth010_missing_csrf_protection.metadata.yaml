@@ -1,0 +1,31 @@
+check_id: auth010
+title: Missing CSRF Protection
+category: authentication
+severity: high
+description: >
+  Detects HTTP transport endpoints without Cross-Site Request Forgery
+  protection. MCP servers exposed over HTTP without CSRF tokens or same-
+  origin validation are vulnerable to attacks where a malicious website
+  forces the user's browser to invoke MCP tools.
+risk_explanation: >
+  Without CSRF protection, a malicious website can craft requests to the
+  MCP server that execute in the context of the authenticated user's
+  session. This allows attackers to invoke tools, modify resources, and
+  exfiltrate data by tricking the user into visiting a crafted page.
+  CSRF is especially dangerous for MCP servers accessible on localhost.
+remediation: >
+  Implement CSRF protection using synchronizer tokens, double-submit
+  cookies, or same-origin request validation. Set SameSite=Strict on all
+  authentication cookies. Validate the Origin and Referer headers on
+  state-changing requests. Use custom request headers that cannot be set
+  by cross-origin requests.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - authentication
+  - csrf
+  - cross_site
+  - session_security

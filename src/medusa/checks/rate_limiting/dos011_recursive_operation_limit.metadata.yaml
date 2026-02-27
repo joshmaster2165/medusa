@@ -1,0 +1,32 @@
+check_id: dos011
+title: Missing Recursive Operation Limit
+category: rate_limiting
+severity: high
+description: >
+  Detects MCP server tools that perform recursive operations without
+  depth limits. Unbounded recursion in file traversal, data processing,
+  dependency resolution, or nested structure parsing can exhaust stack
+  space and cause server crashes.
+risk_explanation: >
+  Recursive operations without depth limits can exhaust server stack
+  space, causing crashes, or consume exponential CPU and memory
+  resources, causing denial of service. An attacker can craft inputs
+  such as deeply nested JSON, circular directory structures, or self-
+  referencing data that trigger unbounded recursion in MCP tools. Stack
+  overflow crashes are particularly dangerous because they terminate the
+  entire server process without graceful degradation.
+remediation: >
+  Implement explicit recursion depth limits for all recursive operations
+  in MCP tools. Set maximum depths for file traversal, nested structure
+  parsing, dependency resolution, and data processing recursion. Use
+  iterative algorithms instead of recursive ones where possible.
+  Implement cycle detection for operations on graph-structured data.
+  Monitor recursion depths and alert on unexpectedly deep operations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - rate_limiting
+  - dos
+  - availability

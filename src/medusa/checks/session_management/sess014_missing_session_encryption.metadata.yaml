@@ -1,0 +1,30 @@
+check_id: sess014
+title: Missing Session Encryption
+category: session_management
+severity: high
+description: >
+  Detects MCP server sessions where session data is stored or
+  transmitted without encryption. Unencrypted session tokens and session
+  state can be intercepted in transit or read from storage by attackers
+  with access to network traffic or the storage medium.
+risk_explanation: >
+  Unencrypted MCP session data is vulnerable to interception during
+  transit and unauthorized access at rest. Attackers on the same network
+  can capture session tokens via packet sniffing. Attackers with storage
+  access can read session state including tool invocation history,
+  cached credentials, and intermediate results. This enables session
+  hijacking and data exfiltration.
+remediation: >
+  Encrypt all MCP session data both in transit and at rest. Use TLS 1.2
+  or higher for all session-bearing communications. Encrypt server-side
+  session stores using AES-256 or equivalent. Ensure session tokens
+  transmitted via cookies have the Secure flag set. For session data
+  stored in databases or caches, use transparent data encryption or
+  application-level encryption.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - session_management
+  - authentication

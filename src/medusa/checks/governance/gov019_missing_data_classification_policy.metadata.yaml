@@ -1,0 +1,37 @@
+check_id: gov019
+title: Missing Data Classification Policy
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a data classification policy
+  defining sensitivity levels and handling requirements for data
+  processed through tool invocations. Without classification, all data
+  receives the same handling regardless of sensitivity, leading to
+  either over-protection of low-sensitivity data or under-protection of
+  high-sensitivity data.
+risk_explanation: >
+  MCP servers process data of varying sensitivity through tool
+  invocations, from public web content to highly confidential
+  credentials and personal information. Without data classification,
+  security controls cannot be applied proportionally. Low-sensitivity
+  data may be over-protected, wasting resources, while high-sensitivity
+  data may be under-protected, creating breach risk. LLM agents cannot
+  make informed decisions about data handling without classification
+  metadata, increasing the risk of inadvertent exposure.
+remediation: >
+  Define a data classification policy with at least three levels (such
+  as public, internal, and confidential) and specify handling
+  requirements for each level. Classify tool inputs and outputs by
+  sensitivity. Implement technical controls that enforce classification-
+  based handling such as encryption requirements, access restrictions,
+  and retention limits. Tag data with classification metadata throughout
+  the MCP processing pipeline. Train developers and operators on the
+  classification policy.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

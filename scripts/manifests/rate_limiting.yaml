@@ -1,0 +1,499 @@
+category: rate_limiting
+checks:
+  - id: dos001
+    slug: missing_rate_limiting
+    title: "Missing Rate Limiting"
+    severity: high
+    description: >
+      Detects MCP server configurations that lack rate limiting on tool invocations.
+      Without rate limits, an attacker or compromised LLM agent can invoke tools
+      at an unlimited rate, overwhelming the server and any downstream services
+      the tools interact with.
+    risk_explanation: >
+      Missing rate limiting on MCP tool invocations allows attackers to flood the
+      server with requests, causing denial of service for all users. High-frequency
+      tool invocations can exhaust server resources, overwhelm downstream APIs and
+      databases, trigger billing overages on metered services, and create cascading
+      failures across the infrastructure. Automated agents can generate thousands
+      of requests per minute without rate controls.
+    remediation: >
+      Implement rate limiting on all MCP tool invocations using a sliding window
+      or token bucket algorithm. Set per-user, per-session, and per-tool rate
+      limits based on expected usage patterns. Return appropriate rate limit
+      exceeded errors that allow the client to implement backoff. Deploy rate
+      limiting at the server edge to protect against volumetric attacks. Monitor
+      rate limit hits for anomaly detection.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos002
+    slug: missing_request_throttling
+    title: "Missing Request Throttling"
+    severity: medium
+    description: >
+      Detects MCP server API endpoints that lack request throttling mechanisms.
+      Without throttling, burst traffic from LLM agents can saturate server
+      capacity, degrading performance for all connected clients and potentially
+      causing service outages.
+    risk_explanation: >
+      Unthrottled MCP API endpoints are vulnerable to burst traffic that exceeds
+      server capacity. LLM agents can generate rapid bursts of requests during
+      multi-step operations, and without throttling, these bursts consume all
+      available server resources. This degrades response times for all users,
+      can trigger cascade failures in dependent services, and may cause the
+      MCP server to become completely unresponsive.
+    remediation: >
+      Implement request throttling that limits the rate of incoming requests per
+      client. Use adaptive throttling that adjusts limits based on current server
+      load. Implement queue-based request processing that absorbs bursts without
+      rejecting requests immediately. Return HTTP 429 responses with Retry-After
+      headers when throttle limits are exceeded. Monitor server load metrics and
+      adjust throttle thresholds dynamically.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos003
+    slug: resource_exhaustion_risk
+    title: "Resource Exhaustion Risk"
+    severity: high
+    description: >
+      Detects MCP server tools that can consume unbounded system resources during
+      execution. Tools that process large inputs, perform complex computations,
+      or interact with external services without resource limits can exhaust
+      server capacity and affect all connected sessions.
+    risk_explanation: >
+      MCP tools without resource boundaries can consume unlimited CPU, memory,
+      network bandwidth, or disk I/O during a single invocation. An attacker can
+      craft tool inputs that trigger worst-case resource consumption, such as
+      regex patterns causing catastrophic backtracking, queries returning massive
+      result sets, or computations with exponential complexity. A single resource-
+      exhausting tool invocation can render the entire MCP server unresponsive.
+    remediation: >
+      Implement resource limits for each tool invocation including CPU time,
+      memory allocation, output size, and execution duration. Use process
+      isolation, containers, or sandboxes to enforce resource limits at the
+      operating system level. Set timeouts for all tool executions that terminate
+      runaway processes. Monitor resource consumption per tool invocation and
+      alert on anomalous usage. Implement input size validation to prevent
+      resource-intensive processing.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos004
+    slug: concurrent_request_limit
+    title: "Missing Concurrent Request Limit"
+    severity: medium
+    description: >
+      Detects MCP server configurations that allow unlimited concurrent requests
+      from a single client or across all clients. Without concurrent request
+      limits, server threads, connections, and processing capacity can be
+      exhausted by parallel requests from aggressive LLM agents.
+    risk_explanation: >
+      Unlimited concurrent requests allow a single LLM agent to consume all
+      available server processing capacity. Modern LLM agents often issue
+      multiple tool invocations in parallel, and without concurrency limits,
+      a single session can monopolize server resources. An attacker can amplify
+      this by opening multiple sessions, each generating parallel requests,
+      creating a distributed denial-of-service condition from a single client.
+    remediation: >
+      Implement concurrent request limits per client session and globally across
+      the MCP server. Set a maximum number of in-flight requests per session
+      based on expected agent behavior, typically 3-10 concurrent requests.
+      Queue excess requests rather than rejecting them immediately. Monitor
+      concurrent request counts and alert when limits are consistently reached.
+      Implement fair scheduling that prevents any single session from monopolizing
+      server capacity.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos005
+    slug: payload_size_limit
+    title: "Missing Payload Size Limit"
+    severity: high
+    description: >
+      Detects MCP server configurations that do not enforce size limits on request
+      and response payloads. Without size limits, attackers can send oversized
+      requests that consume memory during parsing or trigger tools to generate
+      massive responses that exhaust server resources.
+    risk_explanation: >
+      Missing payload size limits expose MCP servers to memory exhaustion attacks.
+      An attacker can send tool invocation requests with extremely large parameters
+      that consume excessive memory during parsing and processing. Conversely,
+      tool invocations can be crafted to generate oversized responses that exhaust
+      server memory during serialization. Large payloads also consume network
+      bandwidth and can degrade performance for all connected clients.
+    remediation: >
+      Enforce maximum payload size limits for all MCP requests and responses.
+      Set request body size limits at the transport layer (web server or reverse
+      proxy) to prevent oversized requests from reaching the application. Implement
+      per-parameter size limits for tool invocation arguments. Set maximum
+      response sizes for tool outputs. Implement streaming for large responses
+      rather than buffering entire payloads in memory.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos006
+    slug: timeout_configuration
+    title: "Missing Timeout Configuration"
+    severity: medium
+    description: >
+      Detects MCP server tools that execute without configured timeouts. Missing
+      timeouts allow tool invocations to run indefinitely, consuming server
+      resources and blocking processing capacity for other requests. Long-running
+      tools can be intentionally triggered as a denial-of-service technique.
+    risk_explanation: >
+      Tool invocations without timeouts can run indefinitely, tying up server
+      threads, connections, and processing capacity. An attacker can intentionally
+      trigger long-running operations such as complex queries, large file
+      processing, or requests to slow external services to consume all available
+      server capacity. Accumulated long-running requests progressively degrade
+      performance until the server becomes completely unresponsive.
+    remediation: >
+      Configure explicit execution timeouts for all MCP tool invocations. Set
+      default timeouts appropriate for each tool's expected execution time,
+      typically 30-60 seconds for synchronous operations. Implement timeout
+      enforcement at the process level to ensure runaway tools are terminated.
+      Provide timeout override configuration for tools that legitimately require
+      longer execution. Log timeout events for monitoring and capacity planning.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos007
+    slug: connection_pool_exhaustion
+    title: "Connection Pool Exhaustion"
+    severity: high
+    description: >
+      Detects MCP server configurations where connection pools for databases,
+      external APIs, or internal services can be exhausted by excessive tool
+      invocations. Without connection pool management, tools that open connections
+      without proper release can deplete available connections.
+    risk_explanation: >
+      Connection pool exhaustion blocks all MCP tool invocations that require
+      external connectivity. When tools consume all available connections to
+      databases, APIs, or caches, new tool invocations fail or hang waiting for
+      connections. An attacker can trigger this by invoking tools that hold
+      connections open through slow requests, error conditions, or intentional
+      delays. This creates a denial of service that affects all users and all
+      tools that share the connection pool.
+    remediation: >
+      Configure connection pool limits with appropriate maximum sizes for each
+      external service. Implement connection timeouts that release connections
+      held longer than expected. Use connection pool monitoring to detect
+      exhaustion before it impacts service. Implement per-session connection
+      quotas that prevent any single session from consuming all connections.
+      Use circuit breaker patterns that fail fast when connection pools are
+      near exhaustion.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos008
+    slug: memory_exhaustion_risk
+    title: "Memory Exhaustion Risk"
+    severity: high
+    description: >
+      Detects MCP server tools that can cause memory exhaustion through
+      processing large datasets, accumulating results in memory, or triggering
+      memory leaks. Memory exhaustion crashes the server process and terminates
+      all active sessions.
+    risk_explanation: >
+      Memory exhaustion in MCP servers is catastrophic because it crashes the
+      server process, terminating all active sessions simultaneously. An attacker
+      can trigger memory exhaustion through tools that load large files into
+      memory, accumulate unbounded result sets, process data with memory-intensive
+      algorithms, or exploit memory leaks through repeated invocations. Unlike
+      CPU exhaustion which causes degradation, memory exhaustion causes immediate
+      and complete service failure.
+    remediation: >
+      Implement memory limits for tool invocations using process isolation or
+      container memory limits. Use streaming processing for large datasets rather
+      than loading entire datasets into memory. Implement pagination for result
+      sets and enforce maximum result sizes. Monitor server memory usage and
+      implement graceful degradation when memory pressure increases. Deploy
+      automatic scaling that adds capacity before memory limits are reached.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos009
+    slug: disk_exhaustion_risk
+    title: "Disk Exhaustion Risk"
+    severity: high
+    description: >
+      Detects MCP server tools that can fill disk space through writing logs,
+      temporary files, output data, or uploaded content without storage limits.
+      Disk exhaustion prevents the server from writing logs, creating temporary
+      files, or processing requests, causing cascading failures.
+    risk_explanation: >
+      Disk exhaustion on MCP servers causes widespread failures because many
+      server components depend on disk access. When disk space is exhausted,
+      the server cannot write logs (losing audit data), create temporary files
+      (failing tool executions), or save state (corrupting sessions). An attacker
+      can trigger disk exhaustion through tools that generate large outputs, write
+      temporary files, or accept file uploads. Database operations may also fail
+      if the database shares the same filesystem.
+    remediation: >
+      Implement disk usage quotas for MCP tool operations including temporary
+      file creation, output storage, and file uploads. Set per-tool disk usage
+      limits and enforce them at the filesystem level. Monitor disk usage and
+      alert before critical thresholds are reached. Implement automatic cleanup
+      of temporary files with configurable retention periods. Use separate
+      filesystems or volumes for tool data to prevent exhaustion from affecting
+      core server operations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos010
+    slug: cpu_exhaustion_risk
+    title: "CPU Exhaustion Risk"
+    severity: medium
+    description: >
+      Detects MCP server tools that can cause excessive CPU usage through
+      computationally intensive operations such as complex regex evaluation,
+      cryptographic operations, data transformation, or algorithmic processing
+      without CPU time limits.
+    risk_explanation: >
+      CPU-intensive MCP tool invocations degrade performance for all sessions
+      sharing the server. An attacker can trigger worst-case computational
+      complexity through crafted inputs such as regex patterns causing
+      catastrophic backtracking, deeply nested JSON structures, or large matrix
+      operations. Unlike memory exhaustion which is immediately fatal, CPU
+      exhaustion causes progressive degradation, making detection more difficult
+      while still rendering the server effectively unusable for all clients.
+    remediation: >
+      Implement CPU time limits for individual tool invocations using process-level
+      resource controls. Use algorithms with predictable complexity and avoid
+      operations vulnerable to algorithmic complexity attacks. Implement input
+      validation that rejects inputs likely to trigger worst-case performance.
+      Deploy CPU usage monitoring and alerting. Use process priority or cgroup
+      controls to ensure tool invocations cannot starve the core server process.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos011
+    slug: recursive_operation_limit
+    title: "Missing Recursive Operation Limit"
+    severity: high
+    description: >
+      Detects MCP server tools that perform recursive operations without depth
+      limits. Unbounded recursion in file traversal, data processing, dependency
+      resolution, or nested structure parsing can exhaust stack space and cause
+      server crashes.
+    risk_explanation: >
+      Recursive operations without depth limits can exhaust server stack space,
+      causing crashes, or consume exponential CPU and memory resources, causing
+      denial of service. An attacker can craft inputs such as deeply nested JSON,
+      circular directory structures, or self-referencing data that trigger
+      unbounded recursion in MCP tools. Stack overflow crashes are particularly
+      dangerous because they terminate the entire server process without graceful
+      degradation.
+    remediation: >
+      Implement explicit recursion depth limits for all recursive operations in
+      MCP tools. Set maximum depths for file traversal, nested structure parsing,
+      dependency resolution, and data processing recursion. Use iterative
+      algorithms instead of recursive ones where possible. Implement cycle
+      detection for operations on graph-structured data. Monitor recursion depths
+      and alert on unexpectedly deep operations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos012
+    slug: batch_operation_limit
+    title: "Missing Batch Operation Limit"
+    severity: medium
+    description: >
+      Detects MCP server tools that accept batch operations without limiting the
+      batch size. Unbounded batch sizes allow a single tool invocation to process
+      an arbitrary number of items, consuming disproportionate resources compared
+      to a single invocation.
+    risk_explanation: >
+      Batch operations without size limits allow attackers to amplify the impact
+      of a single MCP tool invocation. By submitting a batch with thousands or
+      millions of items, an attacker can consume server resources equivalent to
+      thousands of individual invocations in a single request. This bypasses
+      per-invocation rate limits and can overwhelm databases, APIs, and processing
+      capacity. Batch operations also increase the blast radius of errors, as a
+      single malformed batch can corrupt large amounts of data.
+    remediation: >
+      Implement maximum batch size limits for all MCP tools that accept batch
+      operations. Set reasonable limits based on server capacity and expected
+      usage, typically 100-1000 items per batch. Implement batch processing with
+      pagination that processes items in manageable chunks. Apply the same
+      resource limits to batch operations as to individual invocations scaled by
+      batch size. Monitor batch sizes for anomaly detection.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos013
+    slug: slowloris_risk
+    title: "Slowloris Attack Risk"
+    severity: medium
+    description: >
+      Detects MCP server configurations vulnerable to slowloris-style attacks
+      where clients send requests extremely slowly, holding connections open for
+      extended periods. Slow connections consume server connection slots without
+      generating meaningful load, exhausting the server's ability to accept new
+      connections.
+    risk_explanation: >
+      Slowloris attacks are particularly effective against MCP servers because
+      they require minimal attacker resources while consuming maximum server
+      resources. By sending HTTP headers or WebSocket frames one byte at a time,
+      an attacker can hold hundreds of connections open simultaneously, each
+      consuming a server connection slot. This prevents legitimate LLM clients
+      from connecting to the server, creating a denial of service without
+      generating suspicious traffic volumes.
+    remediation: >
+      Configure minimum request rate thresholds that close connections not making
+      sufficient progress. Set request header and body read timeouts that terminate
+      slow connections. Deploy a reverse proxy or load balancer that buffers
+      incoming requests and only forwards complete requests to the MCP server.
+      Implement connection limits per IP address. Use async I/O server
+      implementations that handle slow connections efficiently without blocking
+      threads.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos014
+    slug: amplification_risk
+    title: "Amplification Attack Risk"
+    severity: high
+    description: >
+      Detects MCP server tools where small input requests generate
+      disproportionately large responses or trigger extensive downstream
+      processing. Amplification allows an attacker to consume server and network
+      resources far exceeding the cost of their requests.
+    risk_explanation: >
+      Amplification attacks exploit MCP tools where a small input produces a
+      large output or triggers extensive processing. For example, a tool that
+      accepts a single database query and returns millions of rows, or a search
+      tool that fans out across many services. The amplification ratio determines
+      the attacker's leverage: a 1000x amplification means each kilobyte of
+      attacker input consumes a megabyte of server resources. This makes denial
+      of service achievable with minimal attacker bandwidth.
+    remediation: >
+      Identify and mitigate amplification vectors in MCP tools. Implement output
+      size limits and pagination for tools that can generate large responses.
+      Set maximum result counts for search and query operations. Implement fan-out
+      limits for tools that distribute requests across multiple services. Monitor
+      the input-to-output ratio of tool invocations and alert on high
+      amplification patterns. Apply rate limiting based on response size rather
+      than just request count.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability
+
+  - id: dos015
+    slug: backpressure_missing
+    title: "Missing Backpressure Mechanism"
+    severity: medium
+    description: >
+      Detects MCP server configurations that lack backpressure mechanisms for
+      managing flow control between the LLM client and the server. Without
+      backpressure, a fast producer can overwhelm a slow consumer, causing buffer
+      overflows, memory exhaustion, and dropped messages.
+    risk_explanation: >
+      Missing backpressure in MCP server communications allows one side of the
+      connection to overwhelm the other. If an LLM agent sends tool invocations
+      faster than the server can process them, unbounded request queues grow until
+      memory is exhausted. Conversely, if the server generates output faster than
+      the client can consume it, response buffers overflow. In both cases, the
+      lack of flow control leads to resource exhaustion, data loss, and potential
+      server crashes.
+    remediation: >
+      Implement backpressure mechanisms in the MCP transport layer that signal
+      the sender to slow down when the receiver is overwhelmed. Use bounded
+      queues with configurable sizes for request processing. Implement flow
+      control at the WebSocket or HTTP/2 stream level. Return appropriate signals
+      (HTTP 429, WebSocket flow control) when processing capacity is exceeded.
+      Monitor queue depths and processing latency to detect backpressure
+      conditions. Implement graceful degradation that prioritizes in-progress
+      requests over new ones.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - rate_limiting
+      - dos
+      - availability

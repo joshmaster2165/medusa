@@ -1,0 +1,29 @@
+check_id: cred011
+title: Docker Registry Auth Exposure
+category: credential_exposure
+severity: high
+description: >
+  Detects Docker registry authentication credentials in MCP server
+  configuration. Docker registry auth tokens stored in config.json or
+  environment variables grant access to pull and push container images.
+risk_explanation: >
+  Exposed Docker registry credentials allow an attacker to pull private
+  container images containing proprietary code, push malicious images
+  that will be deployed in production, or tamper with existing images.
+  Registry access often includes images containing additional embedded
+  secrets and configuration data.
+remediation: >
+  Use credential helpers for Docker registry authentication instead of
+  storing credentials in config.json. Implement short-lived token-based
+  authentication for CI/CD pipelines. Use cloud-native registry
+  authentication (ECR, GCR, ACR) with IAM roles. Remove registry
+  credentials from configuration files.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - credential_exposure
+  - docker
+  - registry
+  - container_security

@@ -1,0 +1,29 @@
+check_id: intg015
+title: Binary Planting Risk
+category: integrity
+severity: high
+description: >
+  Detects MCP server configurations vulnerable to binary planting
+  attacks where executable search path manipulation causes a malicious
+  binary to be executed instead of the intended one.
+risk_explanation: >
+  Binary planting (also known as DLL hijacking or PATH manipulation)
+  exploits the way operating systems search for executables. If the MCP
+  server's startup command does not use an absolute path, an attacker
+  who can write to a directory in the search path can place a malicious
+  binary that gets executed with the server's privileges.
+remediation: >
+  Use absolute paths for all executable references in MCP server
+  configurations. Restrict the PATH environment variable to trusted
+  directories only. Verify executable integrity before launch using
+  checksums or code signatures. Avoid using relative paths or relying on
+  system PATH resolution for security-critical binaries.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - binary_planting
+  - path_manipulation
+  - execution

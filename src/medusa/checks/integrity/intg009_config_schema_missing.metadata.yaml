@@ -1,0 +1,28 @@
+check_id: intg009
+title: Missing Configuration Schema
+category: integrity
+severity: low
+description: >
+  Checks whether the MCP server defines a schema for its configuration
+  file. Without a schema, invalid or malicious configuration values may
+  be accepted without validation.
+risk_explanation: >
+  Without a configuration schema, the MCP server accepts arbitrary
+  configuration values without validation. An attacker who can modify
+  the configuration file can inject unexpected values that alter server
+  behavior, disable security controls, or redirect data flows. Schema
+  validation catches malformed or malicious configurations before they
+  take effect.
+remediation: >
+  Define a JSON Schema or equivalent validation schema for the MCP
+  server's configuration file. Validate all configuration values against
+  the schema at startup and reject invalid configurations. Document the
+  expected configuration format and valid value ranges for each field.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - integrity
+  - configuration
+  - schema_validation

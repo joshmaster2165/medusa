@@ -1,0 +1,31 @@
+check_id: iv022
+title: Unsafe Deserialization Risk
+category: input_validation
+severity: critical
+description: >
+  Detects tool parameters that suggest object deserialization from user
+  input. Parameters accepting serialized objects (pickle, Java
+  serialization, YAML load, PHP unserialize) can trigger arbitrary code
+  execution when attacker-controlled data is deserialized.
+risk_explanation: >
+  Unsafe deserialization is a well-known path to remote code execution.
+  Serialized objects can contain instructions that execute during
+  deserialization, giving the attacker full control of the server.
+  Python's pickle, Java's ObjectInputStream, PHP's unserialize, and
+  Ruby's Marshal are all exploitable when processing untrusted data.
+remediation: >
+  Never deserialize untrusted input using native serialization formats.
+  Use safe data interchange formats like JSON with strict schema
+  validation. If deserialization is required, use safe loaders (e.g.
+  yaml.safe_load instead of yaml.load). Implement integrity verification
+  (HMAC) on serialized data before deserialization.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - input_validation
+  - deserialization
+  - code_execution
+  - object_injection

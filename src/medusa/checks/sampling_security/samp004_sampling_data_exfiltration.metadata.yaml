@@ -1,0 +1,36 @@
+check_id: samp004
+title: Data Exfiltration via Sampling
+category: sampling_security
+severity: critical
+description: >
+  Detects MCP server configurations where sampling requests can be used
+  as a channel to exfiltrate sensitive data from the LLM's context. A
+  malicious server can craft sampling prompts that instruct the LLM to
+  include sensitive information from the conversation, tool outputs, or
+  system configuration in its sampling response, which is then sent back
+  to the server.
+risk_explanation: >
+  Sampling-based data exfiltration exploits the bidirectional nature of
+  the sampling protocol. The MCP server sends a prompt designed to
+  elicit sensitive information from the LLM's context, and the LLM's
+  response is returned to the server. This creates a covert channel for
+  extracting user data, API keys, conversation history, other servers'
+  tool outputs, and any information the LLM has access to, all without
+  the user's awareness.
+remediation: >
+  Implement output filtering on sampling responses that detects and
+  redacts sensitive information before returning it to the MCP server.
+  Limit the information available in the LLM context during sampling
+  request processing. Use data loss prevention (DLP) rules that block
+  sampling responses containing credentials, PII, or other classified
+  data. Display both sampling requests and responses to the user for
+  review.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

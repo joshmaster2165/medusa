@@ -1,0 +1,31 @@
+check_id: mt004
+title: Missing Tenant Context Validation
+category: multi_tenant
+severity: high
+description: >
+  Detects MCP server requests that are processed without validating the
+  tenant context, or where the tenant identifier is derived from client-
+  supplied data without verification. Missing tenant context validation
+  allows clients to operate outside their authorized tenant scope.
+risk_explanation: >
+  Without tenant context validation, a client can forge or manipulate
+  its tenant identifier to access another tenant context. If the tenant
+  ID is taken from a request header or parameter without cryptographic
+  verification, any client can impersonate any tenant by simply changing
+  the value. This enables complete bypass of all tenant-based access
+  controls.
+remediation: >
+  Derive the tenant context from authenticated session state rather than
+  client-supplied parameters. Validate tenant context cryptographically
+  using signed tokens or verified session data. Reject requests that
+  lack valid tenant context. Implement tenant context as an immutable
+  property of the authenticated session that cannot be modified by the
+  client after authentication.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - multi_tenant
+  - isolation
+  - data_protection

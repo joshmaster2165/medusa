@@ -1,0 +1,29 @@
+check_id: ctx007
+title: Cross-Conversation Context Contamination
+category: context_security
+severity: high
+description: >
+  Detects MCP server implementations that allow data from one
+  conversation session to leak into another. Cross-conversation
+  contamination violates session isolation and exposes user data.
+risk_explanation: >
+  When data from one user's conversation leaks into another user's
+  session, private information, tool invocation results, and
+  conversation context are exposed to unauthorized parties. This can
+  occur through shared caches, persistent state, or improper session
+  management in the MCP server.
+remediation: >
+  Implement strict session isolation in the MCP server. Use separate
+  state stores for each conversation session and clear all session data
+  when a conversation ends. Avoid shared caches that span sessions.
+  Validate session boundaries in all tool invocations and resource
+  accesses. Conduct regular testing for cross-session data leakage.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP10:2025"
+tags:
+  - context_security
+  - session_isolation
+  - data_leakage
+  - cross_conversation

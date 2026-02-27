@@ -1,0 +1,32 @@
+check_id: priv004
+title: Cloud Metadata Service Access
+category: privilege_scope
+severity: critical
+description: >
+  Detects MCP tools that can access cloud instance metadata endpoints
+  (e.g. http://169.254.169.254). Cloud metadata services expose instance
+  credentials, network configuration, and user data without
+  authentication, making them high-value SSRF targets.
+risk_explanation: >
+  Cloud metadata endpoints return IAM credentials, instance identity
+  tokens, network configuration, and user-data scripts without
+  authentication. An attacker exploiting an MCP tool to access the
+  metadata service obtains temporary cloud credentials that can be used
+  to access S3 buckets, databases, and other cloud resources. This is
+  the most common cloud privilege escalation vector.
+remediation: >
+  Block access to metadata IP ranges (169.254.169.254, fd00:ec2::254)
+  from MCP server processes. Use IMDSv2 with hop limit 1 to prevent
+  SSRF-based metadata access. Implement network-level firewall rules
+  blocking metadata endpoints. Validate all URLs in tool parameters
+  against internal IP blocklists.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - privilege_scope
+  - cloud_metadata
+  - ssrf
+  - credential_theft

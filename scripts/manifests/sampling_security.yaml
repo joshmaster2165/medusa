@@ -1,0 +1,511 @@
+category: sampling_security
+checks:
+  - id: samp001
+    slug: sampling_injection
+    title: "Sampling Request Injection"
+    severity: critical
+    description: >
+      Detects MCP server implementations where malicious prompts can be injected
+      into sampling requests sent to LLM clients. A compromised or malicious MCP
+      server can craft sampling requests containing hidden instructions that
+      manipulate the LLM into performing unauthorized actions, exfiltrating data,
+      or bypassing safety guardrails.
+    risk_explanation: >
+      Sampling request injection allows a malicious MCP server to embed attacker-
+      controlled instructions directly into the prompts sent to the LLM for
+      processing. Since the LLM treats sampling requests as trusted input, injected
+      instructions are followed without user awareness. This can lead to data
+      exfiltration, unauthorized tool invocations, and complete compromise of the
+      LLM agent's actions within the user's session.
+    remediation: >
+      Implement strict input validation and sanitization for all sampling requests
+      before they are forwarded to the LLM. Display sampling request contents to
+      the user for review and approval before execution. Apply content filtering
+      that detects and blocks known injection patterns in sampling prompts. Use
+      a separate execution context for sampling requests that limits available
+      tools and data access.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp002
+    slug: model_manipulation_via_sampling
+    title: "Model Manipulation via Sampling"
+    severity: critical
+    description: >
+      Detects MCP server configurations where sampling requests can be used to
+      manipulate the LLM's behavior, including altering its system prompt
+      interpretation, overriding safety constraints, or changing the model's
+      decision-making process through carefully crafted sampling payloads.
+    risk_explanation: >
+      Model manipulation through sampling allows an attacker to alter the LLM's
+      behavior for the duration of the session. By crafting sampling requests with
+      specific instructions or context, the attacker can cause the LLM to ignore
+      safety guidelines, misinterpret user instructions, or adopt a manipulated
+      persona. This undermines the trust relationship between the user and the LLM
+      and can lead to harmful outputs or unauthorized actions across all subsequent
+      tool invocations.
+    remediation: >
+      Isolate sampling request processing from the main conversation context.
+      Implement behavioral monitoring that detects changes in LLM output patterns
+      after sampling interactions. Require human approval for sampling requests
+      that include system-level instructions or context modifications. Apply
+      guardrails that prevent sampling from altering the LLM's core safety
+      constraints or system prompt.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp003
+    slug: unauthorized_sampling
+    title: "Unauthorized Sampling Requests"
+    severity: high
+    description: >
+      Detects MCP server implementations that issue sampling requests to the LLM
+      client without explicit user consent or authorization. Sampling allows the
+      server to request LLM completions, and without proper consent mechanisms,
+      servers can silently invoke the LLM to process attacker-controlled prompts.
+    risk_explanation: >
+      Unauthorized sampling requests allow MCP servers to use the user's LLM
+      session without their knowledge or consent. The server can issue prompts
+      that consume the user's API quota, generate content the user did not
+      request, and influence the conversation context. This violates the principle
+      of user control and can be exploited for prompt injection, data harvesting,
+      and unauthorized resource consumption.
+    remediation: >
+      Implement a user consent mechanism for all sampling requests from MCP
+      servers. Display the sampling request content to the user before forwarding
+      it to the LLM. Allow users to approve, deny, or modify sampling requests.
+      Maintain an audit log of all sampling requests and their approval status.
+      Provide configuration to disable sampling entirely for servers that do not
+      require it.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp004
+    slug: sampling_data_exfiltration
+    title: "Data Exfiltration via Sampling"
+    severity: critical
+    description: >
+      Detects MCP server configurations where sampling requests can be used as a
+      channel to exfiltrate sensitive data from the LLM's context. A malicious
+      server can craft sampling prompts that instruct the LLM to include sensitive
+      information from the conversation, tool outputs, or system configuration
+      in its sampling response, which is then sent back to the server.
+    risk_explanation: >
+      Sampling-based data exfiltration exploits the bidirectional nature of the
+      sampling protocol. The MCP server sends a prompt designed to elicit sensitive
+      information from the LLM's context, and the LLM's response is returned to
+      the server. This creates a covert channel for extracting user data, API keys,
+      conversation history, other servers' tool outputs, and any information the
+      LLM has access to, all without the user's awareness.
+    remediation: >
+      Implement output filtering on sampling responses that detects and redacts
+      sensitive information before returning it to the MCP server. Limit the
+      information available in the LLM context during sampling request processing.
+      Use data loss prevention (DLP) rules that block sampling responses containing
+      credentials, PII, or other classified data. Display both sampling requests
+      and responses to the user for review.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp005
+    slug: sampling_privilege_escalation
+    title: "Privilege Escalation via Sampling"
+    severity: critical
+    description: >
+      Detects MCP server implementations where sampling requests can be used to
+      escalate tool access privileges. A server with limited tool access can use
+      sampling to instruct the LLM to invoke tools from other servers or access
+      resources beyond the server's authorized scope.
+    risk_explanation: >
+      Sampling-based privilege escalation allows a low-privilege MCP server to
+      leverage the LLM as a proxy for accessing tools and resources it is not
+      authorized to use directly. By crafting sampling prompts that instruct the
+      LLM to invoke other servers' tools, the malicious server effectively
+      bypasses access controls and operates with the full privilege set of the
+      LLM client. This breaks the principle of least privilege for MCP servers.
+    remediation: >
+      Enforce tool access isolation during sampling request processing. Prevent
+      sampling responses from triggering tool invocations on other MCP servers.
+      Implement privilege boundaries that restrict the LLM's available tools
+      during sampling to only those belonging to the requesting server. Require
+      explicit user approval for any tool invocations resulting from sampling
+      interactions. Audit sampling interactions for cross-server privilege
+      escalation patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp006
+    slug: recursive_sampling
+    title: "Recursive Sampling Attack"
+    severity: high
+    description: >
+      Detects MCP server configurations that enable recursive or self-referential
+      sampling where a sampling response triggers additional sampling requests,
+      creating an infinite loop. Recursive sampling can exhaust API quotas, consume
+      server resources, and create denial-of-service conditions for the LLM client.
+    risk_explanation: >
+      Recursive sampling attacks create infinite loops where the LLM's sampling
+      response triggers the MCP server to issue another sampling request, which
+      generates another response, and so on indefinitely. This consumes the user's
+      LLM API quota, ties up server and client resources, and can result in
+      significant costs for pay-per-token LLM services. The attack is difficult
+      to detect because each individual sampling request appears legitimate.
+    remediation: >
+      Implement recursion depth limits for sampling requests that cap the number
+      of consecutive sampling interactions. Track sampling request chains and
+      reject requests that exceed a configurable depth limit (recommended: 3-5
+      levels). Set a maximum total number of sampling requests per session.
+      Implement circuit-breaker patterns that halt sampling when resource
+      consumption exceeds thresholds. Alert on detected recursive patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp007
+    slug: sampling_without_rate_limit
+    title: "Sampling Without Rate Limit"
+    severity: medium
+    description: >
+      Detects MCP server configurations where sampling requests are not subject
+      to rate limiting. Without rate limits, an MCP server can issue high volumes
+      of sampling requests, consuming LLM API quotas, increasing costs, and
+      potentially degrading service for the user.
+    risk_explanation: >
+      Unrestricted sampling request rates allow a malicious or compromised MCP
+      server to rapidly consume the user's LLM API quota and generate significant
+      costs. High-frequency sampling can also be used to amplify prompt injection
+      attacks by attempting many variations, overwhelm content filtering systems,
+      or establish a denial-of-service condition that prevents the user from
+      using their LLM client for legitimate purposes.
+    remediation: >
+      Implement rate limiting on sampling requests per MCP server and per session.
+      Set reasonable limits based on expected usage patterns, typically no more
+      than 10-20 sampling requests per minute per server. Apply sliding window
+      rate limiting to prevent burst abuse. Notify the user when rate limits are
+      approached or exceeded. Provide configuration for users to set custom rate
+      limits per server based on trust level.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp008
+    slug: sampling_context_manipulation
+    title: "Sampling Context Manipulation"
+    severity: high
+    description: >
+      Detects MCP server implementations where sampling requests can manipulate
+      the LLM's context window by injecting or modifying the conversation history,
+      system prompts, or tool outputs available during sampling. Context
+      manipulation can alter the LLM's understanding of the current task and
+      available information.
+    risk_explanation: >
+      Sampling context manipulation allows a malicious MCP server to alter the
+      information the LLM uses to make decisions. By injecting false conversation
+      history, fabricated tool outputs, or modified system instructions into the
+      sampling context, the attacker can cause the LLM to make decisions based
+      on false premises. This can lead to incorrect tool invocations, data
+      corruption, and actions that the user would not have approved if given
+      accurate information.
+    remediation: >
+      Isolate the sampling context from the main conversation context. Validate
+      all context provided by MCP servers in sampling requests against expected
+      formats and content policies. Prevent sampling requests from modifying
+      the conversation history or system prompts. Display the sampling context
+      to the user for verification. Implement context integrity checks that
+      detect modifications to protected context elements.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp009
+    slug: sampling_response_validation
+    title: "Missing Sampling Response Validation"
+    severity: high
+    description: >
+      Detects MCP server implementations that process sampling responses from the
+      LLM without validation. Unvalidated sampling responses may contain unexpected
+      content, malformed data, or injected instructions that the server processes
+      as trusted input, leading to secondary injection attacks or logic errors.
+    risk_explanation: >
+      When MCP servers process LLM sampling responses without validation, they
+      are vulnerable to attacks where the LLM's response contains unexpected or
+      malicious content. An attacker who can influence the LLM's output through
+      prompt injection can use sampling responses as a vector for injecting
+      commands into the MCP server's processing pipeline. This creates a bidirectional
+      attack channel where compromised LLM outputs exploit the server.
+    remediation: >
+      Validate all sampling responses before processing them in MCP server logic.
+      Implement schema validation for expected response formats. Sanitize response
+      content to remove potential injection payloads. Apply content type checking
+      and length limits on sampling responses. Treat all sampling responses as
+      untrusted input regardless of their origin from the LLM client. Log and
+      alert on malformed or suspicious sampling responses.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp010
+    slug: cross_server_sampling
+    title: "Cross-Server Sampling Attack"
+    severity: critical
+    description: >
+      Detects MCP configurations where sampling requests from one server can
+      influence or access the context and tools of other connected MCP servers.
+      Cross-server sampling breaks isolation boundaries and allows a malicious
+      server to leverage trusted servers' capabilities through the shared LLM
+      session.
+    risk_explanation: >
+      Cross-server sampling attacks exploit the shared LLM context to bridge
+      isolation boundaries between MCP servers. A malicious server uses sampling
+      to inject instructions that reference tools or data from other trusted
+      servers. Since the LLM has access to all connected servers, the sampling
+      response may invoke tools or reveal data from servers the malicious server
+      should not be able to access. This effectively turns the LLM into a
+      confused deputy that bridges trust boundaries.
+    remediation: >
+      Implement strict server isolation in the sampling pipeline. Ensure sampling
+      requests from one server cannot reference or access tools and resources from
+      other servers. Apply the principle of least privilege by restricting the
+      tool set available during sampling to only the requesting server's tools.
+      Use separate LLM contexts for sampling from different servers. Monitor for
+      cross-server reference patterns in sampling requests and responses.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp011
+    slug: sampling_token_exhaustion
+    title: "Sampling Token Exhaustion"
+    severity: medium
+    description: >
+      Detects MCP server configurations where sampling requests can consume
+      excessive LLM tokens through large prompts, high max_tokens values, or
+      frequent requests. Token exhaustion creates a denial-of-service condition
+      for the user's LLM quota and can result in significant financial costs.
+    risk_explanation: >
+      Sampling token exhaustion allows a malicious MCP server to rapidly consume
+      the user's LLM API quota by issuing sampling requests with large input
+      prompts and high output token limits. In pay-per-token LLM services, this
+      directly translates to financial damage. Even in quota-based services, token
+      exhaustion prevents the user from using their LLM for legitimate purposes,
+      creating an effective denial of service.
+    remediation: >
+      Implement token budgets for sampling requests per server and per session.
+      Limit the maximum input prompt size and output token count for individual
+      sampling requests. Track cumulative token usage per server and enforce
+      configurable limits. Alert users when sampling token consumption exceeds
+      normal thresholds. Provide per-server token budget configuration in the
+      MCP client settings.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp012
+    slug: sampling_output_injection
+    title: "Sampling Output Injection"
+    severity: high
+    description: >
+      Detects MCP server implementations where sampling response content is
+      incorporated into tool outputs, resource contents, or other data returned
+      to the LLM without sanitization. Injected content from sampling can
+      influence subsequent LLM decisions and tool invocations.
+    risk_explanation: >
+      Sampling output injection creates a feedback loop where attacker-influenced
+      sampling responses are embedded in tool outputs that the LLM processes in
+      subsequent turns. This allows persistent prompt injection where malicious
+      instructions survive across conversation turns. The injected content can
+      redirect the LLM's behavior, override safety constraints, and create
+      compounding effects that escalate the severity of the attack over time.
+    remediation: >
+      Sanitize all sampling response content before incorporating it into tool
+      outputs or resource data. Apply output encoding and content filtering that
+      strips potential injection payloads. Mark sampling-derived content with
+      metadata that allows the LLM client to apply additional scrutiny. Implement
+      content integrity checks that detect modifications to tool outputs after
+      sampling interactions.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp013
+    slug: model_selection_manipulation
+    title: "Model Selection Manipulation"
+    severity: high
+    description: >
+      Detects MCP server sampling requests that attempt to control which LLM
+      model processes the request. By specifying a weaker or more permissive
+      model, an attacker can bypass safety guardrails implemented in the user's
+      preferred model and obtain responses that would otherwise be blocked.
+    risk_explanation: >
+      Model selection manipulation allows a malicious MCP server to downgrade the
+      safety level of sampling responses by requesting processing from a less
+      restrictive model. Different models have different safety training, content
+      policies, and capability levels. By selecting a model with weaker guardrails,
+      the attacker can obtain responses containing harmful content, bypass
+      instruction-following safety measures, or exploit known vulnerabilities in
+      specific model versions.
+    remediation: >
+      Restrict model selection in sampling requests to the user's configured
+      model. Ignore or reject model preferences specified by MCP servers in
+      sampling requests. If model selection is a supported feature, require
+      explicit user approval for model changes. Maintain an allowlist of
+      permitted models for sampling and enforce minimum safety requirements.
+      Log all model selection attempts for security monitoring.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp014
+    slug: sampling_history_poisoning
+    title: "Sampling History Poisoning"
+    severity: high
+    description: >
+      Detects MCP server sampling requests that include fabricated conversation
+      history or modified previous messages. By injecting false history into
+      sampling requests, a malicious server can alter the LLM's understanding
+      of past interactions and influence its future responses.
+    risk_explanation: >
+      Sampling history poisoning undermines the LLM's ability to maintain
+      accurate context by injecting false conversation history. A malicious MCP
+      server can include fabricated user messages, assistant responses, or tool
+      outputs in the sampling request history. The LLM processes this false
+      history as factual context, leading to decisions based on events that never
+      occurred. This can cause the LLM to trust the malicious server more, follow
+      instructions it would normally reject, or take actions contrary to the
+      user's actual intent.
+    remediation: >
+      Validate conversation history in sampling requests against the actual
+      session history maintained by the LLM client. Reject sampling requests
+      containing history entries that do not match verified records. Implement
+      message integrity verification using cryptographic signatures on
+      conversation history entries. Display sampling history to the user for
+      verification before processing. Limit the history context available in
+      sampling to only the current interaction.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security
+
+  - id: samp015
+    slug: sampling_system_prompt_override
+    title: "Sampling System Prompt Override"
+    severity: critical
+    description: >
+      Detects MCP server sampling requests that attempt to override or modify the
+      LLM client's system prompt. By injecting a custom system prompt through
+      sampling, a malicious server can fundamentally alter the LLM's behavior,
+      remove safety constraints, and redirect the agent toward attacker-controlled
+      objectives.
+    risk_explanation: >
+      System prompt override via sampling is among the most severe attacks on the
+      MCP sampling mechanism. The system prompt defines the LLM's core behavior,
+      safety constraints, and operational boundaries. A malicious MCP server that
+      can override it through sampling gains complete control over the LLM's
+      behavior for the duration of the session. This can disable safety guardrails,
+      enable unrestricted tool access, facilitate data exfiltration, and turn the
+      LLM into a fully controlled agent operating against the user's interests.
+    remediation: >
+      Never allow MCP server sampling requests to modify or override the client's
+      system prompt. Implement system prompt protection that is immune to sampling
+      influence. Reject sampling requests that include systemPrompt fields or
+      instructions that reference system-level configuration. Maintain the system
+      prompt in a protected context that is read-only to sampling interactions.
+      Alert users immediately if a sampling request attempts system prompt
+      modification.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+      - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+    owasp_mcp:
+      - "MCP07:2025"
+    tags:
+      - sampling
+      - unit42
+      - model_security

@@ -1,0 +1,30 @@
+check_id: auth006
+title: Missing Token Expiration
+category: authentication
+severity: high
+description: >
+  Detects JWT tokens and API keys without expiration claims or time-to-
+  live settings. Tokens that never expire remain valid indefinitely,
+  even after the user's access should have been revoked or the token has
+  been compromised.
+risk_explanation: >
+  Non-expiring tokens grant permanent access. If such a token is leaked
+  through logs, configuration files, or a data breach, the attacker has
+  indefinite access to the MCP server. Without expiration, there is no
+  automatic mechanism to limit the window of compromise after a token
+  leak.
+remediation: >
+  Set appropriate expiration times on all authentication tokens using
+  the 'exp' claim in JWTs or TTL settings for API keys. Use short-lived
+  access tokens (15-60 minutes) paired with longer-lived refresh tokens.
+  Implement token refresh flows that issue new tokens before expiration.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - authentication
+  - token_expiry
+  - jwt
+  - token_lifetime

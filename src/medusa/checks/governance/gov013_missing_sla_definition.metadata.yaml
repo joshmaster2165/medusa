@@ -1,0 +1,34 @@
+check_id: gov013
+title: Missing SLA Definition
+category: governance
+severity: low
+description: >
+  Detects MCP server deployments that lack defined service level
+  agreements (SLAs) specifying availability targets, performance
+  requirements, and support response times. SLAs set expectations for
+  service quality and provide a framework for measuring and reporting on
+  operational performance.
+risk_explanation: >
+  Without SLAs, there are no measurable commitments for MCP server
+  availability, performance, or support. Users and dependent systems
+  have no basis for planning around MCP server reliability. Performance
+  degradation goes unmeasured and unreported because there are no
+  defined thresholds. This creates a disconnect between user
+  expectations and actual service delivery that manifests as user
+  dissatisfaction and unplanned workflow disruptions.
+remediation: >
+  Define SLAs for the MCP server deployment including availability
+  targets (such as 99.9% uptime), response time requirements (such as
+  less than 200ms p95), and support response times for different
+  severity levels. Implement monitoring that measures SLA compliance
+  continuously. Publish SLA dashboards for transparency. Define
+  remediation procedures for SLA violations. Review SLAs annually and
+  adjust based on operational history.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

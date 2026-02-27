@@ -1,0 +1,34 @@
+check_id: ssrf019
+title: Kubernetes API Access
+category: ssrf_and_network
+severity: critical
+description: >
+  Detects MCP server tools that can access the Kubernetes API server,
+  typically available at kubernetes.default.svc or via the service
+  account token mounted at
+  /var/run/secrets/kubernetes.io/serviceaccount/token. Access to the
+  Kubernetes API enables cluster-wide enumeration and resource
+  manipulation.
+risk_explanation: >
+  Kubernetes API access from MCP tools can lead to complete cluster
+  compromise. An attacker can list all pods, services, and secrets;
+  create new privileged containers; modify deployments; and access
+  secrets containing database credentials and API keys. If the MCP
+  server's service account has elevated permissions, the attacker can
+  achieve cluster-admin level access and compromise all workloads in the
+  cluster.
+remediation: >
+  Block MCP tool access to the Kubernetes API server address and service
+  account token paths. Implement network policies that prevent MCP
+  server pods from reaching the Kubernetes API. Use minimal RBAC
+  permissions for the MCP server's service account. Mount service
+  account tokens as read-only and consider disabling automatic token
+  mounting. Deploy admission controllers that enforce security policies
+  on MCP server pod specifications.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

@@ -1,0 +1,33 @@
+check_id: samp002
+title: Model Manipulation via Sampling
+category: sampling_security
+severity: critical
+description: >
+  Detects MCP server configurations where sampling requests can be used
+  to manipulate the LLM's behavior, including altering its system prompt
+  interpretation, overriding safety constraints, or changing the model's
+  decision-making process through carefully crafted sampling payloads.
+risk_explanation: >
+  Model manipulation through sampling allows an attacker to alter the
+  LLM's behavior for the duration of the session. By crafting sampling
+  requests with specific instructions or context, the attacker can cause
+  the LLM to ignore safety guidelines, misinterpret user instructions,
+  or adopt a manipulated persona. This undermines the trust relationship
+  between the user and the LLM and can lead to harmful outputs or
+  unauthorized actions across all subsequent tool invocations.
+remediation: >
+  Isolate sampling request processing from the main conversation
+  context. Implement behavioral monitoring that detects changes in LLM
+  output patterns after sampling interactions. Require human approval
+  for sampling requests that include system-level instructions or
+  context modifications. Apply guardrails that prevent sampling from
+  altering the LLM's core safety constraints or system prompt.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://unit42.paloaltonetworks.com/mcp-security-risks-vulnerabilities/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - sampling
+  - unit42
+  - model_security

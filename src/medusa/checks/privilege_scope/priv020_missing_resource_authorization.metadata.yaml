@@ -1,0 +1,31 @@
+check_id: priv020
+title: Missing Resource Authorization
+category: privilege_scope
+severity: high
+description: >
+  Detects MCP resources that can be accessed without authorization
+  checks. Resources without access control allow any authenticated user
+  to read, modify, or delete any resource regardless of ownership or
+  permissions.
+risk_explanation: >
+  Missing resource authorization means that authentication alone is
+  considered sufficient for access. Any authenticated user can access
+  all resources, including other users' private data, administrative
+  configurations, and sensitive documents. This violates the principle
+  of least privilege and enables data breaches through compromised low-
+  privilege accounts.
+remediation: >
+  Implement authorization checks on all resource access operations.
+  Verify that the requesting user has the specific permission required
+  for the operation (read, write, delete) on the specific resource. Use
+  attribute-based access control (ABAC) or role-based access control
+  (RBAC) to define and enforce resource access policies.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - privilege_scope
+  - authorization
+  - resource_access
+  - access_control

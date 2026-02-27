@@ -1,0 +1,33 @@
+check_id: gov011
+title: Missing Business Continuity Plan
+category: governance
+severity: medium
+description: >
+  Detects MCP server deployments that lack a business continuity plan
+  for maintaining MCP server operations during disruptions including
+  infrastructure failures, security incidents, and service provider
+  outages.
+risk_explanation: >
+  MCP servers may become critical infrastructure for organizations that
+  depend on them for automated workflows, data processing, and business
+  operations. Without a business continuity plan, disruptions to the MCP
+  server cause unplanned downtime, data loss, and business process
+  failures. The interconnected nature of MCP tool invocations means a
+  single service disruption can cascade across multiple dependent
+  workflows.
+remediation: >
+  Develop a business continuity plan that addresses MCP server
+  availability requirements including maximum tolerable downtime,
+  recovery point objectives, and failover procedures. Identify critical
+  tool dependencies and plan for their unavailability. Implement
+  redundancy for critical MCP server components. Define communication
+  procedures for service disruptions. Test the continuity plan regularly
+  through tabletop exercises and failover drills.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - governance
+  - compliance
+  - enterprise

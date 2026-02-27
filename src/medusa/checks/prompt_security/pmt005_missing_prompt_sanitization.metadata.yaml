@@ -1,0 +1,30 @@
+check_id: pmt005
+title: Missing Prompt Sanitization
+category: prompt_security
+severity: medium
+description: >
+  Detects MCP prompt handlers that pass prompt content and arguments to
+  the LLM without any sanitization, filtering, or validation. Missing
+  sanitization allows any content in prompts and arguments to reach the
+  LLM unmodified, including injection payloads.
+risk_explanation: >
+  Without prompt sanitization, all content in prompt definitions and
+  their arguments is passed directly to the LLM. This creates a direct
+  channel for prompt injection attacks where malicious content embedded
+  in arguments or dynamically loaded prompt data can manipulate the LLM
+  behavior. The lack of any filtering means even obvious injection
+  patterns pass through undetected.
+remediation: >
+  Implement a prompt sanitization pipeline that processes all prompt
+  content before it reaches the LLM. Strip or encode known injection
+  patterns, validate argument types and formats, and filter control
+  characters. Apply content security policies that define acceptable
+  prompt content. Log sanitization actions for security monitoring.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - prompt_security
+  - injection

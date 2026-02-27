@@ -1,0 +1,30 @@
+check_id: shadow004
+title: Missing Server Metadata
+category: server_identity
+severity: medium
+description: >
+  Detects MCP servers that lack descriptive metadata such as a human-
+  readable description, author information, contact details, or homepage
+  URL. Missing metadata makes it difficult to verify server legitimacy.
+risk_explanation: >
+  Servers without adequate metadata cannot be easily verified by users
+  or administrators. Missing descriptions prevent users from
+  understanding what a server does before granting it access. Missing
+  contact information prevents reporting security issues. Missing author
+  and homepage details make it impossible to verify the server's
+  provenance and legitimacy.
+remediation: >
+  Ensure all MCP servers include comprehensive metadata: a clear
+  description of functionality, author name and contact information,
+  homepage or repository URL, and license information. Implement server
+  registration policies that require minimum metadata fields. Display
+  server metadata to users during consent and authorization flows.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - server_identity
+  - metadata
+  - transparency
+  - verification

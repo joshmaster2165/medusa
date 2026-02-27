@@ -1,0 +1,605 @@
+category: session_management
+checks:
+  - id: sess001
+    slug: missing_session_timeout
+    title: "Missing Session Timeout"
+    severity: high
+    description: >
+      Detects MCP server configurations that lack session timeout settings for
+      client connections. When sessions between LLM clients and MCP servers persist
+      indefinitely, abandoned or forgotten sessions remain active and exploitable.
+      Tool invocations can continue on stale sessions long after the user has
+      disengaged.
+    risk_explanation: >
+      Without session timeouts, compromised or abandoned MCP sessions remain valid
+      indefinitely. An attacker who obtains a session token can use it to invoke
+      tools, access resources, and exfiltrate data without time pressure. This is
+      especially dangerous in multi-tenant MCP deployments where long-lived sessions
+      can bridge trust boundaries.
+    remediation: >
+      Configure an explicit session timeout for all MCP server connections. Set a
+      maximum session lifetime appropriate for your threat model, typically no longer
+      than 8 hours for interactive sessions. Implement server-side session expiry
+      that cannot be overridden by the client. Ensure expired sessions are fully
+      invalidated and all associated tokens are revoked.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess002
+    slug: session_fixation
+    title: "Session Fixation Vulnerability"
+    severity: high
+    description: >
+      Detects MCP server implementations vulnerable to session fixation attacks
+      where an attacker can force a known session ID onto a victim's LLM client
+      connection. If the server accepts externally supplied session identifiers
+      without regeneration after authentication, an attacker can pre-set the
+      session ID and then hijack the authenticated session.
+    risk_explanation: >
+      Session fixation allows an attacker to establish a valid session and then
+      trick a legitimate user into authenticating on that session. Once the victim
+      authenticates, the attacker already possesses the session token and gains
+      full access to all MCP tool invocations and resources available to the
+      victim. This can lead to unauthorized data access, privilege escalation,
+      and tool abuse.
+    remediation: >
+      Always generate a new session ID on the server side after successful
+      authentication. Reject any session IDs supplied by the client prior to
+      authentication. Invalidate pre-authentication session tokens immediately
+      upon login. Implement session ID regeneration at privilege level changes
+      within the MCP server lifecycle.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess003
+    slug: weak_session_id_entropy
+    title: "Weak Session ID Entropy"
+    severity: high
+    description: >
+      Detects MCP server session identifiers generated with insufficient
+      randomness or entropy. Weak session IDs that use predictable patterns,
+      sequential numbers, or low-entropy random sources can be guessed or
+      brute-forced by attackers to hijack active LLM client connections.
+    risk_explanation: >
+      Session IDs with weak entropy can be predicted or brute-forced, allowing
+      an attacker to hijack active MCP sessions. This grants unauthorized access
+      to all tools and resources available in the compromised session, enabling
+      data exfiltration, tool misuse, and privilege escalation through the
+      connected LLM client.
+    remediation: >
+      Use a cryptographically secure random number generator (CSPRNG) to produce
+      session IDs with at least 128 bits of entropy. Avoid sequential, timestamp-
+      based, or hash-based session ID schemes. Use standard session management
+      libraries that have been audited for secure ID generation. Regularly test
+      session ID randomness using statistical analysis tools.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess004
+    slug: session_stored_in_url
+    title: "Session ID Stored in URL"
+    severity: high
+    description: >
+      Detects MCP server configurations where session identifiers are transmitted
+      or stored in URL parameters rather than secure headers or cookies. Session
+      IDs in URLs are exposed in browser history, server logs, referrer headers,
+      and proxy logs, making them trivially accessible to attackers.
+    risk_explanation: >
+      When MCP session tokens appear in URLs, they are recorded in multiple
+      locations including web server logs, proxy caches, browser history, and HTTP
+      Referer headers. This dramatically increases the attack surface for session
+      hijacking. An attacker with access to any of these log sources can extract
+      valid session tokens and invoke MCP tools on behalf of legitimate users.
+    remediation: >
+      Transmit session identifiers exclusively via HTTP headers such as the
+      Authorization header or secure cookies with HttpOnly and Secure flags. Never
+      include session tokens in URL query parameters or path segments. Configure
+      MCP server transport to strip session tokens from any logged URLs. Review
+      server and proxy logging configurations to ensure session data is not
+      inadvertently captured.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess005
+    slug: missing_session_invalidation
+    title: "Missing Session Invalidation on Logout"
+    severity: medium
+    description: >
+      Detects MCP servers that fail to properly invalidate sessions when a user
+      or LLM client disconnects or logs out. Without explicit session invalidation,
+      session tokens remain valid on the server side even after the client believes
+      the session has ended, creating a window for session reuse attacks.
+    risk_explanation: >
+      If MCP sessions are not invalidated upon logout, an attacker who has captured
+      a session token can continue to use it for tool invocations even after the
+      legitimate user has disconnected. This is particularly dangerous in shared
+      environments or when session tokens are leaked through logs, as the tokens
+      remain permanently usable.
+    remediation: >
+      Implement server-side session invalidation that destroys all session state
+      upon logout or disconnection. Remove the session from the server-side session
+      store immediately. Ensure all associated tokens, including refresh tokens and
+      access tokens tied to the session, are revoked. Return an error for any
+      subsequent requests using the invalidated session ID.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess006
+    slug: concurrent_session_limit
+    title: "Missing Concurrent Session Limit"
+    severity: medium
+    description: >
+      Detects MCP server configurations that allow unlimited concurrent sessions
+      for a single user or identity. Without concurrent session limits, a
+      compromised credential can be used to establish multiple parallel sessions
+      across different LLM clients without the legitimate user being aware.
+    risk_explanation: >
+      Without concurrent session limits, an attacker who obtains valid credentials
+      can open additional MCP sessions alongside the legitimate user's session.
+      This enables silent, parallel exploitation of tools and resources while the
+      legitimate user continues operating normally, making detection difficult.
+      It also creates resource exhaustion risks on the MCP server.
+    remediation: >
+      Enforce a maximum number of concurrent sessions per user identity on the MCP
+      server. Implement a policy for handling session limit violations, such as
+      terminating the oldest session or rejecting new session requests. Notify
+      users when concurrent session limits are reached or when sessions are
+      created from new locations. Log all session creation events for audit.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess007
+    slug: session_replay_risk
+    title: "Session Replay Attack Risk"
+    severity: high
+    description: >
+      Detects MCP server configurations vulnerable to session replay attacks where
+      captured session tokens or authenticated requests can be retransmitted to
+      gain unauthorized access. Without replay protections such as nonces or
+      timestamp validation, intercepted tool invocation requests can be replayed
+      by an attacker.
+    risk_explanation: >
+      Session replay attacks allow an attacker to capture and retransmit valid MCP
+      requests including tool invocations, resource access, and administrative
+      commands. Without anti-replay mechanisms, the server cannot distinguish between
+      legitimate and replayed requests, enabling attackers to duplicate actions,
+      exfiltrate data, or escalate privileges by replaying privileged operations.
+    remediation: >
+      Implement anti-replay protections in the MCP server transport layer. Use
+      unique nonces or request IDs that are validated and rejected on reuse.
+      Include timestamps in requests and enforce a maximum clock skew tolerance.
+      Consider implementing sequence numbers for tool invocation requests within
+      a session. Use TLS to protect against network-level capture of session data.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess008
+    slug: missing_session_binding
+    title: "Missing Session-IP Binding"
+    severity: medium
+    description: >
+      Detects MCP server sessions that are not bound to the originating client
+      IP address or other client fingerprint. Without session binding, a session
+      token stolen from one network location can be used from any other location
+      to invoke tools and access resources on the MCP server.
+    risk_explanation: >
+      Unbound MCP sessions can be used from any network location, meaning a stolen
+      session token grants full access regardless of where the attacker is located.
+      This removes a significant barrier to session hijacking and makes stolen
+      tokens maximally useful to attackers. In MCP deployments handling sensitive
+      tool invocations, this significantly increases the blast radius of token
+      compromise.
+    remediation: >
+      Bind MCP sessions to the client's IP address or a stable client fingerprint
+      at session creation time. Invalidate sessions when the source IP changes
+      unexpectedly. For environments where IP changes are expected (mobile users,
+      VPNs), use additional binding factors such as TLS client certificate
+      fingerprints or User-Agent strings. Log and alert on binding violations.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess009
+    slug: session_data_exposure
+    title: "Session Data Exposure"
+    severity: high
+    description: >
+      Detects MCP server implementations that store sensitive data directly in
+      session objects or transmit session contents to the client. Session data
+      may include tool invocation history, user credentials, resource URIs, or
+      intermediate computation results that should not be exposed to the LLM
+      client or stored in client-accessible session storage.
+    risk_explanation: >
+      Exposed session data can reveal sensitive information about MCP tool
+      invocations, user credentials, internal resource URIs, and server-side
+      state. Attackers can extract this data to map internal infrastructure,
+      harvest credentials, or understand tool behavior for crafting more
+      sophisticated attacks. Client-side session storage is particularly
+      dangerous as it persists beyond the session lifetime.
+    remediation: >
+      Store all sensitive session data server-side in a secure session store.
+      Never include credentials, internal URIs, or sensitive tool outputs in
+      client-visible session data. Encrypt server-side session storage at rest.
+      Minimize the data stored in sessions to only what is required for session
+      management. Implement session data classification and enforce storage
+      policies based on sensitivity.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess010
+    slug: missing_session_rotation
+    title: "Missing Session ID Rotation"
+    severity: high
+    description: >
+      Detects MCP servers that do not periodically rotate session identifiers
+      during active sessions. Without rotation, a session ID remains static for
+      the entire session lifetime, giving attackers an extended window to capture
+      and exploit the token for unauthorized tool invocations.
+    risk_explanation: >
+      Static session IDs that persist for the entire session lifetime provide
+      attackers with a long window for capture and exploitation. If a session ID
+      is leaked at any point during a long-running MCP session, the attacker can
+      use it for the remainder of the session. In MCP contexts where sessions may
+      last hours during extended LLM interactions, this risk is amplified.
+    remediation: >
+      Implement periodic session ID rotation during active MCP sessions. Rotate
+      the session ID at least every 15-30 minutes and immediately after any
+      privilege level change. Ensure the old session ID is invalidated upon
+      rotation. Maintain session continuity across rotation by migrating session
+      state to the new ID atomically. Log all rotation events for audit purposes.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess011
+    slug: persistent_session_risk
+    title: "Persistent Session Risk"
+    severity: medium
+    description: >
+      Detects MCP server configurations that support persistent or "remember me"
+      sessions that survive client restarts, browser closures, or system reboots.
+      Persistent sessions extend the window of exposure for session tokens stored
+      on disk and can be exploited if the client device is compromised.
+    risk_explanation: >
+      Persistent MCP sessions store session tokens on disk, making them available
+      to anyone with access to the client filesystem. This is particularly
+      dangerous in shared computing environments or when LLM client devices are
+      lost or stolen. Persistent sessions also survive security events like
+      password changes, meaning compromised sessions may remain valid even after
+      remediation steps are taken.
+    remediation: >
+      Avoid persistent sessions for MCP connections by default. If persistent
+      sessions are required, encrypt stored session tokens with a key derived from
+      user credentials. Implement automatic invalidation of persistent sessions
+      when security-relevant events occur such as password changes or permission
+      modifications. Set a maximum lifetime for persistent sessions that is
+      enforced server-side.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess012
+    slug: cross_site_session_sharing
+    title: "Cross-Site Session Sharing"
+    severity: high
+    description: >
+      Detects MCP server configurations where session tokens can be shared or
+      reused across different origins, domains, or MCP server instances. Cross-site
+      session sharing violates the principle of session isolation and allows a
+      compromised server to leverage sessions established with a different server.
+    risk_explanation: >
+      When MCP session tokens are valid across multiple origins or servers, a
+      compromise of any single server grants access to all servers sharing the
+      session. This dramatically increases the blast radius of a security incident.
+      A malicious MCP server could capture session tokens and replay them against
+      legitimate servers, gaining unauthorized access to tools and resources.
+    remediation: >
+      Ensure MCP session tokens are scoped to a single server origin and cannot
+      be reused across different MCP server instances. Include the server identity
+      in session token validation. Use audience-restricted tokens that are bound to
+      a specific MCP server endpoint. Implement session isolation at the transport
+      layer using distinct cookie domains or authorization scopes per server.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess013
+    slug: session_cookie_scope
+    title: "Overly Broad Session Cookie Scope"
+    severity: medium
+    description: >
+      Detects MCP servers that set session cookies with overly broad domain or
+      path scopes. Cookies scoped to parent domains or root paths are sent with
+      requests to all subdomains and paths, exposing session tokens to unrelated
+      services and increasing the risk of token capture.
+    risk_explanation: >
+      Broadly scoped session cookies are sent with every request to matching
+      domains and paths, including requests to unrelated services hosted on the
+      same domain. This exposes MCP session tokens to services that have no need
+      for them, increasing the likelihood of token leakage through logs, caches,
+      or compromised co-hosted applications. Any service on the matching domain
+      can read and potentially abuse the session token.
+    remediation: >
+      Set session cookies with the most restrictive domain and path scope possible.
+      Use the exact MCP server hostname rather than a parent domain. Set the path
+      to the specific API endpoint prefix. Apply the Secure flag to prevent
+      transmission over unencrypted connections. Apply the HttpOnly flag to prevent
+      JavaScript access. Use the SameSite attribute set to Strict or Lax.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess014
+    slug: missing_session_encryption
+    title: "Missing Session Encryption"
+    severity: high
+    description: >
+      Detects MCP server sessions where session data is stored or transmitted
+      without encryption. Unencrypted session tokens and session state can be
+      intercepted in transit or read from storage by attackers with access to
+      network traffic or the storage medium.
+    risk_explanation: >
+      Unencrypted MCP session data is vulnerable to interception during transit
+      and unauthorized access at rest. Attackers on the same network can capture
+      session tokens via packet sniffing. Attackers with storage access can read
+      session state including tool invocation history, cached credentials, and
+      intermediate results. This enables session hijacking and data exfiltration.
+    remediation: >
+      Encrypt all MCP session data both in transit and at rest. Use TLS 1.2 or
+      higher for all session-bearing communications. Encrypt server-side session
+      stores using AES-256 or equivalent. Ensure session tokens transmitted via
+      cookies have the Secure flag set. For session data stored in databases or
+      caches, use transparent data encryption or application-level encryption.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess015
+    slug: session_hijacking_via_xss
+    title: "Session Hijacking via XSS"
+    severity: high
+    description: >
+      Detects MCP server configurations where session tokens are accessible to
+      client-side JavaScript, making them vulnerable to exfiltration via cross-site
+      scripting (XSS) attacks. If an attacker injects malicious scripts into the
+      LLM client interface, they can steal session tokens and hijack the MCP
+      session.
+    risk_explanation: >
+      JavaScript-accessible session tokens can be stolen by XSS payloads injected
+      into the LLM client interface or tool output rendering. Once stolen, the
+      attacker can use the session token from any location to invoke MCP tools,
+      access resources, and impersonate the legitimate user. MCP servers are
+      particularly vulnerable because tool outputs may contain attacker-controlled
+      content that is rendered in the client.
+    remediation: >
+      Set the HttpOnly flag on all session cookies to prevent JavaScript access.
+      Implement Content Security Policy (CSP) headers to mitigate XSS attacks.
+      Sanitize and escape all tool output before rendering in the client. Avoid
+      storing session tokens in localStorage or sessionStorage where they are
+      accessible to scripts. Use subresource integrity (SRI) for loaded scripts.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess016
+    slug: session_token_in_logs
+    title: "Session Token in Logs"
+    severity: high
+    description: >
+      Detects MCP server configurations where session tokens or session identifiers
+      are written to application logs, access logs, or debug output. Logged session
+      tokens can be harvested by anyone with access to log files, log aggregation
+      systems, or monitoring dashboards.
+    risk_explanation: >
+      Session tokens recorded in logs are accessible to anyone with log access,
+      including system administrators, logging service providers, and attackers
+      who compromise log storage. In MCP deployments, logs often contain tool
+      invocation details alongside session identifiers, making it trivial to
+      correlate stolen tokens with high-value sessions. Log retention policies
+      may keep these tokens available for extended periods.
+    remediation: >
+      Implement log sanitization that redacts or masks session tokens before they
+      are written to any log destination. Configure structured logging that
+      excludes session identifiers from log fields. Review log configurations for
+      all components in the MCP request path including proxies, load balancers,
+      and application servers. Use session reference IDs in logs that cannot be
+      used for authentication.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess017
+    slug: missing_idle_timeout
+    title: "Missing Idle Session Timeout"
+    severity: medium
+    description: >
+      Detects MCP server sessions that lack idle timeout configuration. Without
+      idle timeouts, sessions remain active even when no tool invocations or
+      client interactions have occurred for extended periods. This leaves sessions
+      open for exploitation during periods of user inactivity.
+    risk_explanation: >
+      MCP sessions without idle timeouts remain active during extended periods
+      of inactivity, creating unnecessary exposure windows. If a user steps away
+      from their LLM client or loses connectivity, the session remains valid and
+      can be hijacked. In enterprise environments, idle sessions represent
+      unmonitored access points that accumulate over time, increasing the overall
+      attack surface.
+    remediation: >
+      Configure an idle session timeout on the MCP server that terminates sessions
+      after a period of inactivity. Set the idle timeout to a value appropriate for
+      your use case, typically 15-30 minutes. Implement server-side tracking of
+      last activity time per session. Provide a warning to the LLM client before
+      session expiry to allow the user to extend the session if needed.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess018
+    slug: session_deserialization_risk
+    title: "Session Deserialization Risk"
+    severity: high
+    description: >
+      Detects MCP server implementations that deserialize session data from
+      untrusted sources without validation. Insecure deserialization of session
+      objects can lead to remote code execution, privilege escalation, or denial
+      of service when an attacker crafts malicious serialized session payloads.
+    risk_explanation: >
+      Insecure deserialization of MCP session data can allow an attacker to execute
+      arbitrary code on the server, modify session state to escalate privileges,
+      or crash the server via malformed objects. If session data is serialized using
+      formats like Python pickle, Java ObjectInputStream, or PHP serialize, an
+      attacker who can modify session storage or intercept session data can inject
+      malicious payloads that execute upon deserialization.
+    remediation: >
+      Avoid deserializing session data from untrusted sources. Use safe serialization
+      formats such as JSON that do not support arbitrary code execution during
+      deserialization. If complex object serialization is required, implement
+      integrity checks using HMAC signatures on serialized session data. Use
+      allowlists for permitted classes during deserialization. Consider using
+      signed and encrypted session tokens (such as JWTs) instead of server-side
+      session objects.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess019
+    slug: missing_session_audit
+    title: "Missing Session Audit Trail"
+    severity: medium
+    description: >
+      Detects MCP server deployments that do not maintain an audit trail of session
+      lifecycle events including creation, authentication, tool invocations,
+      privilege changes, and termination. Without session auditing, security
+      incidents involving compromised sessions cannot be investigated or detected.
+    risk_explanation: >
+      Without session audit trails, organizations cannot detect session hijacking,
+      investigate security incidents, or demonstrate compliance with regulatory
+      requirements. When an MCP session is compromised, the lack of audit data
+      makes it impossible to determine what tools were invoked, what data was
+      accessed, or how long the attacker maintained access. This hampers incident
+      response and forensic analysis.
+    remediation: >
+      Implement comprehensive session audit logging that records all session
+      lifecycle events. Log session creation with client metadata, authentication
+      events, all tool invocations with timestamps, privilege changes, and session
+      termination reasons. Store audit logs in a tamper-resistant log store with
+      appropriate retention periods. Implement real-time alerting on suspicious
+      session activity patterns.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication
+
+  - id: sess020
+    slug: websocket_session_security
+    title: "WebSocket Session Security"
+    severity: high
+    description: >
+      Detects MCP servers using WebSocket transport without proper session security
+      controls. WebSocket connections used for MCP communication may lack
+      authentication token validation on upgrade, origin checking, or per-message
+      session verification, allowing unauthorized access to tool invocations.
+    risk_explanation: >
+      WebSocket connections for MCP transport present unique session security
+      challenges. If session tokens are only validated during the initial HTTP
+      upgrade and not on subsequent messages, a hijacked WebSocket connection
+      provides persistent unauthorized access. Cross-origin WebSocket connections
+      without proper origin validation can be initiated by malicious web pages,
+      enabling cross-site WebSocket hijacking attacks against MCP servers.
+    remediation: >
+      Validate authentication tokens on the WebSocket upgrade request and
+      periodically during the connection lifetime. Implement origin checking to
+      reject WebSocket connections from unauthorized origins. Use per-message
+      authentication or session binding for long-lived WebSocket connections.
+      Implement connection-level timeouts and idle detection. Close WebSocket
+      connections when the associated session expires or is invalidated.
+    references:
+      - "https://owasp.org/www-project-mcp-top-10/"
+    owasp_mcp:
+      - "MCP01:2025"
+    tags:
+      - session_management
+      - authentication

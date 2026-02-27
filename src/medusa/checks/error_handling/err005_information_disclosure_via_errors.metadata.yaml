@@ -1,0 +1,28 @@
+check_id: err005
+title: Information Disclosure via Errors
+category: error_handling
+severity: high
+description: >
+  Detects MCP server error responses that disclose system-level
+  information such as operating system details, hostname, IP addresses,
+  user account names, installed software versions, or runtime
+  environment configuration.
+risk_explanation: >
+  System information disclosed through errors enables attackers to
+  fingerprint the server environment, identify vulnerable software
+  versions, determine network topology, and craft OS-specific exploits.
+  Hostnames and IP addresses can reveal internal network structure and
+  enable lateral movement planning.
+remediation: >
+  Sanitize all error responses to remove system-level information before
+  returning them to clients. Configure the MCP server runtime to
+  suppress system details in error messages. Implement an error response
+  middleware that strips hostnames, paths, IPs, and version strings from
+  all outgoing error payloads.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - error_handling
+  - information_disclosure

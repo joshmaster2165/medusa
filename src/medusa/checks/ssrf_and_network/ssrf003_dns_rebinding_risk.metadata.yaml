@@ -1,0 +1,32 @@
+check_id: ssrf003
+title: DNS Rebinding Risk
+category: ssrf_and_network
+severity: high
+description: >
+  Detects MCP server tools that validate URLs at request time but do not
+  re-validate after DNS resolution, making them vulnerable to DNS
+  rebinding attacks. An attacker can configure a DNS record to first
+  resolve to an allowed IP and then switch to an internal IP between
+  validation and use.
+risk_explanation: >
+  DNS rebinding bypasses URL validation by exploiting the gap between
+  DNS resolution during validation and the actual connection. An
+  attacker sets up a domain that initially resolves to a permitted
+  address, passes validation, then resolves to an internal address when
+  the MCP tool makes the actual request. This technique bypasses all
+  hostname-based SSRF protections and grants access to internal
+  services.
+remediation: >
+  Validate IP addresses after DNS resolution, not just hostnames. Pin
+  DNS resolutions so the same IP is used for validation and connection.
+  Implement DNS resolution caching with short TTLs that prevent
+  rebinding. Use a dedicated DNS resolver that blocks resolution to
+  private IP ranges. Validate the resolved IP address against the
+  allowlist immediately before establishing the connection.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ssrf
+  - network_security

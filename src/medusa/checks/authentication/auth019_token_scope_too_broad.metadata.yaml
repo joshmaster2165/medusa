@@ -1,0 +1,31 @@
+check_id: auth019
+title: Token Scope Too Broad
+category: authentication
+severity: high
+description: >
+  Detects authentication tokens with excessively broad permission scopes
+  that grant access beyond what is required for the token's intended
+  use. Over-scoped tokens violate the principle of least privilege and
+  amplify the impact of token compromise.
+risk_explanation: >
+  A token with broad scopes (e.g. full admin access when only read
+  access is needed) grants an attacker who compromises the token far
+  more access than the legitimate use case requires. Over-scoped tokens
+  are common when developers request all permissions during development
+  and fail to restrict them for production.
+remediation: >
+  Issue tokens with the minimum scopes required for their intended use.
+  Implement scope-based access control that maps each tool to its
+  required permissions. Review and restrict token scopes during security
+  audits. Use OAuth 2.0 scope parameters to request only necessary
+  permissions.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+  - "MCP07:2025"
+tags:
+  - authentication
+  - token_scope
+  - least_privilege
+  - over_scoped
