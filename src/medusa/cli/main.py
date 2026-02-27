@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 
 import click
+import httpx
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -171,6 +173,12 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     default=4,
     help="Max servers to scan concurrently (default: 4)",
 )
+@click.option(
+    "--upload",
+    type=str,
+    default=None,
+    help="Upload results to dashboard URL (e.g. https://dashboard.example.com/api/v1/reports)",
+)
 @click.pass_context
 def scan(
     ctx: click.Context,
@@ -189,6 +197,7 @@ def scan(
     compliance: str | None,
     no_auto_discover: bool,
     max_concurrency: int,
+    upload: str | None,
 ) -> None:
     """Scan MCP servers for security vulnerabilities."""
     quiet = ctx.obj.get("quiet", False)
@@ -338,6 +347,39 @@ def scan(
             console.print(f"Report written to: {output_file}")
     else:
         click.echo(output)
+
+    # Upload results to dashboard
+    if upload:
+        api_key = os.environ.get("MEDUSA_API_KEY", "")
+        if not api_key:
+            console.print(
+                "[red]MEDUSA_API_KEY environment variable is required"
+                " for --upload[/red]"
+            )
+            sys.exit(2)
+
+        if not quiet:
+            console.print(f"\n[dim]Uploading results to {upload}...[/dim]")
+
+        try:
+            resp = httpx.post(
+                upload,
+                json=result.model_dump(mode="json"),
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if not quiet:
+                    console.print(
+                        f"[green]Uploaded successfully.[/green]"
+                        f" View at: {data.get('scan_url', '')}"
+                    )
+            else:
+                detail = resp.json().get("error", resp.text)
+                console.print(f"[red]Upload failed ({resp.status_code}): {detail}[/red]")
+        except httpx.HTTPError as exc:
+            console.print(f"[red]Upload failed: {exc}[/red]")
 
     # Print summary to stderr if writing to file
     if not quiet:
