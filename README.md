@@ -1,5 +1,10 @@
 # Medusa
 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+[![Checks: 435](https://img.shields.io/badge/checks-435-brightgreen.svg)](#check-categories)
+[![OWASP MCP Top 10](https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange.svg)](#owasp-mcp-top-10-compliance)
+
 **Security scanner for MCP servers**
 
 Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers, runs **435 security checks** across **24 categories**, scores findings on a 0--10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
@@ -19,6 +24,10 @@ Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)
 
 ---
 
+## Prerequisites
+
+- **Python 3.12+**
+
 ## Quick Start
 
 ```bash
@@ -27,6 +36,15 @@ medusa scan
 ```
 
 Medusa auto-discovers your locally configured MCP servers, runs all checks, and prints a JSON report with scores to stdout.
+
+### Development Install
+
+```bash
+git clone https://github.com/joshmaster2165/medusa.git
+cd medusa
+poetry install
+poetry run medusa scan
+```
 
 ---
 
@@ -228,6 +246,10 @@ Medusa searches for configuration in this order: `medusa.yaml`, `medusa.yml`, `.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on adding new checks, running the test suite, and submitting pull requests.
 
 ---
+
+## Issues
+
+Found a bug or have a feature request? [Open an issue](https://github.com/joshmaster2165/medusa/issues).
 
 ## License
 

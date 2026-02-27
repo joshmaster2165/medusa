@@ -6,19 +6,23 @@ build-backend = "poetry.core.masonry.api"
 name = "medusa-mcp"
 version = "0.1.0"
 description = "Security scanner for Model Context Protocol (MCP) servers"
-authors = []
+authors = ["Joshua Bukshpan"]
 license = "Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/joshmaster2165/medusa"
+homepage = "https://github.com/joshmaster2165/medusa"
 packages = [{include = "medusa", from = "src"}]
-keywords = ["mcp", "security", "scanner", "ai", "model-context-protocol"]
+keywords = ["mcp", "security", "scanner", "ai", "model-context-protocol", "owasp"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
     "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
 ]
 
 [tool.poetry.scripts]

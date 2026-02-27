@@ -71,7 +71,7 @@ def print_banner(console: Console, version: str) -> None:
         highlight=False,
     )
     console.print(
-        f" [dim green]v{version} | 39 checks | 8 categories | OWASP MCP Top 10[/dim green]",
+        f" [dim green]v{version} | 435 checks | 24 categories | OWASP MCP Top 10[/dim green]",
         highlight=False,
     )
     console.print(
