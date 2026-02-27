@@ -1,8 +1,7 @@
-"""CRED004: GCP Service Account Key Exposure.
+"""CRED-004: GCP Service Account Key Exposure.
 
-Detects Google Cloud Platform service account JSON key files in MCP server configuration or
-environment. GCP service account keys contain private keys that grant full access to the
-associated cloud project resources and APIs.
+Detects Google Cloud Platform service account JSON key files in MCP server
+configuration or environment.
 """
 
 from __future__ import annotations
@@ -11,8 +10,12 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.credential_exposure._provider_check import run_provider_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+from medusa.utils.patterns.credentials import PROVIDER_SECRET_PATTERNS
+
+_PATTERNS = PROVIDER_SECRET_PATTERNS["gcp"]
 
 
 class GcpServiceAccountKeyCheck(BaseCheck):
@@ -24,5 +27,4 @@ class GcpServiceAccountKeyCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement cred004 check logic
-        return []
+        return run_provider_check(snapshot, self.metadata(), _PATTERNS, "GCP")

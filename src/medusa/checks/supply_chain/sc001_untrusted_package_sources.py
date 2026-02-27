@@ -177,8 +177,7 @@ class UntrustedPackageSourcesCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server '{snapshot.server_name}' uses trusted "
-                        f"package sources."
+                        f"Server '{snapshot.server_name}' uses trusted package sources."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

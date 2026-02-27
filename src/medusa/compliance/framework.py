@@ -87,28 +87,32 @@ def evaluate_compliance(
         for check_id in requirement.checks:
             check_findings = findings_by_check.get(check_id, [])
             if not check_findings:
-                details.append({
-                    "check_id": check_id,
-                    "status": "not_run",
-                })
+                details.append(
+                    {
+                        "check_id": check_id,
+                        "status": "not_run",
+                    }
+                )
                 continue
 
             has_fail = any(f.status == Status.FAIL for f in check_findings)
             if has_fail:
                 checks_failed += 1
-                details.append({
-                    "check_id": check_id,
-                    "status": "fail",
-                    "finding_count": sum(
-                        1 for f in check_findings if f.status == Status.FAIL
-                    ),
-                })
+                details.append(
+                    {
+                        "check_id": check_id,
+                        "status": "fail",
+                        "finding_count": sum(1 for f in check_findings if f.status == Status.FAIL),
+                    }
+                )
             else:
                 checks_passed += 1
-                details.append({
-                    "check_id": check_id,
-                    "status": "pass",
-                })
+                details.append(
+                    {
+                        "check_id": check_id,
+                        "status": "pass",
+                    }
+                )
 
         total = checks_passed + checks_failed
         if total == 0:

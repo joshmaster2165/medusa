@@ -11,8 +11,12 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.server_hardening.hard001_unnecessary_services_enabled import (
+    _hardening_config_check,
+)
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+from medusa.utils.pattern_matching import RESOURCE_LIMIT_KEYS
 
 
 class MissingResourceLimitsCheck(BaseCheck):
@@ -24,5 +28,16 @@ class MissingResourceLimitsCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement hard011 check logic
-        return []
+        meta = self.metadata()
+        return _hardening_config_check(
+            snapshot,
+            meta,
+            bad_keys=RESOURCE_LIMIT_KEYS,
+            bad_values=None,
+            missing_msg=(
+                "Server '{server}' has no server resource limit configuration. "
+                "A single request can consume all available system resources."
+            ),
+            present_msg=("Server '{server}' has resource limit configuration."),
+            fail_on_present=False,
+        )

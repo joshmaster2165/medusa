@@ -9,9 +9,7 @@ import pytest
 
 from medusa.connectors.stdio import StdioConnector
 
-MOCK_SERVER_PATH = str(
-    Path(__file__).parent / "mock_server.py"
-)
+MOCK_SERVER_PATH = str(Path(__file__).parent / "mock_server.py")
 
 
 def _make_connector(profile: str) -> StdioConnector:

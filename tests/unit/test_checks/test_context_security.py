@@ -352,7 +352,23 @@ class TestContextWindowOverflowCheck:
         assert meta.check_id == "ctx003"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: ContextWindowOverflowCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: ContextWindowOverflowCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: ContextWindowOverflowCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: ContextWindowOverflowCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -372,7 +388,25 @@ class TestInstructionHierarchyViolationCheck:
         assert meta.check_id == "ctx004"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: InstructionHierarchyViolationCheck) -> None:
+    async def test_runs_on_populated_snapshot(
+        self, check: InstructionHierarchyViolationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: InstructionHierarchyViolationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: InstructionHierarchyViolationCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -390,7 +424,25 @@ class TestContextPoisoningViaResourcesCheck:
         assert meta.check_id == "ctx005"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: ContextPoisoningViaResourcesCheck) -> None:
+    async def test_runs_on_populated_snapshot(
+        self, check: ContextPoisoningViaResourcesCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: ContextPoisoningViaResourcesCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: ContextPoisoningViaResourcesCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -408,7 +460,23 @@ class TestPromptLeakageRiskCheck:
         assert meta.check_id == "ctx006"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: PromptLeakageRiskCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: PromptLeakageRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: PromptLeakageRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: PromptLeakageRiskCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -428,7 +496,25 @@ class TestCrossConversationContaminationCheck:
         assert meta.check_id == "ctx007"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: CrossConversationContaminationCheck) -> None:
+    async def test_runs_on_populated_snapshot(
+        self, check: CrossConversationContaminationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: CrossConversationContaminationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: CrossConversationContaminationCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -446,7 +532,23 @@ class TestTokenBudgetExhaustionCheck:
         assert meta.check_id == "ctx008"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: TokenBudgetExhaustionCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: TokenBudgetExhaustionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: TokenBudgetExhaustionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: TokenBudgetExhaustionCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -464,7 +566,23 @@ class TestRoleConfusionAttackCheck:
         assert meta.check_id == "ctx009"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: RoleConfusionAttackCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: RoleConfusionAttackCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: RoleConfusionAttackCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: RoleConfusionAttackCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -482,7 +600,23 @@ class TestMultiTurnManipulationCheck:
         assert meta.check_id == "ctx010"
         assert meta.category == "context_security"
 
-    async def test_stub_returns_empty(self, check: MultiTurnManipulationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: MultiTurnManipulationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_tools(self, check: MultiTurnManipulationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test"}],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: MultiTurnManipulationCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)

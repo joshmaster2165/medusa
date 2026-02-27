@@ -39,13 +39,9 @@ def _build_rule(finding: Finding) -> dict[str, Any]:
         "shortDescription": {
             "text": finding.check_title,
         },
-        "helpUri": (
-            "https://github.com/joshmaster2165/medusa"
-        ),
+        "helpUri": ("https://github.com/joshmaster2165/medusa"),
         "properties": {
-            "security-severity": _SECURITY_SEVERITY.get(
-                finding.severity, "0.0"
-            ),
+            "security-severity": _SECURITY_SEVERITY.get(finding.severity, "0.0"),
             "tags": [
                 "security",
                 *finding.owasp_mcp,
@@ -58,11 +54,7 @@ def _build_result(finding: Finding) -> dict[str, Any]:
     """Build a SARIF result object from a finding."""
     # Construct a synthetic artifact URI following the pattern:
     # mcp://server-name/resource-type/resource-name
-    artifact_uri = (
-        f"mcp://{finding.server_name}"
-        f"/{finding.resource_type}"
-        f"/{finding.resource_name}"
-    )
+    artifact_uri = f"mcp://{finding.server_name}/{finding.resource_type}/{finding.resource_name}"
     result: dict[str, Any] = {
         "ruleId": finding.check_id,
         "level": _SARIF_LEVEL.get(finding.severity, "note"),
@@ -81,9 +73,7 @@ def _build_result(finding: Finding) -> dict[str, Any]:
                         "name": finding.resource_name,
                         "kind": finding.resource_type,
                         "fullyQualifiedName": (
-                            f"{finding.server_name}"
-                            f"/{finding.resource_type}"
-                            f"/{finding.resource_name}"
+                            f"{finding.server_name}/{finding.resource_type}/{finding.resource_name}"
                         ),
                     }
                 ],
@@ -121,9 +111,7 @@ class SarifReporter(BaseReporter):
     def generate(self, result: ScanResult) -> str:
         """Generate a SARIF 2.1.0 JSON string from scan results."""
         # Only include FAIL findings as SARIF results.
-        fail_findings = [
-            f for f in result.findings if f.status == Status.FAIL
-        ]
+        fail_findings = [f for f in result.findings if f.status == Status.FAIL]
 
         # Deduplicate rules by check_id.
         seen_rule_ids: set[str] = set()
@@ -144,10 +132,7 @@ class SarifReporter(BaseReporter):
                         "driver": {
                             "name": "Medusa",
                             "version": result.medusa_version,
-                            "informationUri": (
-                                "https://github.com/"
-                                "joshmaster2165/medusa"
-                            ),
+                            "informationUri": ("https://github.com/joshmaster2165/medusa"),
                             "rules": rules,
                         },
                     },
@@ -157,18 +142,10 @@ class SarifReporter(BaseReporter):
                             "executionSuccessful": True,
                             "properties": {
                                 "scan_id": result.scan_id,
-                                "servers_scanned": (
-                                    result.servers_scanned
-                                ),
-                                "scan_duration_seconds": (
-                                    result.scan_duration_seconds
-                                ),
-                                "aggregate_score": (
-                                    result.aggregate_score
-                                ),
-                                "aggregate_grade": (
-                                    result.aggregate_grade
-                                ),
+                                "servers_scanned": (result.servers_scanned),
+                                "scan_duration_seconds": (result.scan_duration_seconds),
+                                "aggregate_score": (result.aggregate_score),
+                                "aggregate_grade": (result.aggregate_grade),
                             },
                         }
                     ],

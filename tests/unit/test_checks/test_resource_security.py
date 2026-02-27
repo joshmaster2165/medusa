@@ -69,10 +69,44 @@ class TestMissingResourceAccessControlCheck:
         assert meta.check_id == "res001"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: MissingResourceAccessControlCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: MissingResourceAccessControlCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: MissingResourceAccessControlCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_empty_config(self, check: MissingResourceAccessControlCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_no_config_returns_finding(
+        self, check: MissingResourceAccessControlCheck
+    ) -> None:
+        snapshot = make_snapshot(config_raw=None)
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
 
 
 class TestResourceTemplateTraversalCheck:
@@ -87,10 +121,30 @@ class TestResourceTemplateTraversalCheck:
         assert meta.check_id == "res002"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceTemplateTraversalCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceTemplateTraversalCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceTemplateTraversalCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(
+        self, check: ResourceTemplateTraversalCheck
+    ) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceContentValidationCheck:
@@ -105,10 +159,53 @@ class TestResourceContentValidationCheck:
         assert meta.check_id == "res003"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceContentValidationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceContentValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: ResourceContentValidationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ResourceContentValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: ResourceContentValidationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "content_validation": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ResourceContentValidationCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestResourceInjectionViaUriCheck:
@@ -123,10 +220,28 @@ class TestResourceInjectionViaUriCheck:
         assert meta.check_id == "res004"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceInjectionViaUriCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceInjectionViaUriCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceInjectionViaUriCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(self, check: ResourceInjectionViaUriCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceEnumerationCheck:
@@ -141,10 +256,28 @@ class TestResourceEnumerationCheck:
         assert meta.check_id == "res005"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceEnumerationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceEnumerationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceEnumerationCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(self, check: ResourceEnumerationCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceRaceConditionCheck:
@@ -159,10 +292,49 @@ class TestResourceRaceConditionCheck:
         assert meta.check_id == "res006"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceRaceConditionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceRaceConditionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceRaceConditionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ResourceRaceConditionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceRaceConditionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "atomic": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ResourceRaceConditionCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestResourceCachingRiskCheck:
@@ -177,10 +349,49 @@ class TestResourceCachingRiskCheck:
         assert meta.check_id == "res007"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceCachingRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceCachingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceCachingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ResourceCachingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceCachingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "cache_control": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ResourceCachingRiskCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestResourceSymlinkRiskCheck:
@@ -195,10 +406,49 @@ class TestResourceSymlinkRiskCheck:
         assert meta.check_id == "res008"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceSymlinkRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceSymlinkRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceSymlinkRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ResourceSymlinkRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceSymlinkRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "follow_symlinks": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ResourceSymlinkRiskCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestResourceSizeLimitCheck:
@@ -213,10 +463,38 @@ class TestResourceSizeLimitCheck:
         assert meta.check_id == "res009"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceSizeLimitCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceSizeLimitCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceSizeLimitCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_empty_config(self, check: ResourceSizeLimitCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_no_config_returns_finding(self, check: ResourceSizeLimitCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
 
 
 class TestResourceTypeConfusionCheck:
@@ -231,10 +509,28 @@ class TestResourceTypeConfusionCheck:
         assert meta.check_id == "res010"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceTypeConfusionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceTypeConfusionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceTypeConfusionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(self, check: ResourceTypeConfusionCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceOriginValidationCheck:
@@ -249,10 +545,49 @@ class TestResourceOriginValidationCheck:
         assert meta.check_id == "res011"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceOriginValidationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceOriginValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceOriginValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ResourceOriginValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceOriginValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "origin_validation": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ResourceOriginValidationCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestResourceLifetimeManagementCheck:
@@ -267,10 +602,42 @@ class TestResourceLifetimeManagementCheck:
         assert meta.check_id == "res012"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceLifetimeManagementCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: ResourceLifetimeManagementCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: ResourceLifetimeManagementCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_empty_config(self, check: ResourceLifetimeManagementCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_no_config_returns_finding(self, check: ResourceLifetimeManagementCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
 
 
 class TestDynamicResourceInjectionCheck:
@@ -285,10 +652,38 @@ class TestDynamicResourceInjectionCheck:
         assert meta.check_id == "res013"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: DynamicResourceInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: DynamicResourceInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DynamicResourceInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_empty_config(self, check: DynamicResourceInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_no_config_returns_finding(self, check: DynamicResourceInjectionCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
 
 
 class TestResourceSchemaValidationCheck:
@@ -303,10 +698,49 @@ class TestResourceSchemaValidationCheck:
         assert meta.check_id == "res014"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceSchemaValidationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceSchemaValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceSchemaValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ResourceSchemaValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceSchemaValidationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "resource_schema": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ResourceSchemaValidationCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestResourceSubscriptionAbuseCheck:
@@ -321,10 +755,40 @@ class TestResourceSubscriptionAbuseCheck:
         assert meta.check_id == "res015"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceSubscriptionAbuseCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceSubscriptionAbuseCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: ResourceSubscriptionAbuseCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_empty_config(self, check: ResourceSubscriptionAbuseCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_no_config_returns_finding(self, check: ResourceSubscriptionAbuseCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
 
 
 class TestResourceUriNormalizationCheck:
@@ -339,10 +803,30 @@ class TestResourceUriNormalizationCheck:
         assert meta.check_id == "res016"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceUriNormalizationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceUriNormalizationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceUriNormalizationCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(
+        self, check: ResourceUriNormalizationCheck
+    ) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceContentTypeMismatchCheck:
@@ -357,10 +841,32 @@ class TestResourceContentTypeMismatchCheck:
         assert meta.check_id == "res017"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceContentTypeMismatchCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(
+        self, check: ResourceContentTypeMismatchCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceContentTypeMismatchCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(
+        self, check: ResourceContentTypeMismatchCheck
+    ) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceEncodingBypassCheck:
@@ -375,10 +881,28 @@ class TestResourceEncodingBypassCheck:
         assert meta.check_id == "res018"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceEncodingBypassCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceEncodingBypassCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceEncodingBypassCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(self, check: ResourceEncodingBypassCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestResourceQuotaMissingCheck:
@@ -393,10 +917,38 @@ class TestResourceQuotaMissingCheck:
         assert meta.check_id == "res019"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceQuotaMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ResourceQuotaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ResourceQuotaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_empty_config(self, check: ResourceQuotaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_no_config_returns_finding(self, check: ResourceQuotaMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
 
 
 class TestResourceDependencyChainCheck:
@@ -411,7 +963,25 @@ class TestResourceDependencyChainCheck:
         assert meta.check_id == "res020"
         assert meta.category == "resource_security"
 
-    async def test_stub_returns_empty(self, check: ResourceDependencyChainCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(self, check: ResourceDependencyChainCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_resources(self, check: ResourceDependencyChainCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "res_a", "uri": "file:///a"},
+                {"name": "res_b", "uri": "file:///a/sub"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_resources_returns_empty(self, check: ResourceDependencyChainCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)

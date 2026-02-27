@@ -1,18 +1,36 @@
-"""RES007: Resource Caching Security Risk.
+"""RES-007: Resource Caching Security Risk.
 
-Detects MCP resources that are cached without considering security implications. Cached
-resources may be served to unauthorized clients, retain stale access control decisions, or
-persist sensitive data beyond its intended lifetime in cache storage.
+Checks config for resource caching with sensitive data. Fails when
+caching is enabled but no cache security controls are configured.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding
+from medusa.core.models import CheckMetadata, Finding, Status
+
+CACHE_KEYS: set[str] = {
+    "cache",
+    "caching",
+    "cache_ttl",
+    "cache_enabled",
+    "enable_cache",
+}
+
+CACHE_SECURITY_KEYS: set[str] = {
+    "cache_control",
+    "no_cache",
+    "private_cache",
+    "cache_auth",
+    "cache_acl",
+    "cache_isolation",
+    "secure_cache",
+}
 
 
 class ResourceCachingRiskCheck(BaseCheck):
@@ -24,5 +42,66 @@ class ResourceCachingRiskCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement res007 check logic
-        return []
+        meta = self.metadata()
+        findings: list[Finding] = []
+
+        if not snapshot.resources:
+            return findings
+
+        has_caching = _walk_config_for_keys(snapshot.config_raw, CACHE_KEYS)
+        has_cache_security = _walk_config_for_keys(snapshot.config_raw, CACHE_SECURITY_KEYS)
+
+        if has_caching and not has_cache_security:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.FAIL,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        "Resource caching is enabled but no cache security controls "
+                        "(cache-control, ACL, isolation) detected."
+                    ),
+                    evidence="cache config found; no cache security config.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+        else:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No unsafe resource caching detected.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+
+        return findings
+
+
+def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
+    if _depth > 10:
+        return False
+    if isinstance(config, dict):
+        for key in config:
+            if isinstance(key, str) and key.lower() in keys:
+                return True
+            if _walk_config_for_keys(config[key], keys, _depth + 1):
+                return True
+    elif isinstance(config, list):
+        for item in config:
+            if _walk_config_for_keys(item, keys, _depth + 1):
+                return True
+    return False

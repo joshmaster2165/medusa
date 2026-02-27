@@ -46,8 +46,11 @@ class MissingAuditTrailCheck(BaseCheck):
                     ),
                     evidence=(
                         "capabilities keys: "
-                        + str(sorted(snapshot.capabilities.keys())
-                              if snapshot.capabilities else "none")
+                        + str(
+                            sorted(snapshot.capabilities.keys())
+                            if snapshot.capabilities
+                            else "none"
+                        )
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
@@ -65,8 +68,7 @@ class MissingAuditTrailCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server '{snapshot.server_name}' declares logging "
-                        f"capability."
+                        f"Server '{snapshot.server_name}' declares logging capability."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

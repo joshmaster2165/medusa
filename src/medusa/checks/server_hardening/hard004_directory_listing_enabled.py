@@ -11,8 +11,20 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.server_hardening.hard001_unnecessary_services_enabled import (
+    _hardening_config_check,
+)
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_DIR_LISTING_KEYS = {
+    "directory_listing",
+    "autoindex",
+    "list_directory",
+    "browse_directory",
+    "dir_listing",
+    "index_of",
+}
 
 
 class DirectoryListingEnabledCheck(BaseCheck):
@@ -24,5 +36,16 @@ class DirectoryListingEnabledCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement hard004 check logic
-        return []
+        meta = self.metadata()
+        return _hardening_config_check(
+            snapshot,
+            meta,
+            bad_keys=_DIR_LISTING_KEYS,
+            bad_values=None,
+            missing_msg=(
+                "Server '{server}' has directory listing enabled in configuration. "
+                "This exposes the server file structure to enumeration."
+            ),
+            present_msg=("Server '{server}' does not have directory listing explicitly enabled."),
+            fail_on_present=True,
+        )

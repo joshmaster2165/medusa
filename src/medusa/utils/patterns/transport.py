@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 # Certificate validation disable config keys
 CERT_DISABLE_CONFIG_KEYS: set[str] = {
     "verify",
@@ -37,4 +39,39 @@ INSECURE_TLS_VERSIONS: set[str] = {
     "tlsv1",
     "tlsv1.0",
     "tlsv1.1",
+}
+
+# Weak cipher suite patterns
+WEAK_CIPHER_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"(RC4|DES|3DES|MD5|NULL|EXPORT|anon)", re.IGNORECASE),
+    re.compile(r"TLS_RSA_WITH", re.IGNORECASE),  # Non-PFS ciphers
+]
+
+# HSTS configuration keys
+HSTS_CONFIG_KEYS: set[str] = {
+    "hsts",
+    "strict_transport_security",
+    "max_age",
+    "includesubdomains",
+    "preload",
+}
+
+# CORS configuration keys
+CORS_CONFIG_KEYS: set[str] = {
+    "cors",
+    "access_control_allow_origin",
+    "allowed_origins",
+    "cors_origins",
+    "cors_methods",
+    "cors_headers",
+}
+
+# Content Security Policy keys
+CSP_CONFIG_KEYS: set[str] = {
+    "csp",
+    "content_security_policy",
+    "default_src",
+    "script_src",
+    "style_src",
+    "img_src",
 }

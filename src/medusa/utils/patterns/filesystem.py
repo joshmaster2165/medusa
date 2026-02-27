@@ -44,3 +44,27 @@ FS_TOOL_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"fs[-_]", re.IGNORECASE),
     re.compile(r"filesystem", re.IGNORECASE),
 ]
+
+# Tool names suggesting destructive operations
+DESTRUCTIVE_TOOL_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(
+        r"(delete|remove|drop|truncate|destroy|purge|wipe)[-_]?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"[-_]?(delete|remove|drop|truncate|destroy|purge|wipe)$",
+        re.IGNORECASE,
+    ),
+    re.compile(r"(rm|rmdir|rmrf|unlink|shred)", re.IGNORECASE),
+]
+
+# Tool names suggesting admin/privileged operations
+ADMIN_TOOL_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"(admin|manage|configure|provision)[-_]?", re.IGNORECASE),
+    re.compile(
+        r"(create|modify|update)[-_]?(user|role|permission|policy)",
+        re.IGNORECASE,
+    ),
+    re.compile(r"(grant|revoke)[-_]?(access|permission|role)", re.IGNORECASE),
+    re.compile(r"(deploy|install|upgrade|migrate)[-_]?", re.IGNORECASE),
+]

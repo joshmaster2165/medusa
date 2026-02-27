@@ -24,5 +24,17 @@ class MissingDataGovernanceCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov009 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import DATA_GOVERNANCE_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=DATA_GOVERNANCE_KEYS,
+            missing_msg=(
+                "Server '{server}' has no data governance configuration. "
+                "Data ownership, classification, and lifecycle are undocumented."
+            ),
+            present_msg="Server '{server}' has data governance framework configured.",
+        )

@@ -42,7 +42,7 @@ def _is_risky_path(path: str) -> bool:
                 return True
         else:
             if normalised == prefix or normalised.startswith(prefix + "/"):
-                    return True
+                return True
 
     # Check substrings for embedded temp directories.
     for substr in _RISKY_SUBSTRINGS:

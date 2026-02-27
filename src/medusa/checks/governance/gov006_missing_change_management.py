@@ -25,5 +25,17 @@ class MissingChangeManagementCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov006 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import CHANGE_MANAGEMENT_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=CHANGE_MANAGEMENT_KEYS,
+            missing_msg=(
+                "Server '{server}' has no change management configuration. "
+                "Uncontrolled changes may introduce security vulnerabilities."
+            ),
+            present_msg="Server '{server}' has change management configured.",
+        )

@@ -24,5 +24,17 @@ class MissingAuditScheduleCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov015 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import GOVERNANCE_AUDIT_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=GOVERNANCE_AUDIT_KEYS,
+            missing_msg=(
+                "Server '{server}' has no audit schedule configuration. "
+                "Security controls degrade without periodic assessments."
+            ),
+            present_msg="Server '{server}' has an audit schedule configured.",
+        )

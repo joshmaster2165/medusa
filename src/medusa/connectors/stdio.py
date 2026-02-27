@@ -67,15 +67,12 @@ class StdioConnector(BaseConnector):
                         ),
                         protocol_version=init_result.protocolVersion,
                         server_info=(
-                            init_result.serverInfo.model_dump()
-                            if init_result.serverInfo
-                            else {}
+                            init_result.serverInfo.model_dump() if init_result.serverInfo else {}
                         ),
                         config_file_path=self.config_file_path,
                         config_raw=self.config_raw,
                     )
         except Exception as e:
             raise ConnectionError(
-                f"Failed to connect to stdio server '{self.name}' "
-                f"(command: {self.command}): {e}"
+                f"Failed to connect to stdio server '{self.name}' (command: {self.command}): {e}"
             ) from e

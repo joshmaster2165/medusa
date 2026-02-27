@@ -52,26 +52,17 @@ class PermissiveSchemaCheck(BaseCheck):
             # -- additionalProperties check --
             additional = input_schema.get("additionalProperties")
             if additional is True:
-                issues.append(
-                    "additionalProperties is explicitly set to true"
-                )
+                issues.append("additionalProperties is explicitly set to true")
             elif additional is None:
                 # JSON Schema defaults to true when omitted
-                issues.append(
-                    "additionalProperties is not set (defaults to true)"
-                )
+                issues.append("additionalProperties is not set (defaults to true)")
 
             # -- required check --
             required = input_schema.get("required")
             if required is None:
-                issues.append(
-                    "No 'required' array is defined; all parameters are "
-                    "optional"
-                )
+                issues.append("No 'required' array is defined; all parameters are optional")
             elif isinstance(required, list) and len(required) == 0:
-                issues.append(
-                    "'required' is an empty list; all parameters are optional"
-                )
+                issues.append("'required' is an empty list; all parameters are optional")
 
             if issues:
                 findings.append(

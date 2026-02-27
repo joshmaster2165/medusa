@@ -50,9 +50,7 @@ class SensitiveResourceUrisCheck(BaseCheck):
                 for pattern in SENSITIVE_PATH_PATTERNS:
                     match = pattern.search(text)
                     if match:
-                        issues.append(
-                            f"Sensitive path pattern: '{match.group()}'"
-                        )
+                        issues.append(f"Sensitive path pattern: '{match.group()}'")
 
                 # Check for hardcoded secrets
                 for secret_name, pattern in SECRET_PATTERNS:

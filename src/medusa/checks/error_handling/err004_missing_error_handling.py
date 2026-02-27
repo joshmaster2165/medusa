@@ -24,5 +24,17 @@ class MissingErrorHandlingCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement err004 check logic
-        return []
+        from medusa.checks.error_handling.err001_stack_trace_exposure import _err_absent_check
+        from medusa.utils.pattern_matching import ERROR_HANDLING_KEYS
+
+        meta = self.metadata()
+        return _err_absent_check(
+            snapshot,
+            meta,
+            required_keys=ERROR_HANDLING_KEYS,
+            fail_msg=(
+                "Server '{server}' has no error handling configuration. "
+                "Unhandled errors may crash the server or corrupt data."
+            ),
+            pass_msg="Server '{server}' has error handling configuration.",
+        )

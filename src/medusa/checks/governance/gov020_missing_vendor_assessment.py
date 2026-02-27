@@ -25,5 +25,17 @@ class MissingVendorAssessmentCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov020 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import VENDOR_ASSESSMENT_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=VENDOR_ASSESSMENT_KEYS,
+            missing_msg=(
+                "Server '{server}' has no vendor security assessment configuration. "
+                "Third-party LLM providers or tools may not meet security requirements."
+            ),
+            present_msg="Server '{server}' has vendor security assessment configured.",
+        )

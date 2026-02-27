@@ -11,8 +11,17 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.multi_tenant.mt001_missing_tenant_isolation import _mt_config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_TENANT_CONFIG_KEYS = {
+    "tenant_config",
+    "per_tenant_config",
+    "tenant_settings",
+    "tenant_feature_flags",
+    "tenant_config_isolation",
+}
 
 
 class MissingTenantConfigurationCheck(BaseCheck):
@@ -24,5 +33,14 @@ class MissingTenantConfigurationCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement mt010 check logic
-        return []
+        meta = self.metadata()
+        return _mt_config_check(
+            snapshot,
+            meta,
+            config_keys=_TENANT_CONFIG_KEYS,
+            missing_msg=(
+                "Server '{server}' has no tenant configuration isolation. "
+                "Shared config may cause security posture to bleed between tenants."
+            ),
+            present_msg="Server '{server}' has per-tenant configuration isolation.",
+        )

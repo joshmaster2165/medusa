@@ -82,10 +82,7 @@ class MissingLoggingCheck(BaseCheck):
                     server_transport=snapshot.transport_type,
                     resource_type="server",
                     resource_name=snapshot.server_name,
-                    status_extended=(
-                        f"Logging configuration detected in: "
-                        f"{', '.join(sources)}."
-                    ),
+                    status_extended=(f"Logging configuration detected in: {', '.join(sources)}."),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )

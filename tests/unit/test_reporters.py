@@ -242,9 +242,7 @@ class TestSarifReporter:
         result = data["runs"][0]["results"][0]
         assert result["level"] == "error"
 
-    def test_sarif_security_severity_property(
-        self, sample_scan_result
-    ):
+    def test_sarif_security_severity_property(self, sample_scan_result):
         reporter = SarifReporter()
         output = reporter.generate(sample_scan_result)
         data = json.loads(output)

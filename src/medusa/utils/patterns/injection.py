@@ -64,3 +64,58 @@ SUSPICIOUS_CODEPOINTS: set[int] = {
     0x2068,  # First strong isolate
     0x2069,  # Pop directional isolate
 }
+
+# Base64 content detection in descriptions
+BASE64_PATTERN: re.Pattern[str] = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
+
+# URL injection patterns in descriptions
+URL_INJECTION_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", re.IGNORECASE),
+    re.compile(
+        r"https?://[a-z0-9\-]+\.(ngrok|burp|interact|oast)\.",
+        re.IGNORECASE,
+    ),
+    re.compile(r"javascript:", re.IGNORECASE),
+    re.compile(r"data:text/html", re.IGNORECASE),
+]
+
+# Markdown injection patterns in descriptions
+MARKDOWN_INJECTION_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"!\[.*?\]\(https?://[^\)]+\)"),  # Image with URL
+    re.compile(r"\[.*?\]\(javascript:[^\)]+\)"),  # Link with javascript:
+    re.compile(r"\[.*?\]\(data:[^\)]+\)"),  # Link with data: URI
+]
+
+# Jailbreak/prompt override patterns
+JAILBREAK_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"DAN\s*mode", re.IGNORECASE),
+    re.compile(r"jailbreak", re.IGNORECASE),
+    re.compile(r"developer\s+mode", re.IGNORECASE),
+    re.compile(r"unrestricted\s+mode", re.IGNORECASE),
+    re.compile(r"bypass\s+(safety|filter|restriction)", re.IGNORECASE),
+    re.compile(r"role[-_\s]?play\s+as", re.IGNORECASE),
+]
+
+# Capability escalation keywords
+CAPABILITY_ESCALATION_KEYWORDS: set[str] = {
+    "sudo",
+    "admin",
+    "root",
+    "superuser",
+    "privilege",
+    "escalate",
+    "elevate",
+    "override",
+    "bypass",
+    "all_permissions",
+    "god_mode",
+    "master",
+}
+
+# Encoding bypass patterns (for prompt security)
+ENCODING_BYPASS_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"\\u[0-9a-fA-F]{4}"),  # Unicode escapes
+    re.compile(r"\\x[0-9a-fA-F]{2}"),  # Hex escapes
+    re.compile(r"&#x?[0-9a-fA-F]+;"),  # HTML entities
+    re.compile(r"%[0-9a-fA-F]{2}"),  # URL encoding
+]

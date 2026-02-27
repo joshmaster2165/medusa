@@ -88,9 +88,7 @@ class ToolShadowingCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        tool_names: list[str] = [
-            tool.get("name", "") for tool in snapshot.tools
-        ]
+        tool_names: list[str] = [tool.get("name", "") for tool in snapshot.tools]
 
         # --- Sub-check 1: Duplicate names within the server ----------------
         name_counts = Counter(tool_names)

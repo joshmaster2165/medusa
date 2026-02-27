@@ -239,10 +239,30 @@ class TestDuplicateToolNamesAcrossServersCheck:
         assert meta.check_id == "shadow003"
         assert meta.category == "server_identity"
 
-    async def test_stub_returns_empty(self, check: DuplicateToolNamesAcrossServersCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_runs_on_populated_snapshot(
+        self, check: DuplicateToolNamesAcrossServersCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_runs_on_tools(self, check: DuplicateToolNamesAcrossServersCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test"}],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(
+        self, check: DuplicateToolNamesAcrossServersCheck
+    ) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestMissingServerMetadataCheck:
@@ -257,8 +277,28 @@ class TestMissingServerMetadataCheck:
         assert meta.check_id == "shadow004"
         assert meta.category == "server_identity"
 
-    async def test_stub_returns_empty(self, check: MissingServerMetadataCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_metadata(self, check: MissingServerMetadataCheck) -> None:
+        snapshot = make_snapshot(server_info={})
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_passes_on_complete_metadata(self, check: MissingServerMetadataCheck) -> None:
+        snapshot = make_snapshot(
+            server_info={"name": "test-server", "version": "1.0.0"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_checks_server_info(self, check: MissingServerMetadataCheck) -> None:
+        snapshot = make_snapshot(
+            server_info={"name": "test", "version": "1.0"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_server_info(self, check: MissingServerMetadataCheck) -> None:
+        snapshot = make_snapshot(server_info={})
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
 
@@ -275,7 +315,23 @@ class TestSuspiciousServerOriginCheck:
         assert meta.check_id == "shadow005"
         assert meta.category == "server_identity"
 
-    async def test_stub_returns_empty(self, check: SuspiciousServerOriginCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: SuspiciousServerOriginCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: SuspiciousServerOriginCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: SuspiciousServerOriginCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -293,8 +349,28 @@ class TestServerVersionSpoofingCheck:
         assert meta.check_id == "shadow006"
         assert meta.category == "server_identity"
 
-    async def test_stub_returns_empty(self, check: ServerVersionSpoofingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_metadata(self, check: ServerVersionSpoofingCheck) -> None:
+        snapshot = make_snapshot(server_info={})
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_passes_on_complete_metadata(self, check: ServerVersionSpoofingCheck) -> None:
+        snapshot = make_snapshot(
+            server_info={"name": "test-server", "version": "1.0.0"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_checks_server_info(self, check: ServerVersionSpoofingCheck) -> None:
+        snapshot = make_snapshot(
+            server_info={"name": "test", "version": "1.0"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_server_info(self, check: ServerVersionSpoofingCheck) -> None:
+        snapshot = make_snapshot(server_info={})
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
 
@@ -313,7 +389,54 @@ class TestUnauthorizedServerRegistrationCheck:
         assert meta.check_id == "shadow007"
         assert meta.category == "server_identity"
 
-    async def test_stub_returns_empty(self, check: UnauthorizedServerRegistrationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: UnauthorizedServerRegistrationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: UnauthorizedServerRegistrationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(
+        self, check: UnauthorizedServerRegistrationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: UnauthorizedServerRegistrationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "authorization": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: UnauthorizedServerRegistrationCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1

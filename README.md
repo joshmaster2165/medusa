@@ -2,14 +2,14 @@
 
 **Security scanner for MCP servers**
 
-Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers, runs 39 security checks across 8 categories, scores findings on a 0--10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+Medusa is an open-source CLI tool that connects to [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers, runs **435 security checks** across **24 categories**, scores findings on a 0--10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
 
 ---
 
 ## Features
 
 - **Auto-discovery** -- finds MCP servers from Claude Desktop, Cursor, Windsurf, and custom config files without manual configuration.
-- **39 built-in checks** across tool poisoning, authentication, input validation, credential exposure, privilege/scope, transport security, data protection, and integrity.
+- **435 built-in checks** across 24 categories including tool poisoning, authentication, input validation, credential exposure, privilege/scope, transport security, data protection, integrity, session management, error handling, rate limiting, SSRF/network, agentic behavior, sampling security, context security, resource security, multi-tenant isolation, secrets management, server hardening, governance, audit logging, supply chain, and server identity.
 - **Severity scoring** -- each server receives a 0--10 numeric score and an A--F letter grade.
 - **Multiple output formats** -- JSON (machine-readable), HTML (interactive dashboard), and Markdown.
 - **CI/CD integration** -- `--fail-on` flag returns a non-zero exit code when findings meet or exceed a severity threshold.
@@ -85,18 +85,34 @@ medusa scan --exclude-checks tp005,iv005
 
 ## Check Categories
 
-Medusa ships with **39 checks** across **8 categories**:
+Medusa ships with **435 checks** across **24 categories**:
 
-| Category             | Prefix                    | Checks | Description                                                 |
-|----------------------|---------------------------|--------|-------------------------------------------------------------|
-| Tool Poisoning       | `tp0xx`                   | 5      | Hidden instructions, prompt injection, tool shadowing, suspicious parameters, abnormally long descriptions |
-| Authentication       | `auth0xx`                 | 4      | Missing auth on HTTP, weak OAuth, missing TLS, localhost without auth |
-| Input Validation     | `iv0xx`                   | 5      | Command injection, path traversal, SQL injection, missing schemas, permissive schemas |
-| Credential Exposure  | `cred0xx`                 | 3      | Secrets in config files, environment variable leakage, secrets in tool definitions |
-| Privilege & Scope    | `priv0xx`                 | 3      | Overprivileged filesystem access, unrestricted network access, shell execution |
-| Transport Security   | `ts0xx`                   | 4      | Unencrypted transport, missing certificate validation, insecure TLS, missing transport auth |
-| Data Protection      | `dp0xx` `audit0xx` `ctx0xx` | 8    | PII in definitions, sensitive URIs, missing data classification, excessive data exposure, missing logging/audit, resource over-sharing, resource/prompt injection |
-| Integrity            | `intg0xx` `sc0xx` `shadow0xx` | 7  | Missing version pinning, unsigned binaries, config tampering, missing integrity verification, untrusted package sources, generic server names, unverified server identity |
+| Category               | Prefix     | Checks | Description                                                                 |
+|------------------------|------------|--------|-----------------------------------------------------------------------------|
+| Tool Poisoning         | `tp0xx`    | 15     | Hidden instructions, prompt injection, tool shadowing, rug pull detection, cross-server collisions |
+| Authentication         | `auth0xx`  | 30     | Missing auth, weak OAuth, token storage, JWT issues, CSRF, MFA, credential rotation |
+| Input Validation       | `iv0xx`    | 30     | Command injection, path traversal, SQL injection, schema validation, deserialization |
+| Credential Exposure    | `cred0xx`  | 10     | Secrets in config, env var leakage, secrets in definitions, hardcoded tokens |
+| Privilege & Scope      | `priv0xx`  | 15     | Filesystem access, network access, shell execution, privilege escalation |
+| Transport Security     | `ts0xx`    | 20     | Unencrypted transport, TLS validation, certificate issues, CORS, WebSocket security |
+| Data Protection        | `dp0xx`    | 29     | PII exposure, data leakage, encryption, consent, COPPA, health/financial data |
+| Integrity              | `intg0xx`  | 17     | Version pinning, lockfiles, SBOM, dependency confusion, typosquatting |
+| Session Management     | `sess0xx`  | 20     | Session fixation, timeout, hijacking, cookie security, WebSocket sessions |
+| Error Handling         | `err0xx`   | 15     | Stack traces, error codes, injection, graceful degradation, log injection |
+| Rate Limiting          | `rl0xx`    | 15     | Missing rate limits, DDoS protection, burst control, cost-based limiting |
+| SSRF & Network         | `ssrf0xx`  | 15     | Private IP access, cloud metadata, DNS rebinding, egress control |
+| Agentic Behavior       | `agent0xx` | 20     | Unauthorized tool chaining, goal drift, memory poisoning, self-modification |
+| Sampling Security      | `samp0xx`  | 15     | Sampling abuse, model manipulation, prompt leakage, budget exhaustion |
+| Context Security       | `ctx0xx`   | 10     | Context overflow, token exhaustion, role confusion, multi-turn manipulation |
+| Resource Security      | `res0xx`   | 20     | URI injection, unauthorized access, SSRF via resources, dependency chains |
+| Multi-Tenant           | `mt0xx`    | 10     | Tenant isolation, cross-tenant access, data leakage, impersonation |
+| Secrets Management     | `sm0xx`    | 10     | Plaintext secrets, rotation, vault integration, encryption at rest |
+| Server Hardening       | `sh0xx`    | 15     | Default configs, unnecessary features, security headers, directory listing |
+| Governance             | `gov0xx`   | 20     | Security policies, access review, vulnerability management, compliance |
+| Audit Logging          | `audit0xx` | 10     | Missing logging, audit trails, log integrity, rotation, forensic capability |
+| Supply Chain           | `sc0xx`    | 8      | Untrusted sources, abandoned deps, install scripts, native binaries |
+| Server Identity        | `shadow0xx`| 7      | Duplicate names, missing metadata, suspicious origins, version spoofing |
+| Prompt Security        | `pi0xx`    | 39     | Prompt injection patterns, encoding attacks, multi-language injection |
 
 Run `medusa list-checks` to see the full table with OWASP MCP mappings.
 

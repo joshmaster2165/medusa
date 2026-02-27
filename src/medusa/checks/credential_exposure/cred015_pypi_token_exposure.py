@@ -10,8 +10,12 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.credential_exposure._provider_check import run_provider_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+from medusa.utils.patterns.credentials import PROVIDER_SECRET_PATTERNS
+
+_PATTERNS = PROVIDER_SECRET_PATTERNS["pypi"]
 
 
 class PypiTokenExposureCheck(BaseCheck):
@@ -23,5 +27,4 @@ class PypiTokenExposureCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement cred015 check logic
-        return []
+        return run_provider_check(snapshot, self.metadata(), _PATTERNS, "PyPI")

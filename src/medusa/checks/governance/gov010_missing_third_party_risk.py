@@ -24,5 +24,17 @@ class MissingThirdPartyRiskCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov010 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import VENDOR_ASSESSMENT_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=VENDOR_ASSESSMENT_KEYS,
+            missing_msg=(
+                "Server '{server}' has no third-party risk assessment configuration. "
+                "External integrations introduce undocumented supply chain risks."
+            ),
+            present_msg="Server '{server}' has third-party risk assessment configured.",
+        )

@@ -128,8 +128,7 @@ class MissingVersionPinningCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server '{snapshot.server_name}' has properly pinned "
-                        f"package versions."
+                        f"Server '{snapshot.server_name}' has properly pinned package versions."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

@@ -302,6 +302,7 @@ def empty_snapshot() -> ServerSnapshot:
 # HTTP vulnerable snapshot -- triggers transport & auth check failures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def http_vulnerable_snapshot() -> ServerSnapshot:
     """An HTTP server snapshot with no auth, unencrypted transport."""
@@ -324,6 +325,7 @@ def http_vulnerable_snapshot() -> ServerSnapshot:
 # ---------------------------------------------------------------------------
 # HTTP secure snapshot -- all transport/auth checks should PASS
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def http_secure_snapshot() -> ServerSnapshot:

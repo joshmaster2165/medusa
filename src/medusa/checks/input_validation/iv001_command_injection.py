@@ -64,9 +64,7 @@ class CommandInjectionCheck(BaseCheck):
                     continue
 
                 # Unconstrained shell parameter -- flag it
-                constraint_hint = (
-                    "No `pattern` or `enum` constraint is defined"
-                )
+                constraint_hint = "No `pattern` or `enum` constraint is defined"
                 findings.append(
                     Finding(
                         check_id=meta.check_id,

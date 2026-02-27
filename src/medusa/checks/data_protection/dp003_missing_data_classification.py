@@ -46,9 +46,7 @@ class MissingDataClassificationCheck(BaseCheck):
             description: str = resource.get("description") or ""
 
             has_mime = bool(mime_type)
-            has_classification = any(
-                kw in description.lower() for kw in CLASSIFICATION_KEYWORDS
-            )
+            has_classification = any(kw in description.lower() for kw in CLASSIFICATION_KEYWORDS)
 
             if not has_mime and not has_classification:
                 findings.append(
@@ -65,10 +63,7 @@ class MissingDataClassificationCheck(BaseCheck):
                             f"Resource '{res_name}' has no mimeType and no data "
                             f"classification keywords in its description."
                         ),
-                        evidence=(
-                            f"mimeType: {mime_type!r}, "
-                            f"description: {description[:100]!r}"
-                        ),
+                        evidence=(f"mimeType: {mime_type!r}, description: {description[:100]!r}"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )

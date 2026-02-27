@@ -11,8 +11,20 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.rate_limiting.dos001_missing_rate_limiting import _config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_BATCH_KEYS = {
+    "batch_size",
+    "max_batch_size",
+    "max_items",
+    "page_size",
+    "max_page_size",
+    "chunk_size",
+    "batch_limit",
+}
+_BATCH_ENV = {"MAX_BATCH_SIZE", "BATCH_LIMIT", "MAX_ITEMS_PER_REQUEST"}
 
 
 class BatchOperationLimitCheck(BaseCheck):
@@ -24,5 +36,15 @@ class BatchOperationLimitCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement dos012 check logic
-        return []
+        meta = self.metadata()
+        return _config_check(
+            snapshot,
+            meta,
+            config_keys=_BATCH_KEYS,
+            env_vars=_BATCH_ENV,
+            missing_msg=(
+                "Server '{server}' has no batch operation size limit. "
+                "A single invocation could process an unbounded number of items."
+            ),
+            present_msg="Batch operation limit configuration detected in: {sources}.",
+        )

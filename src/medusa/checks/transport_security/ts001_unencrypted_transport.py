@@ -87,7 +87,9 @@ class UnencryptedTransportCheck(BaseCheck):
         # Check proxy env vars
         if not findings:
             for env_key, env_value in snapshot.env.items():
-                if env_key.lower() in ("http_proxy", "https_proxy") and env_value.startswith("http://"):
+                if env_key.lower() in ("http_proxy", "https_proxy") and env_value.startswith(
+                    "http://"
+                ):
                     findings.append(
                         Finding(
                             check_id=meta.check_id,
@@ -122,8 +124,7 @@ class UnencryptedTransportCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server '{snapshot.server_name}' uses encrypted "
-                        f"transport (HTTPS)."
+                        f"Server '{snapshot.server_name}' uses encrypted transport (HTTPS)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

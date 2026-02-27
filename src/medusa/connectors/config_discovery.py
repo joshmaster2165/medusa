@@ -108,9 +108,7 @@ def discover_servers(
 
         servers = config.get("mcpServers", {})
         for server_name, server_config in servers.items():
-            connector = _build_connector(
-                server_name, server_config, str(config_path)
-            )
+            connector = _build_connector(server_name, server_config, str(config_path))
             if connector:
                 connectors.append(connector)
 
@@ -129,9 +127,7 @@ def discover_servers(
 
         servers = config.get("mcpServers", {})
         for server_name, server_config in servers.items():
-            connector = _build_connector(
-                server_name, server_config, str(config_path)
-            )
+            connector = _build_connector(server_name, server_config, str(config_path))
             if connector:
                 connectors.append(connector)
 

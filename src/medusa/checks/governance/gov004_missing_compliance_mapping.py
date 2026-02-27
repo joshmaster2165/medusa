@@ -24,5 +24,17 @@ class MissingComplianceMappingCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov004 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import COMPLIANCE_CONFIG_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=COMPLIANCE_CONFIG_KEYS,
+            missing_msg=(
+                "Server '{server}' has no compliance mapping configuration. "
+                "Security controls are not mapped to regulatory frameworks."
+            ),
+            present_msg="Server '{server}' has compliance mapping configured.",
+        )

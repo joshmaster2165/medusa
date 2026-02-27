@@ -66,9 +66,7 @@ class ScanEngine:
         if self.progress_callback is not None:
             self.progress_callback(event, detail)
 
-    async def _connect(
-        self, connector: BaseConnector
-    ) -> ServerSnapshot | None:
+    async def _connect(self, connector: BaseConnector) -> ServerSnapshot | None:
         """Connect to a single MCP server and return its snapshot."""
         try:
             snapshot = await connector.connect_and_snapshot()
@@ -88,9 +86,7 @@ class ScanEngine:
             logger.error("Unexpected error connecting: %s", e)
             return None
 
-    async def _run_check(
-        self, check: BaseCheck, snapshot: ServerSnapshot
-    ) -> list[Finding]:
+    async def _run_check(self, check: BaseCheck, snapshot: ServerSnapshot) -> list[Finding]:
         """Run a single check against a snapshot, catching errors."""
         meta = check.metadata()
         try:
@@ -119,17 +115,13 @@ class ScanEngine:
                 )
             ]
 
-    async def _scan_server(
-        self, snapshot: ServerSnapshot
-    ) -> list[Finding]:
+    async def _scan_server(self, snapshot: ServerSnapshot) -> list[Finding]:
         """Run all checks concurrently against a single server snapshot.
 
         Checks operate on an immutable *ServerSnapshot* with no shared
         mutable state, so it is safe to run them in parallel.
         """
-        tasks = [
-            self._run_check(check, snapshot) for check in self.checks
-        ]
+        tasks = [self._run_check(check, snapshot) for check in self.checks]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         all_findings: list[Finding] = []
@@ -152,18 +144,14 @@ class ScanEngine:
                         server_transport=snapshot.transport_type,
                         resource_type="server",
                         resource_name=snapshot.server_name,
-                        status_extended=(
-                            f"Check execution error: {result}"
-                        ),
+                        status_extended=(f"Check execution error: {result}"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )
                 )
             else:
                 all_findings.extend(result)
-            self._emit(
-                "check_done", self.checks[i].metadata().check_id
-            )
+            self._emit("check_done", self.checks[i].metadata().check_id)
         return all_findings
 
     async def _scan_one(
@@ -179,22 +167,14 @@ class ScanEngine:
                 # Emit check_done for each check so the progress bar
                 # still advances even when connection fails.
                 for check in self.checks:
-                    self._emit(
-                        "check_done", check.metadata().check_id
-                    )
+                    self._emit("check_done", check.metadata().check_id)
                 self._emit("server_done", connector.name)
                 return [], None
 
             findings = await self._scan_server(snapshot)
 
-            check_ids_run = {
-                f.check_id
-                for f in findings
-                if f.status != Status.SKIPPED
-            }
-            server_score = calculate_server_score(
-                findings, len(check_ids_run)
-            )
+            check_ids_run = {f.check_id for f in findings if f.status != Status.SKIPPED}
+            server_score = calculate_server_score(findings, len(check_ids_run))
             self._emit("server_done", connector.name)
             return findings, server_score
 
@@ -209,10 +189,7 @@ class ScanEngine:
 
         semaphore = asyncio.Semaphore(self.max_concurrency)
         raw_results = await asyncio.gather(
-            *[
-                self._scan_one(c, semaphore)
-                for c in self.connectors
-            ],
+            *[self._scan_one(c, semaphore) for c in self.connectors],
             return_exceptions=True,
         )
 
@@ -240,9 +217,7 @@ class ScanEngine:
             medusa_version=__version__,
             scan_duration_seconds=round(duration, 2),
             servers_scanned=servers_scanned,
-            total_findings=sum(
-                1 for f in all_findings if f.status == Status.FAIL
-            ),
+            total_findings=sum(1 for f in all_findings if f.status == Status.FAIL),
             findings=all_findings,
             server_scores=server_scores,
             aggregate_score=aggregate,
@@ -250,9 +225,7 @@ class ScanEngine:
         )
 
 
-def has_findings_above_threshold(
-    result: ScanResult, threshold: str
-) -> bool:
+def has_findings_above_threshold(result: ScanResult, threshold: str) -> bool:
     """Check if any findings meet or exceed the given severity threshold."""
     severity_order = {
         "critical": 4,
@@ -265,9 +238,7 @@ def has_findings_above_threshold(
 
     for finding in result.findings:
         if finding.status == Status.FAIL:
-            finding_level = severity_order.get(
-                finding.severity.value, 0
-            )
+            finding_level = severity_order.get(finding.severity.value, 0)
             if finding_level >= threshold_level:
                 return True
     return False

@@ -76,8 +76,7 @@ class GenericServerNameCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server '{snapshot.server_name}' has a unique, "
-                        f"descriptive name."
+                        f"Server '{snapshot.server_name}' has a unique, descriptive name."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

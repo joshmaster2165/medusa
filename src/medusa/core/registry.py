@@ -7,7 +7,6 @@ import pkgutil
 from pathlib import Path
 
 from medusa.core.check import BaseCheck
-from medusa.core.models import Severity
 
 
 class CheckRegistry:

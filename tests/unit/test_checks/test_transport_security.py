@@ -1,4 +1,4 @@
-"""Unit tests for all Transport Security checks (TS-001 through TS-004)."""
+"""Unit tests for all Transport Security checks (TS-001 through TS-019)."""
 
 from __future__ import annotations
 
@@ -304,6 +304,11 @@ class TestTS004MissingTransportAuth:
         assert findings[0].status == Status.FAIL
 
 
+# ==========================================================================
+# TS-005: Mixed Content
+# ==========================================================================
+
+
 class TestMixedContentCheck:
     """Tests for MixedContentCheck."""
 
@@ -316,10 +321,54 @@ class TestMixedContentCheck:
         assert meta.check_id == "ts005"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: MixedContentCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MixedContentCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_http_resource_in_https_server(self, check: MixedContentCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "resource_url": "http://cdn.example.com/image.png",
+            },
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_all_https(self, check: MixedContentCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "resource_url": "https://cdn.example.com/image.png",
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_skips_http_primary(self, check: MixedContentCheck) -> None:
+        # Mixed content only applies when primary is HTTPS; HTTP primary is handled by ts001
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="http://example.com/mcp",
+            config_raw={"url": "http://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        # No mixed content violation on a plain HTTP server
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+
+# ==========================================================================
+# TS-006: Weak Cipher Suites
+# ==========================================================================
 
 
 class TestWeakCipherSuitesCheck:
@@ -334,10 +383,56 @@ class TestWeakCipherSuitesCheck:
         assert meta.check_id == "ts006"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: WeakCipherSuitesCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: WeakCipherSuitesCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_rc4_cipher(self, check: WeakCipherSuitesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"ciphers": "RC4-MD5:AES256-GCM-SHA384"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_des_cipher(self, check: WeakCipherSuitesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"cipher_suites": "DES-CBC3-SHA"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_strong_cipher(self, check: WeakCipherSuitesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"ciphers": "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_cipher_config(self, check: WeakCipherSuitesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-007: Missing HSTS
+# ==========================================================================
 
 
 class TestMissingHstsCheck:
@@ -352,10 +447,53 @@ class TestMissingHstsCheck:
         assert meta.check_id == "ts007"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: MissingHstsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingHstsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_hsts(self, check: MissingHstsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_hsts_configured(self, check: MissingHstsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "hsts": {"max_age": 31536000, "include_subdomains": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_strict_transport_security_header(
+        self, check: MissingHstsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "headers": {"Strict-Transport-Security": "max-age=31536000; includeSubDomains"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-008: Certificate Pinning Absent
+# ==========================================================================
 
 
 class TestCertificatePinningAbsentCheck:
@@ -370,10 +508,39 @@ class TestCertificatePinningAbsentCheck:
         assert meta.check_id == "ts008"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: CertificatePinningAbsentCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: CertificatePinningAbsentCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_pinning(self, check: CertificatePinningAbsentCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_cert_pinning(self, check: CertificatePinningAbsentCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "certificate_pinning": {"pin_sha256": "abc123"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-009: Self-Signed Certificate
+# ==========================================================================
 
 
 class TestSelfSignedCertificateCheck:
@@ -388,10 +555,46 @@ class TestSelfSignedCertificateCheck:
         assert meta.check_id == "ts009"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: SelfSignedCertificateCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: SelfSignedCertificateCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_self_signed_true(self, check: SelfSignedCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"tls": {"self_signed": True}},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_verify_false(self, check: SelfSignedCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"tls": {"verify": False}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_no_self_signed_config(self, check: SelfSignedCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-010: Expired Certificate
+# ==========================================================================
 
 
 class TestExpiredCertificateCheck:
@@ -406,10 +609,40 @@ class TestExpiredCertificateCheck:
         assert meta.check_id == "ts010"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: ExpiredCertificateCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: ExpiredCertificateCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_cert_monitoring(self, check: ExpiredCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_cert_expiry_monitoring(self, check: ExpiredCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "cert_expiry_check": True,
+                "cert_monitor": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-011: Wildcard Certificate
+# ==========================================================================
 
 
 class TestWildcardCertificateCheck:
@@ -424,10 +657,46 @@ class TestWildcardCertificateCheck:
         assert meta.check_id == "ts011"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: WildcardCertificateCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: WildcardCertificateCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_wildcard_cert(self, check: WildcardCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"tls": {"cert_name": "*.example.com"}},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_specific_cert(self, check: WildcardCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"tls": {"cert_name": "api.example.com"}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_cert_config(self, check: WildcardCertificateCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-012: Missing CORS Headers
+# ==========================================================================
 
 
 class TestMissingCorsHeadersCheck:
@@ -442,10 +711,39 @@ class TestMissingCorsHeadersCheck:
         assert meta.check_id == "ts012"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: MissingCorsHeadersCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingCorsHeadersCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_cors(self, check: MissingCorsHeadersCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_cors_configured(self, check: MissingCorsHeadersCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "cors": {"allowed_origins": ["https://app.example.com"]},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-013: Overly Permissive CORS
+# ==========================================================================
 
 
 class TestOverlyPermissiveCorsCheck:
@@ -460,10 +758,56 @@ class TestOverlyPermissiveCorsCheck:
         assert meta.check_id == "ts013"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: OverlyPermissiveCorsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: OverlyPermissiveCorsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_wildcard_origin(self, check: OverlyPermissiveCorsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"cors_origin": "*"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_wildcard_in_list(self, check: OverlyPermissiveCorsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"allowed_origins": ["*", "https://trusted.example.com"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_no_cors_config(self, check: OverlyPermissiveCorsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_specific_origin(self, check: OverlyPermissiveCorsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"cors_origin": "https://app.example.com"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-014: WebSocket Without TLS
+# ==========================================================================
 
 
 class TestWebsocketWithoutTlsCheck:
@@ -478,10 +822,46 @@ class TestWebsocketWithoutTlsCheck:
         assert meta.check_id == "ts014"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: WebsocketWithoutTlsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: WebsocketWithoutTlsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_ws_url(self, check: WebsocketWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="ws://example.com/mcp",
+            config_raw={"url": "ws://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_ws_in_config(self, check: WebsocketWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"websocket_url": "ws://realtime.example.com/ws"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_wss_url(self, check: WebsocketWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"websocket_url": "wss://realtime.example.com/ws"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-015: SSE Without TLS
+# ==========================================================================
 
 
 class TestSseWithoutTlsCheck:
@@ -496,10 +876,43 @@ class TestSseWithoutTlsCheck:
         assert meta.check_id == "ts015"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: SseWithoutTlsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: SseWithoutTlsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_http_transport(self, check: SseWithoutTlsCheck) -> None:
+        # ts015 only fires for SSE transport type specifically
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="http://example.com/mcp",
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_sse_over_http(self, check: SseWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="sse",
+            transport_url="http://example.com/sse",
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_sse_over_https(self, check: SseWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="sse",
+            transport_url="https://example.com/sse",
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-016: Missing Content Security Policy
+# ==========================================================================
 
 
 class TestMissingContentSecurityPolicyCheck:
@@ -514,10 +927,51 @@ class TestMissingContentSecurityPolicyCheck:
         assert meta.check_id == "ts016"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: MissingContentSecurityPolicyCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingContentSecurityPolicyCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_csp(self, check: MissingContentSecurityPolicyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_csp_configured(self, check: MissingContentSecurityPolicyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "content_security_policy": "default-src 'self'",
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_csp_header(self, check: MissingContentSecurityPolicyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="sse",
+            transport_url="https://example.com/sse",
+            config_raw={
+                "headers": {"Content-Security-Policy": "default-src 'self'"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-017: DNS Over HTTP
+# ==========================================================================
 
 
 class TestDnsOverHttpCheck:
@@ -532,10 +986,48 @@ class TestDnsOverHttpCheck:
         assert meta.check_id == "ts017"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: DnsOverHttpCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: DnsOverHttpCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_dns_config(self, check: DnsOverHttpCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_dns_without_doh(self, check: DnsOverHttpCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"dns_server": "8.8.8.8"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_dns_with_doh(self, check: DnsOverHttpCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "dns_server": "8.8.8.8",
+                "dns_over_https": "https://dns.google/dns-query",
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-018: Proxy Without TLS
+# ==========================================================================
 
 
 class TestProxyWithoutTlsCheck:
@@ -550,10 +1042,56 @@ class TestProxyWithoutTlsCheck:
         assert meta.check_id == "ts018"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: ProxyWithoutTlsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: ProxyWithoutTlsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_proxy_config(self, check: ProxyWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_http_proxy_in_config(self, check: ProxyWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"proxy": "http://proxy.internal:8080"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_http_proxy_in_env(self, check: ProxyWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            env={"HTTP_PROXY": "http://proxy.internal:8080"},
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_https_proxy(self, check: ProxyWithoutTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"proxy": "https://proxy.internal:8443"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# TS-019: Missing Certificate Transparency
+# ==========================================================================
 
 
 class TestMissingCertificateTransparencyCheck:
@@ -570,7 +1108,49 @@ class TestMissingCertificateTransparencyCheck:
         assert meta.check_id == "ts019"
         assert meta.category == "transport_security"
 
-    async def test_stub_returns_empty(self, check: MissingCertificateTransparencyCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingCertificateTransparencyCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_ct_monitoring(
+        self, check: MissingCertificateTransparencyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_ct_monitoring_configured(
+        self, check: MissingCertificateTransparencyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "certificate_transparency": {"enabled": True, "monitor": "crt.sh"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_expect_ct_header(
+        self, check: MissingCertificateTransparencyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "headers": {"Expect-CT": "max-age=86400, enforce"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1

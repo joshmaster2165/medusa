@@ -45,18 +45,14 @@ class PromptInjectionCheck(BaseCheck):
             for param_name, param_def in schema_properties.items():
                 param_desc: str = param_def.get("description", "")
                 if param_desc:
-                    text_surfaces.append(
-                        (f"parameter '{param_name}' description", param_desc)
-                    )
+                    text_surfaces.append((f"parameter '{param_name}' description", param_desc))
 
             for surface_label, text in text_surfaces:
                 injection_matches = find_injection_phrases(text)
                 if injection_matches:
                     # Deduplicate while preserving order
                     unique_phrases = list(dict.fromkeys(injection_matches))
-                    phrase_list = ", ".join(
-                        f"'{p}'" for p in unique_phrases[:5]
-                    )
+                    phrase_list = ", ".join(f"'{p}'" for p in unique_phrases[:5])
 
                     findings.append(
                         Finding(

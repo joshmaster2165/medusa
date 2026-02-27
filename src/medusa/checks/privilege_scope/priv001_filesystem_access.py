@@ -54,13 +54,10 @@ def _has_path_restriction(tool: dict) -> tuple[bool, str]:
 
         if has_pattern:
             restrictions_found.append(
-                f"'{param_name}' has pattern constraint: "
-                f"{param_def['pattern']}"
+                f"'{param_name}' has pattern constraint: {param_def['pattern']}"
             )
         if has_enum:
-            restrictions_found.append(
-                f"'{param_name}' is restricted to enum values"
-            )
+            restrictions_found.append(f"'{param_name}' is restricted to enum values")
 
     if restrictions_found:
         return True, "; ".join(restrictions_found)
@@ -97,9 +94,7 @@ class FilesystemAccessCheck(BaseCheck):
 
             if not is_restricted:
                 # Also check server args/config for directory restrictions
-                config_restriction = _check_server_config_restrictions(
-                    snapshot, tool_name
-                )
+                config_restriction = _check_server_config_restrictions(snapshot, tool_name)
 
                 if config_restriction:
                     # Server-level config provides some restriction
@@ -150,18 +145,25 @@ class FilesystemAccessCheck(BaseCheck):
         return findings
 
 
-def _check_server_config_restrictions(
-    snapshot: ServerSnapshot, tool_name: str
-) -> bool:
+def _check_server_config_restrictions(snapshot: ServerSnapshot, tool_name: str) -> bool:
     """Heuristic: check server args and config for directory-restriction hints.
 
     Looks for common CLI patterns like ``--allowed-dir``, ``--root``,
     ``--sandbox``, or config keys that suggest path scoping.
     """
     restriction_hints = {
-        "allowed", "allowlist", "root", "sandbox", "chroot",
-        "base-dir", "base_dir", "basedir", "workdir", "workspace",
-        "restrict", "scope",
+        "allowed",
+        "allowlist",
+        "root",
+        "sandbox",
+        "chroot",
+        "base-dir",
+        "base_dir",
+        "basedir",
+        "workdir",
+        "workspace",
+        "restrict",
+        "scope",
     }
 
     # Check server command-line arguments

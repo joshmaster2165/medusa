@@ -1,6 +1,5 @@
 """Tests for medusa.utils - text_analysis, pattern_matching, hashing."""
 
-
 from medusa.utils.hashing import (
     compare_baseline,
     compute_baseline,

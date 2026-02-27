@@ -11,8 +11,23 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.server_hardening.hard001_unnecessary_services_enabled import (
+    _hardening_config_check,
+)
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_NETWORK_SEG_KEYS = {
+    "network_policy",
+    "firewall",
+    "vpc",
+    "vnet",
+    "network_segmentation",
+    "security_group",
+    "egress_filter",
+    "ingress_filter",
+    "network_acl",
+}
 
 
 class MissingNetworkSegmentationCheck(BaseCheck):
@@ -24,5 +39,16 @@ class MissingNetworkSegmentationCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement hard015 check logic
-        return []
+        meta = self.metadata()
+        return _hardening_config_check(
+            snapshot,
+            meta,
+            bad_keys=_NETWORK_SEG_KEYS,
+            bad_values=None,
+            missing_msg=(
+                "Server '{server}' has no network segmentation configuration. "
+                "A compromised server may have direct access to backend services."
+            ),
+            present_msg=("Server '{server}' has network segmentation or policy configuration."),
+            fail_on_present=False,
+        )

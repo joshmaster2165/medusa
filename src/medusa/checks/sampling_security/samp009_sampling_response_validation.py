@@ -1,19 +1,28 @@
-"""SAMP009: Missing Sampling Response Validation.
+"""SAMP-009: Missing Sampling Response Validation.
 
-Detects MCP server implementations that process sampling responses from the LLM without
-validation. Unvalidated sampling responses may contain unexpected content, malformed data, or
-injected instructions that the server processes as trusted input, leading to secondary injection
-attacks or logic errors.
+Checks if sampling responses are validated. Fails when sampling is
+enabled but no response validation config is found.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding
+from medusa.core.models import CheckMetadata, Finding, Status
+
+RESPONSE_VALIDATION_KEYS: set[str] = {
+    "response_validation",
+    "sampling_response_validation",
+    "output_validation",
+    "response_schema",
+    "validate_sampling_response",
+    "response_schema_check",
+    "response_sanitization",
+}
 
 
 class SamplingResponseValidationCheck(BaseCheck):
@@ -25,5 +34,65 @@ class SamplingResponseValidationCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement samp009 check logic
-        return []
+        meta = self.metadata()
+        findings: list[Finding] = []
+
+        if "sampling" not in snapshot.capabilities:
+            return findings
+
+        has_validation = _walk_config_for_keys(snapshot.config_raw, RESPONSE_VALIDATION_KEYS)
+
+        if not has_validation:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.FAIL,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        "Sampling is enabled but no response validation config detected — "
+                        "sampling responses are processed without validation."
+                    ),
+                    evidence="sampling in capabilities; no response validation config.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+        else:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="Sampling response validation detected.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+
+        return findings
+
+
+def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
+    if _depth > 10:
+        return False
+    if isinstance(config, dict):
+        for key in config:
+            if isinstance(key, str) and key.lower() in keys:
+                return True
+            if _walk_config_for_keys(config[key], keys, _depth + 1):
+                return True
+    elif isinstance(config, list):
+        for item in config:
+            if _walk_config_for_keys(item, keys, _depth + 1):
+                return True
+    return False

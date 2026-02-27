@@ -124,8 +124,7 @@ class LocalhostNoAuthCheck(BaseCheck):
                     f"the user's browser."
                 ),
                 evidence=(
-                    f"transport_url = {snapshot.transport_url}; "
-                    f"authentication = none detected"
+                    f"transport_url = {snapshot.transport_url}; authentication = none detected"
                 ),
                 remediation=meta.remediation,
                 owasp_mcp=meta.owasp_mcp,

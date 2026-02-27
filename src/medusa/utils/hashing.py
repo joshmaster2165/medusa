@@ -27,8 +27,7 @@ def hash_server_tools(tools: list[dict]) -> dict[str, str]:
     Returns a dict mapping tool name to its SHA-256 hash.
     """
     return {
-        tool.get("name", f"unknown_{i}"): hash_tool_definition(tool)
-        for i, tool in enumerate(tools)
+        tool.get("name", f"unknown_{i}"): hash_tool_definition(tool) for i, tool in enumerate(tools)
     }
 
 
@@ -41,10 +40,7 @@ def compute_baseline(servers: dict[str, list[dict]]) -> dict[str, dict[str, str]
     Returns:
         dict mapping server name to dict of tool name -> hash
     """
-    return {
-        server_name: hash_server_tools(tools)
-        for server_name, tools in servers.items()
-    }
+    return {server_name: hash_server_tools(tools) for server_name, tools in servers.items()}
 
 
 def compare_baseline(

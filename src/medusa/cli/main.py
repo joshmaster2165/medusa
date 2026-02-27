@@ -38,11 +38,15 @@ console = Console()
 @click.group(invoke_without_command=True)
 @click.version_option(version=__version__, prog_name="medusa")
 @click.option(
-    "-v", "--verbose", count=True,
+    "-v",
+    "--verbose",
+    count=True,
     help="Increase verbosity (-v, -vv, -vvv)",
 )
 @click.option(
-    "-q", "--quiet", is_flag=True,
+    "-q",
+    "--quiet",
+    is_flag=True,
     help="Suppress all output except errors",
 )
 @click.pass_context
@@ -75,64 +79,96 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
 
 @cli.command()
 @click.option(
-    "--config-file", type=str, default=None,
+    "--config-file",
+    type=str,
+    default=None,
     help="Path to MCP config file",
 )
 @click.option(
-    "--scan-config", type=str, default=None,
+    "--scan-config",
+    type=str,
+    default=None,
     help="Path to medusa.yaml",
 )
 @click.option(
-    "--http", "http_url", type=str, default=None,
+    "--http",
+    "http_url",
+    type=str,
+    default=None,
     help="Scan an HTTP MCP server by URL",
 )
 @click.option(
-    "--stdio", "stdio_cmd", type=str, default=None,
+    "--stdio",
+    "stdio_cmd",
+    type=str,
+    default=None,
     help="Scan a stdio MCP server by command",
 )
 @click.option(
-    "--server", type=str, default=None,
+    "--server",
+    type=str,
+    default=None,
     help="Scan a specific server by name from config",
 )
 @click.option(
-    "-o", "--output", "output_format",
+    "-o",
+    "--output",
+    "output_format",
     type=click.Choice(["json", "html", "markdown", "sarif"]),
-    default="json", help="Output format",
+    default="json",
+    help="Output format",
 )
 @click.option(
-    "--output-file", type=str, default=None,
+    "--output-file",
+    type=str,
+    default=None,
     help="Write output to file",
 )
 @click.option(
-    "--category", type=str, default=None,
+    "--category",
+    type=str,
+    default=None,
     help="Comma-separated categories to scan",
 )
 @click.option(
-    "--severity", type=str, default=None,
+    "--severity",
+    type=str,
+    default=None,
     help="Minimum severity to report",
 )
 @click.option(
-    "--checks", type=str, default=None,
+    "--checks",
+    type=str,
+    default=None,
     help="Comma-separated check IDs to run",
 )
 @click.option(
-    "--exclude-checks", type=str, default=None,
+    "--exclude-checks",
+    type=str,
+    default=None,
     help="Comma-separated check IDs to exclude",
 )
 @click.option(
-    "--fail-on", type=str, default="high",
+    "--fail-on",
+    type=str,
+    default="high",
     help="Min severity for non-zero exit code",
 )
 @click.option(
-    "--compliance", type=str, default=None,
+    "--compliance",
+    type=str,
+    default=None,
     help="Compliance framework to evaluate",
 )
 @click.option(
-    "--no-auto-discover", is_flag=True,
+    "--no-auto-discover",
+    is_flag=True,
     help="Disable auto-discovery of servers",
 )
 @click.option(
-    "--max-concurrency", type=int, default=4,
+    "--max-concurrency",
+    type=int,
+    default=4,
     help="Max servers to scan concurrently (default: 4)",
 )
 @click.pass_context
@@ -165,9 +201,7 @@ def scan(
 
     # Explicit server targets
     if http_url:
-        connectors.append(
-            HttpConnector(name="cli-http", url=http_url)
-        )
+        connectors.append(HttpConnector(name="cli-http", url=http_url))
     if stdio_cmd:
         parts = stdio_cmd.split()
         connectors.append(
@@ -186,19 +220,11 @@ def scan(
 
     # Auto-discover from known config locations
     has_explicit = http_url or stdio_cmd
-    if (
-        not no_auto_discover
-        and config.discovery.auto_discover
-        and not has_explicit
-    ):
-        discovered = discover_servers(
-            additional_config_files=extra_configs
-        )
+    if not no_auto_discover and config.discovery.auto_discover and not has_explicit:
+        discovered = discover_servers(additional_config_files=extra_configs)
         connectors.extend(discovered)
     elif extra_configs:
-        discovered = discover_servers(
-            additional_config_files=extra_configs
-        )
+        discovered = discover_servers(additional_config_files=extra_configs)
         connectors.extend(discovered)
 
     # Servers from medusa.yaml
@@ -206,34 +232,29 @@ def scan(
         if srv.transport == "http" and srv.url:
             connectors.append(
                 HttpConnector(
-                    name=srv.name, url=srv.url,
+                    name=srv.name,
+                    url=srv.url,
                     headers=srv.headers,
                 )
             )
         elif srv.transport == "stdio" and srv.command:
             connectors.append(
                 StdioConnector(
-                    name=srv.name, command=srv.command,
-                    args=srv.args, env=srv.env,
+                    name=srv.name,
+                    command=srv.command,
+                    args=srv.args,
+                    env=srv.env,
                 )
             )
 
     if not connectors:
         if not quiet:
-            console.print(
-                "[yellow]No MCP servers found to scan.[/yellow]"
-            )
-            console.print(
-                "Use --config-file, --http, or --stdio "
-                "to specify servers."
-            )
+            console.print("[yellow]No MCP servers found to scan.[/yellow]")
+            console.print("Use --config-file, --http, or --stdio to specify servers.")
         sys.exit(3)
 
     if not quiet:
-        console.print(
-            f"[green]Found {len(connectors)} server(s) "
-            f"to scan[/green]"
-        )
+        console.print(f"[green]Found {len(connectors)} server(s) to scan[/green]")
 
     # Discover and filter checks
     registry = CheckRegistry()
@@ -241,9 +262,7 @@ def scan(
 
     categories = category.split(",") if category else None
     check_ids = checks.split(",") if checks else None
-    exclude_ids = (
-        exclude_checks.split(",") if exclude_checks else None
-    )
+    exclude_ids = exclude_checks.split(",") if exclude_checks else None
     # Merge excludes from config
     config_excludes = config.checks.exclude
     if config_excludes:
@@ -291,22 +310,17 @@ def scan(
 
     # Evaluate compliance if requested
     compliance_name = compliance or (
-        config.compliance.frameworks[0]
-        if config.compliance.frameworks
-        else None
+        config.compliance.frameworks[0] if config.compliance.frameworks else None
     )
     if compliance_name:
         try:
             framework = load_framework(compliance_name)
-            result.compliance_results[framework.name] = (
-                evaluate_compliance(framework, result.findings)
+            result.compliance_results[framework.name] = evaluate_compliance(
+                framework, result.findings
             )
         except FileNotFoundError:
             if not quiet:
-                console.print(
-                    "[yellow]Compliance framework not found: "
-                    f"{compliance_name}[/yellow]"
-                )
+                console.print(f"[yellow]Compliance framework not found: {compliance_name}[/yellow]")
 
     # Generate report
     reporters = {
@@ -338,17 +352,17 @@ def scan(
 def _print_summary(result) -> None:
     """Print a summary table to the console."""
     grade_colors = {
-        "A": "green", "B": "green", "C": "yellow",
-        "D": "red", "F": "red",
+        "A": "green",
+        "B": "green",
+        "C": "yellow",
+        "D": "red",
+        "F": "red",
     }
     color = grade_colors.get(result.aggregate_grade, "white")
 
     grade = result.aggregate_grade
     score = result.aggregate_score
-    console.print(
-        f"[bold {color}]Grade: {grade} ({score}/10)"
-        f"[/bold {color}]"
-    )
+    console.print(f"[bold {color}]Grade: {grade} ({score}/10)[/bold {color}]")
     console.print()
 
     table = Table(show_header=True, header_style="bold")
@@ -376,36 +390,36 @@ def _print_summary(result) -> None:
     console.print()
     duration = result.scan_duration_seconds
     servers = result.servers_scanned
-    console.print(
-        f"Scanned {servers} server(s) in {duration}s"
-    )
+    console.print(f"Scanned {servers} server(s) in {duration}s")
 
 
 @cli.command("list-checks")
 @click.option(
-    "--category", type=str, default=None,
+    "--category",
+    type=str,
+    default=None,
     help="Filter by category",
 )
 @click.option(
-    "--severity", type=str, default=None,
+    "--severity",
+    type=str,
+    default=None,
     help="Filter by severity",
 )
 @click.option(
-    "--format", "fmt",
-    type=click.Choice(["table", "json"]), default="table",
+    "--format",
+    "fmt",
+    type=click.Choice(["table", "json"]),
+    default="table",
 )
-def list_checks(
-    category: str | None, severity: str | None, fmt: str
-) -> None:
+def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
     """List all available security checks."""
     registry = CheckRegistry()
     registry.discover_checks()
 
     categories = [category] if category else None
     severities = [severity] if severity else None
-    all_checks = registry.get_checks(
-        categories=categories, severities=severities
-    )
+    all_checks = registry.get_checks(categories=categories, severities=severities)
 
     if fmt == "json":
         import json
@@ -444,9 +458,7 @@ def list_checks(
     for check in all_checks:
         meta = check.metadata()
         sev_style = severity_styles.get(meta.severity.value, "")
-        owasp = (
-            ", ".join(meta.owasp_mcp) if meta.owasp_mcp else "-"
-        )
+        owasp = ", ".join(meta.owasp_mcp) if meta.owasp_mcp else "-"
         table.add_row(
             meta.check_id,
             meta.title,

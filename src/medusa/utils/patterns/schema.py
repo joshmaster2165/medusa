@@ -74,3 +74,129 @@ PAGINATION_PARAMS: set[str] = {
     "count",
     "top",
 }
+
+# LDAP-related parameter names
+LDAP_PARAM_NAMES: set[str] = {
+    "ldap_query",
+    "ldap_filter",
+    "dn",
+    "distinguished_name",
+    "ldap_search",
+    "base_dn",
+    "search_filter",
+    "ldap_bind",
+}
+
+# NoSQL/MongoDB-related parameter names
+NOSQL_PARAM_NAMES: set[str] = {
+    "mongo_query",
+    "collection",
+    "aggregate",
+    "pipeline",
+    "document",
+    "nosql_query",
+    "find_query",
+}
+
+# HTTP header parameter names
+HEADER_PARAM_NAMES: set[str] = {
+    "header",
+    "headers",
+    "host",
+    "referer",
+    "user_agent",
+    "origin",
+    "x_forwarded_for",
+    "content_type",
+}
+
+# XML-related parameter names
+XML_PARAM_NAMES: set[str] = {
+    "xml",
+    "xml_data",
+    "xml_input",
+    "soap",
+    "wsdl",
+    "xslt",
+    "xml_content",
+    "xml_body",
+}
+
+# XPath-related parameter names
+XPATH_PARAM_NAMES: set[str] = {
+    "xpath",
+    "xpath_query",
+    "xpath_expression",
+    "xml_path",
+    "node_path",
+}
+
+# URL parameter names
+URL_PARAM_NAMES: set[str] = {
+    "url",
+    "uri",
+    "endpoint",
+    "link",
+    "href",
+    "redirect",
+    "callback_url",
+    "webhook_url",
+    "target_url",
+    "return_url",
+}
+
+# Email parameter names
+EMAIL_PARAM_NAMES: set[str] = {
+    "email",
+    "mail",
+    "to",
+    "from",
+    "cc",
+    "bcc",
+    "recipient",
+    "sender",
+    "email_address",
+}
+
+# File upload parameter names
+FILE_PARAM_NAMES: set[str] = {
+    "file",
+    "upload",
+    "attachment",
+    "document",
+    "image",
+    "media",
+    "binary",
+    "blob",
+}
+
+# CSV-related parameter names
+CSV_PARAM_NAMES: set[str] = {
+    "csv",
+    "csv_data",
+    "spreadsheet",
+    "tsv",
+    "delimiter",
+}
+
+# Environment variable parameter names
+ENV_PARAM_NAMES: set[str] = {
+    "env",
+    "environment",
+    "env_var",
+    "env_name",
+    "env_value",
+    "variable",
+    "config_var",
+}
+
+# Template parameter names (for SSTI)
+TEMPLATE_PARAM_NAMES: set[str] = {
+    "template",
+    "template_string",
+    "render",
+    "format_string",
+    "mustache",
+    "handlebars",
+    "jinja",
+}

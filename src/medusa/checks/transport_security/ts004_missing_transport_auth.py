@@ -36,9 +36,7 @@ class MissingTransportAuthCheck(BaseCheck):
         headers: dict = {}
         if snapshot.config_raw:
             headers = (
-                snapshot.config_raw.get("headers")
-                or snapshot.config_raw.get("httpHeaders")
-                or {}
+                snapshot.config_raw.get("headers") or snapshot.config_raw.get("httpHeaders") or {}
             )
 
         if not isinstance(headers, dict):

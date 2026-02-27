@@ -11,8 +11,20 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.rate_limiting.dos001_missing_rate_limiting import _config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_CPU_KEYS = {
+    "max_cpu",
+    "cpu_limit",
+    "cpu_quota",
+    "cpu_shares",
+    "cpu_period",
+    "cpu_time_limit",
+    "process_priority",
+}
+_CPU_ENV = {"MAX_CPU", "CPU_LIMIT", "CPU_QUOTA", "CPU_SHARES"}
 
 
 class CpuExhaustionRiskCheck(BaseCheck):
@@ -24,5 +36,15 @@ class CpuExhaustionRiskCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement dos010 check logic
-        return []
+        meta = self.metadata()
+        return _config_check(
+            snapshot,
+            meta,
+            config_keys=_CPU_KEYS,
+            env_vars=_CPU_ENV,
+            missing_msg=(
+                "Server '{server}' has no CPU limit configuration. "
+                "Computationally intensive tool operations may starve other processes."
+            ),
+            present_msg="CPU limit configuration detected in: {sources}.",
+        )

@@ -35,9 +35,7 @@ class ExcessiveDataExposureCheck(BaseCheck):
             tool_name: str = tool.get("name", "<unnamed>")
 
             # Check if tool name matches a data-dump pattern
-            is_dump_tool = any(
-                pattern.search(tool_name) for pattern in DATA_DUMP_PATTERNS
-            )
+            is_dump_tool = any(pattern.search(tool_name) for pattern in DATA_DUMP_PATTERNS)
             if not is_dump_tool:
                 continue
 

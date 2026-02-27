@@ -11,8 +11,19 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.multi_tenant.mt001_missing_tenant_isolation import _mt_config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_SHARED_RESOURCE_KEYS = {
+    "resource_access_control",
+    "resource_scoping",
+    "resource_policy",
+    "resource_authorization",
+    "access_control",
+    "resource_acl",
+    "tenant_resource_filter",
+}
 
 
 class SharedResourceAccessCheck(BaseCheck):
@@ -24,5 +35,14 @@ class SharedResourceAccessCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement mt002 check logic
-        return []
+        meta = self.metadata()
+        return _mt_config_check(
+            snapshot,
+            meta,
+            config_keys=_SHARED_RESOURCE_KEYS,
+            missing_msg=(
+                "Server '{server}' has no resource access control configuration. "
+                "Shared resources may be accessible across tenant boundaries."
+            ),
+            present_msg="Server '{server}' has resource access control configuration.",
+        )

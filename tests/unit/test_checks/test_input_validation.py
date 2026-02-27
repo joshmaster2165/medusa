@@ -909,6 +909,11 @@ class TestIV005PermissiveSchema:
         assert "required" in status_text, "Should mention missing required issue"
 
 
+# ==========================================================================
+# IV-006: LDAP Injection Risk
+# ==========================================================================
+
+
 class TestLdapInjectionCheck:
     """Tests for LdapInjectionCheck."""
 
@@ -921,10 +926,51 @@ class TestLdapInjectionCheck:
         assert meta.check_id == "iv006"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: LdapInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_ldap_param(self, check: LdapInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "ldap_search",
+                    "description": "Searches LDAP directory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"dn": {"type": "string"}},
+                        "required": ["dn"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "ldap_search.dn" in fail_findings[0].resource_name
+
+    async def test_passes_when_pattern_constrained(self, check: LdapInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "ldap_search",
+                    "description": "Searches LDAP directory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"dn": {"type": "string", "pattern": "^[a-zA-Z0-9,=]+$"}},
+                        "required": ["dn"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: LdapInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-007: NoSQL Injection Risk
+# ==========================================================================
 
 
 class TestNosqlInjectionCheck:
@@ -939,10 +985,52 @@ class TestNosqlInjectionCheck:
         assert meta.check_id == "iv007"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: NosqlInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_nosql_named_param(self, check: NosqlInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mongo_find",
+                    "description": "MongoDB find.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"mongo_query": {"type": "string"}},
+                        "required": ["mongo_query"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: NosqlInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mongo_find",
+                    "description": "MongoDB find.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "mongo_query": {"type": "string", "enum": ["active", "inactive"]}
+                        },
+                        "required": ["mongo_query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: NosqlInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-008: SSTI Injection Risk
+# ==========================================================================
 
 
 class TestSstiInjectionCheck:
@@ -957,10 +1045,52 @@ class TestSstiInjectionCheck:
         assert meta.check_id == "iv008"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: SstiInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_template_param(self, check: SstiInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "render_page",
+                    "description": "Renders a template.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"template": {"type": "string"}},
+                        "required": ["template"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: SstiInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "render_page",
+                    "description": "Renders a template.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "template": {"type": "string", "enum": ["welcome", "goodbye"]}
+                        },
+                        "required": ["template"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: SstiInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-009: XXE Injection Risk
+# ==========================================================================
 
 
 class TestXxeInjectionCheck:
@@ -975,10 +1105,50 @@ class TestXxeInjectionCheck:
         assert meta.check_id == "iv009"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: XxeInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_xml_param(self, check: XxeInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_parser",
+                    "description": "Parses XML.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"xml": {"type": "string"}},
+                        "required": ["xml"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_format_constraint(self, check: XxeInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_parser",
+                    "description": "Parses XML.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"xml": {"type": "string", "format": "xml"}},
+                        "required": ["xml"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: XxeInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-010: Header Injection Risk
+# ==========================================================================
 
 
 class TestHeaderInjectionCheck:
@@ -993,10 +1163,50 @@ class TestHeaderInjectionCheck:
         assert meta.check_id == "iv010"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: HeaderInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_header_param(self, check: HeaderInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_request",
+                    "description": "Makes HTTP requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"host": {"type": "string"}},
+                        "required": ["host"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: HeaderInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_request",
+                    "description": "Makes HTTP requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"host": {"type": "string", "enum": ["api.example.com"]}},
+                        "required": ["host"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: HeaderInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-011: ReDoS Risk
+# ==========================================================================
 
 
 class TestRegexDosCheck:
@@ -1011,10 +1221,50 @@ class TestRegexDosCheck:
         assert meta.check_id == "iv011"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: RegexDosCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_catastrophic_pattern(self, check: RegexDosCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "search_tool",
+                    "description": "Searches text.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string", "pattern": "(a+)+"}},
+                        "required": ["query"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_safe_pattern(self, check: RegexDosCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "search_tool",
+                    "description": "Searches text.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string", "pattern": "^[a-z]+$"}},
+                        "required": ["query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: RegexDosCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-012: Integer Overflow Risk
+# ==========================================================================
 
 
 class TestIntegerOverflowCheck:
@@ -1029,10 +1279,50 @@ class TestIntegerOverflowCheck:
         assert meta.check_id == "iv012"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: IntegerOverflowCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unbounded_integer(self, check: IntegerOverflowCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "calculator",
+                    "description": "Performs math.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"count": {"type": "integer"}},
+                        "required": ["count"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_min_and_max(self, check: IntegerOverflowCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "calculator",
+                    "description": "Performs math.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"count": {"type": "integer", "minimum": 0, "maximum": 1000}},
+                        "required": ["count"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: IntegerOverflowCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-013: Format String Injection
+# ==========================================================================
 
 
 class TestFormatStringInjectionCheck:
@@ -1047,10 +1337,54 @@ class TestFormatStringInjectionCheck:
         assert meta.check_id == "iv013"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: FormatStringInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_format_param(
+        self, check: FormatStringInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "logger",
+                    "description": "Logs messages.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"format": {"type": "string"}},
+                        "required": ["format"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: FormatStringInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "logger",
+                    "description": "Logs messages.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"format": {"type": "string", "enum": ["json", "text"]}},
+                        "required": ["format"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: FormatStringInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-014: XPath Injection Risk
+# ==========================================================================
 
 
 class TestXpathInjectionCheck:
@@ -1065,10 +1399,50 @@ class TestXpathInjectionCheck:
         assert meta.check_id == "iv014"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: XpathInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_xpath_param(self, check: XpathInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_query",
+                    "description": "Queries XML.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"xpath": {"type": "string"}},
+                        "required": ["xpath"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_pattern_constraint(self, check: XpathInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_query",
+                    "description": "Queries XML.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"xpath": {"type": "string", "pattern": "^/[a-zA-Z/]+$"}},
+                        "required": ["xpath"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: XpathInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-015: CSV Injection Risk
+# ==========================================================================
 
 
 class TestCsvInjectionCheck:
@@ -1083,10 +1457,50 @@ class TestCsvInjectionCheck:
         assert meta.check_id == "iv015"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: CsvInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_csv_param(self, check: CsvInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "csv_exporter",
+                    "description": "Exports data to CSV.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"csv": {"type": "string"}},
+                        "required": ["csv"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: CsvInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "csv_exporter",
+                    "description": "Exports data to CSV.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"csv": {"type": "string", "enum": ["report", "summary"]}},
+                        "required": ["csv"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: CsvInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-016: Unicode Normalization Bypass
+# ==========================================================================
 
 
 class TestUnicodeNormalizationCheck:
@@ -1101,10 +1515,57 @@ class TestUnicodeNormalizationCheck:
         assert meta.check_id == "iv016"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: UnicodeNormalizationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_user_input_tool_with_unpattern_string(
+        self, check: UnicodeNormalizationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "search_tool",
+                    "description": "Searches user input text.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string"}},
+                        "required": ["query"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_when_no_user_input_keywords(
+        self, check: UnicodeNormalizationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "calculator",
+                    "description": "Calculates totals.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"type": "string"}},
+                        "required": ["value"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        # Without user-input keywords in description, should not flag
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: UnicodeNormalizationCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-017: Null Byte Injection Risk
+# ==========================================================================
 
 
 class TestNullByteInjectionCheck:
@@ -1119,10 +1580,50 @@ class TestNullByteInjectionCheck:
         assert meta.check_id == "iv017"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: NullByteInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_string_param(self, check: NullByteInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "file_tool",
+                    "description": "Reads files.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"}},
+                        "required": ["name"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_alphanumeric_pattern(self, check: NullByteInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "file_tool",
+                    "description": "Reads files.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string", "pattern": "^[a-zA-Z0-9]+$"}},
+                        "required": ["name"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: NullByteInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-018: CRLF Injection Risk
+# ==========================================================================
 
 
 class TestCrlfInjectionCheck:
@@ -1137,10 +1638,50 @@ class TestCrlfInjectionCheck:
         assert meta.check_id == "iv018"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: CrlfInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_string_param(self, check: CrlfInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_tool",
+                    "description": "Makes HTTP calls.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"type": "string"}},
+                        "required": ["value"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: CrlfInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_tool",
+                    "description": "Makes HTTP calls.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"type": "string", "enum": ["GET", "POST"]}},
+                        "required": ["value"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: CrlfInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-019: Missing Length Constraint
+# ==========================================================================
 
 
 class TestMissingLengthConstraintCheck:
@@ -1155,10 +1696,72 @@ class TestMissingLengthConstraintCheck:
         assert meta.check_id == "iv019"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: MissingLengthConstraintCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_string_without_max_length(
+        self, check: MissingLengthConstraintCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "text_tool",
+                    "description": "Processes text.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"text": {"type": "string"}},
+                        "required": ["text"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_max_length(self, check: MissingLengthConstraintCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "text_tool",
+                    "description": "Processes text.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"text": {"type": "string", "maxLength": 1000}},
+                        "required": ["text"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_enum_param_passes(self, check: MissingLengthConstraintCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "text_tool",
+                    "description": "Processes text.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"mode": {"type": "string", "enum": ["fast", "slow"]}},
+                        "required": ["mode"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: MissingLengthConstraintCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-020: Missing Type Constraint
+# ==========================================================================
 
 
 class TestMissingTypeConstraintCheck:
@@ -1173,10 +1776,52 @@ class TestMissingTypeConstraintCheck:
         assert meta.check_id == "iv020"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: MissingTypeConstraintCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_param_without_type(self, check: MissingTypeConstraintCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "flexible_tool",
+                    "description": "Does stuff.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"description": "Some value"}},
+                        "required": ["value"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_explicit_type(self, check: MissingTypeConstraintCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "typed_tool",
+                    "description": "Has typed params.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"type": "string"}},
+                        "required": ["value"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: MissingTypeConstraintCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-021: Environment Variable Injection
+# ==========================================================================
 
 
 class TestEnvVariableInjectionCheck:
@@ -1191,10 +1836,52 @@ class TestEnvVariableInjectionCheck:
         assert meta.check_id == "iv021"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: EnvVariableInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_env_param(self, check: EnvVariableInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "env_setter",
+                    "description": "Sets environment variables.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"env": {"type": "string"}},
+                        "required": ["env"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: EnvVariableInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "env_setter",
+                    "description": "Sets environment variables.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"env": {"type": "string", "enum": ["LOG_LEVEL", "TIMEOUT"]}},
+                        "required": ["env"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: EnvVariableInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-022: Deserialization Risk
+# ==========================================================================
 
 
 class TestDeserializationRiskCheck:
@@ -1209,10 +1896,58 @@ class TestDeserializationRiskCheck:
         assert meta.check_id == "iv022"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: DeserializationRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_open_object_param(self, check: DeserializationRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "deserializer",
+                    "description": "Deserializes objects.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"data": {"type": "object"}},
+                        "required": ["data"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_when_schema_and_locked(self, check: DeserializationRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "deserializer",
+                    "description": "Deserializes objects.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "object",
+                                "properties": {"name": {"type": "string"}},
+                                "additionalProperties": False,
+                            }
+                        },
+                        "required": ["data"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: DeserializationRiskCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-023: Prototype Pollution Risk
+# ==========================================================================
 
 
 class TestPrototypePollutionCheck:
@@ -1227,10 +1962,52 @@ class TestPrototypePollutionCheck:
         assert meta.check_id == "iv023"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: PrototypePollutionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_object_without_additional_props_false(
+        self, check: PrototypePollutionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "obj_tool",
+                    "description": "Handles objects.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"config": {"type": "object"}},
+                        "required": ["config"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_when_additional_props_false(self, check: PrototypePollutionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "obj_tool",
+                    "description": "Handles objects.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"config": {"type": "object", "additionalProperties": False}},
+                        "required": ["config"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: PrototypePollutionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-024: Log Injection Risk
+# ==========================================================================
 
 
 class TestLogInjectionCheck:
@@ -1245,10 +2022,50 @@ class TestLogInjectionCheck:
         assert meta.check_id == "iv024"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: LogInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_message_param(self, check: LogInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "audit_log",
+                    "description": "Writes audit logs.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"message": {"type": "string"}},
+                        "required": ["message"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_pattern_constraint(self, check: LogInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "audit_log",
+                    "description": "Writes audit logs.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"message": {"type": "string", "pattern": "^[a-zA-Z0-9 ]+$"}},
+                        "required": ["message"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: LogInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-025: Template Literal Injection
+# ==========================================================================
 
 
 class TestTemplateLiteralInjectionCheck:
@@ -1263,10 +2080,56 @@ class TestTemplateLiteralInjectionCheck:
         assert meta.check_id == "iv025"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: TemplateLiteralInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_template_param(
+        self, check: TemplateLiteralInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "email_sender",
+                    "description": "Sends emails.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"template": {"type": "string"}},
+                        "required": ["template"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: TemplateLiteralInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "email_sender",
+                    "description": "Sends emails.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "template": {"type": "string", "enum": ["welcome", "reset"]}
+                        },
+                        "required": ["template"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: TemplateLiteralInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-026: Wildcard Parameter
+# ==========================================================================
 
 
 class TestWildcardParameterCheck:
@@ -1281,10 +2144,50 @@ class TestWildcardParameterCheck:
         assert meta.check_id == "iv026"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: WildcardParameterCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_wildcard_pattern(self, check: WildcardParameterCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "search_tool",
+                    "description": "Searches things.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string", "pattern": ".*"}},
+                        "required": ["query"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_specific_pattern(self, check: WildcardParameterCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "search_tool",
+                    "description": "Searches things.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string", "pattern": "^[a-z]+$"}},
+                        "required": ["query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: WildcardParameterCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-027: Missing Enum Constraint
+# ==========================================================================
 
 
 class TestMissingEnumConstraintCheck:
@@ -1299,10 +2202,56 @@ class TestMissingEnumConstraintCheck:
         assert meta.check_id == "iv027"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: MissingEnumConstraintCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_action_param_without_enum(
+        self, check: MissingEnumConstraintCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "router",
+                    "description": "Routes requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"action": {"type": "string"}},
+                        "required": ["action"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: MissingEnumConstraintCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "router",
+                    "description": "Routes requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "action": {"type": "string", "enum": ["create", "delete", "read"]}
+                        },
+                        "required": ["action"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: MissingEnumConstraintCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-028: Nested Object Depth
+# ==========================================================================
 
 
 class TestNestedObjectDepthCheck:
@@ -1317,10 +2266,50 @@ class TestNestedObjectDepthCheck:
         assert meta.check_id == "iv028"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: NestedObjectDepthCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_deeply_nested_schema(self, check: NestedObjectDepthCheck) -> None:
+        # Build 7 levels of nesting
+        deep = {"type": "object", "properties": {"x": {"type": "string"}}}
+        for _ in range(6):
+            deep = {"type": "object", "properties": {"child": deep}}
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "deep_tool",
+                    "description": "Deeply nested.",
+                    "inputSchema": deep,
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_shallow_schema(self, check: NestedObjectDepthCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "shallow_tool",
+                    "description": "Shallow schema.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"}},
+                        "required": ["name"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: NestedObjectDepthCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-029: Array Length Unbounded
+# ==========================================================================
 
 
 class TestArrayLengthUnboundedCheck:
@@ -1335,10 +2324,58 @@ class TestArrayLengthUnboundedCheck:
         assert meta.check_id == "iv029"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: ArrayLengthUnboundedCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_array_without_max_items(self, check: ArrayLengthUnboundedCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "batch_tool",
+                    "description": "Processes items.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"items": {"type": "array", "items": {"type": "string"}}},
+                        "required": ["items"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_max_items(self, check: ArrayLengthUnboundedCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "batch_tool",
+                    "description": "Processes items.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "maxItems": 100,
+                            }
+                        },
+                        "required": ["items"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: ArrayLengthUnboundedCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-030: Additional Properties Open
+# ==========================================================================
 
 
 class TestAdditionalPropertiesOpenCheck:
@@ -1353,10 +2390,54 @@ class TestAdditionalPropertiesOpenCheck:
         assert meta.check_id == "iv030"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: AdditionalPropertiesOpenCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_open_object_param(self, check: AdditionalPropertiesOpenCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "obj_handler",
+                    "description": "Handles objects.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"config": {"type": "object"}},
+                        "required": ["config"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_when_additional_props_false(
+        self, check: AdditionalPropertiesOpenCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "obj_handler",
+                    "description": "Handles objects.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"config": {"type": "object", "additionalProperties": False}},
+                        "required": ["config"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: AdditionalPropertiesOpenCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-031: Missing Pattern Validation
+# ==========================================================================
 
 
 class TestMissingPatternValidationCheck:
@@ -1371,10 +2452,72 @@ class TestMissingPatternValidationCheck:
         assert meta.check_id == "iv031"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: MissingPatternValidationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_string_without_pattern(
+        self, check: MissingPatternValidationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "input_tool",
+                    "description": "Accepts input.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"type": "string"}},
+                        "required": ["value"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_pattern(self, check: MissingPatternValidationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "input_tool",
+                    "description": "Accepts input.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"value": {"type": "string", "pattern": "^[a-z]+$"}},
+                        "required": ["value"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_format(self, check: MissingPatternValidationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "email_tool",
+                    "description": "Handles emails.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"email": {"type": "string", "format": "email"}},
+                        "required": ["email"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: MissingPatternValidationCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-032: URL Parameter Injection
+# ==========================================================================
 
 
 class TestUrlParameterInjectionCheck:
@@ -1389,10 +2532,54 @@ class TestUrlParameterInjectionCheck:
         assert meta.check_id == "iv032"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: UrlParameterInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_url_param_without_format(
+        self, check: UrlParameterInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "web_fetcher",
+                    "description": "Fetches web pages.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"url": {"type": "string"}},
+                        "required": ["url"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_format_uri(self, check: UrlParameterInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "web_fetcher",
+                    "description": "Fetches web pages.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"url": {"type": "string", "format": "uri"}},
+                        "required": ["url"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: UrlParameterInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-033: Email Parameter Injection
+# ==========================================================================
 
 
 class TestEmailParameterInjectionCheck:
@@ -1407,10 +2594,54 @@ class TestEmailParameterInjectionCheck:
         assert meta.check_id == "iv033"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: EmailParameterInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_email_param_without_format(
+        self, check: EmailParameterInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mailer",
+                    "description": "Sends emails.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"email": {"type": "string"}},
+                        "required": ["email"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_format_email(self, check: EmailParameterInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mailer",
+                    "description": "Sends emails.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"email": {"type": "string", "format": "email"}},
+                        "required": ["email"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: EmailParameterInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-034: File Upload No Validation
+# ==========================================================================
 
 
 class TestFileUploadNoValidationCheck:
@@ -1425,10 +2656,60 @@ class TestFileUploadNoValidationCheck:
         assert meta.check_id == "iv034"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: FileUploadNoValidationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_file_param_without_constraints(
+        self, check: FileUploadNoValidationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "uploader",
+                    "description": "Uploads files.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"upload": {"type": "string"}},
+                        "required": ["upload"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_content_media_type(self, check: FileUploadNoValidationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "uploader",
+                    "description": "Uploads files.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "upload": {
+                                "type": "string",
+                                "contentMediaType": "image/png",
+                                "maxLength": 5_000_000,
+                            }
+                        },
+                        "required": ["upload"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: FileUploadNoValidationCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-035: HTML Injection Risk
+# ==========================================================================
 
 
 class TestHtmlInjectionCheck:
@@ -1443,7 +2724,47 @@ class TestHtmlInjectionCheck:
         assert meta.check_id == "iv035"
         assert meta.category == "input_validation"
 
-    async def test_stub_returns_empty(self, check: HtmlInjectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_string_param(self, check: HtmlInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "html_renderer",
+                    "description": "Renders HTML content.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"content": {"type": "string"}},
+                        "required": ["content"],
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_with_enum_constraint(self, check: HtmlInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "html_renderer",
+                    "description": "Renders HTML content.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "content": {
+                                "type": "string",
+                                "enum": ["header", "footer", "body"],
+                            }
+                        },
+                        "required": ["content"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(self, check: HtmlInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []

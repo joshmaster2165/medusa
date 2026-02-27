@@ -1,18 +1,28 @@
-"""RES014: Missing Resource Schema Validation.
+"""RES-014: Missing Resource Schema Validation.
 
-Detects MCP resources that lack schema definitions or validation for their content structure.
-Without schema validation, resources can contain unexpected fields, malformed data, or
-additional properties that may be processed in unintended ways by consumers.
+Checks resources for content schema validation. Fails when resources
+expose JSON data (application/json mimeType) without schema config.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding
+from medusa.core.models import CheckMetadata, Finding, Status
+
+SCHEMA_VALIDATION_KEYS: set[str] = {
+    "resource_schema",
+    "content_schema",
+    "schema_validation",
+    "json_schema",
+    "response_schema",
+    "validate_schema",
+    "schema_check",
+}
 
 
 class ResourceSchemaValidationCheck(BaseCheck):
@@ -24,5 +34,69 @@ class ResourceSchemaValidationCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement res014 check logic
-        return []
+        meta = self.metadata()
+        findings: list[Finding] = []
+
+        if not snapshot.resources:
+            return findings
+
+        has_schema = _walk_config_for_keys(snapshot.config_raw, SCHEMA_VALIDATION_KEYS)
+
+        json_resources = [r for r in snapshot.resources if "json" in r.get("mimeType", "").lower()]
+
+        if json_resources and not has_schema:
+            for resource in json_resources:
+                res_name = resource.get("name", "<unnamed>")
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="resource",
+                        resource_name=res_name,
+                        status_extended=(
+                            f"JSON resource '{res_name}' has no schema validation config."
+                        ),
+                        evidence=f"resource={res_name!r}, mimeType=application/json",
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        if not findings and snapshot.resources:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="Resource schema validation present or not applicable.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+
+        return findings
+
+
+def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
+    if _depth > 10:
+        return False
+    if isinstance(config, dict):
+        for key in config:
+            if isinstance(key, str) and key.lower() in keys:
+                return True
+            if _walk_config_for_keys(config[key], keys, _depth + 1):
+                return True
+    elif isinstance(config, list):
+        for item in config:
+            if _walk_config_for_keys(item, keys, _depth + 1):
+                return True
+    return False

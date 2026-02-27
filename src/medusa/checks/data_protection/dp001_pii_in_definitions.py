@@ -45,27 +45,19 @@ class PiiInDefinitionsCheck(BaseCheck):
             for param_name, param_def in schema_properties.items():
                 param_desc: str = param_def.get("description", "")
                 if param_desc:
-                    surfaces.append(
-                        (f"parameter '{param_name}' description", param_desc)
-                    )
+                    surfaces.append((f"parameter '{param_name}' description", param_desc))
                 param_default = param_def.get("default")
                 if param_default and isinstance(param_default, str):
-                    surfaces.append(
-                        (f"parameter '{param_name}' default", param_default)
-                    )
+                    surfaces.append((f"parameter '{param_name}' default", param_default))
                 param_enum = param_def.get("enum", [])
                 for enum_val in param_enum:
                     if isinstance(enum_val, str):
-                        surfaces.append(
-                            (f"parameter '{param_name}' enum value", enum_val)
-                        )
+                        surfaces.append((f"parameter '{param_name}' enum value", enum_val))
 
             for surface_label, text in surfaces:
                 pii_matches = _find_pii(text)
                 if pii_matches:
-                    match_list = ", ".join(
-                        f"{name}: '{val}'" for name, val in pii_matches[:5]
-                    )
+                    match_list = ", ".join(f"{name}: '{val}'" for name, val in pii_matches[:5])
                     findings.append(
                         Finding(
                             check_id=meta.check_id,
@@ -77,8 +69,7 @@ class PiiInDefinitionsCheck(BaseCheck):
                             resource_type="tool",
                             resource_name=tool_name,
                             status_extended=(
-                                f"Tool '{tool_name}' {surface_label} contains "
-                                f"PII: {match_list}"
+                                f"Tool '{tool_name}' {surface_label} contains PII: {match_list}"
                             ),
                             evidence=match_list,
                             remediation=meta.remediation,
@@ -101,9 +92,7 @@ class PiiInDefinitionsCheck(BaseCheck):
             for surface_label, text in surfaces:
                 pii_matches = _find_pii(text)
                 if pii_matches:
-                    match_list = ", ".join(
-                        f"{name}: '{val}'" for name, val in pii_matches[:5]
-                    )
+                    match_list = ", ".join(f"{name}: '{val}'" for name, val in pii_matches[:5])
                     findings.append(
                         Finding(
                             check_id=meta.check_id,
@@ -115,8 +104,7 @@ class PiiInDefinitionsCheck(BaseCheck):
                             resource_type="resource",
                             resource_name=res_name,
                             status_extended=(
-                                f"Resource '{res_name}' {surface_label} contains "
-                                f"PII: {match_list}"
+                                f"Resource '{res_name}' {surface_label} contains PII: {match_list}"
                             ),
                             evidence=match_list,
                             remediation=meta.remediation,
@@ -132,9 +120,7 @@ class PiiInDefinitionsCheck(BaseCheck):
             if prompt_desc:
                 pii_matches = _find_pii(prompt_desc)
                 if pii_matches:
-                    match_list = ", ".join(
-                        f"{name}: '{val}'" for name, val in pii_matches[:5]
-                    )
+                    match_list = ", ".join(f"{name}: '{val}'" for name, val in pii_matches[:5])
                     findings.append(
                         Finding(
                             check_id=meta.check_id,
@@ -146,8 +132,7 @@ class PiiInDefinitionsCheck(BaseCheck):
                             resource_type="prompt",
                             resource_name=prompt_name,
                             status_extended=(
-                                f"Prompt '{prompt_name}' description contains "
-                                f"PII: {match_list}"
+                                f"Prompt '{prompt_name}' description contains PII: {match_list}"
                             ),
                             evidence=match_list,
                             remediation=meta.remediation,

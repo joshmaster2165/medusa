@@ -46,16 +46,12 @@ class HiddenInstructionsCheck(BaseCheck):
             # Check for hidden XML/HTML tags
             hidden_tags = find_hidden_tags(description)
             if hidden_tags:
-                issues.append(
-                    f"Hidden tags found: {'; '.join(hidden_tags[:5])}"
-                )
+                issues.append(f"Hidden tags found: {'; '.join(hidden_tags[:5])}")
 
             # Check for invisible Unicode characters
             suspicious_chars = find_suspicious_unicode(description)
             if suspicious_chars:
-                issues.append(
-                    f"Suspicious Unicode characters: {'; '.join(suspicious_chars[:5])}"
-                )
+                issues.append(f"Suspicious Unicode characters: {'; '.join(suspicious_chars[:5])}")
 
             if issues:
                 findings.append(
@@ -89,14 +85,10 @@ class HiddenInstructionsCheck(BaseCheck):
                 param_issues: list[str] = []
                 param_hidden = find_hidden_tags(param_desc)
                 if param_hidden:
-                    param_issues.append(
-                        f"Hidden tags: {'; '.join(param_hidden[:3])}"
-                    )
+                    param_issues.append(f"Hidden tags: {'; '.join(param_hidden[:3])}")
                 param_unicode = find_suspicious_unicode(param_desc)
                 if param_unicode:
-                    param_issues.append(
-                        f"Suspicious Unicode: {'; '.join(param_unicode[:3])}"
-                    )
+                    param_issues.append(f"Suspicious Unicode: {'; '.join(param_unicode[:3])}")
 
                 if param_issues:
                     findings.append(
@@ -133,8 +125,7 @@ class HiddenInstructionsCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No hidden instructions detected across "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"No hidden instructions detected across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

@@ -195,11 +195,7 @@ class SecretsInDefinitionsCheck(BaseCheck):
 
         # If nothing was found, emit a PASS.
         if not findings:
-            total_defs = (
-                len(snapshot.tools)
-                + len(snapshot.resources)
-                + len(snapshot.prompts)
-            )
+            total_defs = len(snapshot.tools) + len(snapshot.resources) + len(snapshot.prompts)
             findings.append(
                 Finding(
                     check_id=meta.check_id,

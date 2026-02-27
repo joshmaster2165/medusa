@@ -1,4 +1,4 @@
-"""Unit tests for all Authentication checks (AUTH-001 through AUTH-004).
+"""Unit tests for all Authentication checks (AUTH-001 through AUTH-029).
 
 Each check is tested for:
 - FAIL on the appropriate vulnerable snapshot
@@ -395,6 +395,11 @@ class TestAuth004LocalhostNoAuth:
         assert findings[0].status == Status.FAIL
 
 
+# ==========================================================================
+# AUTH-005: Weak Token Entropy
+# ==========================================================================
+
+
 class TestWeakTokenEntropyCheck:
     """Tests for WeakTokenEntropyCheck."""
 
@@ -407,10 +412,46 @@ class TestWeakTokenEntropyCheck:
         assert meta.check_id == "auth005"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: WeakTokenEntropyCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: WeakTokenEntropyCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_short_token(self, check: WeakTokenEntropyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"token": "abc123"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_long_random_token(self, check: WeakTokenEntropyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"token": "a7f3b8d2e6c1f4a9b5d0e3c7f2a8b4d1e6c9f3a"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_token_config(self, check: WeakTokenEntropyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-006: Missing Token Expiry
+# ==========================================================================
 
 
 class TestMissingTokenExpiryCheck:
@@ -425,10 +466,45 @@ class TestMissingTokenExpiryCheck:
         assert meta.check_id == "auth006"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingTokenExpiryCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingTokenExpiryCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_token_config(self, check: MissingTokenExpiryCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_jwt_without_expiry(self, check: MissingTokenExpiryCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"jwt": {"algorithm": "RS256", "secret": "mysecret"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_jwt_with_expiry(self, check: MissingTokenExpiryCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"jwt": {"algorithm": "RS256", "ttl": 3600}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-007: Insecure Token Storage
+# ==========================================================================
 
 
 class TestInsecureTokenStorageCheck:
@@ -443,10 +519,56 @@ class TestInsecureTokenStorageCheck:
         assert meta.check_id == "auth007"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: InsecureTokenStorageCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: InsecureTokenStorageCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_plaintext_password(self, check: InsecureTokenStorageCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"password": "myplaintextpassword"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_plaintext_api_key(self, check: InsecureTokenStorageCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"api_key": "sk-1234567890abcdef"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_env_var_reference(self, check: InsecureTokenStorageCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"api_key": "${API_KEY}"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_credentials(self, check: InsecureTokenStorageCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-008: Missing OAuth PKCE
+# ==========================================================================
 
 
 class TestMissingOauthPkceCheck:
@@ -461,10 +583,51 @@ class TestMissingOauthPkceCheck:
         assert meta.check_id == "auth008"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingOauthPkceCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingOauthPkceCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_oauth(self, check: MissingOauthPkceCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_oauth_without_pkce(self, check: MissingOauthPkceCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"oauth": {"client_id": "abc123", "grant_type": "authorization_code"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_oauth_with_pkce(self, check: MissingOauthPkceCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "oauth": {
+                    "client_id": "abc123",
+                    "code_challenge_method": "S256",
+                    "pkce": True,
+                },
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-009: Bearer Token in URL
+# ==========================================================================
 
 
 class TestBearerTokenInUrlCheck:
@@ -479,10 +642,45 @@ class TestBearerTokenInUrlCheck:
         assert meta.check_id == "auth009"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: BearerTokenInUrlCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: BearerTokenInUrlCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_token_in_transport_url(self, check: BearerTokenInUrlCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp?token=secret123",
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_api_key_in_url(self, check: BearerTokenInUrlCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://api.example.com/v1?api_key=sk-abc123"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_url(self, check: BearerTokenInUrlCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-010: Missing CSRF Protection
+# ==========================================================================
 
 
 class TestMissingCsrfProtectionCheck:
@@ -497,10 +695,36 @@ class TestMissingCsrfProtectionCheck:
         assert meta.check_id == "auth010"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingCsrfProtectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingCsrfProtectionCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_csrf(self, check: MissingCsrfProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_csrf_token(self, check: MissingCsrfProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"csrf_token": "enabled", "csrf_protection": True},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-011: Hardcoded Credentials
+# ==========================================================================
 
 
 class TestHardcodedCredentialsCheck:
@@ -515,10 +739,46 @@ class TestHardcodedCredentialsCheck:
         assert meta.check_id == "auth011"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: HardcodedCredentialsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: HardcodedCredentialsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_hardcoded_password(self, check: HardcodedCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"password": "admin123"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_env_var_password(self, check: HardcodedCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"password": "${DB_PASSWORD}"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_credentials(self, check: HardcodedCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-012: Missing Token Rotation
+# ==========================================================================
 
 
 class TestMissingTokenRotationCheck:
@@ -533,10 +793,45 @@ class TestMissingTokenRotationCheck:
         assert meta.check_id == "auth012"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingTokenRotationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingTokenRotationCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_token_config(self, check: MissingTokenRotationCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_token_without_rotation(self, check: MissingTokenRotationCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"token": {"type": "bearer", "ttl": 3600}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_token_with_rotation(self, check: MissingTokenRotationCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"token": {"type": "bearer", "rotation": True, "refresh_token": True}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-013: Insecure Cookie Flags
+# ==========================================================================
 
 
 class TestInsecureCookieFlagsCheck:
@@ -551,10 +846,47 @@ class TestInsecureCookieFlagsCheck:
         assert meta.check_id == "auth013"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: InsecureCookieFlagsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: InsecureCookieFlagsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_cookie_config(self, check: InsecureCookieFlagsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_missing_secure_flag(self, check: InsecureCookieFlagsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"cookie": {"httponly": True, "samesite": "Strict"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_all_flags_set(self, check: InsecureCookieFlagsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "cookie": {"secure": True, "httponly": True, "samesite": "Strict"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-014: JWT Algorithm None
+# ==========================================================================
 
 
 class TestJwtAlgorithmNoneCheck:
@@ -569,10 +901,45 @@ class TestJwtAlgorithmNoneCheck:
         assert meta.check_id == "auth014"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: JwtAlgorithmNoneCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: JwtAlgorithmNoneCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_algorithm_config(self, check: JwtAlgorithmNoneCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_algorithm_none(self, check: JwtAlgorithmNoneCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"jwt": {"algorithm": "none"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_rs256(self, check: JwtAlgorithmNoneCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"jwt": {"algorithm": "RS256"}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-015: JWT Weak Signing
+# ==========================================================================
 
 
 class TestJwtWeakSigningCheck:
@@ -587,10 +954,45 @@ class TestJwtWeakSigningCheck:
         assert meta.check_id == "auth015"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: JwtWeakSigningCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: JwtWeakSigningCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_jwt_config(self, check: JwtWeakSigningCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_hs256(self, check: JwtWeakSigningCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"jwt": {"algorithm": "HS256", "secret": "a" * 40}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_rs256(self, check: JwtWeakSigningCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"jwt": {"algorithm": "RS256"}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-016: Missing Auth on Tools
+# ==========================================================================
 
 
 class TestMissingAuthOnToolsCheck:
@@ -605,10 +1007,43 @@ class TestMissingAuthOnToolsCheck:
         assert meta.check_id == "auth016"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingAuthOnToolsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingAuthOnToolsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_sensitive_tool_without_auth(
+        self, check: MissingAuthOnToolsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            tools=[{"name": "delete_user", "description": "Delete a user from the system."}],
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_sensitive_tool_with_auth(self, check: MissingAuthOnToolsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            tools=[{"name": "delete_user", "description": "Delete a user."}],
+            config_raw={
+                "url": "https://example.com/mcp",
+                "auth": {"type": "bearer", "required": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-017: API Key in Headers Insecure
+# ==========================================================================
 
 
 class TestApiKeyInHeadersInsecureCheck:
@@ -623,10 +1058,52 @@ class TestApiKeyInHeadersInsecureCheck:
         assert meta.check_id == "auth017"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: ApiKeyInHeadersInsecureCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: ApiKeyInHeadersInsecureCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_api_key_over_http(self, check: ApiKeyInHeadersInsecureCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="http://example.com/mcp",
+            config_raw={
+                "url": "http://example.com/mcp",
+                "headers": {"x-api-key": "sk-abc123"},
+            },
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_api_key_over_https(self, check: ApiKeyInHeadersInsecureCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "headers": {"x-api-key": "sk-abc123"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_api_key(self, check: ApiKeyInHeadersInsecureCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-018: Missing Mutual TLS
+# ==========================================================================
 
 
 class TestMissingMutualTlsCheck:
@@ -641,10 +1118,39 @@ class TestMissingMutualTlsCheck:
         assert meta.check_id == "auth018"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingMutualTlsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingMutualTlsCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_mtls(self, check: MissingMutualTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_mtls_configured(self, check: MissingMutualTlsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "mtls": {"client_cert": "/path/to/cert.pem", "client_key": "/path/to/key.pem"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-019: Token Scope Too Broad
+# ==========================================================================
 
 
 class TestTokenScopeTooBroadCheck:
@@ -659,10 +1165,55 @@ class TestTokenScopeTooBroadCheck:
         assert meta.check_id == "auth019"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: TokenScopeTooBroadCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: TokenScopeTooBroadCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_scope_config(self, check: TokenScopeTooBroadCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_wildcard_scope(self, check: TokenScopeTooBroadCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"scope": "*"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_admin_scope(self, check: TokenScopeTooBroadCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"scope": "admin"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_narrow_scope(self, check: TokenScopeTooBroadCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"scope": "read:items"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-020: Missing Auth Header
+# ==========================================================================
 
 
 class TestMissingAuthHeaderCheck:
@@ -677,10 +1228,33 @@ class TestMissingAuthHeaderCheck:
         assert meta.check_id == "auth020"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingAuthHeaderCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingAuthHeaderCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_auth_headers(
+        self, check: MissingAuthHeaderCheck, http_vulnerable_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(http_vulnerable_snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_authorization_header(self, check: MissingAuthHeaderCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"headers": {"Authorization": "Bearer token123"}},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-021: Basic Auth Over HTTP
+# ==========================================================================
 
 
 class TestBasicAuthOverHttpCheck:
@@ -695,10 +1269,55 @@ class TestBasicAuthOverHttpCheck:
         assert meta.check_id == "auth021"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: BasicAuthOverHttpCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: BasicAuthOverHttpCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_basic_auth_over_http(self, check: BasicAuthOverHttpCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="http://example.com/mcp",
+            config_raw={
+                "url": "http://example.com/mcp",
+                "headers": {"Authorization": "Basic dXNlcjpwYXNz"},
+            },
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_basic_auth_over_https(self, check: BasicAuthOverHttpCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "url": "https://example.com/mcp",
+                "headers": {"Authorization": "Basic dXNlcjpwYXNz"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_bearer_over_http(self, check: BasicAuthOverHttpCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="http://example.com/mcp",
+            config_raw={
+                "url": "http://example.com/mcp",
+                "headers": {"Authorization": "Bearer token123"},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-022: Missing Token Revocation
+# ==========================================================================
 
 
 class TestMissingTokenRevocationCheck:
@@ -713,10 +1332,39 @@ class TestMissingTokenRevocationCheck:
         assert meta.check_id == "auth022"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingTokenRevocationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingTokenRevocationCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_revocation(self, check: MissingTokenRevocationCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp", "token": "Bearer abc123"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_revocation_endpoint(self, check: MissingTokenRevocationCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "token": "Bearer abc123",
+                "revocation_endpoint": "https://auth.example.com/revoke",
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-023: Shared Secrets Across Servers
+# ==========================================================================
 
 
 class TestSharedSecretsAcrossServersCheck:
@@ -731,10 +1379,46 @@ class TestSharedSecretsAcrossServersCheck:
         assert meta.check_id == "auth023"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: SharedSecretsAcrossServersCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: SharedSecretsAcrossServersCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_default_secret(self, check: SharedSecretsAcrossServersCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"secret": "changeme"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_unique_secret(self, check: SharedSecretsAcrossServersCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"secret": "a9f3b8d2e6c1f4a9b5d0e3c7f2a8b4d1e6c9f3a2"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_no_secret(self, check: SharedSecretsAcrossServersCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-024: Missing Rate Limit on Auth
+# ==========================================================================
 
 
 class TestMissingRateLimitOnAuthCheck:
@@ -749,10 +1433,38 @@ class TestMissingRateLimitOnAuthCheck:
         assert meta.check_id == "auth024"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingRateLimitOnAuthCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingRateLimitOnAuthCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_rate_limit(self, check: MissingRateLimitOnAuthCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_rate_limit_configured(
+        self, check: MissingRateLimitOnAuthCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"rate_limit": {"max_attempts": 5, "window": 60}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-025: Session Fixation Risk
+# ==========================================================================
 
 
 class TestSessionFixationRiskCheck:
@@ -767,10 +1479,49 @@ class TestSessionFixationRiskCheck:
         assert meta.check_id == "auth025"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: SessionFixationRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: SessionFixationRiskCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_session_config(self, check: SessionFixationRiskCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_session_without_regeneration(
+        self, check: SessionFixationRiskCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"session": {"ttl": 3600}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_session_with_regeneration(
+        self, check: SessionFixationRiskCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"session": {"ttl": 3600, "regenerate": True}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-026: Missing Logout Mechanism
+# ==========================================================================
 
 
 class TestMissingLogoutMechanismCheck:
@@ -785,10 +1536,39 @@ class TestMissingLogoutMechanismCheck:
         assert meta.check_id == "auth026"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingLogoutMechanismCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingLogoutMechanismCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_logout(self, check: MissingLogoutMechanismCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp", "auth": {"type": "bearer"}},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_logout_endpoint(self, check: MissingLogoutMechanismCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={
+                "auth": {"type": "bearer"},
+                "logout_endpoint": "https://auth.example.com/logout",
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-027: Weak Password Policy
+# ==========================================================================
 
 
 class TestWeakPasswordPolicyCheck:
@@ -803,10 +1583,45 @@ class TestWeakPasswordPolicyCheck:
         assert meta.check_id == "auth027"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: WeakPasswordPolicyCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: WeakPasswordPolicyCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_password_policy(self, check: WeakPasswordPolicyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_min_length_too_short(self, check: WeakPasswordPolicyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"password_policy": {"min_length": 6}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_strong_min_length(self, check: WeakPasswordPolicyCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"password_policy": {"min_length": 12, "require_uppercase": True}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-028: Missing MFA
+# ==========================================================================
 
 
 class TestMissingMfaCheck:
@@ -821,10 +1636,36 @@ class TestMissingMfaCheck:
         assert meta.check_id == "auth028"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: MissingMfaCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: MissingMfaCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_fails_on_no_mfa(self, check: MissingMfaCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp", "auth": {"type": "bearer"}},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_mfa_configured(self, check: MissingMfaCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"auth": {"type": "bearer"}, "mfa": {"enabled": True, "totp": True}},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AUTH-029: Insecure Auth Redirect
+# ==========================================================================
 
 
 class TestInsecureAuthRedirectCheck:
@@ -839,7 +1680,37 @@ class TestInsecureAuthRedirectCheck:
         assert meta.check_id == "auth029"
         assert meta.category == "authentication"
 
-    async def test_stub_returns_empty(self, check: InsecureAuthRedirectCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_stdio(
+        self, check: InsecureAuthRedirectCheck, secure_snapshot: ServerSnapshot
+    ) -> None:
+        findings = await check.execute(secure_snapshot)
+        assert len(findings) == 0
+
+    async def test_skips_without_redirect_config(self, check: InsecureAuthRedirectCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"url": "https://example.com/mcp"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    async def test_fails_on_http_redirect_uri(self, check: InsecureAuthRedirectCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"redirect_uri": "http://app.example.com/callback"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_https_redirect_uri(self, check: InsecureAuthRedirectCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="http",
+            transport_url="https://example.com/mcp",
+            config_raw={"redirect_uri": "https://app.example.com/callback"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1

@@ -1,4 +1,4 @@
-"""Unit tests for all Privilege & Scope checks (PRIV-001 through PRIV-003).
+"""Unit tests for all Privilege & Scope checks (PRIV-001 through PRIV-023).
 
 Each check is tested for:
 - FAIL on the vulnerable_snapshot
@@ -415,9 +415,12 @@ class TestPriv003ShellExecution:
         assert len(fail_findings) >= 1, "Shell tools should always fail regardless of constraints"
 
 
-class TestCloudMetadataAccessCheck:
-    """Tests for CloudMetadataAccessCheck."""
+# ==========================================================================
+# PRIV-004: Cloud Metadata Access
+# ==========================================================================
 
+
+class TestCloudMetadataAccessCheck:
     @pytest.fixture()
     def check(self) -> CloudMetadataAccessCheck:
         return CloudMetadataAccessCheck()
@@ -427,15 +430,42 @@ class TestCloudMetadataAccessCheck:
         assert meta.check_id == "priv004"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: CloudMetadataAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_cloud_metadata_reference(self, check: CloudMetadataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_creds",
+                    "description": "Fetches credentials from 169.254.169.254",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: CloudMetadataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: CloudMetadataAccessCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-005: Destructive Operations Without Confirmation
+# ==========================================================================
 
 
 class TestDestructiveOpsNoConfirmCheck:
-    """Tests for DestructiveOpsNoConfirmCheck."""
-
     @pytest.fixture()
     def check(self) -> DestructiveOpsNoConfirmCheck:
         return DestructiveOpsNoConfirmCheck()
@@ -445,15 +475,73 @@ class TestDestructiveOpsNoConfirmCheck:
         assert meta.check_id == "priv005"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: DestructiveOpsNoConfirmCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_delete_tool_without_confirm(
+        self, check: DestructiveOpsNoConfirmCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Deletes a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"user_id": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_with_confirm_param(self, check: DestructiveOpsNoConfirmCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Deletes a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                            "confirm": {"type": "boolean"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status != Status.FAIL for f in findings)
+
+    async def test_passes_on_non_destructive_tool(
+        self, check: DestructiveOpsNoConfirmCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Gets user info.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"user_id": {"type": "string"}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(
+        self, check: DestructiveOpsNoConfirmCheck
+    ) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-006: RBAC Bypass Risk
+# ==========================================================================
 
 
 class TestRbacBypassRiskCheck:
-    """Tests for RbacBypassRiskCheck."""
-
     @pytest.fixture()
     def check(self) -> RbacBypassRiskCheck:
         return RbacBypassRiskCheck()
@@ -463,15 +551,44 @@ class TestRbacBypassRiskCheck:
         assert meta.check_id == "priv006"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: RbacBypassRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_without_rbac_config(self, check: RbacBypassRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "list_data",
+                    "description": "Lists data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_with_rbac_config(self, check: RbacBypassRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "list_data",
+                    "description": "Lists data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            config_raw={"rbac": {"enabled": True}, "command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: RbacBypassRiskCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-007: Sudo Elevation
+# ==========================================================================
 
 
 class TestSudoElevationCheck:
-    """Tests for SudoElevationCheck."""
-
     @pytest.fixture()
     def check(self) -> SudoElevationCheck:
         return SudoElevationCheck()
@@ -481,15 +598,42 @@ class TestSudoElevationCheck:
         assert meta.check_id == "priv007"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: SudoElevationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_sudo_tool(self, check: SudoElevationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_as_root",
+                    "description": "Runs a command with sudo.",
+                    "inputSchema": {"type": "object", "properties": {"cmd": {"type": "string"}}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: SudoElevationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Gets weather data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: SudoElevationCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-008: Container Escape Risk
+# ==========================================================================
 
 
 class TestContainerEscapeRiskCheck:
-    """Tests for ContainerEscapeRiskCheck."""
-
     @pytest.fixture()
     def check(self) -> ContainerEscapeRiskCheck:
         return ContainerEscapeRiskCheck()
@@ -499,15 +643,42 @@ class TestContainerEscapeRiskCheck:
         assert meta.check_id == "priv008"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: ContainerEscapeRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_docker_sock_reference(self, check: ContainerEscapeRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "container_exec",
+                    "description": "Exec via docker.sock",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: ContainerEscapeRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Gets weather.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: ContainerEscapeRiskCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-009: Process Spawning
+# ==========================================================================
 
 
 class TestProcessSpawningCheck:
-    """Tests for ProcessSpawningCheck."""
-
     @pytest.fixture()
     def check(self) -> ProcessSpawningCheck:
         return ProcessSpawningCheck()
@@ -517,15 +688,58 @@ class TestProcessSpawningCheck:
         assert meta.check_id == "priv009"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: ProcessSpawningCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_spawn_tool(self, check: ProcessSpawningCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "launch_subprocess",
+                    "description": "Spawns a new subprocess.",
+                    "inputSchema": {"type": "object", "properties": {"cmd": {"type": "string"}}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_constrained_spawn(self, check: ProcessSpawningCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "launch_subprocess",
+                    "description": "Spawns a subprocess.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"cmd": {"type": "string", "enum": ["ls", "pwd"]}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status != Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: ProcessSpawningCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: ProcessSpawningCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-010: Environment Modification
+# ==========================================================================
 
 
 class TestEnvironmentModificationCheck:
-    """Tests for EnvironmentModificationCheck."""
-
     @pytest.fixture()
     def check(self) -> EnvironmentModificationCheck:
         return EnvironmentModificationCheck()
@@ -535,15 +749,49 @@ class TestEnvironmentModificationCheck:
         assert meta.check_id == "priv010"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: EnvironmentModificationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_env_modification_tool(
+        self, check: EnvironmentModificationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "set_environment_var",
+                    "description": "Sets an environment variable.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"}, "value": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: EnvironmentModificationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(
+        self, check: EnvironmentModificationCheck
+    ) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-011: Registry Access
+# ==========================================================================
 
 
 class TestRegistryAccessCheck:
-    """Tests for RegistryAccessCheck."""
-
     @pytest.fixture()
     def check(self) -> RegistryAccessCheck:
         return RegistryAccessCheck()
@@ -553,15 +801,42 @@ class TestRegistryAccessCheck:
         assert meta.check_id == "priv011"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: RegistryAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_registry_tool(self, check: RegistryAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "read_registry",
+                    "description": "Reads HKEY_LOCAL_MACHINE registry values.",
+                    "inputSchema": {"type": "object", "properties": {"key": {"type": "string"}}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: RegistryAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: RegistryAccessCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-012: Kernel Module Loading
+# ==========================================================================
 
 
 class TestKernelModuleLoadingCheck:
-    """Tests for KernelModuleLoadingCheck."""
-
     @pytest.fixture()
     def check(self) -> KernelModuleLoadingCheck:
         return KernelModuleLoadingCheck()
@@ -571,15 +846,42 @@ class TestKernelModuleLoadingCheck:
         assert meta.check_id == "priv012"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: KernelModuleLoadingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_modprobe_tool(self, check: KernelModuleLoadingCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "load_driver",
+                    "description": "Loads a kernel module via modprobe.",
+                    "inputSchema": {"type": "object", "properties": {"module": {"type": "string"}}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: KernelModuleLoadingCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: KernelModuleLoadingCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-013: Cron Job Creation
+# ==========================================================================
 
 
 class TestCronJobCreationCheck:
-    """Tests for CronJobCreationCheck."""
-
     @pytest.fixture()
     def check(self) -> CronJobCreationCheck:
         return CronJobCreationCheck()
@@ -589,15 +891,45 @@ class TestCronJobCreationCheck:
         assert meta.check_id == "priv013"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: CronJobCreationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_cron_tool(self, check: CronJobCreationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "schedule_task",
+                    "description": "Creates a crontab entry for scheduled execution.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"schedule": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: CronJobCreationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: CronJobCreationCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-014: User Management
+# ==========================================================================
 
 
 class TestUserManagementCheck:
-    """Tests for UserManagementCheck."""
-
     @pytest.fixture()
     def check(self) -> UserManagementCheck:
         return UserManagementCheck()
@@ -607,15 +939,45 @@ class TestUserManagementCheck:
         assert meta.check_id == "priv014"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: UserManagementCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_useradd_tool(self, check: UserManagementCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "create_system_user",
+                    "description": "Creates a new user via useradd.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"username": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: UserManagementCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: UserManagementCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-015: Firewall Modification
+# ==========================================================================
 
 
 class TestFirewallModificationCheck:
-    """Tests for FirewallModificationCheck."""
-
     @pytest.fixture()
     def check(self) -> FirewallModificationCheck:
         return FirewallModificationCheck()
@@ -625,15 +987,42 @@ class TestFirewallModificationCheck:
         assert meta.check_id == "priv015"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: FirewallModificationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_iptables_tool(self, check: FirewallModificationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "modify_firewall",
+                    "description": "Manages iptables rules.",
+                    "inputSchema": {"type": "object", "properties": {"rule": {"type": "string"}}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: FirewallModificationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: FirewallModificationCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-016: Package Installation
+# ==========================================================================
 
 
 class TestPackageInstallationCheck:
-    """Tests for PackageInstallationCheck."""
-
     @pytest.fixture()
     def check(self) -> PackageInstallationCheck:
         return PackageInstallationCheck()
@@ -643,15 +1032,45 @@ class TestPackageInstallationCheck:
         assert meta.check_id == "priv016"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: PackageInstallationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_apt_install_reference(self, check: PackageInstallationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "install_dependency",
+                    "description": "Runs apt-get install to add packages.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"package": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: PackageInstallationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: PackageInstallationCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-017: Service Management
+# ==========================================================================
 
 
 class TestServiceManagementCheck:
-    """Tests for ServiceManagementCheck."""
-
     @pytest.fixture()
     def check(self) -> ServiceManagementCheck:
         return ServiceManagementCheck()
@@ -661,15 +1080,45 @@ class TestServiceManagementCheck:
         assert meta.check_id == "priv017"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: ServiceManagementCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_systemctl_reference(self, check: ServiceManagementCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "manage_service",
+                    "description": "Runs systemctl start/stop commands.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"service": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: ServiceManagementCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: ServiceManagementCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-018: Database Admin
+# ==========================================================================
 
 
 class TestDatabaseAdminCheck:
-    """Tests for DatabaseAdminCheck."""
-
     @pytest.fixture()
     def check(self) -> DatabaseAdminCheck:
         return DatabaseAdminCheck()
@@ -679,15 +1128,42 @@ class TestDatabaseAdminCheck:
         assert meta.check_id == "priv018"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: DatabaseAdminCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_drop_table_reference(self, check: DatabaseAdminCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "admin_db",
+                    "description": "Executes DDL like DROP TABLE and GRANT privileges.",
+                    "inputSchema": {"type": "object", "properties": {"sql": {"type": "string"}}},
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_safe_tool(self, check: DatabaseAdminCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: DatabaseAdminCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-019: IDOR in Resources
+# ==========================================================================
 
 
 class TestIdorInResourcesCheck:
-    """Tests for IdorInResourcesCheck."""
-
     @pytest.fixture()
     def check(self) -> IdorInResourcesCheck:
         return IdorInResourcesCheck()
@@ -697,15 +1173,42 @@ class TestIdorInResourcesCheck:
         assert meta.check_id == "priv019"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: IdorInResourcesCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_sequential_numeric_id(self, check: IdorInResourcesCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "https://api.example.com/users/42",
+                    "name": "User Resource",
+                    "description": "User data.",
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_non_sequential_uri(self, check: IdorInResourcesCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "https://api.example.com/users/me",
+                    "name": "My Profile",
+                    "description": "Current user data.",
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status != Status.FAIL for f in findings)
+
+    async def test_empty_resources_returns_no_findings(self, check: IdorInResourcesCheck) -> None:
+        assert await check.execute(make_snapshot(resources=[])) == []
+
+
+# ==========================================================================
+# PRIV-020: Missing Resource Authorization
+# ==========================================================================
 
 
 class TestMissingResourceAuthorizationCheck:
-    """Tests for MissingResourceAuthorizationCheck."""
-
     @pytest.fixture()
     def check(self) -> MissingResourceAuthorizationCheck:
         return MissingResourceAuthorizationCheck()
@@ -715,15 +1218,48 @@ class TestMissingResourceAuthorizationCheck:
         assert meta.check_id == "priv020"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: MissingResourceAuthorizationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_sensitive_resource_without_authz(
+        self, check: MissingResourceAuthorizationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "file:///etc/shadow",
+                    "name": "Shadow Password File",
+                    "description": "Contains sensitive credentials.",
+                }
+            ],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_with_authz_config(self, check: MissingResourceAuthorizationCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "file:///etc/shadow",
+                    "name": "Shadow Password File",
+                    "description": "Sensitive credentials.",
+                }
+            ],
+            config_raw={"authorization": {"enabled": True}},
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status != Status.FAIL for f in findings)
+
+    async def test_empty_resources_returns_no_findings(
+        self, check: MissingResourceAuthorizationCheck
+    ) -> None:
+        assert await check.execute(make_snapshot(resources=[])) == []
+
+
+# ==========================================================================
+# PRIV-021: Horizontal Privilege Escalation
+# ==========================================================================
 
 
 class TestHorizontalPrivilegeEscalationCheck:
-    """Tests for HorizontalPrivilegeEscalationCheck."""
-
     @pytest.fixture()
     def check(self) -> HorizontalPrivilegeEscalationCheck:
         return HorizontalPrivilegeEscalationCheck()
@@ -735,15 +1271,69 @@ class TestHorizontalPrivilegeEscalationCheck:
         assert meta.check_id == "priv021"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: HorizontalPrivilegeEscalationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_user_id_param(
+        self, check: HorizontalPrivilegeEscalationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user_data",
+                    "description": "Gets data for a specific user.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"user_id": {"type": "string"}},
+                    },
+                }
+            ]
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_on_constrained_user_id(
+        self, check: HorizontalPrivilegeEscalationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user_data",
+                    "description": "Gets data for a specific user.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"user_id": {"type": "string", "const": "self"}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status != Status.FAIL for f in findings)
+
+    async def test_passes_on_tool_without_user_params(
+        self, check: HorizontalPrivilegeEscalationCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {"city": {"type": "string"}}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(
+        self, check: HorizontalPrivilegeEscalationCheck
+    ) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-022: Missing Least Privilege
+# ==========================================================================
 
 
 class TestMissingLeastPrivilegeCheck:
-    """Tests for MissingLeastPrivilegeCheck."""
-
     @pytest.fixture()
     def check(self) -> MissingLeastPrivilegeCheck:
         return MissingLeastPrivilegeCheck()
@@ -753,15 +1343,46 @@ class TestMissingLeastPrivilegeCheck:
         assert meta.check_id == "priv022"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: MissingLeastPrivilegeCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_when_broad_caps_but_benign_tools(
+        self, check: MissingLeastPrivilegeCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "lookup_weather",
+                    "description": "Returns the current weather for a city.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            capabilities={"tools": "all", "access": "*"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_when_no_broad_caps(self, check: MissingLeastPrivilegeCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            capabilities={"tools": {"listChanged": True}},
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: MissingLeastPrivilegeCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []
+
+
+# ==========================================================================
+# PRIV-023: Cross-Tenant Access
+# ==========================================================================
 
 
 class TestCrossTenantAccessCheck:
-    """Tests for CrossTenantAccessCheck."""
-
     @pytest.fixture()
     def check(self) -> CrossTenantAccessCheck:
         return CrossTenantAccessCheck()
@@ -771,7 +1392,54 @@ class TestCrossTenantAccessCheck:
         assert meta.check_id == "priv023"
         assert meta.category == "privilege_scope"
 
-    async def test_stub_returns_empty(self, check: CrossTenantAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_unconstrained_tenant_id(self, check: CrossTenantAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_tenant_data",
+                    "description": "Gets data for any tenant.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"tenant_id": {"type": "string"}},
+                    },
+                }
+            ],
+            config_raw={"command": "node"},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert any(f.status == Status.FAIL for f in findings)
+
+    async def test_passes_with_tenant_isolation_config(self, check: CrossTenantAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_tenant_data",
+                    "description": "Gets data for any tenant.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"tenant_id": {"type": "string"}},
+                    },
+                }
+            ],
+            config_raw={"tenant_isolation": True, "command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status != Status.FAIL for f in findings)
+
+    async def test_passes_on_tool_without_tenant_params(
+        self, check: CrossTenantAccessCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Weather tool.",
+                    "inputSchema": {"type": "object", "properties": {"city": {"type": "string"}}},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert any(f.status == Status.PASS for f in findings)
+
+    async def test_empty_tools_returns_no_findings(self, check: CrossTenantAccessCheck) -> None:
+        assert await check.execute(make_snapshot(tools=[])) == []

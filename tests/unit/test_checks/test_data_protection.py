@@ -635,10 +635,49 @@ class TestDataLeakageViaErrorsCheck:
         assert meta.check_id == "dp005"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: DataLeakageViaErrorsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: DataLeakageViaErrorsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DataLeakageViaErrorsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: DataLeakageViaErrorsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DataLeakageViaErrorsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "debug": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: DataLeakageViaErrorsCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestUnmaskedSensitiveFieldsCheck:
@@ -653,10 +692,43 @@ class TestUnmaskedSensitiveFieldsCheck:
         assert meta.check_id == "dp006"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: UnmaskedSensitiveFieldsCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_tool_with_issues(self, check: UnmaskedSensitiveFieldsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "test_tool",
+                    "description": "A test tool",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: UnmaskedSensitiveFieldsCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
+
+    async def test_processes_tool_schemas(self, check: UnmaskedSensitiveFieldsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "t",
+                    "description": "test",
+                    "inputSchema": {"type": "object", "properties": {"x": {"type": "string"}}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: UnmaskedSensitiveFieldsCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestMissingDataRetentionPolicyCheck:
@@ -671,10 +743,57 @@ class TestMissingDataRetentionPolicyCheck:
         assert meta.check_id == "dp007"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: MissingDataRetentionPolicyCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: MissingDataRetentionPolicyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: MissingDataRetentionPolicyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(
+        self, check: MissingDataRetentionPolicyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: MissingDataRetentionPolicyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "retention": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: MissingDataRetentionPolicyCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestCrossOriginDataSharingCheck:
@@ -689,10 +808,49 @@ class TestCrossOriginDataSharingCheck:
         assert meta.check_id == "dp008"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: CrossOriginDataSharingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: CrossOriginDataSharingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: CrossOriginDataSharingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: CrossOriginDataSharingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: CrossOriginDataSharingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "cors": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: CrossOriginDataSharingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestMissingEncryptionAtRestCheck:
@@ -707,10 +865,49 @@ class TestMissingEncryptionAtRestCheck:
         assert meta.check_id == "dp009"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: MissingEncryptionAtRestCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: MissingEncryptionAtRestCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingEncryptionAtRestCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: MissingEncryptionAtRestCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingEncryptionAtRestCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "encryption_at_rest": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: MissingEncryptionAtRestCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestMissingEncryptionInTransitCheck:
@@ -725,10 +922,57 @@ class TestMissingEncryptionInTransitCheck:
         assert meta.check_id == "dp010"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: MissingEncryptionInTransitCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: MissingEncryptionInTransitCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: MissingEncryptionInTransitCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "http": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(
+        self, check: MissingEncryptionInTransitCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: MissingEncryptionInTransitCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "tls": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: MissingEncryptionInTransitCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestExcessiveLoggingOfPiiCheck:
@@ -743,10 +987,43 @@ class TestExcessiveLoggingOfPiiCheck:
         assert meta.check_id == "dp011"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: ExcessiveLoggingOfPiiCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_tool_with_issues(self, check: ExcessiveLoggingOfPiiCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "test_tool",
+                    "description": "A test tool",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ExcessiveLoggingOfPiiCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
+
+    async def test_processes_tool_schemas(self, check: ExcessiveLoggingOfPiiCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "t",
+                    "description": "test",
+                    "inputSchema": {"type": "object", "properties": {"x": {"type": "string"}}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ExcessiveLoggingOfPiiCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestMissingConsentMechanismCheck:
@@ -761,10 +1038,49 @@ class TestMissingConsentMechanismCheck:
         assert meta.check_id == "dp012"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: MissingConsentMechanismCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: MissingConsentMechanismCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingConsentMechanismCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: MissingConsentMechanismCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingConsentMechanismCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "consent": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: MissingConsentMechanismCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestDataMinimizationViolationCheck:
@@ -779,10 +1095,43 @@ class TestDataMinimizationViolationCheck:
         assert meta.check_id == "dp013"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: DataMinimizationViolationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_tool_with_issues(self, check: DataMinimizationViolationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "test_tool",
+                    "description": "A test tool",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: DataMinimizationViolationCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
+
+    async def test_processes_tool_schemas(self, check: DataMinimizationViolationCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "t",
+                    "description": "test",
+                    "inputSchema": {"type": "object", "properties": {"x": {"type": "string"}}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: DataMinimizationViolationCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestMissingDataAnonymizationCheck:
@@ -797,10 +1146,49 @@ class TestMissingDataAnonymizationCheck:
         assert meta.check_id == "dp014"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: MissingDataAnonymizationCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: MissingDataAnonymizationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingDataAnonymizationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: MissingDataAnonymizationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingDataAnonymizationCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "anonymize": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: MissingDataAnonymizationCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestClipboardDataExposureCheck:
@@ -815,10 +1203,42 @@ class TestClipboardDataExposureCheck:
         assert meta.check_id == "dp015"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: ClipboardDataExposureCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: ClipboardDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "clipboard_tool", "description": "Handles clipboard data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ClipboardDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: ClipboardDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "clipboard_tool", "description": "Handles clipboard data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ClipboardDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ClipboardDataExposureCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestScreenshotCaptureRiskCheck:
@@ -833,10 +1253,42 @@ class TestScreenshotCaptureRiskCheck:
         assert meta.check_id == "dp016"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: ScreenshotCaptureRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: ScreenshotCaptureRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "screenshot_tool", "description": "Handles screenshot data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ScreenshotCaptureRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: ScreenshotCaptureRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "screenshot_tool", "description": "Handles screenshot data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ScreenshotCaptureRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ScreenshotCaptureRiskCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestKeyloggerRiskCheck:
@@ -851,10 +1303,42 @@ class TestKeyloggerRiskCheck:
         assert meta.check_id == "dp017"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: KeyloggerRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: KeyloggerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "keylog_tool", "description": "Handles keylog data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: KeyloggerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: KeyloggerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "keylog_tool", "description": "Handles keylog data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: KeyloggerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: KeyloggerRiskCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestBrowserHistoryAccessCheck:
@@ -869,10 +1353,42 @@ class TestBrowserHistoryAccessCheck:
         assert meta.check_id == "dp018"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: BrowserHistoryAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: BrowserHistoryAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "browser_history_tool", "description": "Handles browser_history data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: BrowserHistoryAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: BrowserHistoryAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "browser_history_tool", "description": "Handles browser_history data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: BrowserHistoryAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: BrowserHistoryAccessCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestContactDataAccessCheck:
@@ -887,10 +1403,42 @@ class TestContactDataAccessCheck:
         assert meta.check_id == "dp019"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: ContactDataAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: ContactDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "contacts_tool", "description": "Handles contacts data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ContactDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: ContactDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "contacts_tool", "description": "Handles contacts data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ContactDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ContactDataAccessCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestLocationDataExposureCheck:
@@ -905,10 +1453,42 @@ class TestLocationDataExposureCheck:
         assert meta.check_id == "dp020"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: LocationDataExposureCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: LocationDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "location_tool", "description": "Handles location data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: LocationDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: LocationDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "location_tool", "description": "Handles location data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: LocationDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: LocationDataExposureCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestCameraMicrophoneAccessCheck:
@@ -923,10 +1503,42 @@ class TestCameraMicrophoneAccessCheck:
         assert meta.check_id == "dp021"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: CameraMicrophoneAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: CameraMicrophoneAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "camera_tool", "description": "Handles camera data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: CameraMicrophoneAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: CameraMicrophoneAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "camera_tool", "description": "Handles camera data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: CameraMicrophoneAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: CameraMicrophoneAccessCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestCalendarDataAccessCheck:
@@ -941,10 +1553,42 @@ class TestCalendarDataAccessCheck:
         assert meta.check_id == "dp022"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: CalendarDataAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: CalendarDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "calendar_tool", "description": "Handles calendar data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: CalendarDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: CalendarDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "calendar_tool", "description": "Handles calendar data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: CalendarDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: CalendarDataAccessCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestMessageDataAccessCheck:
@@ -959,10 +1603,42 @@ class TestMessageDataAccessCheck:
         assert meta.check_id == "dp023"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: MessageDataAccessCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: MessageDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "messages_tool", "description": "Handles messages data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: MessageDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: MessageDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "messages_tool", "description": "Handles messages data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: MessageDataAccessCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: MessageDataAccessCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestBiometricDataHandlingCheck:
@@ -977,10 +1653,42 @@ class TestBiometricDataHandlingCheck:
         assert meta.check_id == "dp024"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: BiometricDataHandlingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: BiometricDataHandlingCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "biometric_tool", "description": "Handles biometric data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: BiometricDataHandlingCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: BiometricDataHandlingCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "biometric_tool", "description": "Handles biometric data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: BiometricDataHandlingCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: BiometricDataHandlingCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestHealthDataExposureCheck:
@@ -995,10 +1703,42 @@ class TestHealthDataExposureCheck:
         assert meta.check_id == "dp025"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: HealthDataExposureCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: HealthDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "health_tool", "description": "Handles health data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: HealthDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: HealthDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "health_tool", "description": "Handles health data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: HealthDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: HealthDataExposureCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestFinancialDataExposureCheck:
@@ -1013,10 +1753,42 @@ class TestFinancialDataExposureCheck:
         assert meta.check_id == "dp026"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: FinancialDataExposureCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: FinancialDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "payment_tool", "description": "Handles payment data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: FinancialDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: FinancialDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "payment_tool", "description": "Handles payment data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: FinancialDataExposureCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: FinancialDataExposureCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestChildDataProtectionCheck:
@@ -1031,10 +1803,42 @@ class TestChildDataProtectionCheck:
         assert meta.check_id == "dp027"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: ChildDataProtectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_keyword_in_tool(self, check: ChildDataProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "child_tool", "description": "Handles child data"}],
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ChildDataProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A simple utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_keyword_in_tool(self, check: ChildDataProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "child_tool", "description": "Handles child data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_tools(self, check: ChildDataProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "safe_tool", "description": "A utility"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ChildDataProtectionCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
 
 
 class TestDataPortabilityMissingCheck:
@@ -1049,10 +1853,49 @@ class TestDataPortabilityMissingCheck:
         assert meta.check_id == "dp028"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: DataPortabilityMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: DataPortabilityMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DataPortabilityMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: DataPortabilityMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DataPortabilityMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "export": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: DataPortabilityMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestRightToDeletionMissingCheck:
@@ -1067,7 +1910,46 @@ class TestRightToDeletionMissingCheck:
         assert meta.check_id == "dp029"
         assert meta.category == "data_protection"
 
-    async def test_stub_returns_empty(self, check: RightToDeletionMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: RightToDeletionMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: RightToDeletionMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: RightToDeletionMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: RightToDeletionMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "deletion": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: RightToDeletionMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1

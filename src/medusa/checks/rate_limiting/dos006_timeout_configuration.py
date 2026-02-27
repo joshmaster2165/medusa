@@ -12,8 +12,22 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.rate_limiting.dos001_missing_rate_limiting import _config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_TIMEOUT_KEYS = {
+    "timeout",
+    "connection_timeout",
+    "read_timeout",
+    "write_timeout",
+    "request_timeout",
+    "idle_timeout",
+    "keep_alive_timeout",
+    "execution_timeout",
+    "tool_timeout",
+}
+_TIMEOUT_ENV = {"TIMEOUT", "REQUEST_TIMEOUT", "CONNECTION_TIMEOUT", "TOOL_TIMEOUT"}
 
 
 class TimeoutConfigurationCheck(BaseCheck):
@@ -25,5 +39,15 @@ class TimeoutConfigurationCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement dos006 check logic
-        return []
+        meta = self.metadata()
+        return _config_check(
+            snapshot,
+            meta,
+            config_keys=_TIMEOUT_KEYS,
+            env_vars=_TIMEOUT_ENV,
+            missing_msg=(
+                "Server '{server}' has no timeout configuration. "
+                "Tool invocations may run indefinitely, blocking server capacity."
+            ),
+            present_msg="Timeout configuration detected in: {sources}.",
+        )

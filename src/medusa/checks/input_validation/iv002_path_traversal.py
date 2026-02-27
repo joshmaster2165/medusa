@@ -20,9 +20,9 @@ from medusa.utils.pattern_matching import PATH_PARAM_NAMES
 # Patterns that, if present in a schema `pattern`, indicate the author at least
 # attempted to block path traversal.
 _TRAVERSAL_BLOCK_HINTS: list[re.Pattern[str]] = [
-    re.compile(r"\.\.", re.IGNORECASE),         # literal ".." in regex
-    re.compile(r"\\\.\\.", re.IGNORECASE),       # escaped "\.\." in regex
-    re.compile(r"\^[a-zA-Z]", re.IGNORECASE),   # anchored to safe prefix
+    re.compile(r"\.\.", re.IGNORECASE),  # literal ".." in regex
+    re.compile(r"\\\.\\.", re.IGNORECASE),  # escaped "\.\." in regex
+    re.compile(r"\^[a-zA-Z]", re.IGNORECASE),  # anchored to safe prefix
 ]
 
 

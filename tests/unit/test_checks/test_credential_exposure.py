@@ -1,4 +1,4 @@
-"""Unit tests for all Credential Exposure checks (CRED-001 through CRED-003).
+"""Unit tests for all Credential Exposure checks (CRED-001 through CRED-023).
 
 Each check is tested for:
 - FAIL on the vulnerable_snapshot
@@ -323,6 +323,11 @@ class TestCred003SecretsInDefinitions:
         assert findings[0].status == Status.PASS
 
 
+# ==========================================================================
+# CRED-004: GCP Service Account Key Exposure
+# ==========================================================================
+
+
 class TestGcpServiceAccountKeyCheck:
     """Tests for GcpServiceAccountKeyCheck."""
 
@@ -335,10 +340,43 @@ class TestGcpServiceAccountKeyCheck:
         assert meta.check_id == "cred004"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: GcpServiceAccountKeyCheck) -> None:
+    async def test_fails_on_gcp_service_account_json(
+        self, check: GcpServiceAccountKeyCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"key_json": '"type": "service_account"'},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_gcp_env_var(self, check: GcpServiceAccountKeyCheck) -> None:
+        snapshot = make_snapshot(
+            env={"GOOGLE_APPLICATION_CREDENTIALS": "/path/to/key.json"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: GcpServiceAccountKeyCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+            env={"NODE_ENV": "production"},
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) == 1
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: GcpServiceAccountKeyCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-005: Azure Credentials Exposure
+# ==========================================================================
 
 
 class TestAzureCredentialsCheck:
@@ -353,10 +391,37 @@ class TestAzureCredentialsCheck:
         assert meta.check_id == "cred005"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: AzureCredentialsCheck) -> None:
+    async def test_fails_on_azure_client_secret_env(self, check: AzureCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"AZURE_CLIENT_SECRET": "my-azure-client-secret-value"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_azure_shared_access_key(self, check: AzureCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"connection": "SharedAccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=="},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: AzureCredentialsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"PORT": "8080"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: AzureCredentialsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-006: Database Connection String
+# ==========================================================================
 
 
 class TestDatabaseConnectionStringCheck:
@@ -371,10 +436,39 @@ class TestDatabaseConnectionStringCheck:
         assert meta.check_id == "cred006"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: DatabaseConnectionStringCheck) -> None:
+    async def test_fails_on_postgres_connection_string(
+        self, check: DatabaseConnectionStringCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"db_url": "postgres://user:password123@localhost:5432/mydb"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_database_url_env(self, check: DatabaseConnectionStringCheck) -> None:
+        snapshot = make_snapshot(
+            env={"DATABASE_URL": "mysql://admin:secret@db.example.com/app"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: DatabaseConnectionStringCheck) -> None:
+        snapshot = make_snapshot(config_raw={"host": "localhost"}, env={"PORT": "5432"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: DatabaseConnectionStringCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-007: SSH Private Key Exposure
+# ==========================================================================
 
 
 class TestSshPrivateKeyCheck:
@@ -389,10 +483,37 @@ class TestSshPrivateKeyCheck:
         assert meta.check_id == "cred007"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: SshPrivateKeyCheck) -> None:
+    async def test_fails_on_ssh_private_key_header(self, check: SshPrivateKeyCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"key": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAK"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_ssh_key_path(self, check: SshPrivateKeyCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"identity_file": ".ssh/id_rsa"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: SshPrivateKeyCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: SshPrivateKeyCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-008: JWT Secret in Environment
+# ==========================================================================
 
 
 class TestJwtSecretInEnvCheck:
@@ -407,10 +528,37 @@ class TestJwtSecretInEnvCheck:
         assert meta.check_id == "cred008"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: JwtSecretInEnvCheck) -> None:
+    async def test_fails_on_jwt_secret_env(self, check: JwtSecretInEnvCheck) -> None:
+        snapshot = make_snapshot(
+            env={"JWT_SECRET": "my-super-secret-jwt-signing-key"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_jwt_key_config(self, check: JwtSecretInEnvCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"auth": {"JWT_SIGNING_KEY": "supersecretkey"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: JwtSecretInEnvCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: JwtSecretInEnvCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-009: OAuth Client Secret
+# ==========================================================================
 
 
 class TestOauthClientSecretCheck:
@@ -425,10 +573,29 @@ class TestOauthClientSecretCheck:
         assert meta.check_id == "cred009"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: OauthClientSecretCheck) -> None:
+    async def test_fails_on_client_secret_in_config(self, check: OauthClientSecretCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"oauth": {"client_secret": "my-oauth-secret-value"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: OauthClientSecretCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: OauthClientSecretCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-010: SMTP Credentials
+# ==========================================================================
 
 
 class TestSmtpCredentialsCheck:
@@ -443,10 +610,37 @@ class TestSmtpCredentialsCheck:
         assert meta.check_id == "cred010"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: SmtpCredentialsCheck) -> None:
+    async def test_fails_on_smtp_password_env(self, check: SmtpCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"SMTP_PASSWORD": "my-email-password"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_smtp_uri(self, check: SmtpCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"mail": {"url": "smtp://user:password@smtp.example.com:587"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: SmtpCredentialsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: SmtpCredentialsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-011: Docker Registry Auth
+# ==========================================================================
 
 
 class TestDockerRegistryAuthCheck:
@@ -461,10 +655,37 @@ class TestDockerRegistryAuthCheck:
         assert meta.check_id == "cred011"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: DockerRegistryAuthCheck) -> None:
+    async def test_fails_on_docker_auth_env(self, check: DockerRegistryAuthCheck) -> None:
+        snapshot = make_snapshot(
+            env={"DOCKER_AUTH_CONFIG": '{"auths":{"registry.example.com":{}}}'},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_dockerconfigjson(self, check: DockerRegistryAuthCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"secret": ".dockerconfigjson"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: DockerRegistryAuthCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "docker"}, env={"PORT": "8080"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: DockerRegistryAuthCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-012: Kubernetes Secrets
+# ==========================================================================
 
 
 class TestKubernetesSecretsCheck:
@@ -479,10 +700,29 @@ class TestKubernetesSecretsCheck:
         assert meta.check_id == "cred012"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: KubernetesSecretsCheck) -> None:
+    async def test_fails_on_kubeconfig_env(self, check: KubernetesSecretsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"KUBECONFIG": "/home/user/.kube/config"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: KubernetesSecretsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: KubernetesSecretsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-013: Terraform State Secrets
+# ==========================================================================
 
 
 class TestTerraformStateSecretsCheck:
@@ -497,10 +737,37 @@ class TestTerraformStateSecretsCheck:
         assert meta.check_id == "cred013"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: TerraformStateSecretsCheck) -> None:
+    async def test_fails_on_tf_token_env(self, check: TerraformStateSecretsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"TF_TOKEN_app_terraform_io": "my-terraform-token"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_tfstate_reference(self, check: TerraformStateSecretsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"state_file": "terraform.tfstate"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: TerraformStateSecretsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: TerraformStateSecretsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-014: NPM Token Exposure
+# ==========================================================================
 
 
 class TestNpmTokenExposureCheck:
@@ -515,10 +782,37 @@ class TestNpmTokenExposureCheck:
         assert meta.check_id == "cred014"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: NpmTokenExposureCheck) -> None:
+    async def test_fails_on_npm_token_env(self, check: NpmTokenExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"NPM_TOKEN": "npm_abc123def456ghi789jkl012mno345pqr678"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_npmrc_auth_token(self, check: NpmTokenExposureCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"npmrc": "//registry.npmjs.org/:_authToken=npm_secrettoken123"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: NpmTokenExposureCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: NpmTokenExposureCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-015: PyPI Token Exposure
+# ==========================================================================
 
 
 class TestPypiTokenExposureCheck:
@@ -533,10 +827,37 @@ class TestPypiTokenExposureCheck:
         assert meta.check_id == "cred015"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: PypiTokenExposureCheck) -> None:
+    async def test_fails_on_pypi_token_env(self, check: PypiTokenExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"PYPI_TOKEN": "pypi-secrettoken123"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_pypi_token_value(self, check: PypiTokenExposureCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"token": "pypi-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: PypiTokenExposureCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "python"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: PypiTokenExposureCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-016: Encryption Key Exposure
+# ==========================================================================
 
 
 class TestEncryptionKeyExposureCheck:
@@ -551,10 +872,37 @@ class TestEncryptionKeyExposureCheck:
         assert meta.check_id == "cred016"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: EncryptionKeyExposureCheck) -> None:
+    async def test_fails_on_encryption_key_env(self, check: EncryptionKeyExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"ENCRYPTION_KEY": "my-aes-256-encryption-key-value"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_master_key_config(self, check: EncryptionKeyExposureCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"crypto": {"MASTER_KEY": "master-key-value"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: EncryptionKeyExposureCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: EncryptionKeyExposureCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-017: Webhook Secret Exposure
+# ==========================================================================
 
 
 class TestWebhookSecretExposureCheck:
@@ -569,10 +917,37 @@ class TestWebhookSecretExposureCheck:
         assert meta.check_id == "cred017"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: WebhookSecretExposureCheck) -> None:
+    async def test_fails_on_webhook_secret_env(self, check: WebhookSecretExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"WEBHOOK_SECRET": "my-webhook-signing-secret"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_signing_secret_env(self, check: WebhookSecretExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"SIGNING_SECRET": "slack-signing-secret-value"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: WebhookSecretExposureCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: WebhookSecretExposureCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-018: LDAP Bind Credentials
+# ==========================================================================
 
 
 class TestLdapBindCredentialsCheck:
@@ -587,10 +962,39 @@ class TestLdapBindCredentialsCheck:
         assert meta.check_id == "cred018"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: LdapBindCredentialsCheck) -> None:
+    async def test_fails_on_ldap_password_env(self, check: LdapBindCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"LDAP_BIND_PASSWORD": "my-ldap-bind-password"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_ldap_uri_credentials(self, check: LdapBindCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "ldap": {"url": "ldaps://cn=admin,dc=example,dc=com:password@ldap.example.com"}
+            },
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: LdapBindCredentialsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: LdapBindCredentialsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-019: Redis Auth Exposure
+# ==========================================================================
 
 
 class TestRedisAuthExposureCheck:
@@ -605,10 +1009,37 @@ class TestRedisAuthExposureCheck:
         assert meta.check_id == "cred019"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: RedisAuthExposureCheck) -> None:
+    async def test_fails_on_redis_password_env(self, check: RedisAuthExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"REDIS_PASSWORD": "my-redis-auth-password"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_redis_uri_with_password(self, check: RedisAuthExposureCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"cache": {"url": "redis://:mypassword@redis.example.com:6379"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: RedisAuthExposureCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: RedisAuthExposureCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-020: Firebase Credentials
+# ==========================================================================
 
 
 class TestFirebaseCredentialsCheck:
@@ -623,10 +1054,37 @@ class TestFirebaseCredentialsCheck:
         assert meta.check_id == "cred020"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: FirebaseCredentialsCheck) -> None:
+    async def test_fails_on_firebase_key_env(self, check: FirebaseCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"FIREBASE_API_KEY": "my-firebase-api-key"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_firebase_admin_sdk(self, check: FirebaseCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"key_file": "firebase-adminsdk-abc123.json"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: FirebaseCredentialsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: FirebaseCredentialsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-021: Twilio Credentials
+# ==========================================================================
 
 
 class TestTwilioCredentialsCheck:
@@ -641,10 +1099,37 @@ class TestTwilioCredentialsCheck:
         assert meta.check_id == "cred021"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: TwilioCredentialsCheck) -> None:
+    async def test_fails_on_twilio_auth_token_env(self, check: TwilioCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            env={"TWILIO_AUTH_TOKEN": "my-twilio-auth-token-value"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_twilio_account_sid(self, check: TwilioCredentialsCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"twilio": {"account_sid": "AC" + "abcdef1234567890abcdef1234567890"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: TwilioCredentialsCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: TwilioCredentialsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-022: SendGrid API Key
+# ==========================================================================
 
 
 class TestSendgridApiKeyCheck:
@@ -659,10 +1144,37 @@ class TestSendgridApiKeyCheck:
         assert meta.check_id == "cred022"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: SendgridApiKeyCheck) -> None:
+    async def test_fails_on_sendgrid_api_key_env(self, check: SendgridApiKeyCheck) -> None:
+        snapshot = make_snapshot(
+            env={"SENDGRID_API_KEY": "SG.my-sendgrid-api-key-value"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_sendgrid_key_value(self, check: SendgridApiKeyCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"email": {"key": "SG.ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: SendgridApiKeyCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: SendgridApiKeyCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS
+
+
+# ==========================================================================
+# CRED-023: Vault Token Exposure
+# ==========================================================================
 
 
 class TestVaultTokenExposureCheck:
@@ -677,7 +1189,29 @@ class TestVaultTokenExposureCheck:
         assert meta.check_id == "cred023"
         assert meta.category == "credential_exposure"
 
-    async def test_stub_returns_empty(self, check: VaultTokenExposureCheck) -> None:
+    async def test_fails_on_vault_token_env(self, check: VaultTokenExposureCheck) -> None:
+        snapshot = make_snapshot(
+            env={"VAULT_TOKEN": "hvs.ABCDEFGHIJKLMNOPQRSTUVWXYZ01"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_vault_token_value(self, check: VaultTokenExposureCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"vault": {"token": "hvs.ABCDEFGHIJKLMNOPQRSTUVWXYZ01"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_clean_config(self, check: VaultTokenExposureCheck) -> None:
+        snapshot = make_snapshot(config_raw={"command": "node"}, env={"NODE_ENV": "prod"})
+        findings = await check.execute(snapshot)
+        assert findings[0].status == Status.PASS
+
+    async def test_not_applicable_returns_pass(self, check: VaultTokenExposureCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert findings[0].status == Status.PASS

@@ -23,15 +23,16 @@ _SENSITIVE_ENV_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("Azure Client Secret", re.compile(r"^AZURE_CLIENT_SECRET$", re.IGNORECASE)),
     ("GCP Service Account Key", re.compile(r"^GOOGLE_APPLICATION_CREDENTIALS$", re.IGNORECASE)),
     ("GCP Private Key", re.compile(r"^GCP_PRIVATE_KEY$", re.IGNORECASE)),
-
     # Database credentials
     ("Database URL", re.compile(r"^DATABASE_URL$", re.IGNORECASE)),
-    ("Database Password", re.compile(
-        r"^(DB|DATABASE|MYSQL|POSTGRES|PG|MONGO|REDIS)_PASSWORD$",
-        re.IGNORECASE,
-    )),
+    (
+        "Database Password",
+        re.compile(
+            r"^(DB|DATABASE|MYSQL|POSTGRES|PG|MONGO|REDIS)_PASSWORD$",
+            re.IGNORECASE,
+        ),
+    ),
     ("Database Connection String", re.compile(r"^(DB|DATABASE)_CONNECTION_STRING$", re.IGNORECASE)),
-
     # API tokens and keys
     ("GitHub Token", re.compile(r"^(GITHUB_TOKEN|GH_TOKEN|GITHUB_PAT)$", re.IGNORECASE)),
     ("GitLab Token", re.compile(r"^(GITLAB_TOKEN|GITLAB_PRIVATE_TOKEN)$", re.IGNORECASE)),
@@ -41,20 +42,20 @@ _SENSITIVE_ENV_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("Stripe Key", re.compile(r"^STRIPE_(SECRET_KEY|API_KEY)$", re.IGNORECASE)),
     ("SendGrid Key", re.compile(r"^SENDGRID_API_KEY$", re.IGNORECASE)),
     ("Twilio Auth Token", re.compile(r"^TWILIO_AUTH_TOKEN$", re.IGNORECASE)),
-
     # Generic secret/token/password patterns
     ("Generic Secret", re.compile(r"_(SECRET|SECRET_KEY|PRIVATE_KEY)$", re.IGNORECASE)),
-    ("Generic Token", re.compile(
-        r"_(TOKEN|AUTH_TOKEN|ACCESS_TOKEN|REFRESH_TOKEN)$",
-        re.IGNORECASE,
-    )),
+    (
+        "Generic Token",
+        re.compile(
+            r"_(TOKEN|AUTH_TOKEN|ACCESS_TOKEN|REFRESH_TOKEN)$",
+            re.IGNORECASE,
+        ),
+    ),
     ("Generic Password", re.compile(r"_(PASSWORD|PASSWD|PASS)$", re.IGNORECASE)),
     ("Generic API Key", re.compile(r"_(API_KEY|APIKEY)$", re.IGNORECASE)),
-
     # SSH and encryption keys
     ("SSH Key", re.compile(r"^SSH_(PRIVATE_KEY|KEY)$", re.IGNORECASE)),
     ("Encryption Key", re.compile(r"^(ENCRYPTION_KEY|SIGNING_KEY|JWT_SECRET)$", re.IGNORECASE)),
-
     # NPM / Docker tokens
     ("NPM Token", re.compile(r"^NPM_TOKEN$", re.IGNORECASE)),
     ("Docker Password", re.compile(r"^DOCKER_(PASSWORD|TOKEN)$", re.IGNORECASE)),
@@ -103,9 +104,7 @@ class EnvLeakageCheck(BaseCheck):
                                 f"'{snapshot.server_name}'. The server and all "
                                 f"its tools have access to this credential."
                             ),
-                            evidence=(
-                                f"{env_name} = {_redact_value(env_value)}"
-                            ),
+                            evidence=(f"{env_name} = {_redact_value(env_value)}"),
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,
                         )

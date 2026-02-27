@@ -24,5 +24,17 @@ class MissingIncidentResponsePlanCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov005 check logic
-        return []
+        from medusa.checks.governance.gov001_missing_security_policy import _gov_check
+        from medusa.utils.pattern_matching import INCIDENT_RESPONSE_KEYS
+
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=INCIDENT_RESPONSE_KEYS,
+            missing_msg=(
+                "Server '{server}' has no incident response configuration. "
+                "Security incidents cannot be effectively contained or recovered from."
+            ),
+            present_msg="Server '{server}' has incident response configured.",
+        )

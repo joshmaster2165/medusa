@@ -11,8 +11,18 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.multi_tenant.mt001_missing_tenant_isolation import _mt_config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_TOOL_ACCESS_KEYS = {
+    "tool_access_policy",
+    "tenant_tool_scope",
+    "tool_authorization",
+    "tool_visibility",
+    "per_tenant_tools",
+    "tenant_tool_filter",
+}
 
 
 class CrossTenantToolAccessCheck(BaseCheck):
@@ -24,5 +34,14 @@ class CrossTenantToolAccessCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement mt009 check logic
-        return []
+        meta = self.metadata()
+        return _mt_config_check(
+            snapshot,
+            meta,
+            config_keys=_TOOL_ACCESS_KEYS,
+            missing_msg=(
+                "Server '{server}' has no cross-tenant tool access policy. "
+                "Tools may be invocable or observable across tenant boundaries."
+            ),
+            present_msg="Server '{server}' has per-tenant tool access controls configured.",
+        )

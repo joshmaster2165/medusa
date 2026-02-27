@@ -169,10 +169,49 @@ class TestDependencyVulnerabilityCheck:
         assert meta.check_id == "sc002"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: DependencyVulnerabilityCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: DependencyVulnerabilityCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DependencyVulnerabilityCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: DependencyVulnerabilityCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: DependencyVulnerabilityCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "audit": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: DependencyVulnerabilityCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestAbandonedDependenciesCheck:
@@ -187,10 +226,49 @@ class TestAbandonedDependenciesCheck:
         assert meta.check_id == "sc003"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: AbandonedDependenciesCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: AbandonedDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: AbandonedDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: AbandonedDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: AbandonedDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "update": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: AbandonedDependenciesCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestExcessiveDependenciesCheck:
@@ -205,10 +283,33 @@ class TestExcessiveDependenciesCheck:
         assert meta.check_id == "sc004"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: ExcessiveDependenciesCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_non_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_skips_non_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
 
 
 class TestUnpinnedTransitiveDepsCheck:
@@ -223,7 +324,29 @@ class TestUnpinnedTransitiveDepsCheck:
         assert meta.check_id == "sc005"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: UnpinnedTransitiveDepsCheck) -> None:
+    async def test_skips_non_stdio_transport(self, check: UnpinnedTransitiveDepsCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: UnpinnedTransitiveDepsCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_executes_without_error(self, check: UnpinnedTransitiveDepsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: UnpinnedTransitiveDepsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -241,10 +364,33 @@ class TestInstallScriptsPresentCheck:
         assert meta.check_id == "sc006"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: InstallScriptsPresentCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_non_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_skips_non_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
 
 
 class TestNativeBinaryDependenciesCheck:
@@ -259,10 +405,49 @@ class TestNativeBinaryDependenciesCheck:
         assert meta.check_id == "sc007"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: NativeBinaryDependenciesCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: NativeBinaryDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: NativeBinaryDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: NativeBinaryDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: NativeBinaryDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "native": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: NativeBinaryDependenciesCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestSingleMaintainerRiskCheck:
@@ -277,7 +462,46 @@ class TestSingleMaintainerRiskCheck:
         assert meta.check_id == "sc008"
         assert meta.category == "supply_chain"
 
-    async def test_stub_returns_empty(self, check: SingleMaintainerRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: SingleMaintainerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: SingleMaintainerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: SingleMaintainerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: SingleMaintainerRiskCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "maintainer": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: SingleMaintainerRiskCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1

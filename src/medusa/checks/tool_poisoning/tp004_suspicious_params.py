@@ -49,9 +49,7 @@ def _collect_property_names(
     for combinator in ("allOf", "anyOf", "oneOf"):
         for sub_schema in schema.get(combinator, []):
             if isinstance(sub_schema, dict):
-                results.extend(
-                    _collect_property_names(sub_schema, prefix=prefix)
-                )
+                results.extend(_collect_property_names(sub_schema, prefix=prefix))
 
     return results
 
@@ -87,9 +85,7 @@ class SuspiciousParamsCheck(BaseCheck):
                     suspicious_hits.append((dotted_path, raw_name))
 
             if suspicious_hits:
-                param_list = ", ".join(
-                    f"'{path}'" for path, _ in suspicious_hits[:10]
-                )
+                param_list = ", ".join(f"'{path}'" for path, _ in suspicious_hits[:10])
                 findings.append(
                     Finding(
                         check_id=meta.check_id,
@@ -105,8 +101,7 @@ class SuspiciousParamsCheck(BaseCheck):
                             f"suggesting data exfiltration: {param_list}"
                         ),
                         evidence="; ".join(
-                            f"{path} (matches '{raw}')"
-                            for path, raw in suspicious_hits[:10]
+                            f"{path} (matches '{raw}')" for path, raw in suspicious_hits[:10]
                         ),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,

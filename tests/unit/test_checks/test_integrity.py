@@ -462,10 +462,33 @@ class TestLockfileMissingCheck:
         assert meta.check_id == "intg005"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: LockfileMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_skips_non_stdio_transport(self, check: LockfileMissingCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: LockfileMissingCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_skips_non_stdio_transport(self, check: LockfileMissingCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: LockfileMissingCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
 
 
 class TestLockfileTamperedCheck:
@@ -480,7 +503,29 @@ class TestLockfileTamperedCheck:
         assert meta.check_id == "intg006"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: LockfileTamperedCheck) -> None:
+    async def test_skips_non_stdio_transport(self, check: LockfileTamperedCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: LockfileTamperedCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_executes_without_error(self, check: LockfileTamperedCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: LockfileTamperedCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -498,10 +543,49 @@ class TestUnsignedUpdatesCheck:
         assert meta.check_id == "intg007"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: UnsignedUpdatesCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: UnsignedUpdatesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: UnsignedUpdatesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: UnsignedUpdatesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: UnsignedUpdatesCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "signature": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: UnsignedUpdatesCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestMissingSbomCheck:
@@ -516,10 +600,49 @@ class TestMissingSbomCheck:
         assert meta.check_id == "intg008"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: MissingSbomCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: MissingSbomCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingSbomCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: MissingSbomCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: MissingSbomCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "sbom": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: MissingSbomCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestConfigSchemaMissingCheck:
@@ -534,10 +657,49 @@ class TestConfigSchemaMissingCheck:
         assert meta.check_id == "intg009"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: ConfigSchemaMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ConfigSchemaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ConfigSchemaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ConfigSchemaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ConfigSchemaMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "$schema": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ConfigSchemaMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestToolSchemaDriftCheck:
@@ -552,10 +714,43 @@ class TestToolSchemaDriftCheck:
         assert meta.check_id == "intg010"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: ToolSchemaDriftCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_tool_with_issues(self, check: ToolSchemaDriftCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "test_tool",
+                    "description": "A test tool",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ToolSchemaDriftCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
+
+    async def test_processes_tool_schemas(self, check: ToolSchemaDriftCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "t",
+                    "description": "test",
+                    "inputSchema": {"type": "object", "properties": {"x": {"type": "string"}}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+        assert len(findings) >= 1
+
+    async def test_empty_tools_returns_empty(self, check: ToolSchemaDriftCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == [] or all(f.status == Status.PASS for f in findings)
 
 
 class TestReproducibleBuildMissingCheck:
@@ -570,10 +765,49 @@ class TestReproducibleBuildMissingCheck:
         assert meta.check_id == "intg011"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: ReproducibleBuildMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(self, check: ReproducibleBuildMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ReproducibleBuildMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(self, check: ReproducibleBuildMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(self, check: ReproducibleBuildMissingCheck) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "reproducible": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: ReproducibleBuildMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestDependencyConfusionRiskCheck:
@@ -588,7 +822,29 @@ class TestDependencyConfusionRiskCheck:
         assert meta.check_id == "intg012"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: DependencyConfusionRiskCheck) -> None:
+    async def test_skips_non_stdio_transport(self, check: DependencyConfusionRiskCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: DependencyConfusionRiskCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_executes_without_error(self, check: DependencyConfusionRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: DependencyConfusionRiskCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -606,7 +862,29 @@ class TestTyposquattingRiskCheck:
         assert meta.check_id == "intg013"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: TyposquattingRiskCheck) -> None:
+    async def test_skips_non_stdio_transport(self, check: TyposquattingRiskCheck) -> None:
+        snapshot = make_snapshot(transport_type="http")
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_runs_on_stdio_transport(self, check: TyposquattingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            args=["server.js"],
+        )
+        findings = await check.execute(snapshot)
+        assert len(findings) >= 1
+
+    async def test_executes_without_error(self, check: TyposquattingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: TyposquattingRiskCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -624,10 +902,57 @@ class TestSubresourceIntegrityMissingCheck:
         assert meta.check_id == "intg014"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: SubresourceIntegrityMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: SubresourceIntegrityMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: SubresourceIntegrityMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(
+        self, check: SubresourceIntegrityMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: SubresourceIntegrityMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "integrity": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: SubresourceIntegrityMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
 
 
 class TestBinaryPlantingRiskCheck:
@@ -642,7 +967,23 @@ class TestBinaryPlantingRiskCheck:
         assert meta.check_id == "intg015"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: BinaryPlantingRiskCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: BinaryPlantingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: BinaryPlantingRiskCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: BinaryPlantingRiskCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -660,7 +1001,23 @@ class TestConfigFilePermissionsCheck:
         assert meta.check_id == "intg016"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: ConfigFilePermissionsCheck) -> None:
+    async def test_runs_on_populated_snapshot(self, check: ConfigFilePermissionsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "test_tool", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_executes_without_error(self, check: ConfigFilePermissionsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[{"name": "t", "description": "A test tool"}],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        assert isinstance(findings, list)
+
+    async def test_empty_snapshot(self, check: ConfigFilePermissionsCheck) -> None:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
@@ -678,7 +1035,54 @@ class TestTimestampVerificationMissingCheck:
         assert meta.check_id == "intg017"
         assert meta.category == "integrity"
 
-    async def test_stub_returns_empty(self, check: TimestampVerificationMissingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_fails_on_missing_config_key(
+        self, check: TimestampVerificationMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: TimestampVerificationMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "logging": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_missing_config_key(
+        self, check: TimestampVerificationMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={"command": "node", "args": ["index.js"]},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_config_key_present(
+        self, check: TimestampVerificationMissingCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            config_raw={
+                "command": "node",
+                "timestamp": {"enabled": True},
+            },
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_no_config_fails(self, check: TimestampVerificationMissingCheck) -> None:
+        snapshot = make_snapshot(config_raw=None)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1

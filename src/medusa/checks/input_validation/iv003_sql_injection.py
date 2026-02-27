@@ -58,8 +58,7 @@ class SqlInjectionCheck(BaseCheck):
                 has_pattern = bool(param_def.get("pattern"))
                 has_enum = bool(param_def.get("enum"))
                 has_max_length = (
-                    isinstance(param_def.get("maxLength"), int)
-                    and param_def["maxLength"] <= 128
+                    isinstance(param_def.get("maxLength"), int) and param_def["maxLength"] <= 128
                 )
 
                 if has_pattern or has_enum:

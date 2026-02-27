@@ -24,44 +24,51 @@ class HtmlReporter(BaseReporter):
         pass_rate = round(total_passed / total_checks * 100, 1) if total_checks > 0 else 0
 
         # Build findings JSON for the interactive table
-        findings_json = json.dumps([
-            {
-                "check_id": f.check_id,
-                "check_title": f.check_title,
-                "severity": f.severity.value,
-                "server": f.server_name,
-                "transport": f.server_transport,
-                "resource": f"{f.resource_type}/{f.resource_name}",
-                "details": f.status_extended,
-                "evidence": f.evidence or "",
-                "remediation": f.remediation,
-                "owasp": ", ".join(f.owasp_mcp),
-            }
-            for f in failed
-        ])
+        findings_json = json.dumps(
+            [
+                {
+                    "check_id": f.check_id,
+                    "check_title": f.check_title,
+                    "severity": f.severity.value,
+                    "server": f.server_name,
+                    "transport": f.server_transport,
+                    "resource": f"{f.resource_type}/{f.resource_name}",
+                    "details": f.status_extended,
+                    "evidence": f.evidence or "",
+                    "remediation": f.remediation,
+                    "owasp": ", ".join(f.owasp_mcp),
+                }
+                for f in failed
+            ]
+        )
 
         # Build server scores JSON
-        servers_json = json.dumps([
-            {
-                "name": s.server_name,
-                "score": s.score,
-                "grade": s.grade,
-                "passed": s.passed,
-                "failed": s.failed,
-                "critical": s.critical_findings,
-                "high": s.high_findings,
-                "medium": s.medium_findings,
-                "low": s.low_findings,
-            }
-            for s in result.server_scores
-        ])
+        servers_json = json.dumps(
+            [
+                {
+                    "name": s.server_name,
+                    "score": s.score,
+                    "grade": s.grade,
+                    "passed": s.passed,
+                    "failed": s.failed,
+                    "critical": s.critical_findings,
+                    "high": s.high_findings,
+                    "medium": s.medium_findings,
+                    "low": s.low_findings,
+                }
+                for s in result.server_scores
+            ]
+        )
 
         # Compliance results JSON
         compliance_json = json.dumps(result.compliance_results)
 
         grade_color = {
-            "A": "#22c55e", "B": "#84cc16", "C": "#eab308",
-            "D": "#f97316", "F": "#ef4444",
+            "A": "#22c55e",
+            "B": "#84cc16",
+            "C": "#eab308",
+            "D": "#f97316",
+            "F": "#ef4444",
         }.get(result.aggregate_grade, "#6b7280")
 
         return f"""<!DOCTYPE html>
@@ -120,7 +127,7 @@ footer {{ text-align: center; padding: 30px 0; color: #475569; font-size: 0.8rem
 <div class="container">
 <header>
     <h1>Medusa Security Report</h1>
-    <p class="subtitle">{result.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')} | v{result.medusa_version} | {result.scan_duration_seconds}s</p>
+    <p class="subtitle">{result.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")} | v{result.medusa_version} | {result.scan_duration_seconds}s</p>
     <div class="grade-circle"><span class="grade">{result.aggregate_grade}</span></div>
     <p class="score-label">{result.aggregate_score} / 10</p>
 </header>
@@ -133,10 +140,10 @@ footer {{ text-align: center; padding: 30px 0; color: #475569; font-size: 0.8rem
 </div>
 
 <div class="severity-bar">
-    <span class="sev-badge sev-critical">Critical: {severity_counts['critical']}</span>
-    <span class="sev-badge sev-high">High: {severity_counts['high']}</span>
-    <span class="sev-badge sev-medium">Medium: {severity_counts['medium']}</span>
-    <span class="sev-badge sev-low">Low: {severity_counts['low']}</span>
+    <span class="sev-badge sev-critical">Critical: {severity_counts["critical"]}</span>
+    <span class="sev-badge sev-high">High: {severity_counts["high"]}</span>
+    <span class="sev-badge sev-medium">Medium: {severity_counts["medium"]}</span>
+    <span class="sev-badge sev-low">Low: {severity_counts["low"]}</span>
 </div>
 
 <div class="section">

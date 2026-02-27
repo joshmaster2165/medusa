@@ -92,8 +92,7 @@ def _check_url_restrictions(tool: dict) -> tuple[bool, list[str]]:
 
     if unrestricted_params:
         issues = [
-            f"Parameter '{p}' accepts arbitrary URLs without "
-            f"pattern or enum constraint"
+            f"Parameter '{p}' accepts arbitrary URLs without pattern or enum constraint"
             for p in unrestricted_params
         ]
         return False, issues

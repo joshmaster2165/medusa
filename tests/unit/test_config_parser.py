@@ -1,6 +1,5 @@
 """Tests for medusa.utils.config_parser - configuration loading and parsing."""
 
-
 import pytest
 
 from medusa.utils.config_parser import (
@@ -29,11 +28,7 @@ class TestLoadConfig:
         monkeypatch.chdir(tmp_path)
         config_file = tmp_path / "medusa.yaml"
         config_file.write_text(
-            "version: '2'\n"
-            "discovery:\n"
-            "  auto_discover: false\n"
-            "connection:\n"
-            "  timeout: 60\n"
+            "version: '2'\ndiscovery:\n  auto_discover: false\nconnection:\n  timeout: 60\n"
         )
         config = load_config(str(config_file))
         assert config.version == "2"
@@ -141,9 +136,6 @@ class TestEnvVarExpansion:
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("MEDUSA_REPORT_DIR", "/tmp/reports")
         config_file = tmp_path / "medusa.yaml"
-        config_file.write_text(
-            "output:\n"
-            "  directory: '${MEDUSA_REPORT_DIR}'\n"
-        )
+        config_file.write_text("output:\n  directory: '${MEDUSA_REPORT_DIR}'\n")
         config = load_config(str(config_file))
         assert config.output.directory == "/tmp/reports"

@@ -11,8 +11,24 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.server_hardening.hard001_unnecessary_services_enabled import (
+    _hardening_config_check,
+)
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_ADMIN_KEYS = {
+    "admin",
+    "admin_interface",
+    "admin_panel",
+    "management_interface",
+    "admin_endpoint",
+    "admin_port",
+    "admin_url",
+    "admin_path",
+    "management",
+    "management_port",
+}
 
 
 class AdminInterfaceExposedCheck(BaseCheck):
@@ -24,5 +40,16 @@ class AdminInterfaceExposedCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement hard005 check logic
-        return []
+        meta = self.metadata()
+        return _hardening_config_check(
+            snapshot,
+            meta,
+            bad_keys=_ADMIN_KEYS,
+            bad_values=None,
+            missing_msg=(
+                "Server '{server}' exposes an admin interface in its configuration. "
+                "Admin interfaces should be on isolated networks or disabled."
+            ),
+            present_msg=("Server '{server}' does not appear to expose an admin interface."),
+            fail_on_present=True,
+        )

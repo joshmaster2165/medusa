@@ -40,9 +40,7 @@ class ResourcePromptInjectionCheck(BaseCheck):
 
             hidden_tags = find_hidden_tags(description)
             if hidden_tags:
-                issues.append(
-                    f"Hidden tags found: {'; '.join(hidden_tags[:5])}"
-                )
+                issues.append(f"Hidden tags found: {'; '.join(hidden_tags[:5])}")
 
             injection_matches = find_injection_phrases(description)
             if injection_matches:
@@ -82,9 +80,7 @@ class ResourcePromptInjectionCheck(BaseCheck):
                 issues = []
                 hidden_tags = find_hidden_tags(prompt_desc)
                 if hidden_tags:
-                    issues.append(
-                        f"Hidden tags found: {'; '.join(hidden_tags[:5])}"
-                    )
+                    issues.append(f"Hidden tags found: {'; '.join(hidden_tags[:5])}")
                 injection_matches = find_injection_phrases(prompt_desc)
                 if injection_matches:
                     unique_phrases = list(dict.fromkeys(injection_matches))
@@ -124,9 +120,7 @@ class ResourcePromptInjectionCheck(BaseCheck):
                 issues = []
                 hidden_tags = find_hidden_tags(arg_desc)
                 if hidden_tags:
-                    issues.append(
-                        f"Hidden tags found: {'; '.join(hidden_tags[:5])}"
-                    )
+                    issues.append(f"Hidden tags found: {'; '.join(hidden_tags[:5])}")
                 injection_matches = find_injection_phrases(arg_desc)
                 if injection_matches:
                     unique_phrases = list(dict.fromkeys(injection_matches))

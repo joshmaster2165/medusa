@@ -11,8 +11,20 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.server_hardening.hard001_unnecessary_services_enabled import (
+    _hardening_config_check,
+)
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_UPDATE_KEYS = {
+    "auto_update",
+    "automatic_updates",
+    "security_updates",
+    "patch_management",
+    "update_check",
+    "auto_patch",
+}
 
 
 class MissingSecurityUpdatesCheck(BaseCheck):
@@ -24,5 +36,16 @@ class MissingSecurityUpdatesCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement hard009 check logic
-        return []
+        meta = self.metadata()
+        return _hardening_config_check(
+            snapshot,
+            meta,
+            bad_keys=_UPDATE_KEYS,
+            bad_values=None,
+            missing_msg=(
+                "Server '{server}' has no automated security update configuration. "
+                "Outdated dependencies may contain known exploitable vulnerabilities."
+            ),
+            present_msg=("Server '{server}' has automated security update configuration."),
+            fail_on_present=False,
+        )

@@ -80,10 +80,7 @@ class ResourceOverSharingCheck(BaseCheck):
                         f"Server exposes {resource_count} resources, exceeding "
                         f"the threshold of {RESOURCE_THRESHOLD}."
                     ),
-                    evidence=(
-                        f"resource_count={resource_count}, "
-                        f"threshold={RESOURCE_THRESHOLD}"
-                    ),
+                    evidence=(f"resource_count={resource_count}, threshold={RESOURCE_THRESHOLD}"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -104,10 +101,7 @@ class ResourceOverSharingCheck(BaseCheck):
                         f"Server exposes {prompt_count} prompts, exceeding "
                         f"the threshold of {PROMPT_THRESHOLD}."
                     ),
-                    evidence=(
-                        f"prompt_count={prompt_count}, "
-                        f"threshold={PROMPT_THRESHOLD}"
-                    ),
+                    evidence=(f"prompt_count={prompt_count}, threshold={PROMPT_THRESHOLD}"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )

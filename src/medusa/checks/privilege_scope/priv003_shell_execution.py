@@ -47,9 +47,7 @@ class ShellExecutionCheck(BaseCheck):
             # Note any description that confirms shell intent
             description = tool.get("description", "")
             if description:
-                evidence_parts.append(
-                    f"description={description[:200]}"
-                )
+                evidence_parts.append(f"description={description[:200]}")
 
             # Check if there are any mitigation signals in the schema
             mitigations: list[str] = []
@@ -61,13 +59,9 @@ class ShellExecutionCheck(BaseCheck):
                         if not isinstance(param_def, dict):
                             continue
                         if param_def.get("enum"):
-                            mitigations.append(
-                                f"'{param_name}' has enum constraint"
-                            )
+                            mitigations.append(f"'{param_name}' has enum constraint")
                         if param_def.get("pattern"):
-                            mitigations.append(
-                                f"'{param_name}' has pattern constraint"
-                            )
+                            mitigations.append(f"'{param_name}' has pattern constraint")
 
             mitigation_note = ""
             if mitigations:
@@ -112,8 +106,7 @@ class ShellExecutionCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No shell execution tools detected among "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"No shell execution tools detected among {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

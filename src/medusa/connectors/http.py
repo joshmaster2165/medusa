@@ -34,9 +34,7 @@ class HttpConnector(BaseConnector):
     async def connect_and_snapshot(self) -> ServerSnapshot:
         """Connect to the MCP server via HTTP and return a snapshot."""
         try:
-            async with streamablehttp_client(
-                self.url, headers=self.headers
-            ) as (read, write, _):
+            async with streamablehttp_client(self.url, headers=self.headers) as (read, write, _):
                 async with ClientSession(read, write) as session:
                     init_result = await session.initialize()
 
@@ -61,15 +59,12 @@ class HttpConnector(BaseConnector):
                         ),
                         protocol_version=init_result.protocolVersion,
                         server_info=(
-                            init_result.serverInfo.model_dump()
-                            if init_result.serverInfo
-                            else {}
+                            init_result.serverInfo.model_dump() if init_result.serverInfo else {}
                         ),
                         config_file_path=self.config_file_path,
                         config_raw=self.config_raw,
                     )
         except Exception as e:
             raise ConnectionError(
-                f"Failed to connect to HTTP server '{self.name}' "
-                f"(url: {self.url}): {e}"
+                f"Failed to connect to HTTP server '{self.name}' (url: {self.url}): {e}"
             ) from e

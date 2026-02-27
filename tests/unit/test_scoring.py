@@ -158,9 +158,7 @@ class TestCalculateServerScore:
         # Deductions: HIGH=7.0, LOW=1.5, total=8.5
         # max_possible = 10.0 * 4 = 40.0
         # score = 10.0 - (8.5 / 40.0) * 10.0 = 10.0 - 2.125 = 7.875 -> 7.9
-        assert result.score == 7.9, (
-            f"Expected score 7.9 for mixed severities, got {result.score}"
-        )
+        assert result.score == 7.9, f"Expected score 7.9 for mixed severities, got {result.score}"
         assert result.grade == "B", f"Expected grade B, got {result.grade}"
         assert result.high_findings == 1, "Should count 1 high finding"
         assert result.low_findings == 1, "Should count 1 low finding"
@@ -179,9 +177,7 @@ class TestCalculateServerScore:
 
     def test_zero_checks_run_gives_zero_score(self) -> None:
         result = calculate_server_score([], total_checks_run=0)
-        assert result.score == 0.0, (
-            "Zero checks run should give score 0.0"
-        )
+        assert result.score == 0.0, "Zero checks run should give score 0.0"
         assert result.server_name == "unknown", (
             "Empty findings should default server_name to 'unknown'"
         )
@@ -189,8 +185,7 @@ class TestCalculateServerScore:
     def test_score_is_clamped_to_0_10_range(self) -> None:
         # Even many failures cannot push score below 0
         findings = [
-            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL)
-            for _ in range(20)
+            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL) for _ in range(20)
         ]
         result = calculate_server_score(findings, total_checks_run=5)
         assert result.score >= 0.0, "Score should not go below 0.0"
@@ -201,16 +196,12 @@ class TestCalculateServerScore:
             _make_finding(status=Status.PASS, server_name="my-server"),
         ]
         result = calculate_server_score(findings, total_checks_run=1)
-        assert result.server_name == "my-server", (
-            "Server name should come from findings"
-        )
+        assert result.server_name == "my-server", "Server name should come from findings"
 
     def test_total_checks_field(self) -> None:
         findings = [_make_finding(status=Status.PASS)]
         result = calculate_server_score(findings, total_checks_run=10)
-        assert result.total_checks == 10, (
-            "total_checks should reflect the argument passed in"
-        )
+        assert result.total_checks == 10, "total_checks should reflect the argument passed in"
 
     def test_score_rounding(self) -> None:
         """Score should be rounded to one decimal place."""
@@ -232,9 +223,7 @@ class TestCalculateServerScore:
         result = calculate_server_score(findings, total_checks_run=5)
         # Deduction = 3.0 / 50.0 * 10.0 = 0.6
         # Score = 10.0 - 0.6 = 9.4
-        assert result.score == 9.4, (
-            f"Expected score 9.4, got {result.score}"
-        )
+        assert result.score == 9.4, f"Expected score 9.4, got {result.score}"
         assert result.grade == "A", f"Expected grade A, got {result.grade}"
 
 
@@ -329,9 +318,7 @@ class TestCalculateAggregateScore:
 
     def test_empty_server_scores_gives_perfect(self) -> None:
         result = calculate_aggregate_score([])
-        assert result == 10.0, (
-            "No servers scanned should default to 10.0 (no findings = no risk)"
-        )
+        assert result == 10.0, "No servers scanned should default to 10.0 (no findings = no risk)"
 
     def test_all_zero_check_counts_gives_perfect(self) -> None:
         scores = [
@@ -349,9 +336,7 @@ class TestCalculateAggregateScore:
             ),
         ]
         result = calculate_aggregate_score(scores)
-        assert result == 10.0, (
-            "All servers with 0 checks should give aggregate score 10.0"
-        )
+        assert result == 10.0, "All servers with 0 checks should give aggregate score 10.0"
 
     def test_aggregate_score_is_rounded(self) -> None:
         scores = [
@@ -413,9 +398,7 @@ class TestSeverityWeights:
     """Verify the severity weight constants are sensible."""
 
     def test_critical_is_highest_weight(self) -> None:
-        assert SEVERITY_WEIGHTS[Severity.CRITICAL] == 10.0, (
-            "CRITICAL should have weight 10.0"
-        )
+        assert SEVERITY_WEIGHTS[Severity.CRITICAL] == 10.0, "CRITICAL should have weight 10.0"
 
     def test_informational_is_zero_weight(self) -> None:
         assert SEVERITY_WEIGHTS[Severity.INFORMATIONAL] == 0.0, (

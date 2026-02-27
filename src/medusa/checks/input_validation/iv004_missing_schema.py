@@ -41,29 +41,21 @@ class MissingSchemaCheck(BaseCheck):
             if input_schema is None:
                 issues.append("No inputSchema is defined")
             elif not isinstance(input_schema, dict):
-                issues.append(
-                    f"inputSchema is not an object (got {type(input_schema).__name__})"
-                )
+                issues.append(f"inputSchema is not an object (got {type(input_schema).__name__})")
             else:
                 properties = input_schema.get("properties")
                 schema_type = input_schema.get("type")
 
                 if not schema_type:
-                    issues.append(
-                        "inputSchema is missing the 'type' field"
-                    )
+                    issues.append("inputSchema is missing the 'type' field")
 
                 if properties is None:
-                    issues.append(
-                        "inputSchema has no 'properties' defined"
-                    )
+                    issues.append("inputSchema has no 'properties' defined")
                 elif isinstance(properties, dict) and len(properties) == 0:
                     # An empty properties dict is intentional for zero-arg
                     # tools -- only flag if the schema also lacks 'type'.
                     if not schema_type:
-                        issues.append(
-                            "inputSchema has empty 'properties' and no 'type'"
-                        )
+                        issues.append("inputSchema has empty 'properties' and no 'type'")
 
             if issues:
                 findings.append(

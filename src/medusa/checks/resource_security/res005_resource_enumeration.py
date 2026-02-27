@@ -1,18 +1,23 @@
-"""RES005: Resource Enumeration Risk.
+"""RES-005: Resource Enumeration Risk.
 
-Detects MCP servers that expose predictable or sequential resource identifiers, enabling
-attackers to enumerate all available resources by iterating through ID ranges or patterns.
-Resource listing endpoints without pagination limits also enable bulk enumeration.
+Checks resources for sequential/predictable URIs (e.g. /resource/1, /resource/2).
+Flags servers where numeric/sequential resource IDs are exposed.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding
+from medusa.core.models import CheckMetadata, Finding, Status
+
+SEQUENTIAL_URI_PATTERN = re.compile(r"[/\-_](\d+)$")
+PREDICTABLE_ID_PATTERN = re.compile(
+    r"(id|num|number|seq|sequence|index|item)[/\-_=]?\d+", re.IGNORECASE
+)
 
 
 class ResourceEnumerationCheck(BaseCheck):
@@ -24,5 +29,54 @@ class ResourceEnumerationCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement res005 check logic
-        return []
+        meta = self.metadata()
+        findings: list[Finding] = []
+
+        if not snapshot.resources:
+            return findings
+
+        for resource in snapshot.resources:
+            res_name = resource.get("name", "<unnamed>")
+            uri = resource.get("uri", "")
+            if not uri:
+                continue
+
+            if SEQUENTIAL_URI_PATTERN.search(uri) or PREDICTABLE_ID_PATTERN.search(uri):
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="resource",
+                        resource_name=res_name,
+                        status_extended=(
+                            f"Resource '{res_name}' has a predictable/sequential URI "
+                            f"'{uri}' that may enable enumeration attacks."
+                        ),
+                        evidence=f"uri={uri!r}",
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        if not findings and snapshot.resources:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No predictable/sequential resource URIs detected.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+
+        return findings

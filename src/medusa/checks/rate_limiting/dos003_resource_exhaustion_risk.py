@@ -11,8 +11,12 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.rate_limiting.dos001_missing_rate_limiting import _config_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+from medusa.utils.pattern_matching import RESOURCE_LIMIT_KEYS
+
+_RESOURCE_ENV = {"MAX_MEMORY", "MAX_CPU", "ULIMIT", "RESOURCE_LIMIT"}
 
 
 class ResourceExhaustionRiskCheck(BaseCheck):
@@ -24,5 +28,15 @@ class ResourceExhaustionRiskCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement dos003 check logic
-        return []
+        meta = self.metadata()
+        return _config_check(
+            snapshot,
+            meta,
+            config_keys=RESOURCE_LIMIT_KEYS,
+            env_vars=_RESOURCE_ENV,
+            missing_msg=(
+                "Server '{server}' has no resource limit configuration. "
+                "Tool execution may exhaust CPU, memory, or I/O."
+            ),
+            present_msg="Resource limit configuration detected in: {sources}.",
+        )

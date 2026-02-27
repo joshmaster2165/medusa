@@ -19,9 +19,7 @@ from medusa.core.models import CheckMetadata, Finding, Status
 _SCRIPT_RUNNERS: set[str] = {"node", "python", "python3", "ruby", "deno", "bun"}
 
 # File extensions that indicate a local script.
-_SCRIPT_EXTENSIONS: re.Pattern[str] = re.compile(
-    r"\.(js|mjs|cjs|ts|py|rb|sh|bash)$", re.IGNORECASE
-)
+_SCRIPT_EXTENSIONS: re.Pattern[str] = re.compile(r"\.(js|mjs|cjs|ts|py|rb|sh|bash)$", re.IGNORECASE)
 
 # Config keys indicating integrity verification is in place.
 _INTEGRITY_KEYS: set[str] = {

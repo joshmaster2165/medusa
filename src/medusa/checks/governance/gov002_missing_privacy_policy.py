@@ -12,8 +12,19 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.governance.gov001_missing_security_policy import _gov_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_PRIVACY_KEYS = {
+    "privacy_policy",
+    "privacy",
+    "data_privacy",
+    "gdpr",
+    "ccpa",
+    "data_protection_policy",
+    "privacy_notice",
+}
 
 
 class MissingPrivacyPolicyCheck(BaseCheck):
@@ -25,5 +36,14 @@ class MissingPrivacyPolicyCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement gov002 check logic
-        return []
+        meta = self.metadata()
+        return _gov_check(
+            snapshot,
+            meta,
+            config_keys=_PRIVACY_KEYS,
+            missing_msg=(
+                "Server '{server}' has no privacy policy configuration. "
+                "Data collection and processing practices are undocumented."
+            ),
+            present_msg="Server '{server}' has a privacy policy configured.",
+        )

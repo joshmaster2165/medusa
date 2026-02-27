@@ -11,8 +11,19 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.error_handling.err001_stack_trace_exposure import _err_truthy_check
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_VERBOSE_ERROR_KEYS = {
+    "verbose_errors",
+    "verbose_logging",
+    "detailed_errors",
+    "error_details",
+    "expose_error_details",
+    "show_errors",
+}
+_VERBOSE_ENV = {"VERBOSE_ERRORS", "DETAILED_ERRORS", "SHOW_ERROR_DETAILS"}
 
 
 class VerboseErrorMessagesCheck(BaseCheck):
@@ -24,5 +35,15 @@ class VerboseErrorMessagesCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement err003 check logic
-        return []
+        meta = self.metadata()
+        return _err_truthy_check(
+            snapshot,
+            meta,
+            bad_keys=_VERBOSE_ERROR_KEYS,
+            env_vars=_VERBOSE_ENV,
+            fail_msg=(
+                "Server '{server}' has verbose error messages enabled ({match}). "
+                "Detailed errors reveal internal implementation specifics."
+            ),
+            pass_msg="Server '{server}' does not appear to expose verbose error details.",
+        )

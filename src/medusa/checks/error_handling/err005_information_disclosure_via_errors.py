@@ -24,5 +24,18 @@ class InformationDisclosureViaErrorsCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement err005 check logic
-        return []
+        from medusa.checks.error_handling.err001_stack_trace_exposure import _err_truthy_check
+        from medusa.utils.pattern_matching import ERROR_EXPOSURE_KEYS
+
+        meta = self.metadata()
+        return _err_truthy_check(
+            snapshot,
+            meta,
+            bad_keys=ERROR_EXPOSURE_KEYS | {"expose_internals", "show_internal_errors"},
+            env_vars={"EXPOSE_ERRORS", "SHOW_INTERNAL_DETAILS"},
+            fail_msg=(
+                "Server '{server}' has information disclosure in error responses ({match}). "
+                "OS details, hostnames, or runtime info may be revealed."
+            ),
+            pass_msg="Server '{server}' does not appear to disclose system info in errors.",
+        )

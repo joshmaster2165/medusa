@@ -11,8 +11,21 @@ from pathlib import Path
 
 import yaml
 
+from medusa.checks.server_hardening.hard001_unnecessary_services_enabled import (
+    _hardening_config_check,
+)
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding
+
+_UNSAFE_METHOD_KEYS = {
+    "allowed_methods",
+    "http_methods",
+    "trace",
+    "options_method",
+    "allow_trace",
+    "allow_delete",
+    "enable_delete",
+}
 
 
 class UnnecessaryHttpMethodsCheck(BaseCheck):
@@ -24,5 +37,18 @@ class UnnecessaryHttpMethodsCheck(BaseCheck):
         return CheckMetadata(**data)
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
-        # TODO: Implement hard012 check logic
-        return []
+        meta = self.metadata()
+        if snapshot.transport_type == "stdio":
+            return []
+        return _hardening_config_check(
+            snapshot,
+            meta,
+            bad_keys=_UNSAFE_METHOD_KEYS,
+            bad_values=None,
+            missing_msg=(
+                "Server '{server}' does not restrict HTTP methods in configuration. "
+                "TRACE, DELETE, and PUT may be enabled by default."
+            ),
+            present_msg=("Server '{server}' has HTTP method restriction configured."),
+            fail_on_present=False,
+        )

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from medusa.core.models import Finding, Severity, ServerScore, Status
-
+from medusa.core.models import Finding, ServerScore, Severity, Status
 
 SEVERITY_WEIGHTS: dict[Severity, float] = {
     Severity.CRITICAL: 10.0,
@@ -30,9 +29,7 @@ def score_to_grade(score: float) -> str:
     return "F"
 
 
-def calculate_server_score(
-    findings: list[Finding], total_checks_run: int
-) -> ServerScore:
+def calculate_server_score(findings: list[Finding], total_checks_run: int) -> ServerScore:
     """Calculate a security score for a single server.
 
     Score = 10.0 - (weighted_deductions / max_possible_deduction) * 10.0
