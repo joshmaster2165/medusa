@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """Severity level for a security finding."""
 
     CRITICAL = "critical"
@@ -18,7 +18,7 @@ class Severity(str, Enum):
     INFORMATIONAL = "informational"
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     """Result status of a security check."""
 
     PASS = "pass"

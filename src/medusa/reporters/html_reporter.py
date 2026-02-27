@@ -79,42 +79,88 @@ class HtmlReporter(BaseReporter):
 <title>Medusa Security Report</title>
 <style>
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }}
+body {{
+  font-family: -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, sans-serif;
+  background: #0f172a; color: #e2e8f0;
+  line-height: 1.6;
+}}
 .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
 header {{ text-align: center; padding: 40px 0 30px; }}
 header h1 {{ font-size: 2rem; color: #f8fafc; margin-bottom: 8px; }}
 header .subtitle {{ color: #94a3b8; font-size: 0.9rem; }}
-.grade-circle {{ width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto; border: 4px solid {grade_color}; }}
-.grade-circle .grade {{ font-size: 3rem; font-weight: bold; color: {grade_color}; }}
+.grade-circle {{
+  width: 120px; height: 120px; border-radius: 50%;
+  display: flex; align-items: center;
+  justify-content: center; margin: 20px auto;
+  border: 4px solid {grade_color};
+}}
+.grade-circle .grade {{
+  font-size: 3rem; font-weight: bold;
+  color: {grade_color};
+}}
 .score-label {{ text-align: center; color: #94a3b8; margin-bottom: 30px; }}
-.summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 30px; }}
+.summary {{
+  display: grid; gap: 16px; margin-bottom: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}}
 .stat-card {{ background: #1e293b; border-radius: 12px; padding: 20px; text-align: center; }}
 .stat-card .value {{ font-size: 2rem; font-weight: bold; color: #f8fafc; }}
 .stat-card .label {{ color: #94a3b8; font-size: 0.85rem; margin-top: 4px; }}
 .severity-bar {{ display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }}
 .sev-badge {{ padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; }}
-.sev-critical {{ background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }}
-.sev-high {{ background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }}
-.sev-medium {{ background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); }}
-.sev-low {{ background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }}
+.sev-critical {{
+  background: rgba(239,68,68,0.15);
+  color: #ef4444; border: 1px solid rgba(239,68,68,0.3);
+}}
+.sev-high {{
+  background: rgba(249,115,22,0.15);
+  color: #f97316; border: 1px solid rgba(249,115,22,0.3);
+}}
+.sev-medium {{
+  background: rgba(234,179,8,0.15);
+  color: #eab308; border: 1px solid rgba(234,179,8,0.3);
+}}
+.sev-low {{
+  background: rgba(59,130,246,0.15);
+  color: #3b82f6; border: 1px solid rgba(59,130,246,0.3);
+}}
 .section {{ background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 24px; }}
 .section h2 {{ font-size: 1.3rem; color: #f8fafc; margin-bottom: 16px; }}
-.server-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }}
-.server-card {{ background: #0f172a; border-radius: 10px; padding: 20px; border: 1px solid #334155; }}
+.server-grid {{
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}}
+.server-card {{
+  background: #0f172a; border-radius: 10px;
+  padding: 20px; border: 1px solid #334155;
+}}
 .server-card h3 {{ color: #f8fafc; margin-bottom: 8px; }}
 .server-card .server-score {{ font-size: 1.5rem; font-weight: bold; margin-bottom: 4px; }}
 .server-card .server-meta {{ color: #94a3b8; font-size: 0.85rem; }}
 table {{ width: 100%; border-collapse: collapse; margin-top: 12px; }}
-th {{ text-align: left; padding: 12px; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #334155; }}
+th {{
+  text-align: left; padding: 12px; color: #94a3b8;
+  font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #334155;
+}}
 td {{ padding: 12px; border-bottom: 1px solid #1e293b; font-size: 0.9rem; }}
 tr:hover {{ background: rgba(51,65,85,0.3); }}
 .finding-row {{ cursor: pointer; }}
-.finding-detail {{ display: none; background: #0f172a; padding: 16px; border-radius: 8px; margin: 8px 0; }}
+.finding-detail {{
+  display: none; background: #0f172a;
+  padding: 16px; border-radius: 8px; margin: 8px 0;
+}}
 .finding-detail.open {{ display: block; }}
 .finding-detail p {{ margin-bottom: 8px; }}
 .finding-detail .label {{ color: #94a3b8; font-weight: 600; }}
 .filters {{ display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }}
-.filter-btn {{ padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 0.85rem; }}
+.filter-btn {{
+  padding: 6px 14px; border-radius: 6px;
+  border: 1px solid #334155; background: transparent;
+  color: #94a3b8; cursor: pointer; font-size: 0.85rem;
+}}
 .filter-btn.active {{ background: #334155; color: #f8fafc; }}
 .compliance-table td {{ font-size: 0.85rem; }}
 .status-pass {{ color: #22c55e; }}
@@ -127,16 +173,31 @@ footer {{ text-align: center; padding: 30px 0; color: #475569; font-size: 0.8rem
 <div class="container">
 <header>
     <h1>Medusa Security Report</h1>
-    <p class="subtitle">{result.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")} | v{result.medusa_version} | {result.scan_duration_seconds}s</p>
+    <p class="subtitle">\
+{result.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")} \
+| v{result.medusa_version} \
+| {result.scan_duration_seconds}s</p>
     <div class="grade-circle"><span class="grade">{result.aggregate_grade}</span></div>
     <p class="score-label">{result.aggregate_score} / 10</p>
 </header>
 
 <div class="summary">
-    <div class="stat-card"><div class="value">{result.servers_scanned}</div><div class="label">Servers Scanned</div></div>
-    <div class="stat-card"><div class="value">{result.total_findings}</div><div class="label">Findings</div></div>
-    <div class="stat-card"><div class="value">{pass_rate}%</div><div class="label">Pass Rate</div></div>
-    <div class="stat-card"><div class="value">{total_checks}</div><div class="label">Checks Run</div></div>
+    <div class="stat-card">
+      <div class="value">{result.servers_scanned}</div>
+      <div class="label">Servers Scanned</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{result.total_findings}</div>
+      <div class="label">Findings</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{pass_rate}%</div>
+      <div class="label">Pass Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">{total_checks}</div>
+      <div class="label">Checks Run</div>
+    </div>
 </div>
 
 <div class="severity-bar">
@@ -185,7 +246,11 @@ const compliance = {compliance_json};
 function renderServers() {{
     const grid = document.getElementById('serverGrid');
     grid.innerHTML = servers.map(s => {{
-        const color = s.grade === 'A' ? '#22c55e' : s.grade === 'B' ? '#84cc16' : s.grade === 'C' ? '#eab308' : s.grade === 'D' ? '#f97316' : '#ef4444';
+        const g = s.grade;
+        const color = g === 'A' ? '#22c55e'
+            : g === 'B' ? '#84cc16'
+            : g === 'C' ? '#eab308'
+            : g === 'D' ? '#f97316' : '#ef4444';
         return `<div class="server-card">
             <h3>${{s.name}}</h3>
             <div class="server-score" style="color:${{color}}">${{s.grade}} (${{s.score}}/10)</div>
@@ -214,7 +279,10 @@ function renderFindings(filter) {{
         </tr>
         <tr><td colspan="5"><div class="finding-detail" id="detail-${{i}}">
             <p><span class="label">Details: </span>${{f.details}}</p>
-            ${{f.evidence ? '<p><span class="label">Evidence: </span><code>' + f.evidence.substring(0, 500) + '</code></p>' : ''}}
+            ${{f.evidence
+              ? '<p><span class="label">Evidence: </span>'
+                + '<code>' + f.evidence.substring(0, 500)
+                + '</code></p>' : ''}}
             <p><span class="label">Remediation: </span>${{f.remediation}}</p>
             ${{f.owasp ? '<p><span class="label">OWASP MCP: </span>' + f.owasp + '</p>' : ''}}
         </div></td></tr>`;
@@ -240,8 +308,15 @@ function renderCompliance() {{
     keys.forEach(framework => {{
         const reqs = compliance[framework];
         Object.entries(reqs).forEach(([id, r]) => {{
-            const statusClass = r.status === 'compliant' ? 'status-pass' : r.status === 'non_compliant' ? 'status-fail' : 'status-na';
-            const statusText = r.status === 'compliant' ? 'PASS' : r.status === 'non_compliant' ? 'FAIL' : 'N/A';
+            const st = r.status;
+            const statusClass = st === 'compliant'
+                ? 'status-pass'
+                : st === 'non_compliant'
+                    ? 'status-fail' : 'status-na';
+            const statusText = st === 'compliant'
+                ? 'PASS'
+                : st === 'non_compliant'
+                    ? 'FAIL' : 'N/A';
             tbody.innerHTML += `<tr>
                 <td>${{id}}</td>
                 <td>${{r.title}}</td>

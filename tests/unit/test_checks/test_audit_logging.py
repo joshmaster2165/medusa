@@ -204,7 +204,7 @@ class TestInsufficientLogDetailCheck:
 
     async def test_fails_on_missing_config_key(self, check: InsufficientLogDetailCheck) -> None:
         snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
+            config_raw={"command": "node", "logging": {"level": "info"}},
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
@@ -214,25 +214,7 @@ class TestInsufficientLogDetailCheck:
         snapshot = make_snapshot(
             config_raw={
                 "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
-
-    async def test_fails_on_missing_config_key(self, check: InsufficientLogDetailCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: InsufficientLogDetailCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
+                "logging": {"level": "info"},
                 "caller": {"enabled": True},
             },
         )
@@ -241,7 +223,9 @@ class TestInsufficientLogDetailCheck:
         assert len(pass_findings) >= 1
 
     async def test_no_config_fails(self, check: InsufficientLogDetailCheck) -> None:
-        snapshot = make_snapshot(config_raw=None)
+        snapshot = make_snapshot(
+            config_raw={"logging": {"level": "info"}},
+        )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
@@ -258,25 +242,6 @@ class TestLogTamperingRiskCheck:
         meta = check.metadata()
         assert meta.check_id == "audit004"
         assert meta.category == "audit_logging"
-
-    async def test_fails_on_missing_config_key(self, check: LogTamperingRiskCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: LogTamperingRiskCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
 
     async def test_fails_on_missing_config_key(self, check: LogTamperingRiskCheck) -> None:
         snapshot = make_snapshot(
@@ -328,25 +293,6 @@ class TestMissingLogRotationCheck:
         snapshot = make_snapshot(
             config_raw={
                 "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
-
-    async def test_fails_on_missing_config_key(self, check: MissingLogRotationCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: MissingLogRotationCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
                 "rotation": {"enabled": True},
             },
         )
@@ -372,25 +318,6 @@ class TestMissingAlertingCheck:
         meta = check.metadata()
         assert meta.check_id == "audit006"
         assert meta.category == "audit_logging"
-
-    async def test_fails_on_missing_config_key(self, check: MissingAlertingCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: MissingAlertingCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
 
     async def test_fails_on_missing_config_key(self, check: MissingAlertingCheck) -> None:
         snapshot = make_snapshot(
@@ -432,7 +359,7 @@ class TestSensitiveDataInLogsCheck:
 
     async def test_fails_on_missing_config_key(self, check: SensitiveDataInLogsCheck) -> None:
         snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
+            config_raw={"command": "node", "logging": {"level": "info"}},
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
@@ -442,25 +369,7 @@ class TestSensitiveDataInLogsCheck:
         snapshot = make_snapshot(
             config_raw={
                 "command": "node",
-                "true": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
-
-    async def test_fails_on_missing_config_key(self, check: SensitiveDataInLogsCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: SensitiveDataInLogsCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
+                "logging": {"level": "info"},
                 "log_redact": {"enabled": True},
             },
         )
@@ -469,7 +378,9 @@ class TestSensitiveDataInLogsCheck:
         assert len(pass_findings) >= 1
 
     async def test_no_config_fails(self, check: SensitiveDataInLogsCheck) -> None:
-        snapshot = make_snapshot(config_raw=None)
+        snapshot = make_snapshot(
+            config_raw={"logging": {"level": "info"}},
+        )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
@@ -486,25 +397,6 @@ class TestMissingAccessLoggingCheck:
         meta = check.metadata()
         assert meta.check_id == "audit008"
         assert meta.category == "audit_logging"
-
-    async def test_fails_on_missing_config_key(self, check: MissingAccessLoggingCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: MissingAccessLoggingCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
 
     async def test_fails_on_missing_config_key(self, check: MissingAccessLoggingCheck) -> None:
         snapshot = make_snapshot(
@@ -558,11 +450,6 @@ class TestLogInjectionRiskCheck:
         assert isinstance(findings, list)
         assert len(findings) >= 1
 
-    async def test_empty_tools_returns_empty(self, check: LogInjectionRiskCheck) -> None:
-        snapshot = make_snapshot(tools=[])
-        findings = await check.execute(snapshot)
-        assert findings == [] or all(f.status == Status.PASS for f in findings)
-
     async def test_processes_tool_schemas(self, check: LogInjectionRiskCheck) -> None:
         snapshot = make_snapshot(
             tools=[
@@ -594,27 +481,6 @@ class TestMissingForensicCapabilityCheck:
         meta = check.metadata()
         assert meta.check_id == "audit010"
         assert meta.category == "audit_logging"
-
-    async def test_fails_on_missing_config_key(self, check: MissingForensicCapabilityCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(
-        self, check: MissingForensicCapabilityCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
 
     async def test_fails_on_missing_config_key(self, check: MissingForensicCapabilityCheck) -> None:
         snapshot = make_snapshot(

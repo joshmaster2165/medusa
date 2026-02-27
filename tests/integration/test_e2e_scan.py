@@ -104,7 +104,7 @@ async def test_secure_server_no_critical_findings(
     fire on a mock stdio server with no config. We exclude those known IDs.
     """
     # Checks that require config keys which a minimal mock server won't have
-    _KNOWN_CONFIG_CRITICAL = {
+    known_config_critical = {
         "mt001",
         "mt002",
         "mt003",
@@ -122,7 +122,7 @@ async def test_secure_server_no_critical_findings(
         for f in result.findings
         if f.status == Status.FAIL
         and f.severity == Severity.CRITICAL
-        and f.check_id not in _KNOWN_CONFIG_CRITICAL
+        and f.check_id not in known_config_critical
     ]
     assert len(critical_fails) == 0, f"Unexpected CRITICAL findings: {critical_fails}"
 

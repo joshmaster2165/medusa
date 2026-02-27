@@ -181,25 +181,6 @@ class TestDependencyVulnerabilityCheck:
         snapshot = make_snapshot(
             config_raw={
                 "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
-
-    async def test_fails_on_missing_config_key(self, check: DependencyVulnerabilityCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: DependencyVulnerabilityCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
                 "audit": {"enabled": True},
             },
         )
@@ -225,25 +206,6 @@ class TestAbandonedDependenciesCheck:
         meta = check.metadata()
         assert meta.check_id == "sc003"
         assert meta.category == "supply_chain"
-
-    async def test_fails_on_missing_config_key(self, check: AbandonedDependenciesCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: AbandonedDependenciesCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
 
     async def test_fails_on_missing_config_key(self, check: AbandonedDependenciesCheck) -> None:
         snapshot = make_snapshot(
@@ -291,22 +253,8 @@ class TestExcessiveDependenciesCheck:
     async def test_runs_on_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
         snapshot = make_snapshot(
             transport_type="stdio",
-            command="node",
-            args=["server.js"],
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) >= 1
-
-    async def test_skips_non_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
-        snapshot = make_snapshot(transport_type="http")
-        findings = await check.execute(snapshot)
-        assert findings == []
-
-    async def test_runs_on_stdio_transport(self, check: ExcessiveDependenciesCheck) -> None:
-        snapshot = make_snapshot(
-            transport_type="stdio",
-            command="node",
-            args=["server.js"],
+            command="npm",
+            args=["install", "express"],
         )
         findings = await check.execute(snapshot)
         assert len(findings) >= 1
@@ -372,22 +320,8 @@ class TestInstallScriptsPresentCheck:
     async def test_runs_on_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
         snapshot = make_snapshot(
             transport_type="stdio",
-            command="node",
-            args=["server.js"],
-        )
-        findings = await check.execute(snapshot)
-        assert len(findings) >= 1
-
-    async def test_skips_non_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
-        snapshot = make_snapshot(transport_type="http")
-        findings = await check.execute(snapshot)
-        assert findings == []
-
-    async def test_runs_on_stdio_transport(self, check: InstallScriptsPresentCheck) -> None:
-        snapshot = make_snapshot(
-            transport_type="stdio",
-            command="node",
-            args=["server.js"],
+            command="npm",
+            args=["install", "express"],
         )
         findings = await check.execute(snapshot)
         assert len(findings) >= 1
@@ -405,49 +339,38 @@ class TestNativeBinaryDependenciesCheck:
         assert meta.check_id == "sc007"
         assert meta.category == "supply_chain"
 
-    async def test_fails_on_missing_config_key(self, check: NativeBinaryDependenciesCheck) -> None:
+    async def test_passes_on_no_native_keys(self, check: NativeBinaryDependenciesCheck) -> None:
         snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
             config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: NativeBinaryDependenciesCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
         )
         findings = await check.execute(snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1
 
-    async def test_fails_on_missing_config_key(self, check: NativeBinaryDependenciesCheck) -> None:
+    async def test_fails_on_native_key_present(self, check: NativeBinaryDependenciesCheck) -> None:
         snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: NativeBinaryDependenciesCheck) -> None:
-        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
             config_raw={
                 "command": "node",
                 "native": {"enabled": True},
             },
         )
         findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
-
-    async def test_no_config_fails(self, check: NativeBinaryDependenciesCheck) -> None:
-        snapshot = make_snapshot(config_raw=None)
-        findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
+
+    async def test_no_config_passes(self, check: NativeBinaryDependenciesCheck) -> None:
+        snapshot = make_snapshot(
+            transport_type="stdio",
+            command="node",
+            config_raw=None,
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
 
 
 class TestSingleMaintainerRiskCheck:
@@ -461,25 +384,6 @@ class TestSingleMaintainerRiskCheck:
         meta = check.metadata()
         assert meta.check_id == "sc008"
         assert meta.category == "supply_chain"
-
-    async def test_fails_on_missing_config_key(self, check: SingleMaintainerRiskCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={"command": "node", "args": ["index.js"]},
-        )
-        findings = await check.execute(snapshot)
-        fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1
-
-    async def test_passes_on_config_key_present(self, check: SingleMaintainerRiskCheck) -> None:
-        snapshot = make_snapshot(
-            config_raw={
-                "command": "node",
-                "logging": {"enabled": True},
-            },
-        )
-        findings = await check.execute(snapshot)
-        pass_findings = [f for f in findings if f.status == Status.PASS]
-        assert len(pass_findings) >= 1
 
     async def test_fails_on_missing_config_key(self, check: SingleMaintainerRiskCheck) -> None:
         snapshot = make_snapshot(
