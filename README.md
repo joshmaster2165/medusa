@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Medusa Logo" width="200">
+  <img src="docs/logo.svg" alt="Medusa Logo" width="300">
 </p>
 
 <p align="center">
