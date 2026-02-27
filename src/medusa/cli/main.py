@@ -177,7 +177,15 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     "--upload",
     type=str,
     default=None,
-    help="Upload results to dashboard URL (e.g. https://dashboard.example.com/api/v1/reports)",
+    is_flag=False,
+    flag_value="__default__",
+    help="Upload results to dashboard (optionally provide custom URL)",
+)
+@click.option(
+    "--api-key",
+    type=str,
+    default=None,
+    help="API key for dashboard upload (overrides MEDUSA_API_KEY and saved config)",
 )
 @click.pass_context
 def scan(
@@ -198,6 +206,7 @@ def scan(
     no_auto_discover: bool,
     max_concurrency: int,
     upload: str | None,
+    api_key: str | None,
 ) -> None:
     """Scan MCP servers for security vulnerabilities."""
     quiet = ctx.obj.get("quiet", False)
@@ -350,22 +359,38 @@ def scan(
 
     # Upload results to dashboard
     if upload:
-        api_key = os.environ.get("MEDUSA_API_KEY", "")
-        if not api_key:
+        from medusa.cli.config import load_user_config
+
+        user_config = load_user_config()
+
+        # Resolve upload URL: explicit arg > saved config > default
+        if upload == "__default__":
+            upload_url = user_config.dashboard_url
+        else:
+            upload_url = upload
+
+        # Resolve API key: --api-key flag > env var > saved config
+        resolved_key = (
+            api_key
+            or os.environ.get("MEDUSA_API_KEY", "")
+            or (user_config.api_key or "")
+        )
+
+        if not resolved_key:
             console.print(
-                "[red]MEDUSA_API_KEY environment variable is required"
-                " for --upload[/red]"
+                "[red]API key required for --upload. Provide via --api-key, "
+                "MEDUSA_API_KEY env var, or 'medusa configure'.[/red]"
             )
             sys.exit(2)
 
         if not quiet:
-            console.print(f"\n[dim]Uploading results to {upload}...[/dim]")
+            console.print(f"\n[dim]Uploading results to {upload_url}...[/dim]")
 
         try:
             resp = httpx.post(
-                upload,
+                upload_url,
                 json=result.model_dump(mode="json"),
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers={"Authorization": f"Bearer {resolved_key}"},
                 timeout=30,
             )
             if resp.status_code == 200:
@@ -510,6 +535,58 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
         )
 
     console.print(table)
+
+
+@cli.command()
+@click.option(
+    "--api-key",
+    type=str,
+    default=None,
+    help="Medusa dashboard API key",
+)
+@click.option(
+    "--dashboard-url",
+    type=str,
+    default=None,
+    help="Dashboard upload URL",
+)
+@click.pass_context
+def configure(
+    ctx: click.Context,
+    api_key: str | None,
+    dashboard_url: str | None,
+) -> None:
+    """Save Medusa CLI configuration to ~/.medusa/config.yaml."""
+    from medusa.cli.config import (
+        CONFIG_FILE,
+        load_user_config,
+        save_user_config,
+    )
+
+    quiet = ctx.obj.get("quiet", False)
+    config = load_user_config()
+
+    # Interactive prompts if no flags provided
+    if api_key is None and dashboard_url is None:
+        api_key = click.prompt(
+            "API key",
+            default=config.api_key or "",
+            show_default=bool(config.api_key),
+        )
+        dashboard_url = click.prompt(
+            "Dashboard URL",
+            default=config.dashboard_url,
+        )
+
+    if api_key is not None:
+        config.api_key = api_key
+    if dashboard_url is not None:
+        config.dashboard_url = dashboard_url
+
+    save_user_config(config)
+
+    if not quiet:
+        console.print(f"[green]Configuration saved to {CONFIG_FILE}[/green]")
 
 
 if __name__ == "__main__":
