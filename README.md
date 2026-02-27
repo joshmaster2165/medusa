@@ -2,8 +2,6 @@
   <img src="docs/logo.svg" alt="Medusa Logo" width="200">
 </p>
 
-<h1 align="center">Medusa</h1>
-
 <p align="center">
   <strong>Security scanner for MCP servers</strong>
 </p>
