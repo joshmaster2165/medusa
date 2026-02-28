@@ -176,11 +176,9 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
 )
 @click.option(
     "--upload",
-    type=str,
-    default=None,
-    is_flag=False,
-    flag_value="__default__",
-    help="Upload results to dashboard (optionally provide custom URL)",
+    is_flag=True,
+    default=False,
+    help="Upload results to configured dashboard (see 'medusa configure')",
 )
 @click.option(
     "--api-key",
@@ -206,7 +204,7 @@ def scan(
     compliance: str | None,
     no_auto_discover: bool,
     max_concurrency: int,
-    upload: str | None,
+    upload: bool,
     api_key: str | None,
 ) -> None:
     """Scan MCP servers for security vulnerabilities."""
@@ -372,12 +370,7 @@ def scan(
         from medusa.cli.config import load_user_config
 
         user_config = load_user_config()
-
-        # Resolve upload URL: explicit arg > saved config > default
-        if upload == "__default__":
-            upload_url = user_config.dashboard_url
-        else:
-            upload_url = upload
+        upload_url = user_config.dashboard_url
 
         # Resolve API key: --api-key flag > env var > saved config
         resolved_key = (
