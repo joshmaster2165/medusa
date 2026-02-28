@@ -18,6 +18,11 @@ class UserConfig(BaseModel):
     api_key: str | None = None
     dashboard_url: str = DEFAULT_DASHBOARD_URL
 
+    # AI scanning settings
+    claude_api_key: str | None = None
+    claude_model: str = "claude-sonnet-4-20250514"
+    ai_mode: str = "byok"  # "byok" or "proxied"
+
 
 def load_user_config() -> UserConfig:
     """Load user config from ~/.medusa/config.yaml, or return defaults."""

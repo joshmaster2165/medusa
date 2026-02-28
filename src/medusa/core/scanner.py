@@ -49,15 +49,27 @@ class ScanEngine:
         exclude_ids: list[str] | None = None,
         max_concurrency: int = 4,
         progress_callback: ProgressCallback | None = None,
+        ai_enabled: bool = False,
     ) -> None:
         self.connectors = connectors
         self.registry = registry
-        self.checks = registry.get_checks(
+        self.ai_enabled = ai_enabled
+
+        all_checks = registry.get_checks(
             categories=categories,
             severities=severities,
             check_ids=check_ids,
             exclude_ids=exclude_ids,
         )
+        # Filter out AI checks unless explicitly enabled
+        if ai_enabled:
+            self.checks = all_checks
+        else:
+            self.checks = [
+                c
+                for c in all_checks
+                if not c.metadata().check_id.startswith("ai")
+            ]
         self.max_concurrency = max_concurrency
         self.progress_callback = progress_callback
 

@@ -10,7 +10,6 @@ from medusa.cli.config import (
     save_user_config,
 )
 
-
 # ── UserConfig defaults ─────────────────────────────────────────────────────
 
 

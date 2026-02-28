@@ -186,6 +186,24 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     default=None,
     help="API key for dashboard upload (overrides MEDUSA_API_KEY and saved config)",
 )
+@click.option(
+    "--ai-scan",
+    is_flag=True,
+    default=False,
+    help="Enable AI-powered security analysis (requires credits)",
+)
+@click.option(
+    "--claude-api-key",
+    type=str,
+    default=None,
+    help="Anthropic API key for AI scanning (overrides ANTHROPIC_API_KEY)",
+)
+@click.option(
+    "--ai-mode",
+    type=click.Choice(["byok", "proxied"]),
+    default=None,
+    help="AI mode: use your own Claude key (byok) or dashboard proxy (proxied)",
+)
 @click.pass_context
 def scan(
     ctx: click.Context,
@@ -206,6 +224,9 @@ def scan(
     max_concurrency: int,
     upload: bool,
     api_key: str | None,
+    ai_scan: bool,
+    claude_api_key: str | None,
+    ai_mode: str | None,
 ) -> None:
     """Scan MCP servers for security vulnerabilities."""
     quiet = ctx.obj.get("quiet", False)
@@ -288,6 +309,12 @@ def scan(
         else:
             exclude_ids = config_excludes
 
+    # ── AI scanning setup ─────────────────────────────────────────
+    if ai_scan:
+        _setup_ai_scan(
+            ctx, ai_mode, claude_api_key, api_key, quiet
+        )
+
     # Build the scan engine
     engine = ScanEngine(
         connectors=connectors,
@@ -296,6 +323,7 @@ def scan(
         check_ids=check_ids,
         exclude_ids=exclude_ids,
         max_concurrency=max_concurrency,
+        ai_enabled=ai_scan,
     )
 
     num_checks = len(engine.checks)
@@ -424,6 +452,84 @@ def scan(
     # Exit code
     if has_findings_above_threshold(result, fail_on):
         sys.exit(1)
+
+
+def _setup_ai_scan(
+    ctx: click.Context,
+    ai_mode: str | None,
+    claude_api_key: str | None,
+    api_key: str | None,
+    quiet: bool,
+) -> None:
+    """Configure the AI client and credit manager for AI scanning."""
+    from medusa.ai.client import (
+        BackendProxiedClient,
+        ClaudeClient,
+        configure_ai,
+    )
+    from medusa.ai.credits import CreditManager
+    from medusa.cli.config import load_user_config
+
+    user_config = load_user_config()
+
+    # Determine AI mode: flag > config > default
+    mode = ai_mode or user_config.ai_mode or "byok"
+
+    # Resolve Medusa API key (needed for credits in both modes)
+    medusa_key = (
+        api_key
+        or os.environ.get("MEDUSA_API_KEY", "")
+        or (user_config.api_key or "")
+    )
+
+    if mode == "byok":
+        # Resolve Claude API key: flag > env > config
+        resolved_claude_key = (
+            claude_api_key
+            or os.environ.get("ANTHROPIC_API_KEY", "")
+            or (user_config.claude_api_key or "")
+        )
+        if not resolved_claude_key:
+            console.print(
+                "[red]Claude API key required for AI scanning. "
+                "Provide via --claude-api-key, ANTHROPIC_API_KEY "
+                "env var, or 'medusa configure'.[/red]"
+            )
+            sys.exit(2)
+
+        client = ClaudeClient(
+            api_key=resolved_claude_key,
+            model=user_config.claude_model,
+        )
+    else:
+        # Proxied mode — dashboard holds the Anthropic key
+        if not medusa_key:
+            console.print(
+                "[red]Medusa API key required for proxied AI "
+                "scanning. Run 'medusa configure'.[/red]"
+            )
+            sys.exit(2)
+
+        client = BackendProxiedClient(
+            medusa_api_key=medusa_key,
+            dashboard_url=user_config.dashboard_url,
+        )
+
+    # Set up credit manager (needs Medusa API key)
+    credit_mgr = None
+    if medusa_key:
+        credit_mgr = CreditManager(
+            api_key=medusa_key,
+            dashboard_url=user_config.dashboard_url,
+        )
+
+    configure_ai(client=client, credit_manager=credit_mgr)
+
+    if not quiet:
+        mode_label = "BYOK" if mode == "byok" else "Proxied"
+        console.print(
+            f"[cyan]AI scanning enabled ({mode_label} mode)[/cyan]"
+        )
 
 
 def _print_summary(result) -> None:
@@ -560,11 +666,25 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
     default=None,
     help="Dashboard upload URL",
 )
+@click.option(
+    "--claude-api-key",
+    type=str,
+    default=None,
+    help="Anthropic API key for AI scanning",
+)
+@click.option(
+    "--ai-mode",
+    type=click.Choice(["byok", "proxied"]),
+    default=None,
+    help="AI mode: byok (your own key) or proxied (via dashboard)",
+)
 @click.pass_context
 def configure(
     ctx: click.Context,
     api_key: str | None,
     dashboard_url: str | None,
+    claude_api_key: str | None,
+    ai_mode: str | None,
 ) -> None:
     """Save Medusa CLI configuration to ~/.medusa/config.yaml."""
     from medusa.cli.config import (
@@ -577,9 +697,12 @@ def configure(
     config = load_user_config()
 
     # Interactive prompts if no flags provided
-    if api_key is None and dashboard_url is None:
+    no_flags = all(
+        v is None for v in [api_key, dashboard_url, claude_api_key, ai_mode]
+    )
+    if no_flags:
         api_key = click.prompt(
-            "API key",
+            "Medusa API key",
             default=config.api_key or "",
             show_default=bool(config.api_key),
         )
@@ -587,16 +710,32 @@ def configure(
             "Dashboard URL",
             default=config.dashboard_url,
         )
+        claude_api_key = click.prompt(
+            "Anthropic API key (for AI scanning, optional)",
+            default=config.claude_api_key or "",
+            show_default=bool(config.claude_api_key),
+        )
+        ai_mode = click.prompt(
+            "AI mode",
+            type=click.Choice(["byok", "proxied"]),
+            default=config.ai_mode,
+        )
 
     if api_key is not None:
         config.api_key = api_key
     if dashboard_url is not None:
         config.dashboard_url = dashboard_url
+    if claude_api_key is not None:
+        config.claude_api_key = claude_api_key or None
+    if ai_mode is not None:
+        config.ai_mode = ai_mode
 
     save_user_config(config)
 
     if not quiet:
-        console.print(f"[green]Configuration saved to {CONFIG_FILE}[/green]")
+        console.print(
+            f"[green]Configuration saved to {CONFIG_FILE}[/green]"
+        )
 
 
 @cli.command()
@@ -618,14 +757,34 @@ def settings(ctx: click.Context) -> None:
 
     # Mask API key: show first 12 chars + "..."
     if config.api_key:
-        masked = config.api_key[:12] + "..." if len(config.api_key) > 12 else config.api_key
+        masked = _mask_key(config.api_key)
         table.add_row("API Key", f"[green]{masked}[/green]")
     else:
         table.add_row("API Key", "[red]Not set[/red]")
 
     table.add_row("Dashboard URL", config.dashboard_url)
 
+    # AI settings
+    table.add_row("", "")  # spacer
+    if config.claude_api_key:
+        masked = _mask_key(config.claude_api_key)
+        table.add_row(
+            "Claude API Key", f"[green]{masked}[/green]"
+        )
+    else:
+        table.add_row("Claude API Key", "[dim]Not set[/dim]")
+
+    table.add_row("AI Mode", config.ai_mode)
+    table.add_row("Claude Model", config.claude_model)
+
     console.print(table)
+
+
+def _mask_key(key: str) -> str:
+    """Mask a key: show first 12 chars + '...'."""
+    if len(key) > 12:
+        return key[:12] + "..."
+    return key
 
 
 if __name__ == "__main__":

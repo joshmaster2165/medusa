@@ -19,3 +19,19 @@ class CheckError(MedusaError):
 
 class ReporterError(MedusaError):
     """Failed to generate a report."""
+
+
+class AiApiError(MedusaError):
+    """AI API request failed (Claude/proxy)."""
+
+
+class AiResponseParseError(MedusaError):
+    """AI returned an unparseable response."""
+
+
+class CreditError(MedusaError):
+    """Credit check or deduction failed."""
+
+
+class InsufficientCreditsError(CreditError):
+    """Not enough credits to complete the AI scan."""
