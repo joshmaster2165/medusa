@@ -400,4 +400,4 @@ class TestConsoleReporter:
         test_console = RichConsole(file=string_io, force_terminal=True)
         reporter.print_to_console(result, test_console)
         output = string_io.getvalue()
-        assert "All checks passed" in output
+        assert "all checks passed" in output

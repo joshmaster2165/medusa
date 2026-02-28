@@ -61,10 +61,10 @@ class ConsoleReporter(BaseReporter):
 
     def _print_header(self, result: ScanResult, console: Console) -> None:
         console.print()
-        console.print(Rule("SCAN RESULTS", style="bold"))
+        console.print(Rule("[bold]SCAN RESULTS[/bold]", style="green"))
         ts = result.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")
         console.print(
-            f"  [dim]Scan ID: {result.scan_id}  |  {ts}  |  "
+            f"  [dim]Scan {result.scan_id}  ·  {ts}  ·  "
             f"Medusa v{result.medusa_version}[/dim]"
         )
         console.print()
@@ -76,17 +76,24 @@ class ConsoleReporter(BaseReporter):
         grade_text.append(f"{result.aggregate_score} / 10", style=color)
         panel = Panel(
             grade_text,
-            title="Overall Grade",
+            title="[bold]Overall Grade[/bold]",
             border_style=color,
             padding=(1, 4),
         )
         console.print(panel)
 
-    def _print_severity_summary(self, result: ScanResult, console: Console) -> None:
+    def _print_severity_summary(
+        self, result: ScanResult, console: Console
+    ) -> None:
         failed = [f for f in result.findings if f.status == Status.FAIL]
         counts: dict[Severity, int] = {s: 0 for s in Severity}
         for f in failed:
             counts[f.severity] += 1
+
+        # Count AI vs static findings
+        ai_count = sum(1 for f in failed if f.check_id.startswith("ai"))
+        static_count = len(failed) - ai_count
+
         parts = []
         if counts[Severity.CRITICAL]:
             parts.append(f"[bold red]{counts[Severity.CRITICAL]} Critical[/]")
@@ -98,44 +105,65 @@ class ConsoleReporter(BaseReporter):
             parts.append(f"[blue]{counts[Severity.LOW]} Low[/]")
         if counts[Severity.INFORMATIONAL]:
             parts.append(f"[dim]{counts[Severity.INFORMATIONAL]} Info[/]")
+
         if parts:
-            console.print(f"  {' · '.join(parts)}")
+            line = f"  {' · '.join(parts)}"
+            if ai_count:
+                line += (
+                    f"  [dim]([/dim][bright_magenta]{ai_count} AI[/]"
+                    f"[dim] + {static_count} static)[/dim]"
+                )
+            console.print(line)
         console.print()
 
-    def _print_server_breakdown(self, result: ScanResult, console: Console) -> None:
-        console.print(Rule("Server Breakdown"))
+    def _print_server_breakdown(
+        self, result: ScanResult, console: Console
+    ) -> None:
+        console.print(Rule("[bold]Server Breakdown[/bold]"))
         console.print()
         for ss in result.server_scores:
             color = GRADE_COLORS.get(ss.grade, "white")
             body = (
-                f"  Score: [bold]{ss.score}/10[/]  Grade: [{color}]{ss.grade}[/{color}]\n"
-                f"  Passed: [green]{ss.passed}[/]  Failed: [red]{ss.failed}[/]\n"
+                f"  Score: [bold]{ss.score}/10[/]  "
+                f"Grade: [{color}]{ss.grade}[/{color}]\n"
+                f"  Passed: [green]{ss.passed}[/]  "
+                f"Failed: [red]{ss.failed}[/]\n"
                 f"  [bold red]{ss.critical_findings}[/] Critical  ·  "
                 f"[red]{ss.high_findings}[/] High  ·  "
                 f"[yellow]{ss.medium_findings}[/] Medium  ·  "
                 f"[blue]{ss.low_findings}[/] Low"
             )
             console.print(
-                Panel(body, title=f"[bold]{ss.server_name}[/]", border_style=color)
+                Panel(
+                    body,
+                    title=f"[bold]{ss.server_name}[/]",
+                    border_style=color,
+                )
             )
         console.print()
 
-    def _print_findings_table(self, result: ScanResult, console: Console) -> None:
+    def _print_findings_table(
+        self, result: ScanResult, console: Console
+    ) -> None:
         failed = [f for f in result.findings if f.status == Status.FAIL]
         failed.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 99))
 
-        console.print(Rule(f"Failed Findings ({len(failed)})"))
+        console.print(Rule(f"[bold]Failed Findings ({len(failed)})[/bold]"))
         console.print()
 
         if not failed:
-            console.print("  [green]No failed findings. All checks passed![/]")
+            console.print(
+                "  [green]✓ No failed findings — all checks passed![/]"
+            )
             console.print()
             return
 
-        table = Table(show_header=True, header_style="bold", show_lines=False)
-        table.add_column("Severity", width=10)
+        table = Table(
+            show_header=True, header_style="bold", show_lines=False
+        )
+        table.add_column("Sev", width=10)
         table.add_column("ID", style="cyan", width=8)
-        table.add_column("Title", max_width=40, overflow="ellipsis")
+        table.add_column("Title", max_width=42, overflow="ellipsis")
         table.add_column("Server")
         table.add_column("Resource", max_width=25, overflow="ellipsis")
         table.add_column("OWASP")
@@ -144,10 +172,18 @@ class ConsoleReporter(BaseReporter):
             sev_style = SEVERITY_STYLES.get(f.severity, "")
             owasp = ", ".join(f.owasp_mcp) if f.owasp_mcp else "-"
             resource = f"{f.resource_type}/{f.resource_name}"
+
+            # AI findings get a purple dot prefix
+            title_display = f.check_title
+            if f.check_id.startswith("ai"):
+                title_display = (
+                    f"[bright_magenta]●[/bright_magenta] {f.check_title}"
+                )
+
             table.add_row(
                 f"[{sev_style}]{f.severity.value.upper()}[/{sev_style}]",
                 f.check_id,
-                f.check_title,
+                title_display,
                 f.server_name,
                 resource,
                 owasp,
@@ -156,19 +192,33 @@ class ConsoleReporter(BaseReporter):
         console.print(table)
         console.print()
 
-    def _print_status_counts(self, result: ScanResult, console: Console) -> None:
-        passed = sum(1 for f in result.findings if f.status == Status.PASS)
-        skipped = sum(1 for f in result.findings if f.status == Status.SKIPPED)
-        errors = sum(1 for f in result.findings if f.status == Status.ERROR)
+    def _print_status_counts(
+        self, result: ScanResult, console: Console
+    ) -> None:
+        passed = sum(
+            1 for f in result.findings if f.status == Status.PASS
+        )
+        failed = sum(
+            1 for f in result.findings if f.status == Status.FAIL
+        )
+        skipped = sum(
+            1 for f in result.findings if f.status == Status.SKIPPED
+        )
+        errors = sum(
+            1 for f in result.findings if f.status == Status.ERROR
+        )
         console.print(
             f"  [green]{passed}[/] passed  ·  "
+            f"[red]{failed}[/] failed  ·  "
             f"[dim]{skipped}[/] skipped  ·  "
             f"[red]{errors}[/] errors"
         )
         console.print()
 
-    def _print_compliance(self, result: ScanResult, console: Console) -> None:
-        console.print(Rule("Compliance"))
+    def _print_compliance(
+        self, result: ScanResult, console: Console
+    ) -> None:
+        console.print(Rule("[bold]Compliance[/bold]"))
         console.print()
         for framework_name, requirements in result.compliance_results.items():
             console.print(f"  [bold]{framework_name}[/]")
@@ -176,16 +226,23 @@ class ConsoleReporter(BaseReporter):
                 for req_name, req_data in requirements.items():
                     if isinstance(req_data, dict):
                         status = req_data.get("status", "unknown")
+                        icon = "✓" if status == "pass" else "✗"
                         style = "green" if status == "pass" else "red"
-                        console.print(f"    [{style}]{status.upper()}[/{style}]  {req_name}")
+                        console.print(
+                            f"    [{style}]{icon} {status.upper()}[/{style}]"
+                            f"  {req_name}"
+                        )
                     else:
                         console.print(f"    {req_name}: {req_data}")
             console.print()
 
     def _print_footer(self, result: ScanResult, console: Console) -> None:
-        console.print(Rule())
+        console.print(Rule(style="dim"))
+        servers = result.servers_scanned
+        server_word = "server" if servers == 1 else "servers"
+        duration = result.scan_duration_seconds
         console.print(
-            f"  Scanned {result.servers_scanned} server(s) in "
-            f"{result.scan_duration_seconds}s"
+            f"  Scanned {servers} {server_word} in {duration}s  ·  "
+            f"[dim]medusa.security[/dim]"
         )
         console.print()

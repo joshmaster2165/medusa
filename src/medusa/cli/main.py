@@ -10,6 +10,7 @@ import sys
 import click
 import httpx
 from rich.console import Console
+from rich.panel import Panel
 from rich.progress import (
     BarColumn,
     Progress,
@@ -38,23 +39,58 @@ from medusa.utils.config_parser import load_config
 console = Console()
 
 
-@click.group(invoke_without_command=True)
+# ── Help text formatters ─────────────────────────────────────────────────
+
+
+class _OrderedGroup(click.Group):
+    """Click group that preserves command insertion order in --help."""
+
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        return list(self.commands)
+
+
+EPILOG = """
+\b
+Quick start:
+  medusa scan --http http://localhost:3000/mcp
+  medusa scan --http http://localhost:3000/mcp --ai-scan
+  medusa scan --http http://localhost:3000/mcp --upload
+  medusa scan -o html --output-file report.html
+  medusa configure
+  medusa settings
+
+Docs: https://medusa.security/docs
+"""
+
+
+# ── CLI group ─────────────────────────────────────────────────────────────
+
+
+@click.group(
+    cls=_OrderedGroup,
+    invoke_without_command=True,
+    epilog=EPILOG,
+)
 @click.version_option(version=__version__, prog_name="medusa")
 @click.option(
     "-v",
     "--verbose",
     count=True,
-    help="Increase verbosity (-v, -vv, -vvv)",
+    help="Increase verbosity (-v, -vv, -vvv).",
 )
 @click.option(
     "-q",
     "--quiet",
     is_flag=True,
-    help="Suppress all output except errors",
+    help="Suppress output except errors.",
 )
 @click.pass_context
 def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
-    """Medusa - Security scanner for MCP servers."""
+    """Medusa — Security scanner for MCP servers.
+
+    Scans Model Context Protocol (MCP) servers for security vulnerabilities
+    using 435+ static checks and optional AI-powered analysis.
+    """
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
     ctx.obj["quiet"] = quiet
@@ -80,38 +116,46 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     )
 
 
+# ── scan ──────────────────────────────────────────────────────────────────
+
+
 @cli.command()
-@click.option(
-    "--config-file",
-    type=str,
-    default=None,
-    help="Path to MCP config file",
-)
-@click.option(
-    "--scan-config",
-    type=str,
-    default=None,
-    help="Path to medusa.yaml",
-)
 @click.option(
     "--http",
     "http_url",
     type=str,
     default=None,
-    help="Scan an HTTP MCP server by URL",
+    help="HTTP/SSE MCP server URL to scan.",
 )
 @click.option(
     "--stdio",
     "stdio_cmd",
     type=str,
     default=None,
-    help="Scan a stdio MCP server by command",
+    help="Stdio MCP server command to scan.",
+)
+@click.option(
+    "--config-file",
+    type=str,
+    default=None,
+    help="Path to MCP client config (claude_desktop_config.json, etc).",
+)
+@click.option(
+    "--scan-config",
+    type=str,
+    default=None,
+    help="Path to medusa.yaml scan configuration.",
 )
 @click.option(
     "--server",
     type=str,
     default=None,
-    help="Scan a specific server by name from config",
+    help="Name of a specific server from config to scan.",
+)
+@click.option(
+    "--no-auto-discover",
+    is_flag=True,
+    help="Disable automatic server discovery.",
 )
 @click.option(
     "-o",
@@ -119,93 +163,88 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     "output_format",
     type=click.Choice(["console", "json", "html", "markdown", "sarif"]),
     default="console",
-    help="Output format (default: console for terminal, json for pipes)",
+    help="Report format.  [default: console]",
 )
 @click.option(
     "--output-file",
     type=str,
     default=None,
-    help="Write output to file",
+    help="Write report to file instead of stdout.",
 )
 @click.option(
     "--category",
     type=str,
     default=None,
-    help="Comma-separated categories to scan",
+    help="Only run checks in these categories (comma-separated).",
 )
 @click.option(
     "--severity",
     type=str,
     default=None,
-    help="Minimum severity to report",
+    help="Minimum severity to include in results.",
 )
 @click.option(
     "--checks",
     type=str,
     default=None,
-    help="Comma-separated check IDs to run",
+    help="Only run these check IDs (comma-separated).",
 )
 @click.option(
     "--exclude-checks",
     type=str,
     default=None,
-    help="Comma-separated check IDs to exclude",
+    help="Skip these check IDs (comma-separated).",
 )
 @click.option(
     "--fail-on",
     type=str,
     default="high",
-    help="Min severity for non-zero exit code",
+    help="Exit code 1 if findings at or above this severity.  [default: high]",
 )
 @click.option(
     "--compliance",
     type=str,
     default=None,
-    help="Compliance framework to evaluate",
-)
-@click.option(
-    "--no-auto-discover",
-    is_flag=True,
-    help="Disable auto-discovery of servers",
+    help="Evaluate a compliance framework (e.g. owasp_mcp_top10).",
 )
 @click.option(
     "--max-concurrency",
     type=int,
     default=4,
-    help="Max servers to scan concurrently (default: 4)",
+    help="Max parallel server scans.  [default: 4]",
 )
 @click.option(
     "--upload",
     is_flag=True,
     default=False,
-    help="Upload results to configured dashboard (see 'medusa configure')",
+    help="Upload results to your Medusa dashboard.",
 )
 @click.option(
     "--api-key",
     type=str,
     default=None,
-    help="API key for dashboard upload (overrides MEDUSA_API_KEY and saved config)",
+    help="Medusa API key (overrides env/config).",
 )
 @click.option(
     "--ai-scan",
     is_flag=True,
     default=False,
-    help="Enable AI-powered security analysis (requires credits)",
+    help="Enable AI-powered analysis with Claude (uses credits).",
 )
 @click.option(
     "--claude-api-key",
     type=str,
     default=None,
-    help="Anthropic API key for AI scanning (overrides ANTHROPIC_API_KEY)",
+    help="Anthropic API key for AI analysis (overrides env/config).",
 )
 @click.option(
     "--ai-mode",
     type=click.Choice(["byok", "proxied"]),
     default=None,
-    help="AI mode: use your own Claude key (byok) or dashboard proxy (proxied)",
+    help="AI key mode: bring your own key or use dashboard proxy.",
 )
 @click.pass_context
-def scan(
+def scan(  # noqa: C901, PLR0912, PLR0913
     ctx: click.Context,
     config_file: str | None,
     scan_config: str | None,
@@ -228,7 +267,20 @@ def scan(
     claude_api_key: str | None,
     ai_mode: str | None,
 ) -> None:
-    """Scan MCP servers for security vulnerabilities."""
+    """Scan MCP servers for security vulnerabilities.
+
+    Run 435+ static security checks against your MCP servers. Optionally
+    enable AI-powered analysis with --ai-scan for deeper semantic detection
+    of prompt injection, social engineering, and tool poisoning.
+
+    \b
+    Examples:
+      medusa scan --http http://localhost:3000/mcp
+      medusa scan --http http://localhost:3000/mcp --ai-scan
+      medusa scan --config-file ~/.cursor/mcp.json
+      medusa scan -o html --output-file report.html
+      medusa scan --upload --ai-scan
+    """
     quiet = ctx.obj.get("quiet", False)
 
     # Load scan config
@@ -287,12 +339,32 @@ def scan(
 
     if not connectors:
         if not quiet:
-            console.print("[yellow]No MCP servers found to scan.[/yellow]")
-            console.print("Use --config-file, --http, or --stdio to specify servers.")
+            console.print()
+            console.print(
+                Panel(
+                    "[yellow]No MCP servers found to scan.[/yellow]\n\n"
+                    "Specify a target:\n"
+                    "  [cyan]medusa scan --http[/cyan] http://localhost:3000/mcp\n"
+                    "  [cyan]medusa scan --stdio[/cyan] 'npx my-mcp-server'\n"
+                    "  [cyan]medusa scan --config-file[/cyan] ~/.cursor/mcp.json\n\n"
+                    "Or enable auto-discovery by placing a [bold]medusa.yaml[/bold] "
+                    "in your project root.",
+                    title="[bold yellow]No Targets[/bold yellow]",
+                    border_style="yellow",
+                    padding=(1, 2),
+                )
+            )
         sys.exit(3)
 
     if not quiet:
-        console.print(f"[green]Found {len(connectors)} server(s) to scan[/green]")
+        server_word = "server" if len(connectors) == 1 else "servers"
+        names = ", ".join(c.name for c in connectors[:5])
+        if len(connectors) > 5:
+            names += f" (+{len(connectors) - 5} more)"
+        console.print(
+            f"  [green]▸ Found {len(connectors)} {server_word}:[/green] "
+            f"[dim]{names}[/dim]"
+        )
 
     # Discover and filter checks
     registry = CheckRegistry()
@@ -329,11 +401,19 @@ def scan(
     num_checks = len(engine.checks)
     total_work = len(connectors) * num_checks
 
+    if not quiet:
+        check_word = "check" if num_checks == 1 else "checks"
+        ai_label = "  [bright_magenta]+ AI Analysis[/bright_magenta]" if ai_scan else ""
+        console.print(
+            f"  [green]▸ Running {num_checks} {check_word}[/green]{ai_label}"
+        )
+        console.print()
+
     # Run scan with progress bar
     with Progress(
-        SpinnerColumn(),
+        SpinnerColumn(style="green"),
         TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
+        BarColumn(bar_width=40, complete_style="green", finished_style="bold green"),
         TaskProgressColumn(),
         TimeElapsedColumn(),
         console=console,
@@ -347,7 +427,7 @@ def scan(
             elif event == "server_start":
                 progress.update(
                     task,
-                    description=f"Scanning {detail}...",
+                    description=f"Scanning [cyan]{detail}[/cyan]...",
                 )
 
         engine.progress_callback = on_progress
@@ -365,7 +445,10 @@ def scan(
             )
         except FileNotFoundError:
             if not quiet:
-                console.print(f"[yellow]Compliance framework not found: {compliance_name}[/yellow]")
+                console.print(
+                    f"[yellow]⚠ Compliance framework not found: "
+                    f"{compliance_name}[/yellow]"
+                )
 
     # Generate report
     reporters = {
@@ -389,60 +472,13 @@ def scan(
             reporter = JsonReporter()
         reporter.write(result, output_file)
         if not quiet:
-            console.print(f"Report written to: {output_file}")
+            console.print(f"  [green]▸ Report saved:[/green] {output_file}")
     else:
         reporter.print_to_console(result, console)
 
     # Upload results to dashboard
     if upload:
-        from medusa.cli.config import load_user_config
-
-        user_config = load_user_config()
-        upload_url = user_config.dashboard_url
-
-        # Resolve API key: --api-key flag > env var > saved config
-        resolved_key = (
-            api_key
-            or os.environ.get("MEDUSA_API_KEY", "")
-            or (user_config.api_key or "")
-        )
-
-        if not resolved_key:
-            console.print(
-                "[red]API key required for --upload. Provide via --api-key, "
-                "MEDUSA_API_KEY env var, or 'medusa configure'.[/red]"
-            )
-            sys.exit(2)
-
-        if not quiet:
-            console.print(f"\n[dim]Uploading results to {upload_url}...[/dim]")
-
-        try:
-            resp = httpx.post(
-                upload_url,
-                json=result.model_dump(mode="json"),
-                headers={"Authorization": f"Bearer {resolved_key}"},
-                timeout=30,
-            )
-            if resp.status_code == 200:
-                if not quiet:
-                    # Build dashboard base from upload endpoint
-                    if "/api/" in upload_url:
-                        dash = upload_url.rsplit("/api/", 1)[0]
-                    else:
-                        dash = upload_url
-                    console.print(
-                        "[green]Uploaded successfully to your"
-                        f" dashboard at {dash}[/green]"
-                    )
-            else:
-                try:
-                    detail = resp.json().get("error", resp.text)
-                except (ValueError, KeyError):
-                    detail = resp.text[:200] or f"HTTP {resp.status_code}"
-                console.print(f"[red]Upload failed ({resp.status_code}): {detail}[/red]")
-        except httpx.HTTPError as exc:
-            console.print(f"[red]Upload failed: {exc}[/red]")
+        _upload_results(result, api_key, quiet)
 
     # Print summary for non-console formats (console reporter includes its own)
     if not quiet and effective_format != "console":
@@ -452,6 +488,9 @@ def scan(
     # Exit code
     if has_findings_above_threshold(result, fail_on):
         sys.exit(1)
+
+
+# ── AI setup ──────────────────────────────────────────────────────────────
 
 
 def _setup_ai_scan(
@@ -490,10 +529,20 @@ def _setup_ai_scan(
             or (user_config.claude_api_key or "")
         )
         if not resolved_claude_key:
+            console.print()
             console.print(
-                "[red]Claude API key required for AI scanning. "
-                "Provide via --claude-api-key, ANTHROPIC_API_KEY "
-                "env var, or 'medusa configure'.[/red]"
+                Panel(
+                    "[red]Claude API key required for AI scanning.[/red]\n\n"
+                    "Provide one of:\n"
+                    "  [cyan]--claude-api-key[/cyan] sk-ant-...\n"
+                    "  [cyan]ANTHROPIC_API_KEY[/cyan] environment variable\n"
+                    "  [cyan]medusa configure[/cyan] to save it\n\n"
+                    "Or use [cyan]--ai-mode proxied[/cyan] to route through "
+                    "your Medusa dashboard.",
+                    title="[bold red]Missing API Key[/bold red]",
+                    border_style="red",
+                    padding=(1, 2),
+                )
             )
             sys.exit(2)
 
@@ -504,9 +553,16 @@ def _setup_ai_scan(
     else:
         # Proxied mode — dashboard holds the Anthropic key
         if not medusa_key:
+            console.print()
             console.print(
-                "[red]Medusa API key required for proxied AI "
-                "scanning. Run 'medusa configure'.[/red]"
+                Panel(
+                    "[red]Medusa API key required for proxied AI scanning.[/red]\n\n"
+                    "Run [cyan]medusa configure[/cyan] to set your API key,\n"
+                    "or pass [cyan]--api-key[/cyan] directly.",
+                    title="[bold red]Missing API Key[/bold red]",
+                    border_style="red",
+                    padding=(1, 2),
+                )
             )
             sys.exit(2)
 
@@ -528,8 +584,78 @@ def _setup_ai_scan(
     if not quiet:
         mode_label = "BYOK" if mode == "byok" else "Proxied"
         console.print(
-            f"[cyan]AI scanning enabled ({mode_label} mode)[/cyan]"
+            f"  [bright_magenta]▸ AI analysis enabled[/bright_magenta] "
+            f"[dim]({mode_label} mode)[/dim]"
         )
+
+
+# ── Upload ────────────────────────────────────────────────────────────────
+
+
+def _upload_results(result, api_key: str | None, quiet: bool) -> None:
+    """Upload scan results to the Medusa dashboard."""
+    from medusa.cli.config import load_user_config
+
+    user_config = load_user_config()
+    upload_url = user_config.dashboard_url
+
+    # Resolve API key: --api-key flag > env var > saved config
+    resolved_key = (
+        api_key
+        or os.environ.get("MEDUSA_API_KEY", "")
+        or (user_config.api_key or "")
+    )
+
+    if not resolved_key:
+        console.print()
+        console.print(
+            Panel(
+                "[red]API key required for upload.[/red]\n\n"
+                "Provide one of:\n"
+                "  [cyan]--api-key[/cyan] sk_medusa_...\n"
+                "  [cyan]MEDUSA_API_KEY[/cyan] environment variable\n"
+                "  [cyan]medusa configure[/cyan] to save it",
+                title="[bold red]Upload Failed[/bold red]",
+                border_style="red",
+                padding=(1, 2),
+            )
+        )
+        sys.exit(2)
+
+    if not quiet:
+        console.print("\n  [dim]Uploading results to dashboard...[/dim]")
+
+    try:
+        resp = httpx.post(
+            upload_url,
+            json=result.model_dump(mode="json"),
+            headers={"Authorization": f"Bearer {resolved_key}"},
+            timeout=30,
+        )
+        if resp.status_code == 200:
+            if not quiet:
+                # Build dashboard base from upload endpoint
+                if "/api/" in upload_url:
+                    dash = upload_url.rsplit("/api/", 1)[0]
+                else:
+                    dash = upload_url
+                console.print(
+                    f"  [green]▸ Uploaded to dashboard:[/green] "
+                    f"[dim]{dash}[/dim]"
+                )
+        else:
+            try:
+                detail = resp.json().get("error", resp.text)
+            except (ValueError, KeyError):
+                detail = resp.text[:200] or f"HTTP {resp.status_code}"
+            console.print(
+                f"  [red]✗ Upload failed ({resp.status_code}):[/red] {detail}"
+            )
+    except httpx.HTTPError as exc:
+        console.print(f"  [red]✗ Upload failed:[/red] {exc}")
+
+
+# ── Summary ───────────────────────────────────────────────────────────────
 
 
 def _print_summary(result) -> None:
@@ -573,7 +699,11 @@ def _print_summary(result) -> None:
     console.print()
     duration = result.scan_duration_seconds
     servers = result.servers_scanned
-    console.print(f"Scanned {servers} server(s) in {duration}s")
+    server_word = "server" if servers == 1 else "servers"
+    console.print(f"  Scanned {servers} {server_word} in {duration}s")
+
+
+# ── list-checks ───────────────────────────────────────────────────────────
 
 
 @cli.command("list-checks")
@@ -581,22 +711,33 @@ def _print_summary(result) -> None:
     "--category",
     type=str,
     default=None,
-    help="Filter by category",
+    help="Filter by category.",
 )
 @click.option(
     "--severity",
     type=str,
     default=None,
-    help="Filter by severity",
+    help="Filter by severity.",
 )
 @click.option(
     "--format",
     "fmt",
     type=click.Choice(["table", "json"]),
     default="table",
+    help="Output format.",
 )
 def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
-    """List all available security checks."""
+    """List all available security checks.
+
+    Browse and filter the full check catalog. Use --category or --severity
+    to narrow results. AI-powered checks are marked with [AI].
+
+    \b
+    Examples:
+      medusa list-checks
+      medusa list-checks --category tool_poisoning
+      medusa list-checks --severity critical --format json
+    """
     registry = CheckRegistry()
     registry.discover_checks()
 
@@ -620,14 +761,23 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
         click.echo(json.dumps(data, indent=2))
         return
 
+    # Count static vs AI
+    static = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
+    ai = [c for c in all_checks if c.metadata().check_id.startswith("ai")]
+
+    title = f"Medusa Security Checks — {len(static)} static"
+    if ai:
+        title += f" + {len(ai)} AI"
+
     table = Table(
-        title=f"Medusa Security Checks ({len(all_checks)})",
+        title=title,
         show_header=True,
+        title_style="bold",
     )
-    table.add_column("ID", style="cyan")
+    table.add_column("ID", style="cyan", width=8)
     table.add_column("Title")
     table.add_column("Category", style="magenta")
-    table.add_column("Severity")
+    table.add_column("Severity", width=12)
     table.add_column("OWASP MCP")
 
     severity_styles = {
@@ -642,9 +792,13 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
         meta = check.metadata()
         sev_style = severity_styles.get(meta.severity.value, "")
         owasp = ", ".join(meta.owasp_mcp) if meta.owasp_mcp else "-"
+        # Mark AI checks with a badge
+        title_display = meta.title
+        if meta.check_id.startswith("ai"):
+            title_display = f"[bright_magenta]●[/bright_magenta] {meta.title}"
         table.add_row(
             meta.check_id,
-            meta.title,
+            title_display,
             meta.category,
             f"[{sev_style}]{meta.severity.value}[/{sev_style}]",
             owasp,
@@ -653,30 +807,20 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
     console.print(table)
 
 
+# ── configure ─────────────────────────────────────────────────────────────
+
+
 @cli.command()
+@click.option("--api-key", type=str, default=None, help="Medusa dashboard API key.")
+@click.option("--dashboard-url", type=str, default=None, help="Dashboard API URL.")
 @click.option(
-    "--api-key",
-    type=str,
-    default=None,
-    help="Medusa dashboard API key",
-)
-@click.option(
-    "--dashboard-url",
-    type=str,
-    default=None,
-    help="Dashboard upload URL",
-)
-@click.option(
-    "--claude-api-key",
-    type=str,
-    default=None,
-    help="Anthropic API key for AI scanning",
+    "--claude-api-key", type=str, default=None, help="Anthropic API key for AI scans."
 )
 @click.option(
     "--ai-mode",
     type=click.Choice(["byok", "proxied"]),
     default=None,
-    help="AI mode: byok (your own key) or proxied (via dashboard)",
+    help="AI mode: bring your own key or use dashboard proxy.",
 )
 @click.pass_context
 def configure(
@@ -686,7 +830,17 @@ def configure(
     claude_api_key: str | None,
     ai_mode: str | None,
 ) -> None:
-    """Save Medusa CLI configuration to ~/.medusa/config.yaml."""
+    """Set up Medusa CLI configuration.
+
+    Saves settings to ~/.medusa/config.yaml. Run without flags for an
+    interactive setup wizard, or pass flags to set individual values.
+
+    \b
+    Examples:
+      medusa configure
+      medusa configure --api-key sk_medusa_abc123
+      medusa configure --claude-api-key sk-ant-... --ai-mode byok
+    """
     from medusa.cli.config import (
         CONFIG_FILE,
         load_user_config,
@@ -701,22 +855,44 @@ def configure(
         v is None for v in [api_key, dashboard_url, claude_api_key, ai_mode]
     )
     if no_flags:
+        if not quiet:
+            console.print(
+                "  [bold]Dashboard Settings[/bold]",
+            )
+            console.print(
+                "  [dim]Connect to your Medusa dashboard for scan history, "
+                "reports, and credits.[/dim]"
+            )
+            console.print()
+
         api_key = click.prompt(
-            "Medusa API key",
+            "  Medusa API key",
             default=config.api_key or "",
             show_default=bool(config.api_key),
         )
         dashboard_url = click.prompt(
-            "Dashboard URL",
+            "  Dashboard URL",
             default=config.dashboard_url,
         )
+
+        if not quiet:
+            console.print()
+            console.print(
+                "  [bold]AI Analysis Settings[/bold]",
+            )
+            console.print(
+                "  [dim]Enable AI-powered security analysis using Claude. "
+                "Uses 1 credit per server scanned.[/dim]"
+            )
+            console.print()
+
         claude_api_key = click.prompt(
-            "Anthropic API key (for AI scanning, optional)",
+            "  Anthropic API key (leave blank to skip)",
             default=config.claude_api_key or "",
             show_default=bool(config.claude_api_key),
         )
         ai_mode = click.prompt(
-            "AI mode",
+            "  AI mode",
             type=click.Choice(["byok", "proxied"]),
             default=config.ai_mode,
         )
@@ -733,51 +909,90 @@ def configure(
     save_user_config(config)
 
     if not quiet:
+        console.print()
         console.print(
-            f"[green]Configuration saved to {CONFIG_FILE}[/green]"
+            f"  [green]▸ Configuration saved to {CONFIG_FILE}[/green]"
         )
+        console.print()
+
+
+# ── settings ──────────────────────────────────────────────────────────────
 
 
 @cli.command()
 @click.pass_context
 def settings(ctx: click.Context) -> None:
-    """Display current Medusa CLI configuration."""
+    """Display current Medusa CLI configuration.
+
+    Shows all configured values including API keys (masked),
+    dashboard URL, and AI analysis settings.
+    """
     from medusa.cli.config import CONFIG_FILE, load_user_config
 
     quiet = ctx.obj.get("quiet", False)
     config = load_user_config()
 
     if not quiet:
-        console.print(f"[dim]Config file: {CONFIG_FILE}[/dim]")
+        console.print(f"  [dim]Config: {CONFIG_FILE}[/dim]")
         console.print()
 
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Key", style="bold")
-    table.add_column("Value")
+    # ── Dashboard section
+    dash_table = Table(
+        show_header=False, box=None, padding=(0, 2), pad_edge=False
+    )
+    dash_table.add_column("Key", style="bold", width=20)
+    dash_table.add_column("Value")
 
-    # Mask API key: show first 12 chars + "..."
     if config.api_key:
         masked = _mask_key(config.api_key)
-        table.add_row("API Key", f"[green]{masked}[/green]")
+        dash_table.add_row("API Key", f"[green]{masked}[/green]")
     else:
-        table.add_row("API Key", "[red]Not set[/red]")
+        dash_table.add_row("API Key", "[red]Not configured[/red]")
 
-    table.add_row("Dashboard URL", config.dashboard_url)
+    dash_table.add_row("Dashboard URL", f"[dim]{config.dashboard_url}[/dim]")
 
-    # AI settings
-    table.add_row("", "")  # spacer
+    console.print(
+        Panel(
+            dash_table,
+            title="[bold]Dashboard[/bold]",
+            border_style="bright_blue",
+            padding=(1, 2),
+        )
+    )
+
+    # ── AI section
+    ai_table = Table(
+        show_header=False, box=None, padding=(0, 2), pad_edge=False
+    )
+    ai_table.add_column("Key", style="bold", width=20)
+    ai_table.add_column("Value")
+
     if config.claude_api_key:
         masked = _mask_key(config.claude_api_key)
-        table.add_row(
-            "Claude API Key", f"[green]{masked}[/green]"
-        )
+        ai_table.add_row("Anthropic API Key", f"[green]{masked}[/green]")
     else:
-        table.add_row("Claude API Key", "[dim]Not set[/dim]")
+        ai_table.add_row("Anthropic API Key", "[dim]Not configured[/dim]")
 
-    table.add_row("AI Mode", config.ai_mode)
-    table.add_row("Claude Model", config.claude_model)
+    mode_display = (
+        "[cyan]BYOK[/cyan] — using your own Claude key"
+        if config.ai_mode == "byok"
+        else "[cyan]Proxied[/cyan] — routed through dashboard"
+    )
+    ai_table.add_row("AI Mode", mode_display)
+    ai_table.add_row("Claude Model", f"[dim]{config.claude_model}[/dim]")
 
-    console.print(table)
+    console.print(
+        Panel(
+            ai_table,
+            title="[bold]AI Analysis[/bold]",
+            border_style="bright_magenta",
+            padding=(1, 2),
+        )
+    )
+    console.print()
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────
 
 
 def _mask_key(key: str) -> str:
