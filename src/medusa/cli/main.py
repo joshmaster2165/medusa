@@ -602,5 +602,34 @@ def configure(
         console.print(f"[green]Configuration saved to {CONFIG_FILE}[/green]")
 
 
+@cli.command()
+@click.pass_context
+def settings(ctx: click.Context) -> None:
+    """Display current Medusa CLI configuration."""
+    from medusa.cli.config import CONFIG_FILE, load_user_config
+
+    quiet = ctx.obj.get("quiet", False)
+    config = load_user_config()
+
+    if not quiet:
+        console.print(f"[dim]Config file: {CONFIG_FILE}[/dim]")
+        console.print()
+
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Key", style="bold")
+    table.add_column("Value")
+
+    # Mask API key: show first 12 chars + "..."
+    if config.api_key:
+        masked = config.api_key[:12] + "..." if len(config.api_key) > 12 else config.api_key
+        table.add_row("API Key", f"[green]{masked}[/green]")
+    else:
+        table.add_row("API Key", "[red]Not set[/red]")
+
+    table.add_row("Dashboard URL", config.dashboard_url)
+
+    console.print(table)
+
+
 if __name__ == "__main__":
     cli()
