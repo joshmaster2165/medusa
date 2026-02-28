@@ -397,11 +397,15 @@ def scan(
                 timeout=30,
             )
             if resp.status_code == 200:
-                data = resp.json()
                 if not quiet:
+                    # Build dashboard base from upload endpoint
+                    if "/api/" in upload_url:
+                        dash = upload_url.rsplit("/api/", 1)[0]
+                    else:
+                        dash = upload_url
                     console.print(
-                        f"[green]Uploaded successfully.[/green]"
-                        f" View at: {data.get('scan_url', '')}"
+                        "[green]Uploaded successfully to your"
+                        f" dashboard at {dash}[/green]"
                     )
             else:
                 try:
