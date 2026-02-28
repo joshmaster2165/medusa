@@ -53,7 +53,8 @@ EPILOG = """
 \b
 Quick start:
   medusa scan --http http://localhost:3000/mcp
-  medusa scan --http http://localhost:3000/mcp --ai-scan
+  medusa scan --http http://localhost:3000/mcp --ai
+  medusa scan --http http://localhost:3000/mcp --all
   medusa scan --http http://localhost:3000/mcp --upload
   medusa scan -o html --output-file report.html
   medusa configure
@@ -226,10 +227,25 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     help="Medusa API key (overrides env/config).",
 )
 @click.option(
-    "--ai-scan",
+    "--static",
+    "flag_static",
     is_flag=True,
     default=False,
-    help="Enable AI-powered analysis with Claude (uses credits).",
+    help="Run static checks only (default behavior).",
+)
+@click.option(
+    "--ai",
+    "flag_ai",
+    is_flag=True,
+    default=False,
+    help="Run AI analysis only (requires Claude API key).",
+)
+@click.option(
+    "--all",
+    "flag_all",
+    is_flag=True,
+    default=False,
+    help="Run both static checks and AI analysis.",
 )
 @click.option(
     "--claude-api-key",
@@ -263,25 +279,47 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     max_concurrency: int,
     upload: bool,
     api_key: str | None,
-    ai_scan: bool,
+    flag_static: bool,
+    flag_ai: bool,
+    flag_all: bool,
     claude_api_key: str | None,
     ai_mode: str | None,
 ) -> None:
     """Scan MCP servers for security vulnerabilities.
 
-    Run 435+ static security checks against your MCP servers. Optionally
-    enable AI-powered analysis with --ai-scan for deeper semantic detection
-    of prompt injection, social engineering, and tool poisoning.
+    Run 435+ static security checks against your MCP servers. Use --ai for
+    AI-only analysis or --all for both static + AI combined.
+
+    \b
+    Scan modes (mutually exclusive):
+      --static   Static checks only (default)
+      --ai       AI analysis only (requires Claude key + credits)
+      --all      Both static checks and AI analysis
 
     \b
     Examples:
       medusa scan --http http://localhost:3000/mcp
-      medusa scan --http http://localhost:3000/mcp --ai-scan
+      medusa scan --http http://localhost:3000/mcp --ai
+      medusa scan --http http://localhost:3000/mcp --all
       medusa scan --config-file ~/.cursor/mcp.json
       medusa scan -o html --output-file report.html
-      medusa scan --upload --ai-scan
     """
     quiet = ctx.obj.get("quiet", False)
+
+    # ── Resolve scan mode ─────────────────────────────────────────
+    mode_flags = [flag_static, flag_ai, flag_all]
+    if sum(mode_flags) > 1:
+        console.print(
+            "\n  [red]Use only one of --static, --ai, or --all.[/red]"
+        )
+        sys.exit(2)
+
+    if flag_ai:
+        scan_mode = "ai"
+    elif flag_all:
+        scan_mode = "full"
+    else:
+        scan_mode = "static"
 
     # Load scan config
     config = load_config(scan_config)
@@ -382,7 +420,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
             exclude_ids = config_excludes
 
     # ── AI scanning setup ─────────────────────────────────────────
-    if ai_scan:
+    if scan_mode in ("ai", "full"):
         _setup_ai_scan(
             ctx, ai_mode, claude_api_key, api_key, quiet
         )
@@ -395,7 +433,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         check_ids=check_ids,
         exclude_ids=exclude_ids,
         max_concurrency=max_concurrency,
-        ai_enabled=ai_scan,
+        scan_mode=scan_mode,
     )
 
     num_checks = len(engine.checks)
@@ -403,9 +441,15 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
     if not quiet:
         check_word = "check" if num_checks == 1 else "checks"
-        ai_label = "  [bright_magenta]+ AI Analysis[/bright_magenta]" if ai_scan else ""
+        mode_labels = {
+            "static": "(static)",
+            "ai": "(AI analysis)",
+            "full": "(static + AI)",
+        }
+        mode_label = mode_labels.get(scan_mode, "")
         console.print(
-            f"  [green]▸ Running {num_checks} {check_word}[/green]{ai_label}"
+            f"  [green]▸ Running {num_checks} {check_word}[/green] "
+            f"[dim]{mode_label}[/dim]"
         )
         console.print()
 

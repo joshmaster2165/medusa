@@ -49,11 +49,11 @@ class ScanEngine:
         exclude_ids: list[str] | None = None,
         max_concurrency: int = 4,
         progress_callback: ProgressCallback | None = None,
-        ai_enabled: bool = False,
+        scan_mode: str = "static",
     ) -> None:
         self.connectors = connectors
         self.registry = registry
-        self.ai_enabled = ai_enabled
+        self.scan_mode = scan_mode
 
         all_checks = registry.get_checks(
             categories=categories,
@@ -61,13 +61,17 @@ class ScanEngine:
             check_ids=check_ids,
             exclude_ids=exclude_ids,
         )
-        # Filter out AI checks unless explicitly enabled
-        if ai_enabled:
-            self.checks = all_checks
-        else:
+        # Filter checks based on scan mode
+        if scan_mode == "ai":
             self.checks = [
-                c
-                for c in all_checks
+                c for c in all_checks
+                if c.metadata().check_id.startswith("ai")
+            ]
+        elif scan_mode == "full":
+            self.checks = all_checks
+        else:  # "static" (default)
+            self.checks = [
+                c for c in all_checks
                 if not c.metadata().check_id.startswith("ai")
             ]
         self.max_concurrency = max_concurrency
