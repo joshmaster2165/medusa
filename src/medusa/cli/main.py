@@ -411,7 +411,10 @@ def scan(
                         f" View at: {data.get('scan_url', '')}"
                     )
             else:
-                detail = resp.json().get("error", resp.text)
+                try:
+                    detail = resp.json().get("error", resp.text)
+                except (ValueError, KeyError):
+                    detail = resp.text[:200] or f"HTTP {resp.status_code}"
                 console.print(f"[red]Upload failed ({resp.status_code}): {detail}[/red]")
         except httpx.HTTPError as exc:
             console.print(f"[red]Upload failed: {exc}[/red]")
