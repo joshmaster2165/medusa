@@ -172,6 +172,100 @@ class TestBackendProxiedClient:
             with pytest.raises(AiApiError, match="Insufficient credits"):
                 await client.analyze("system", "content")
 
+    @pytest.mark.asyncio
+    async def test_analyze_retries_on_502(self):
+        """502 from proxy triggers retry and succeeds."""
+        client = BackendProxiedClient(
+            medusa_api_key="key",
+            dashboard_url="https://example.com",
+        )
+
+        fail_resp = httpx.Response(
+            status_code=502, text="Bad Gateway"
+        )
+        ok_resp = httpx.Response(
+            status_code=200,
+            json={"findings": []},
+        )
+
+        with patch.object(
+            client._client,
+            "post",
+            new_callable=AsyncMock,
+            side_effect=[fail_resp, ok_resp],
+        ):
+            result = await client.analyze("system", "content")
+            assert result == {"findings": []}
+
+    @pytest.mark.asyncio
+    async def test_analyze_retries_on_429(self):
+        """429 rate limit triggers retry and succeeds."""
+        client = BackendProxiedClient(
+            medusa_api_key="key",
+            dashboard_url="https://example.com",
+        )
+
+        fail_resp = httpx.Response(
+            status_code=429, text="Rate limited"
+        )
+        ok_resp = httpx.Response(
+            status_code=200,
+            json={"findings": []},
+        )
+
+        with patch.object(
+            client._client,
+            "post",
+            new_callable=AsyncMock,
+            side_effect=[fail_resp, ok_resp],
+        ):
+            result = await client.analyze("system", "content")
+            assert result == {"findings": []}
+
+    @pytest.mark.asyncio
+    async def test_analyze_max_retries_exceeded(self):
+        """All retries exhausted raises AiApiError."""
+        client = BackendProxiedClient(
+            medusa_api_key="key",
+            dashboard_url="https://example.com",
+        )
+
+        fail_resp = httpx.Response(
+            status_code=502, text="Bad Gateway"
+        )
+
+        with patch.object(
+            client._client,
+            "post",
+            new_callable=AsyncMock,
+            return_value=fail_resp,
+        ):
+            with pytest.raises(AiApiError, match="502"):
+                await client.analyze("system", "content")
+
+    @pytest.mark.asyncio
+    async def test_analyze_401_not_retried(self):
+        """401 is not retried — fails immediately."""
+        client = BackendProxiedClient(
+            medusa_api_key="key",
+            dashboard_url="https://example.com",
+        )
+
+        mock_response = httpx.Response(
+            status_code=401, text="Unauthorized"
+        )
+
+        with patch.object(
+            client._client,
+            "post",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ) as mock_post:
+            with pytest.raises(AiApiError, match="Invalid Medusa API key"):
+                await client.analyze("system", "content")
+            # Should only be called once — no retries
+            assert mock_post.call_count == 1
+
 
 # ── Singleton management ─────────────────────────────────────────────────
 

@@ -113,10 +113,16 @@ class BaseAiCategoryCheck(BaseCheck):
             config_raw=snapshot.config_raw,
         )
 
-        # ── Call Claude ───────────────────────────────────────────────
+        # ── Call Claude (throttled) ───────────────────────────────────
         try:
-            client = get_client()
-            response = await client.analyze(system_prompt, payload)
+            from medusa.ai.throttle import acquire_ai_slot, release_ai_slot
+
+            await acquire_ai_slot()
+            try:
+                client = get_client()
+                response = await client.analyze(system_prompt, payload)
+            finally:
+                release_ai_slot()
         except Exception as e:
             logger.error(
                 "AI analysis failed for %s: %s", meta.check_id, e

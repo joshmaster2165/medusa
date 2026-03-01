@@ -47,9 +47,13 @@ def snapshot() -> ServerSnapshot:
 
 @pytest.fixture(autouse=True)
 def _reset():
+    from medusa.ai.throttle import reset_throttle
+
     reset_ai()
+    reset_throttle()
     yield
     reset_ai()
+    reset_throttle()
 
 
 class TestBaseAiCategoryCheck:

@@ -135,8 +135,15 @@ class ScanEngine:
         """Run all checks concurrently against a single server snapshot.
 
         Checks operate on an immutable *ServerSnapshot* with no shared
-        mutable state, so it is safe to run them in parallel.
+        mutable state, so it is safe to run them in parallel.  AI checks
+        are throttled via a global semaphore configured from snapshot size.
         """
+        # Configure AI throttle if this scan includes AI checks
+        if self.scan_mode in ("ai", "full"):
+            from medusa.ai.throttle import configure_throttle
+
+            configure_throttle(snapshot)
+
         tasks = [self._run_check(check, snapshot) for check in self.checks]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -199,9 +206,16 @@ class ScanEngine:
 
         Servers are scanned concurrently up to *max_concurrency*.
         Within each server all checks run concurrently as well.
+        AI checks are throttled via a dynamic semaphore.
         """
         start_time = time.monotonic()
         scan_id = str(uuid.uuid4())[:8]
+
+        # Reset AI throttle for a fresh scan
+        if self.scan_mode in ("ai", "full"):
+            from medusa.ai.throttle import reset_throttle
+
+            reset_throttle()
 
         semaphore = asyncio.Semaphore(self.max_concurrency)
         raw_results = await asyncio.gather(
