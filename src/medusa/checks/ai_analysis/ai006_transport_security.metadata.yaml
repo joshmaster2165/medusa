@@ -1,0 +1,24 @@
+check_id: ai006
+title: "[AI] Transport Security Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all transport_security static checks.
+  Uses Claude to detect unencrypted transport, missing cert validation,
+  insecure TLS config, and missing transport authentication.
+risk_explanation: >
+  Static checks match known insecure transport patterns; AI detects
+  subtle misconfigurations, implicit trust assumptions, and protocol
+  weaknesses that regex cannot identify.
+remediation: >
+  Review AI-flagged transport security issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - ai-analysis
+  - paid
+  - transport-security

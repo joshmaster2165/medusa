@@ -37,6 +37,7 @@ from medusa.reporters.sarif_reporter import SarifReporter
 from medusa.utils.config_parser import load_config
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 # ── Help text formatters ─────────────────────────────────────────────────
@@ -424,6 +425,9 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         _setup_ai_scan(
             ctx, ai_mode, claude_api_key, api_key, quiet
         )
+        # Single credit deduction for the entire AI scan
+        if not _deduct_ai_scan_credit(quiet):
+            sys.exit(2)
 
     # Build the scan engine
     engine = ScanEngine(
@@ -441,16 +445,36 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
     if not quiet:
         check_word = "check" if num_checks == 1 else "checks"
-        mode_labels = {
-            "static": "(static)",
-            "ai": "(AI analysis)",
-            "full": "(static + AI)",
-        }
-        mode_label = mode_labels.get(scan_mode, "")
-        console.print(
-            f"  [green]▸ Running {num_checks} {check_word}[/green] "
-            f"[dim]{mode_label}[/dim]"
-        )
+        if scan_mode == "ai":
+            # AI mode: show category count + total static checks covered
+            ai_count = num_checks
+            static_covered = sum(
+                1
+                for c in registry.get_checks()
+                if not c.metadata().check_id.startswith("ai")
+            )
+            console.print(
+                f"  [green]▸ Running {ai_count} AI {check_word}[/green] "
+                f"[dim]({ai_count} categories · {static_covered}+ checks "
+                f"covered)[/dim]"
+            )
+        elif scan_mode == "full":
+            ai_count = sum(
+                1
+                for c in engine.checks
+                if c.metadata().check_id.startswith("ai")
+            )
+            static_count = num_checks - ai_count
+            console.print(
+                f"  [green]▸ Running {num_checks} {check_word}[/green] "
+                f"[dim]({static_count} static + {ai_count} AI categories)"
+                f"[/dim]"
+            )
+        else:
+            console.print(
+                f"  [green]▸ Running {num_checks} {check_word}[/green] "
+                f"[dim](static)[/dim]"
+            )
         console.print()
 
     # Run scan with progress bar
@@ -631,6 +655,52 @@ def _setup_ai_scan(
             f"  [bright_magenta]▸ AI analysis enabled[/bright_magenta] "
             f"[dim]({mode_label} mode)[/dim]"
         )
+
+
+def _deduct_ai_scan_credit(quiet: bool) -> bool:
+    """Deduct a single credit for the entire AI scan.
+
+    Credits are deducted once per scan, not per-check.
+    Returns True if the scan should proceed, False to abort.
+    """
+    try:
+        from medusa.ai.client import get_credit_manager
+
+        credit_mgr = get_credit_manager()
+    except Exception:
+        # No credit manager configured (e.g. BYOK without Medusa key)
+        # — allow the scan, user pays via their own API key
+        return True
+
+    async def _deduct() -> bool:
+        return await credit_mgr.deduct(
+            check_id="ai_scan",
+            server_name="*",
+            scan_id="",
+        )
+
+    try:
+        ok = asyncio.run(_deduct())
+        if not ok:
+            if not quiet:
+                console.print()
+                console.print(
+                    Panel(
+                        "[red]Insufficient AI credits.[/red]\n\n"
+                        "Purchase more credits at your Medusa dashboard,\n"
+                        "or use [cyan]--static[/cyan] for static-only scanning.",
+                        title="[bold red]No Credits[/bold red]",
+                        border_style="red",
+                        padding=(1, 2),
+                    )
+                )
+            return False
+        return True
+    except Exception as e:
+        logger.warning(
+            "Credit deduction failed: %s — continuing anyway", e
+        )
+        return True
 
 
 # ── Upload ────────────────────────────────────────────────────────────────

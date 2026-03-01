@@ -1,0 +1,23 @@
+check_id: ai009
+title: "[AI] Session Management Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all session_management static checks.
+  Uses Claude to detect session fixation, hijacking, and insecure session
+  handling that pattern matching misses.
+risk_explanation: >
+  Static checks match known session anti-patterns; AI detects subtle
+  session management issues, implicit trust in session tokens, and
+  context-dependent vulnerabilities.
+remediation: >
+  Review AI-flagged session management issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - ai-analysis
+  - paid
+  - session-management

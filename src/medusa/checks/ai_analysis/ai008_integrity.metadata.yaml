@@ -1,0 +1,24 @@
+check_id: ai008
+title: "[AI] Integrity Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all integrity static checks.
+  Uses Claude to detect missing version pinning, unsigned binaries,
+  config tampering risks, and missing integrity verification.
+risk_explanation: >
+  Static checks match known integrity patterns; AI detects subtle
+  supply chain integrity issues, implicit trust assumptions, and
+  configuration tampering vectors.
+remediation: >
+  Review AI-flagged integrity issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP04:2025"
+  - "MCP09:2025"
+tags:
+  - ai-analysis
+  - paid
+  - integrity

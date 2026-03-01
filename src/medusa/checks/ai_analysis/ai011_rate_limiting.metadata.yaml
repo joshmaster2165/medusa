@@ -1,0 +1,23 @@
+check_id: ai011
+title: "[AI] Rate Limiting Analysis"
+category: ai_analysis
+severity: medium
+description: >
+  AI-powered semantic analysis mirroring all rate_limiting static checks.
+  Uses Claude to detect missing rate limits, denial of service risks,
+  and resource exhaustion vulnerabilities.
+risk_explanation: >
+  Static checks match known rate limiting patterns; AI detects implicit
+  DoS vectors, resource exhaustion paths, and missing throttling that
+  regex cannot identify.
+remediation: >
+  Review AI-flagged rate limiting issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - ai-analysis
+  - paid
+  - rate-limiting

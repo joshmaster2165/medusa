@@ -1,0 +1,23 @@
+check_id: ai012
+title: "[AI] SSRF & Network Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all ssrf_and_network static checks.
+  Uses Claude to detect SSRF vectors, internal network access, and
+  network-based attack paths.
+risk_explanation: >
+  Static checks match known SSRF patterns; AI detects obfuscated URLs,
+  indirect network access, and context-dependent SSRF vectors that
+  regex cannot identify.
+remediation: >
+  Review AI-flagged SSRF and network issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ai-analysis
+  - paid
+  - ssrf-network

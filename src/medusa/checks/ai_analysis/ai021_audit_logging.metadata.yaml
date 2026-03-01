@@ -1,0 +1,23 @@
+check_id: ai021
+title: "[AI] Audit Logging Analysis"
+category: ai_analysis
+severity: medium
+description: >
+  AI-powered semantic analysis mirroring all audit_logging static checks.
+  Uses Claude to detect missing audit trails, insufficient log detail,
+  log tampering risks, and alerting gaps.
+risk_explanation: >
+  Static checks match known logging patterns; AI detects subtle
+  logging gaps, implicit audit trail weaknesses, and missing
+  forensic capabilities.
+remediation: >
+  Review AI-flagged audit logging issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - ai-analysis
+  - paid
+  - audit-logging

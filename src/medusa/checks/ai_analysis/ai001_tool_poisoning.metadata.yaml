@@ -1,0 +1,25 @@
+check_id: ai001
+title: "[AI] Tool Poisoning Analysis"
+category: ai_analysis
+severity: critical
+description: >
+  AI-powered semantic analysis mirroring all tool_poisoning static checks.
+  Uses Claude to detect hidden instructions, prompt injection, tool shadowing,
+  and other poisoning attacks that static pattern matching cannot catch.
+risk_explanation: >
+  Static checks use pattern matching; AI catches subtle poisoning that
+  regex misses, including paraphrased instructions, context manipulation,
+  and social engineering in tool descriptions.
+remediation: >
+  Review AI-flagged tools for hidden intent, social engineering, and
+  shadowing. Apply the specific remediation suggested for each finding.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/tools
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP06:2025"
+tags:
+  - ai-analysis
+  - paid
+  - tool-poisoning

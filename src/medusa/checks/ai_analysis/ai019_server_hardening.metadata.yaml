@@ -1,0 +1,24 @@
+check_id: ai019
+title: "[AI] Server Hardening Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all server_hardening static checks.
+  Uses Claude to detect insecure defaults, missing security headers,
+  and insufficient server hardening measures.
+risk_explanation: >
+  Static checks match known hardening patterns; AI detects subtle
+  configuration weaknesses, implicit trust assumptions, and missing
+  defense-in-depth measures.
+remediation: >
+  Review AI-flagged server hardening issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP07:2025"
+tags:
+  - ai-analysis
+  - paid
+  - server-hardening

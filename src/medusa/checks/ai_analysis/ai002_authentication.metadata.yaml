@@ -1,0 +1,23 @@
+check_id: ai002
+title: "[AI] Authentication Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all authentication static checks.
+  Uses Claude to detect missing authentication, weak token handling,
+  insecure OAuth flows, and credential management issues.
+risk_explanation: >
+  Static checks detect known authentication anti-patterns; AI catches
+  subtle misconfigurations, implicit trust assumptions, and authentication
+  bypass vectors that regex cannot identify.
+remediation: >
+  Review AI-flagged authentication issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - ai-analysis
+  - paid
+  - authentication

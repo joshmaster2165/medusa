@@ -1,0 +1,24 @@
+check_id: ai016
+title: "[AI] Resource Security Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all resource_security static checks.
+  Uses Claude to detect resource access control issues, unsafe resource
+  URIs, and data exposure via resources.
+risk_explanation: >
+  Static checks match known resource patterns; AI detects subtle
+  resource access issues, implicit trust assumptions, and
+  context-dependent exposure risks.
+remediation: >
+  Review AI-flagged resource security issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP05:2025"
+  - "MCP10:2025"
+tags:
+  - ai-analysis
+  - paid
+  - resource-security

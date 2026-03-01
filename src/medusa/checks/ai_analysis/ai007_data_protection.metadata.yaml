@@ -1,0 +1,23 @@
+check_id: ai007
+title: "[AI] Data Protection Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all data_protection static checks.
+  Uses Claude to detect PII in definitions, sensitive resource URIs,
+  missing data classification, and excessive data exposure.
+risk_explanation: >
+  Static checks match known PII patterns; AI detects contextual data
+  exposure, implicit information leakage, and subtle privacy violations.
+remediation: >
+  Review AI-flagged data protection issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP01:2025"
+  - "MCP10:2025"
+tags:
+  - ai-analysis
+  - paid
+  - data-protection

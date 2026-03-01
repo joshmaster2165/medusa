@@ -1,0 +1,23 @@
+check_id: ai003
+title: "[AI] Input Validation Analysis"
+category: ai_analysis
+severity: critical
+description: >
+  AI-powered semantic analysis mirroring all input_validation static checks.
+  Uses Claude to detect command injection, path traversal, SQL injection,
+  missing schemas, and permissive validation that pattern matching misses.
+risk_explanation: >
+  Static checks use regex patterns for known injection vectors; AI can
+  detect obfuscated injection, context-dependent validation gaps, and
+  novel attack patterns in parameter schemas.
+remediation: >
+  Review AI-flagged input validation issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - ai-analysis
+  - paid
+  - input-validation

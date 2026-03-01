@@ -1,0 +1,24 @@
+check_id: ai015
+title: "[AI] Context Security Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all context_security static checks.
+  Uses Claude to detect resource oversharing, context poisoning, prompt
+  leakage, and context window manipulation.
+risk_explanation: >
+  Static checks match known context patterns; AI detects subtle
+  context manipulation, implicit information leakage, and
+  cross-conversation contamination risks.
+remediation: >
+  Review AI-flagged context security issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP10:2025"
+tags:
+  - ai-analysis
+  - paid
+  - context-security

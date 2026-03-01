@@ -1,0 +1,24 @@
+check_id: ai023
+title: "[AI] Server Identity Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all server_identity static checks.
+  Uses Claude to detect duplicate server names, unverified identities,
+  and server impersonation risks.
+risk_explanation: >
+  Static checks match known identity patterns; AI detects subtle
+  identity spoofing, implicit trust in server names, and context-dependent
+  impersonation vectors.
+remediation: >
+  Review AI-flagged server identity issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP09:2025"
+tags:
+  - ai-analysis
+  - paid
+  - server-identity

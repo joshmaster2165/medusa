@@ -1,0 +1,23 @@
+check_id: ai022
+title: "[AI] Supply Chain Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all supply_chain static checks.
+  Uses Claude to detect untrusted package sources, dependency risks,
+  and supply chain attack vectors.
+risk_explanation: >
+  Static checks match known supply chain patterns; AI detects subtle
+  dependency risks, implicit trust in third-party code, and novel
+  supply chain attack paths.
+remediation: >
+  Review AI-flagged supply chain issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - ai-analysis
+  - paid
+  - supply-chain

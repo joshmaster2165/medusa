@@ -1,0 +1,24 @@
+check_id: ai024
+title: "[AI] Prompt Security Analysis"
+category: ai_analysis
+severity: critical
+description: >
+  AI-powered semantic analysis mirroring all prompt_security static checks.
+  Uses Claude to detect prompt injection vectors, prompt leakage risks,
+  and unsafe prompt argument handling.
+risk_explanation: >
+  Static checks match known prompt injection patterns; AI detects subtle
+  prompt manipulation, context-dependent injection vectors, and novel
+  prompt attack techniques that regex cannot identify.
+remediation: >
+  Review AI-flagged prompt security issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP06:2025"
+  - "MCP03:2025"
+tags:
+  - ai-analysis
+  - paid
+  - prompt-security

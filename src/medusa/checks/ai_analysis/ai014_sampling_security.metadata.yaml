@@ -1,0 +1,23 @@
+check_id: ai014
+title: "[AI] Sampling Security Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all sampling_security static checks.
+  Uses Claude to detect sampling manipulation, unsafe sampling parameters,
+  and model output control vulnerabilities.
+risk_explanation: >
+  Static checks match known sampling patterns; AI detects subtle
+  sampling manipulation, implicit bias injection, and context-dependent
+  output control issues.
+remediation: >
+  Review AI-flagged sampling security issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - ai-analysis
+  - paid
+  - sampling-security

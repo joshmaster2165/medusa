@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 import pkgutil
 from pathlib import Path
 
@@ -41,6 +42,7 @@ class CheckRegistry:
                         isinstance(attr, type)
                         and issubclass(attr, BaseCheck)
                         and attr is not BaseCheck
+                        and not inspect.isabstract(attr)
                     ):
                         instance = attr()
                         meta = instance.metadata()

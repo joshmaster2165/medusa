@@ -1,0 +1,23 @@
+check_id: ai020
+title: "[AI] Governance Analysis"
+category: ai_analysis
+severity: medium
+description: >
+  AI-powered semantic analysis mirroring all governance static checks.
+  Uses Claude to detect missing policies, inadequate documentation,
+  and governance gaps in MCP server deployments.
+risk_explanation: >
+  Static checks match known governance patterns; AI detects subtle
+  policy gaps, implicit compliance failures, and missing governance
+  controls that regex cannot identify.
+remediation: >
+  Review AI-flagged governance issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - ai-analysis
+  - paid
+  - governance

@@ -202,3 +202,150 @@ class TestParseAiResponse:
         # The string is skipped, only the dict is parsed
         assert len(result) == 1
         assert result[0].resource_name == "t"
+
+
+class TestParseAiResponseCategoryAware:
+    """Tests for category-aware mode (valid_check_ids provided)."""
+
+    def test_valid_check_id_from_claude(self, sample_meta):
+        """Claude returns a known static check_id -> used as-is."""
+        response = {
+            "findings": [
+                {
+                    "check_id": "tp001",
+                    "resource_type": "tool",
+                    "resource_name": "exec",
+                    "severity": "critical",
+                    "title": "[AI] Hidden Instructions",
+                    "status_extended": "Found hidden content",
+                    "owasp_mcp": ["MCP03:2025"],
+                }
+            ]
+        }
+        result = parse_ai_response(
+            response=response,
+            meta=sample_meta,
+            server_name="srv",
+            server_transport="http",
+            valid_check_ids={"tp001", "tp002", "tp003"},
+        )
+        assert len(result) == 1
+        assert result[0].check_id == "tp001"
+        assert result[0].check_title == "[AI] Hidden Instructions"
+
+    def test_unknown_check_id_still_accepted(self, sample_meta):
+        """Claude returns unknown check_id -> accepted with warning."""
+        response = {
+            "findings": [
+                {
+                    "check_id": "tp0ai",
+                    "resource_type": "tool",
+                    "resource_name": "x",
+                    "severity": "high",
+                    "title": "Novel Issue",
+                    "status_extended": "New issue type",
+                }
+            ]
+        }
+        result = parse_ai_response(
+            response=response,
+            meta=sample_meta,
+            server_name="srv",
+            server_transport="http",
+            valid_check_ids={"tp001", "tp002"},
+        )
+        assert len(result) == 1
+        assert result[0].check_id == "tp0ai"
+
+    def test_missing_check_id_falls_back_to_meta(self, sample_meta):
+        """Claude omits check_id -> falls back to AI check's ID."""
+        response = {
+            "findings": [
+                {
+                    "resource_type": "tool",
+                    "resource_name": "x",
+                    "severity": "medium",
+                    "title": "Some Issue",
+                    "status_extended": "Details",
+                }
+            ]
+        }
+        result = parse_ai_response(
+            response=response,
+            meta=sample_meta,
+            server_name="srv",
+            server_transport="http",
+            valid_check_ids={"tp001", "tp002"},
+        )
+        assert len(result) == 1
+        assert result[0].check_id == "ai001"
+
+    def test_legacy_mode_ignores_check_id_from_claude(self, sample_meta):
+        """Without valid_check_ids, check_id always comes from meta."""
+        response = {
+            "findings": [
+                {
+                    "check_id": "tp001",
+                    "resource_type": "tool",
+                    "resource_name": "x",
+                    "severity": "high",
+                    "title": "Test",
+                    "status_extended": "Test",
+                }
+            ]
+        }
+        result = parse_ai_response(
+            response=response,
+            meta=sample_meta,
+            server_name="srv",
+            server_transport="http",
+            # No valid_check_ids -> legacy mode
+        )
+        assert len(result) == 1
+        assert result[0].check_id == "ai001"  # From meta, not Claude
+
+    def test_ai_prefix_added_when_missing(self, sample_meta):
+        """Title without [AI] prefix gets it added."""
+        response = {
+            "findings": [
+                {
+                    "check_id": "tp001",
+                    "resource_type": "tool",
+                    "resource_name": "x",
+                    "severity": "high",
+                    "title": "No Prefix Here",
+                    "status_extended": "Test",
+                }
+            ]
+        }
+        result = parse_ai_response(
+            response=response,
+            meta=sample_meta,
+            server_name="srv",
+            server_transport="http",
+            valid_check_ids={"tp001"},
+        )
+        assert result[0].check_title == "[AI] No Prefix Here"
+
+    def test_ai_prefix_not_duplicated(self, sample_meta):
+        """Title already with [AI] prefix doesn't get doubled."""
+        response = {
+            "findings": [
+                {
+                    "check_id": "tp001",
+                    "resource_type": "tool",
+                    "resource_name": "x",
+                    "severity": "high",
+                    "title": "[AI] Already Prefixed",
+                    "status_extended": "Test",
+                }
+            ]
+        }
+        result = parse_ai_response(
+            response=response,
+            meta=sample_meta,
+            server_name="srv",
+            server_transport="http",
+            valid_check_ids={"tp001"},
+        )
+        assert result[0].check_title == "[AI] Already Prefixed"

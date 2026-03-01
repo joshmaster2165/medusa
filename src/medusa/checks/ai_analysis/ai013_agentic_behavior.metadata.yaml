@@ -1,0 +1,24 @@
+check_id: ai013
+title: "[AI] Agentic Behavior Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all agentic_behavior static checks.
+  Uses Claude to detect missing human-in-the-loop, autonomous action risks,
+  agent loop detection, and multi-step attack chains.
+risk_explanation: >
+  Static checks match known agentic patterns; AI detects subtle
+  autonomous behavior risks, implicit delegation, and emergent
+  multi-step attack paths that regex cannot identify.
+remediation: >
+  Review AI-flagged agentic behavior issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP06:2025"
+tags:
+  - ai-analysis
+  - paid
+  - agentic-behavior

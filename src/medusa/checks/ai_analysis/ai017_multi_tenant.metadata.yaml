@@ -1,0 +1,23 @@
+check_id: ai017
+title: "[AI] Multi-Tenant Analysis"
+category: ai_analysis
+severity: high
+description: >
+  AI-powered semantic analysis mirroring all multi_tenant static checks.
+  Uses Claude to detect tenant isolation failures, cross-tenant data
+  leakage, and shared resource vulnerabilities.
+risk_explanation: >
+  Static checks match known multi-tenant patterns; AI detects subtle
+  tenant isolation issues, implicit shared state, and context-dependent
+  cross-tenant access vectors.
+remediation: >
+  Review AI-flagged multi-tenant issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - ai-analysis
+  - paid
+  - multi-tenant

@@ -1,0 +1,23 @@
+check_id: ai010
+title: "[AI] Error Handling Analysis"
+category: ai_analysis
+severity: medium
+description: >
+  AI-powered semantic analysis mirroring all error_handling static checks.
+  Uses Claude to detect information disclosure in errors, missing error
+  handling, and insecure failure modes.
+risk_explanation: >
+  Static checks match known error patterns; AI detects contextual
+  information leakage, implicit failure modes, and error handling
+  gaps that regex cannot identify.
+remediation: >
+  Review AI-flagged error handling issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP08:2025"
+tags:
+  - ai-analysis
+  - paid
+  - error-handling

@@ -1,0 +1,25 @@
+check_id: ai005
+title: "[AI] Privilege Scope Analysis"
+category: ai_analysis
+severity: critical
+description: >
+  AI-powered semantic analysis mirroring all privilege_scope static checks.
+  Uses Claude to detect filesystem access, network access, shell execution,
+  and other over-privileged tool capabilities.
+risk_explanation: >
+  Static checks match known privilege patterns; AI detects implicit
+  privilege escalation, dangerous tool combinations, and subtle scope
+  violations that regex cannot identify.
+remediation: >
+  Review AI-flagged privilege scope issues and apply the specific
+  remediation suggested for each finding.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP05:2025"
+  - "MCP07:2025"
+tags:
+  - ai-analysis
+  - paid
+  - privilege-scope
