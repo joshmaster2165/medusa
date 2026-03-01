@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 TIER_SMALL_THRESHOLD = 20_000  # < 20K chars → ~5K tokens
 TIER_MEDIUM_THRESHOLD = 100_000  # 20K-100K chars → 5K-25K tokens
 
-CONCURRENCY_SMALL = 8
-CONCURRENCY_MEDIUM = 4
+CONCURRENCY_SMALL = 4
+CONCURRENCY_MEDIUM = 3
 CONCURRENCY_LARGE = 2
 
 # Jitter range (seconds) added before each AI call to stagger bursts

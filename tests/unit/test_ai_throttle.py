@@ -154,7 +154,7 @@ class TestAcquireRelease:
     @pytest.mark.asyncio
     async def test_semaphore_limits_concurrency(self):
         snap = make_snapshot()
-        configure_throttle(snap)  # CONCURRENCY_SMALL = 8
+        configure_throttle(snap)  # CONCURRENCY_SMALL = 4
 
         # All slots should be acquirable
         for _ in range(CONCURRENCY_SMALL):
