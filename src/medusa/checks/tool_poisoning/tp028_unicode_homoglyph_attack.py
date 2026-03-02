@@ -151,8 +151,7 @@ class UnicodeHomoglyphAttackCheck(BaseCheck):
                                 f"character(s)."
                             ),
                             evidence=(
-                                f"param={param_name}: "
-                                f"{_format_char_evidence(param_zero_width)}"
+                                f"param={param_name}: {_format_char_evidence(param_zero_width)}"
                             ),
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,
@@ -175,8 +174,7 @@ class UnicodeHomoglyphAttackCheck(BaseCheck):
                                 f"character(s) that may be Unicode homoglyphs."
                             ),
                             evidence=(
-                                f"param={param_name}: "
-                                f"{_format_char_evidence(param_non_ascii)}"
+                                f"param={param_name}: {_format_char_evidence(param_non_ascii)}"
                             ),
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,

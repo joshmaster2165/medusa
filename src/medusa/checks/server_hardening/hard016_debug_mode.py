@@ -64,21 +64,11 @@ def _walk_config_for_debug(
             if key_lower in DEBUG_KEYS:
                 val_str = str(value).lower().strip()
                 if val_str in DEBUG_VALUES:
-                    matches.append(
-                        f"{key}={value}"
-                    )
-            matches.extend(
-                _walk_config_for_debug(
-                    value, _depth + 1
-                )
-            )
+                    matches.append(f"{key}={value}")
+            matches.extend(_walk_config_for_debug(value, _depth + 1))
     elif isinstance(config, list):
         for item in config:
-            matches.extend(
-                _walk_config_for_debug(
-                    item, _depth + 1
-                )
-            )
+            matches.extend(_walk_config_for_debug(item, _depth + 1))
     return matches
 
 
@@ -100,30 +90,20 @@ class DebugModeCheck(BaseCheck):
             for key, value in snapshot.env.items():
                 key_lower = key.lower()
                 val_lower = str(value).lower().strip()
-                if key_lower in DEBUG_KEYS and (
-                    val_lower in DEBUG_VALUES
-                ):
-                    evidence_parts.append(
-                        f"env:{key}={value}"
-                    )
+                if key_lower in DEBUG_KEYS and (val_lower in DEBUG_VALUES):
+                    evidence_parts.append(f"env:{key}={value}")
 
         # Check config_raw for debug keys
         if snapshot.config_raw:
-            config_matches = _walk_config_for_debug(
-                snapshot.config_raw
-            )
+            config_matches = _walk_config_for_debug(snapshot.config_raw)
             for match in config_matches:
-                evidence_parts.append(
-                    f"config:{match}"
-                )
+                evidence_parts.append(f"config:{match}")
 
         # Check server args for debug flags
         if snapshot.args:
             for arg in snapshot.args:
                 if arg.lower() in DEBUG_ARGS:
-                    evidence_parts.append(
-                        f"arg:{arg}"
-                    )
+                    evidence_parts.append(f"arg:{arg}")
 
         if evidence_parts:
             findings.append(
@@ -133,9 +113,7 @@ class DebugModeCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -145,20 +123,14 @@ class DebugModeCheck(BaseCheck):
                         f"{len(evidence_parts)} "
                         f"indicator(s)."
                     ),
-                    evidence=", ".join(
-                        evidence_parts[:10]
-                    ),
+                    evidence=", ".join(evidence_parts[:10]),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
             )
         else:
             # Only emit PASS if there was data to check
-            has_data = bool(
-                snapshot.env
-                or snapshot.config_raw
-                or snapshot.args
-            )
+            has_data = bool(snapshot.env or snapshot.config_raw or snapshot.args)
             if has_data:
                 findings.append(
                     Finding(
@@ -167,9 +139,7 @@ class DebugModeCheck(BaseCheck):
                         status=Status.PASS,
                         severity=meta.severity,
                         server_name=snapshot.server_name,
-                        server_transport=(
-                            snapshot.transport_type
-                        ),
+                        server_transport=(snapshot.transport_type),
                         resource_type="server",
                         resource_name=snapshot.server_name,
                         status_extended=(

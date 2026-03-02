@@ -48,11 +48,7 @@ def _is_pii_param(name: str) -> str | None:
 
 def _has_validation_constraints(param_def: dict) -> bool:
     """Check if a parameter has any validation constraints."""
-    return bool(
-        param_def.get("pattern")
-        or param_def.get("format")
-        or param_def.get("enum")
-    )
+    return bool(param_def.get("pattern") or param_def.get("format") or param_def.get("enum"))
 
 
 class PiiFieldNoProtectionCheck(BaseCheck):
@@ -95,9 +91,7 @@ class PiiFieldNoProtectionCheck(BaseCheck):
                             status=Status.FAIL,
                             severity=meta.severity,
                             server_name=snapshot.server_name,
-                            server_transport=(
-                                snapshot.transport_type
-                            ),
+                            server_transport=(snapshot.transport_type),
                             resource_type="tool",
                             resource_name=tool_name,
                             status_extended=(

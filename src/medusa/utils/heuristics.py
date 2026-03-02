@@ -157,11 +157,7 @@ def pattern_block_percentage(
     except re.error:
         return 0
 
-    blocked = sum(
-        1
-        for v in attack_vectors
-        if compiled.fullmatch(v) is None
-    )
+    blocked = sum(1 for v in attack_vectors if compiled.fullmatch(v) is None)
     return round(100 * blocked / len(attack_vectors))
 
 
@@ -182,10 +178,7 @@ def compute_entropy(value: str) -> float:
 
     length = len(value)
     counts = Counter(value)
-    return -sum(
-        (count / length) * math.log2(count / length)
-        for count in counts.values()
-    )
+    return -sum((count / length) * math.log2(count / length) for count in counts.values())
 
 
 # Words in key names that suggest the value might be a secret.
@@ -247,9 +240,7 @@ def is_likely_secret(
     key_lower = key_name.lower()
 
     # Determine if the key name suggests a secret
-    key_is_secret_like = any(
-        indicator in key_lower for indicator in _SECRET_KEY_INDICATORS
-    )
+    key_is_secret_like = any(indicator in key_lower for indicator in _SECRET_KEY_INDICATORS)
 
     # Thresholds depend on key name context
     if key_is_secret_like:
@@ -356,7 +347,7 @@ def score_injection_context(
     if match_start > 0 and match_end < len(text):
         before = text[match_start - 1] if match_start > 0 else ""
         after = text[match_end] if match_end < len(text) else ""
-        if (before in {'"', "'", "\u201c"} and after in {'"', "'", "\u201d"}):
+        if before in {'"', "'", "\u201c"} and after in {'"', "'", "\u201d"}:
             score *= 0.3
 
     return round(score, 2)

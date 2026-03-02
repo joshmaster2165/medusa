@@ -77,9 +77,7 @@ class CodeEvalInArgsCheck(BaseCheck):
                             f"code execution during server startup."
                         ),
                         evidence=(
-                            f"arg_index={idx}, "
-                            f"constructs={matched_constructs}, "
-                            f"arg={display_arg}"
+                            f"arg_index={idx}, constructs={matched_constructs}, arg={display_arg}"
                         ),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,

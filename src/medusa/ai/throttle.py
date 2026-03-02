@@ -100,8 +100,7 @@ def configure_throttle(snapshot: ServerSnapshot) -> int:
         )
     else:
         logger.info(
-            "AI throttle: keeping concurrency=%d "
-            "(new snapshot=%d chars would allow %d)",
+            "AI throttle: keeping concurrency=%d (new snapshot=%d chars would allow %d)",
             _concurrency,
             size,
             new_concurrency,

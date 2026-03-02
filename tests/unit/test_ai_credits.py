@@ -19,13 +19,9 @@ class TestCreditManager:
             dashboard_url="https://example.com/api/v1/reports",
         )
 
-        mock_resp = httpx.Response(
-            status_code=200, json={"available": 42}
-        )
+        mock_resp = httpx.Response(status_code=200, json={"available": 42})
 
-        with patch.object(
-            mgr._client, "get", new_callable=AsyncMock, return_value=mock_resp
-        ):
+        with patch.object(mgr._client, "get", new_callable=AsyncMock, return_value=mock_resp):
             balance = await mgr.check_balance()
             assert balance == 42
             assert mgr.remaining == 42
@@ -36,9 +32,7 @@ class TestCreditManager:
 
         mock_resp = httpx.Response(status_code=401, text="Unauthorized")
 
-        with patch.object(
-            mgr._client, "get", new_callable=AsyncMock, return_value=mock_resp
-        ):
+        with patch.object(mgr._client, "get", new_callable=AsyncMock, return_value=mock_resp):
             with pytest.raises(CreditError, match="Invalid Medusa API key"):
                 await mgr.check_balance()
 
@@ -51,9 +45,7 @@ class TestCreditManager:
             json={"available": 10, "required": 3, "sufficient": True},
         )
 
-        with patch.object(
-            mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp
-        ):
+        with patch.object(mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp):
             result = await mgr.preflight(required=3)
             assert isinstance(result, CreditCheckResult)
             assert result.sufficient is True
@@ -69,9 +61,7 @@ class TestCreditManager:
             json={"available": 1, "required": 5, "sufficient": False},
         )
 
-        with patch.object(
-            mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp
-        ):
+        with patch.object(mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp):
             result = await mgr.preflight(required=5)
             assert result.sufficient is False
 
@@ -84,9 +74,7 @@ class TestCreditManager:
             json={"success": True, "remaining": 9},
         )
 
-        with patch.object(
-            mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp
-        ):
+        with patch.object(mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp):
             ok = await mgr.deduct("ai001", "test-server", "scan-123")
             assert ok is True
             assert mgr.remaining == 9
@@ -97,9 +85,7 @@ class TestCreditManager:
 
         mock_resp = httpx.Response(status_code=402, text="No credits")
 
-        with patch.object(
-            mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp
-        ):
+        with patch.object(mgr._client, "post", new_callable=AsyncMock, return_value=mock_resp):
             ok = await mgr.deduct("ai001", "srv", "scan-1")
             assert ok is False
 

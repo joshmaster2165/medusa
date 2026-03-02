@@ -65,9 +65,7 @@ class ReasoningEngine:
         """
         start = time.monotonic()
 
-        fail_count = sum(
-            1 for f in findings if f.status == Status.FAIL
-        )
+        fail_count = sum(1 for f in findings if f.status == Status.FAIL)
 
         # If there are no FAIL findings, return a minimal result
         if fail_count == 0:
@@ -110,9 +108,7 @@ class ReasoningEngine:
         }
 
         for i, chunk in enumerate(chunks):
-            chunk_fail_count = sum(
-                1 for f in chunk if f.status == Status.FAIL
-            )
+            chunk_fail_count = sum(1 for f in chunk if f.status == Status.FAIL)
             system_prompt = build_reasoning_system_prompt(
                 num_findings=chunk_fail_count,
                 chunk_index=i,
@@ -125,37 +121,26 @@ class ReasoningEngine:
 
             try:
                 logger.info(
-                    "Sending reasoning chunk %d/%d for '%s' "
-                    "(%d findings)",
+                    "Sending reasoning chunk %d/%d for '%s' (%d findings)",
                     i + 1,
                     len(chunks),
                     snapshot.server_name,
                     chunk_fail_count,
                 )
-                response = await self.client.analyze(
-                    system_prompt, user_payload
-                )
+                response = await self.client.analyze(system_prompt, user_payload)
 
                 # Extract token usage if available
                 usage = response.get("usage", {})
                 if usage:
-                    total_tokens["input_tokens"] += usage.get(
-                        "input_tokens", 0
-                    )
-                    total_tokens["output_tokens"] += usage.get(
-                        "output_tokens", 0
-                    )
+                    total_tokens["input_tokens"] += usage.get("input_tokens", 0)
+                    total_tokens["output_tokens"] += usage.get("output_tokens", 0)
 
-                partial = parse_reasoning_response(
-                    response, snapshot.server_name
-                )
+                partial = parse_reasoning_response(response, snapshot.server_name)
                 all_annotations.extend(partial.annotations)
                 all_chains.extend(partial.attack_chains)
                 all_gaps.extend(partial.gap_findings)
                 if partial.executive_summary:
-                    executive_summaries.append(
-                        partial.executive_summary
-                    )
+                    executive_summaries.append(partial.executive_summary)
                 if partial.risk_narrative:
                     risk_narratives.append(partial.risk_narrative)
                 if partial.top_priorities:
@@ -185,11 +170,7 @@ class ReasoningEngine:
                 if executive_summaries
                 else "AI reasoning completed with no summary."
             ),
-            risk_narrative=(
-                risk_narratives[0]
-                if risk_narratives
-                else ""
-            ),
+            risk_narrative=(risk_narratives[0] if risk_narratives else ""),
             top_priorities=_dedupe_priorities(all_priorities)[:10],
         )
 

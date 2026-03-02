@@ -35,32 +35,23 @@ class TestEstimateSnapshotSize:
         assert size == 0
 
     def test_snapshot_with_tools(self):
-        snap = make_snapshot(
-            tools=[{"name": "read_file", "description": "Read a file"}]
-        )
+        snap = make_snapshot(tools=[{"name": "read_file", "description": "Read a file"}])
         size = estimate_snapshot_size(snap)
         assert size > 0
 
     def test_snapshot_with_resources(self):
-        snap = make_snapshot(
-            resources=[{"uri": "file:///tmp/data", "name": "data"}]
-        )
+        snap = make_snapshot(resources=[{"uri": "file:///tmp/data", "name": "data"}])
         size = estimate_snapshot_size(snap)
         assert size > 0
 
     def test_large_snapshot(self):
-        big_tools = [
-            {"name": f"tool_{i}", "description": "x" * 1000}
-            for i in range(50)
-        ]
+        big_tools = [{"name": f"tool_{i}", "description": "x" * 1000} for i in range(50)]
         snap = make_snapshot(tools=big_tools)
         size = estimate_snapshot_size(snap)
         assert size > 50_000
 
     def test_includes_capabilities(self):
-        snap = make_snapshot(
-            capabilities={"tools": {"listChanged": True}}
-        )
+        snap = make_snapshot(capabilities={"tools": {"listChanged": True}})
         size = estimate_snapshot_size(snap)
         assert size > 0
 
@@ -109,20 +100,14 @@ class TestConfigureThrottle:
         configure_throttle(small)
 
         big = make_snapshot(
-            tools=[
-                {"name": f"t{i}", "description": "x" * 2000}
-                for i in range(100)
-            ]
+            tools=[{"name": f"t{i}", "description": "x" * 2000} for i in range(100)]
         )
         c = configure_throttle(big)
         assert c == CONCURRENCY_LARGE
 
     def test_smaller_server_does_not_loosen(self):
         big = make_snapshot(
-            tools=[
-                {"name": f"t{i}", "description": "x" * 2000}
-                for i in range(100)
-            ]
+            tools=[{"name": f"t{i}", "description": "x" * 2000} for i in range(100)]
         )
         configure_throttle(big)
 
@@ -172,10 +157,7 @@ class TestResetThrottle:
     @pytest.mark.asyncio
     async def test_reset_allows_reconfiguration(self):
         big = make_snapshot(
-            tools=[
-                {"name": f"t{i}", "description": "x" * 2000}
-                for i in range(100)
-            ]
+            tools=[{"name": f"t{i}", "description": "x" * 2000} for i in range(100)]
         )
         configure_throttle(big)
         assert configure_throttle(make_snapshot()) == CONCURRENCY_LARGE

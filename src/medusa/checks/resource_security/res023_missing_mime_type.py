@@ -69,8 +69,7 @@ class MissingMimeTypeCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"All {len(snapshot.resources)} resource(s) specify "
-                        f"a MIME type."
+                        f"All {len(snapshot.resources)} resource(s) specify a MIME type."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

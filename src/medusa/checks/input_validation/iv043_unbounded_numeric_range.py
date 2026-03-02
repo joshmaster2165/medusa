@@ -54,12 +54,8 @@ class UnboundedNumericRangeCheck(BaseCheck):
                 if param_def.get("enum"):
                     continue
 
-                has_minimum = (
-                    "minimum" in param_def or "exclusiveMinimum" in param_def
-                )
-                has_maximum = (
-                    "maximum" in param_def or "exclusiveMaximum" in param_def
-                )
+                has_minimum = "minimum" in param_def or "exclusiveMinimum" in param_def
+                has_maximum = "maximum" in param_def or "exclusiveMaximum" in param_def
 
                 if has_minimum and has_maximum:
                     continue

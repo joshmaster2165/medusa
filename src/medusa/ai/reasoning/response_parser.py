@@ -52,9 +52,7 @@ def parse_reasoning_response(
         gap_findings=gap_findings,
         executive_summary=str(data.get("executive_summary", "")),
         risk_narrative=str(data.get("risk_narrative", "")),
-        top_priorities=_parse_string_list(
-            data.get("top_priorities", [])
-        ),
+        top_priorities=_parse_string_list(data.get("top_priorities", [])),
     )
 
 
@@ -74,9 +72,7 @@ def _parse_annotations(raw: list) -> list[FindingAnnotation]:
             score = max(0.0, min(1.0, score))
 
             # Validate confidence value
-            confidence_val = str(
-                entry.get("confidence", "uncertain")
-            ).lower()
+            confidence_val = str(entry.get("confidence", "uncertain")).lower()
             if confidence_val not in _VALID_CONFIDENCES:
                 confidence_val = "uncertain"
 
@@ -97,24 +93,14 @@ def _parse_annotations(raw: list) -> list[FindingAnnotation]:
             annotations.append(
                 FindingAnnotation(
                     check_id=str(entry.get("check_id", "")),
-                    resource_name=str(
-                        entry.get("resource_name", "")
-                    ),
+                    resource_name=str(entry.get("resource_name", "")),
                     confidence=Confidence(confidence_val),
                     confidence_score=score,
                     reasoning=str(entry.get("reasoning", "")),
-                    false_positive_reason=(
-                        FalsePositiveReason(fp_reason)
-                        if fp_reason
-                        else None
-                    ),
-                    exploitability_note=entry.get(
-                        "exploitability_note"
-                    ),
+                    false_positive_reason=(FalsePositiveReason(fp_reason) if fp_reason else None),
+                    exploitability_note=entry.get("exploitability_note"),
                     adjusted_severity=adj_sev,
-                    additional_context=entry.get(
-                        "additional_context"
-                    ),
+                    additional_context=entry.get("additional_context"),
                 )
             )
         except (ValueError, TypeError) as e:
@@ -141,25 +127,17 @@ def _parse_attack_chains(raw: list) -> list[AttackChain]:
 
             chains.append(
                 AttackChain(
-                    chain_id=str(
-                        entry.get("chain_id", f"chain_{len(chains):03d}")
-                    ),
+                    chain_id=str(entry.get("chain_id", f"chain_{len(chains):03d}")),
                     title=str(entry.get("title", "Unnamed Chain")),
                     description=str(entry.get("description", "")),
                     severity=severity,
-                    finding_check_ids=_parse_string_list(
-                        entry.get("finding_check_ids", [])
-                    ),
+                    finding_check_ids=_parse_string_list(entry.get("finding_check_ids", [])),
                     finding_resource_names=_parse_string_list(
                         entry.get("finding_resource_names", [])
                     ),
-                    attack_narrative=str(
-                        entry.get("attack_narrative", "")
-                    ),
+                    attack_narrative=str(entry.get("attack_narrative", "")),
                     impact=str(entry.get("impact", "")),
-                    owasp_mcp=_parse_string_list(
-                        entry.get("owasp_mcp", [])
-                    ),
+                    owasp_mcp=_parse_string_list(entry.get("owasp_mcp", [])),
                 )
             )
         except (ValueError, TypeError) as e:
@@ -188,18 +166,12 @@ def _parse_gap_findings(raw: list) -> list[GapFinding]:
                 GapFinding(
                     title=str(entry.get("title", "Untitled Gap")),
                     severity=severity,
-                    resource_type=str(
-                        entry.get("resource_type", "server")
-                    ),
-                    resource_name=str(
-                        entry.get("resource_name", "unknown")
-                    ),
+                    resource_type=str(entry.get("resource_type", "server")),
+                    resource_name=str(entry.get("resource_name", "unknown")),
                     description=str(entry.get("description", "")),
                     evidence=str(entry.get("evidence", "")),
                     remediation=str(entry.get("remediation", "")),
-                    owasp_mcp=_parse_string_list(
-                        entry.get("owasp_mcp", [])
-                    ),
+                    owasp_mcp=_parse_string_list(entry.get("owasp_mcp", [])),
                     reasoning=str(entry.get("reasoning", "")),
                 )
             )

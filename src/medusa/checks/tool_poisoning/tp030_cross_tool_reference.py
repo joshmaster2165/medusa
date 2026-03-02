@@ -56,9 +56,7 @@ class CrossToolReferenceCheck(BaseCheck):
                 # Check if the other tool's name appears in this description.
                 # Use word boundary matching to avoid partial matches
                 # (e.g. "get" matching inside "together").
-                pattern = re.compile(
-                    r"\b" + re.escape(other_name) + r"\b", re.IGNORECASE
-                )
+                pattern = re.compile(r"\b" + re.escape(other_name) + r"\b", re.IGNORECASE)
                 if pattern.search(description):
                     referenced_tools.append(other_name)
 
@@ -79,9 +77,7 @@ class CrossToolReferenceCheck(BaseCheck):
                             f"{', '.join(referenced_tools)}. Cross-tool references "
                             f"can manipulate LLM tool selection behaviour."
                         ),
-                        evidence=(
-                            f"referenced_tools={referenced_tools}"
-                        ),
+                        evidence=(f"referenced_tools={referenced_tools}"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )

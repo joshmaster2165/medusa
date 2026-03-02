@@ -163,8 +163,7 @@ class TestCred001SecretsInConfig:
         findings = await check.execute(snapshot)
         # Should not have entropy-based findings for placeholder
         entropy_findings = [
-            f for f in findings
-            if f.status == Status.FAIL and "entropy" in (f.evidence or "")
+            f for f in findings if f.status == Status.FAIL and "entropy" in (f.evidence or "")
         ]
         assert len(entropy_findings) == 0, "Placeholder should not trigger entropy detection"
 
@@ -246,9 +245,7 @@ class TestCred002EnvLeakage:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Env vars ending in _SECRET should be flagged"
 
-    async def test_entropy_detects_non_standard_env_secret(
-        self, check: EnvLeakageCheck
-    ) -> None:
+    async def test_entropy_detects_non_standard_env_secret(self, check: EnvLeakageCheck) -> None:
         """Entropy-based detection catches high-randomness env values."""
         snapshot = make_snapshot(
             env={

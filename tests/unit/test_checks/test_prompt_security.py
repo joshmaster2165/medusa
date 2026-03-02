@@ -812,9 +812,7 @@ class TestHardcodedPromptSecretsCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
 
-    async def test_passes_on_clean_description(
-        self, check: HardcodedPromptSecretsCheck
-    ) -> None:
+    async def test_passes_on_clean_description(self, check: HardcodedPromptSecretsCheck) -> None:
         snapshot = make_snapshot(
             prompts=[
                 _make_prompt(
@@ -988,27 +986,21 @@ class TestExcessivePromptArgumentsCheck019:
     def check(self) -> ExcessivePromptArgumentsCheck019:
         return ExcessivePromptArgumentsCheck019()
 
-    async def test_metadata_loads_correctly(
-        self, check: ExcessivePromptArgumentsCheck019
-    ) -> None:
+    async def test_metadata_loads_correctly(self, check: ExcessivePromptArgumentsCheck019) -> None:
         meta = check.metadata()
         assert meta.check_id == "pmt019"
         assert meta.category == "prompt_security"
 
     async def test_fails_on_15_arguments(self, check: ExcessivePromptArgumentsCheck019) -> None:
         args = [{"name": f"param_{i}"} for i in range(15)]
-        snapshot = make_snapshot(
-            prompts=[_make_prompt("overloaded_prompt", arguments=args)]
-        )
+        snapshot = make_snapshot(prompts=[_make_prompt("overloaded_prompt", arguments=args)])
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
 
     async def test_fails_on_11_arguments(self, check: ExcessivePromptArgumentsCheck019) -> None:
         args = [{"name": f"arg_{i}"} for i in range(11)]
-        snapshot = make_snapshot(
-            prompts=[_make_prompt("big_prompt", arguments=args)]
-        )
+        snapshot = make_snapshot(prompts=[_make_prompt("big_prompt", arguments=args)])
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
@@ -1019,17 +1011,13 @@ class TestExcessivePromptArgumentsCheck019:
             {"name": "language", "description": "Target language."},
             {"name": "format", "description": "Output format."},
         ]
-        snapshot = make_snapshot(
-            prompts=[_make_prompt("small_prompt", arguments=args)]
-        )
+        snapshot = make_snapshot(prompts=[_make_prompt("small_prompt", arguments=args)])
         findings = await check.execute(snapshot)
         assert any(f.status == Status.PASS for f in findings)
 
     async def test_passes_on_10_arguments(self, check: ExcessivePromptArgumentsCheck019) -> None:
         args = [{"name": f"arg_{i}"} for i in range(10)]
-        snapshot = make_snapshot(
-            prompts=[_make_prompt("ok_prompt", arguments=args)]
-        )
+        snapshot = make_snapshot(prompts=[_make_prompt("ok_prompt", arguments=args)])
         findings = await check.execute(snapshot)
         assert any(f.status == Status.PASS for f in findings)
 
@@ -1095,9 +1083,7 @@ class TestPromptRoleManipulationCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
 
-    async def test_passes_on_normal_description(
-        self, check: PromptRoleManipulationCheck
-    ) -> None:
+    async def test_passes_on_normal_description(self, check: PromptRoleManipulationCheck) -> None:
         snapshot = make_snapshot(
             prompts=[
                 _make_prompt(

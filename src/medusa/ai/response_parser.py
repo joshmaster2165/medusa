@@ -71,9 +71,7 @@ def parse_ai_response(
                 server_transport=server_transport,
                 resource_type="server",
                 resource_name=server_name,
-                status_extended=(
-                    "AI analysis found no security issues."
-                ),
+                status_extended=("AI analysis found no security issues."),
                 remediation=meta.remediation,
                 owasp_mcp=meta.owasp_mcp,
             )
@@ -87,7 +85,10 @@ def parse_ai_response(
 
         try:
             finding = _parse_one_finding(
-                item, meta, server_name, server_transport,
+                item,
+                meta,
+                server_name,
+                server_transport,
                 valid_check_ids=valid_check_ids,
             )
             findings.append(finding)
@@ -151,8 +152,7 @@ def _parse_one_finding(
         elif claude_id:
             # Accept Claude's ID but log a warning
             logger.warning(
-                "AI returned unknown check_id '%s' "
-                "(not in category's static checks)",
+                "AI returned unknown check_id '%s' (not in category's static checks)",
                 claude_id,
             )
             check_id = claude_id

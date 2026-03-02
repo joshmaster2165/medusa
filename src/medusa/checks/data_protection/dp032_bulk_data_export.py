@@ -113,13 +113,9 @@ class BulkDataExportCheck(BaseCheck):
 
             evidence_parts = []
             if is_bulk_name:
-                evidence_parts.append(
-                    "name_match=true"
-                )
+                evidence_parts.append("name_match=true")
             if bulk_phrase:
-                evidence_parts.append(
-                    f"desc_match='{bulk_phrase}'"
-                )
+                evidence_parts.append(f"desc_match='{bulk_phrase}'")
             evidence_parts.append("pagination=missing")
 
             findings.append(
@@ -129,9 +125,7 @@ class BulkDataExportCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="tool",
                     resource_name=tool_name,
                     status_extended=(

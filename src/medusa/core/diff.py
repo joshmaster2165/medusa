@@ -125,16 +125,12 @@ def diff_scan_results(
 
     # New findings: in after but not in before
     new_findings = [
-        _finding_to_change(after_fails[fp])
-        for fp in after_fails
-        if fp not in before_fails
+        _finding_to_change(after_fails[fp]) for fp in after_fails if fp not in before_fails
     ]
 
     # Resolved findings: in before but not in after
     resolved_findings = [
-        _finding_to_change(before_fails[fp])
-        for fp in before_fails
-        if fp not in after_fails
+        _finding_to_change(before_fails[fp]) for fp in before_fails if fp not in after_fails
     ]
 
     # Severity changes: in both but severity differs

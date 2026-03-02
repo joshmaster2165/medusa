@@ -29,7 +29,7 @@ def _normalize_tool_name(name: str) -> str:
     # Strip common prefixes
     for prefix in _STRIP_PREFIXES:
         if normalized.startswith(prefix):
-            normalized = normalized[len(prefix):]
+            normalized = normalized[len(prefix) :]
             break
 
     # Strip common suffixes
@@ -66,24 +66,26 @@ class ConflictingToolNamesCheck(BaseCheck):
 
         for name, count in seen_raw.items():
             if count > 1:
-                findings.append(Finding(
-                    check_id=meta.check_id,
-                    check_title=meta.title,
-                    status=Status.FAIL,
-                    severity=Severity.HIGH,
-                    server_name=snapshot.server_name,
-                    server_transport=snapshot.transport_type,
-                    resource_type="tool",
-                    resource_name=name,
-                    status_extended=(
-                        f"Tool name '{name}' is registered {count} times "
-                        f"(exact duplicate). This causes ambiguity in tool "
-                        f"selection."
-                    ),
-                    evidence=f"Duplicate tool name: '{name}' x{count}",
-                    remediation=meta.remediation,
-                    owasp_mcp=meta.owasp_mcp,
-                ))
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=Severity.HIGH,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="tool",
+                        resource_name=name,
+                        status_extended=(
+                            f"Tool name '{name}' is registered {count} times "
+                            f"(exact duplicate). This causes ambiguity in tool "
+                            f"selection."
+                        ),
+                        evidence=f"Duplicate tool name: '{name}' x{count}",
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
 
         # Check for normalized collisions (excluding exact duplicates)
         normalized_map: dict[str, list[str]] = defaultdict(list)
@@ -95,40 +97,41 @@ class ConflictingToolNamesCheck(BaseCheck):
             # Only flag if there are distinct original names that collide
             unique_names = sorted(set(original_names))
             if len(unique_names) > 1:
-                findings.append(Finding(
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="server",
+                        resource_name=snapshot.server_name,
+                        status_extended=(
+                            f"Tools {unique_names} have semantically similar names "
+                            f"(normalized to '{norm}'). This may cause LLM confusion "
+                            f"or tool shadowing."
+                        ),
+                        evidence=(f"Normalized collision: {' vs '.join(unique_names)} -> '{norm}'"),
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        if not findings:
+            findings.append(
+                Finding(
                     check_id=meta.check_id,
                     check_title=meta.title,
-                    status=Status.FAIL,
+                    status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
                     resource_type="server",
                     resource_name=snapshot.server_name,
-                    status_extended=(
-                        f"Tools {unique_names} have semantically similar names "
-                        f"(normalized to '{norm}'). This may cause LLM confusion "
-                        f"or tool shadowing."
-                    ),
-                    evidence=(
-                        f"Normalized collision: "
-                        f"{' vs '.join(unique_names)} -> '{norm}'"
-                    ),
+                    status_extended="No conflicting or duplicate tool names detected.",
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
-                ))
-
-        if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended="No conflicting or duplicate tool names detected.",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+                )
+            )
         return findings

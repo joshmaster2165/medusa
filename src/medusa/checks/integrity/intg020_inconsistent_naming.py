@@ -74,15 +74,11 @@ class InconsistentNamingCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        "Server has fewer than 2 tools. "
-                        "Naming consistency check not "
-                        "applicable."
+                        "Server has fewer than 2 tools. Naming consistency check not applicable."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
@@ -99,19 +95,13 @@ class InconsistentNamingCheck(BaseCheck):
             style_map[style].append(tool_name)
 
         # Remove "other" from consideration for consistency
-        named_styles = {
-            k: v
-            for k, v in style_map.items()
-            if k != "other"
-        }
+        named_styles = {k: v for k, v in style_map.items() if k != "other"}
 
         if len(named_styles) > 1:
             evidence_parts: list[str] = []
             for style, tools in sorted(named_styles.items()):
                 sample = ", ".join(tools[:3])
-                evidence_parts.append(
-                    f"{style}: [{sample}]"
-                )
+                evidence_parts.append(f"{style}: [{sample}]")
 
             findings.append(
                 Finding(
@@ -120,9 +110,7 @@ class InconsistentNamingCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -132,19 +120,13 @@ class InconsistentNamingCheck(BaseCheck):
                         f"naming conventions: "
                         f"{', '.join(sorted(named_styles))}."
                     ),
-                    evidence=(
-                        "; ".join(evidence_parts)
-                    ),
+                    evidence=("; ".join(evidence_parts)),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
             )
         else:
-            style_used = (
-                next(iter(named_styles))
-                if named_styles
-                else "unknown"
-            )
+            style_used = next(iter(named_styles)) if named_styles else "unknown"
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -152,9 +134,7 @@ class InconsistentNamingCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(

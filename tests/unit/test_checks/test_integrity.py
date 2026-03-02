@@ -975,9 +975,7 @@ class TestIntg018SchemalessTools:
         assert meta.check_id == "intg018"
         assert meta.category == "integrity"
 
-    async def test_fails_on_tool_without_input_schema(
-        self, check: SchemalessToolsCheck
-    ) -> None:
+    async def test_fails_on_tool_without_input_schema(self, check: SchemalessToolsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -992,9 +990,7 @@ class TestIntg018SchemalessTools:
         assert "mystery_tool" in fail_findings[0].status_extended
         assert "missing" in fail_findings[0].evidence
 
-    async def test_passes_on_tool_with_valid_schema(
-        self, check: SchemalessToolsCheck
-    ) -> None:
+    async def test_passes_on_tool_with_valid_schema(self, check: SchemalessToolsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -1015,9 +1011,7 @@ class TestIntg018SchemalessTools:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) == 1
 
-    async def test_fails_on_empty_input_schema(
-        self, check: SchemalessToolsCheck
-    ) -> None:
+    async def test_fails_on_empty_input_schema(self, check: SchemalessToolsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -1108,9 +1102,7 @@ class TestIntg019EmptyToolDescriptions:
         assert "undocumented_tool" in fail_findings[0].status_extended
         assert "empty" in fail_findings[0].evidence
 
-    async def test_passes_on_tool_with_description(
-        self, check: EmptyToolDescriptionsCheck
-    ) -> None:
+    async def test_passes_on_tool_with_description(self, check: EmptyToolDescriptionsCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -1166,9 +1158,7 @@ class TestIntg019EmptyToolDescriptions:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1
 
-    async def test_empty_tools_returns_empty(
-        self, check: EmptyToolDescriptionsCheck
-    ) -> None:
+    async def test_empty_tools_returns_empty(self, check: EmptyToolDescriptionsCheck) -> None:
         snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
         assert findings == []

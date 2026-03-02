@@ -72,10 +72,7 @@ class MissingRequiredFieldsCheck(BaseCheck):
                         f"potentially triggering default behaviors or "
                         f"null reference errors."
                     ),
-                    evidence=(
-                        f"tool={tool_name}, properties=[{prop_names}], "
-                        f"required=[]"
-                    ),
+                    evidence=(f"tool={tool_name}, properties=[{prop_names}], required=[]"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )

@@ -65,11 +65,7 @@ def _count_checks() -> tuple[int, int]:
         registry = CheckRegistry()
         registry.discover_checks()
         all_checks = registry.get_checks()
-        static = [
-            c
-            for c in all_checks
-            if not c.metadata().check_id.startswith("ai")
-        ]
+        static = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
         cats = {c.metadata().category for c in static}
         return len(static), len(cats)
     except Exception:
@@ -102,8 +98,7 @@ def print_banner(console: Console, version: str) -> None:
         highlight=False,
     )
     console.print(
-        "  [dim]────────────────────────────────────────────────"
-        "──────────────────────────[/dim]",
+        "  [dim]──────────────────────────────────────────────────────────────────────────[/dim]",
         highlight=False,
     )
     console.print()

@@ -26,9 +26,7 @@ def estimate_snapshot_tokens(snapshot: ServerSnapshot) -> int:
         if collection:
             total_chars += len(json.dumps(collection, default=str))
     if snapshot.capabilities:
-        total_chars += len(
-            json.dumps(snapshot.capabilities, default=str)
-        )
+        total_chars += len(json.dumps(snapshot.capabilities, default=str))
     if snapshot.config_raw:
         total_chars += len(json.dumps(snapshot.config_raw, default=str))
     # Add overhead for server name, transport, section headers
@@ -73,9 +71,7 @@ def chunk_findings_for_reasoning(
     budget alongside the snapshot.
     """
     snapshot_tokens = estimate_snapshot_tokens(snapshot)
-    overhead = (
-        SYSTEM_PROMPT_TOKENS + OUTPUT_RESERVE_TOKENS + snapshot_tokens
-    )
+    overhead = SYSTEM_PROMPT_TOKENS + OUTPUT_RESERVE_TOKENS + snapshot_tokens
     available = max_tokens_per_chunk - overhead
 
     if available <= 0:
@@ -100,9 +96,7 @@ def chunk_findings_for_reasoning(
     current_tokens = 0
 
     for _category, cat_findings in sorted(by_category.items()):
-        cat_tokens = sum(
-            estimate_finding_tokens(f) for f in cat_findings
-        )
+        cat_tokens = sum(estimate_finding_tokens(f) for f in cat_findings)
 
         if current_tokens + cat_tokens <= available:
             current_chunk.extend(cat_findings)

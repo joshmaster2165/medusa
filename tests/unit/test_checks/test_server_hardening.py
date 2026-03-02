@@ -441,12 +441,8 @@ class TestPermissiveCapabilitiesCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) == 1
 
-    async def test_passes_on_single_capability(
-        self, check: PermissiveCapabilitiesCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            capabilities={"tools": {"listChanged": True}}
-        )
+    async def test_passes_on_single_capability(self, check: PermissiveCapabilitiesCheck) -> None:
+        snapshot = make_snapshot(capabilities={"tools": {"listChanged": True}})
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0
@@ -471,9 +467,7 @@ class TestUnrestrictedExecutionScopeCheck:
     def check(self) -> UnrestrictedExecutionScopeCheck:
         return UnrestrictedExecutionScopeCheck()
 
-    async def test_metadata_loads_correctly(
-        self, check: UnrestrictedExecutionScopeCheck
-    ) -> None:
+    async def test_metadata_loads_correctly(self, check: UnrestrictedExecutionScopeCheck) -> None:
         meta = check.metadata()
         assert meta.check_id == "hard018"
         assert meta.category == "server_hardening"
@@ -501,9 +495,7 @@ class TestUnrestrictedExecutionScopeCheck:
         assert "privileged" in fail_findings[0].status_extended.lower()
         assert "exfiltrative" in fail_findings[0].status_extended.lower()
 
-    async def test_passes_on_read_only_tools(
-        self, check: UnrestrictedExecutionScopeCheck
-    ) -> None:
+    async def test_passes_on_read_only_tools(self, check: UnrestrictedExecutionScopeCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -556,9 +548,7 @@ class TestUnrestrictedExecutionScopeCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0
 
-    async def test_empty_tools_returns_empty(
-        self, check: UnrestrictedExecutionScopeCheck
-    ) -> None:
+    async def test_empty_tools_returns_empty(self, check: UnrestrictedExecutionScopeCheck) -> None:
         snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
         assert findings == []

@@ -48,9 +48,7 @@ class MissingToolNamespaceCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -81,9 +79,7 @@ class MissingToolNamespaceCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -93,10 +89,7 @@ class MissingToolNamespaceCheck(BaseCheck):
                         f"({ratio:.0%}). Namespace "
                         f"separators: ., /, ::"
                     ),
-                    evidence=(
-                        f"no_namespace="
-                        f"{', '.join(tools_without_ns[:10])}"
-                    ),
+                    evidence=(f"no_namespace={', '.join(tools_without_ns[:10])}"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -109,9 +102,7 @@ class MissingToolNamespaceCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(

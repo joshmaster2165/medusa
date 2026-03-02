@@ -63,8 +63,7 @@ class SqlInjectionCheck(BaseCheck):
                 # Check for constraining keywords
                 has_enum = bool(param_def.get("enum"))
                 has_max_length = (
-                    isinstance(param_def.get("maxLength"), int)
-                    and param_def["maxLength"] <= 128
+                    isinstance(param_def.get("maxLength"), int) and param_def["maxLength"] <= 128
                 )
 
                 if has_enum:
@@ -72,16 +71,12 @@ class SqlInjectionCheck(BaseCheck):
 
                 pattern = param_def.get("pattern")
                 if pattern:
-                    strength = assess_pattern_strength(
-                        pattern, SQL_INJECTION_VECTORS
-                    )
+                    strength = assess_pattern_strength(pattern, SQL_INJECTION_VECTORS)
                     if strength == PatternStrength.STRONG:
                         continue  # Pattern blocks ≥90% of SQL payloads
 
                     if strength == PatternStrength.MODERATE:
-                        pct = pattern_block_percentage(
-                            pattern, SQL_INJECTION_VECTORS
-                        )
+                        pct = pattern_block_percentage(pattern, SQL_INJECTION_VECTORS)
                         findings.append(
                             Finding(
                                 check_id=meta.check_id,

@@ -37,9 +37,7 @@ class DescriptionLengthAnomalyCheck(BaseCheck):
             return findings
 
         # Compute the average description length across all tools.
-        descriptions = [
-            tool.get("description", "") or "" for tool in snapshot.tools
-        ]
+        descriptions = [tool.get("description", "") or "" for tool in snapshot.tools]
         lengths = [len(d) for d in descriptions]
         avg_length = sum(lengths) / len(lengths) if lengths else 0
 
@@ -49,9 +47,7 @@ class DescriptionLengthAnomalyCheck(BaseCheck):
 
             # Check 1: absolute threshold
             if length > _ABSOLUTE_THRESHOLD:
-                issues.append(
-                    f"description is {length} chars (threshold: {_ABSOLUTE_THRESHOLD})"
-                )
+                issues.append(f"description is {length} chars (threshold: {_ABSOLUTE_THRESHOLD})")
 
             # Check 2: relative anomaly (>5x average)
             if avg_length > 0 and length > avg_length * _RELATIVE_MULTIPLIER:

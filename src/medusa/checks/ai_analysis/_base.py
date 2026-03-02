@@ -53,9 +53,7 @@ class BaseAiCategoryCheck(BaseCheck):
     # ── metadata ──────────────────────────────────────────────────────
 
     def metadata(self) -> CheckMetadata:
-        meta_path = (
-            Path(__file__).parent / f"{self._meta_file()}.metadata.yaml"
-        )
+        meta_path = Path(__file__).parent / f"{self._meta_file()}.metadata.yaml"
         return CheckMetadata(**yaml.safe_load(meta_path.read_text()))
 
     # ── execute ───────────────────────────────────────────────────────
@@ -78,8 +76,7 @@ class BaseAiCategoryCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        "AI client not configured. "
-                        "Use --ai or --all to enable AI scanning."
+                        "AI client not configured. Use --ai or --all to enable AI scanning."
                     ),
                     remediation="Run with --ai or --all flag.",
                     owasp_mcp=meta.owasp_mcp,
@@ -124,9 +121,7 @@ class BaseAiCategoryCheck(BaseCheck):
             finally:
                 release_ai_slot()
         except Exception as e:
-            logger.error(
-                "AI analysis failed for %s: %s", meta.check_id, e
-            )
+            logger.error("AI analysis failed for %s: %s", meta.check_id, e)
             return [
                 Finding(
                     check_id=meta.check_id,
@@ -178,11 +173,7 @@ class BaseAiCategoryCheck(BaseCheck):
         registry = CheckRegistry()
         registry.discover_checks()
         checks = registry.get_checks(categories=[self._category()])
-        static = [
-            c
-            for c in checks
-            if not c.metadata().check_id.startswith("ai")
-        ]
+        static = [c for c in checks if not c.metadata().check_id.startswith("ai")]
 
         lines = [
             f"CHECKS IN CATEGORY '{self._category()}' "
@@ -219,8 +210,7 @@ class BaseAiCategoryCheck(BaseCheck):
             pct = (covered / total) * 100
             if pct < 80:
                 logger.warning(
-                    "%s: Claude evaluated %d/%d checks (%.0f%%) — "
-                    "below 80%% coverage threshold",
+                    "%s: Claude evaluated %d/%d checks (%.0f%%) — below 80%% coverage threshold",
                     ai_check_id,
                     covered,
                     total,
@@ -242,11 +232,7 @@ class BaseAiCategoryCheck(BaseCheck):
         registry = CheckRegistry()
         registry.discover_checks()
         checks = registry.get_checks(categories=[self._category()])
-        return {
-            c.metadata().check_id
-            for c in checks
-            if not c.metadata().check_id.startswith("ai")
-        }
+        return {c.metadata().check_id for c in checks if not c.metadata().check_id.startswith("ai")}
 
     def _get_category_prefix(self) -> str:
         """Extract the check_id prefix for this category (e.g. 'tp', 'iv')."""

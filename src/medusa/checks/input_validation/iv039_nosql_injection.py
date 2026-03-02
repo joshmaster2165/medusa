@@ -75,9 +75,7 @@ class NosqlInjectionCheck(BaseCheck):
                     if has_pattern or has_enum:
                         continue
                 elif param_type == "object":
-                    add_props = param_def.get(
-                        "additionalProperties"
-                    )
+                    add_props = param_def.get("additionalProperties")
                     if add_props is False:
                         continue
 
@@ -97,10 +95,7 @@ class NosqlInjectionCheck(BaseCheck):
                             f"validation constraints. Attackers can inject query "
                             f"operators to manipulate database queries."
                         ),
-                        evidence=(
-                            f"param={param_name}, type={param_type}, "
-                            f"pattern=N/A, enum=N/A"
-                        ),
+                        evidence=(f"param={param_name}, type={param_type}, pattern=N/A, enum=N/A"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )
@@ -118,8 +113,7 @@ class NosqlInjectionCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No NoSQL injection risks detected across "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"No NoSQL injection risks detected across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

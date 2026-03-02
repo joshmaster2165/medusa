@@ -81,10 +81,20 @@ class CredentialsInResourcesCheck(BaseCheck):
                 if not text:
                     continue
                 self._check_secret_prefixes(
-                    text, text_label, resource_name, meta, snapshot, findings,
+                    text,
+                    text_label,
+                    resource_name,
+                    meta,
+                    snapshot,
+                    findings,
                 )
                 self._check_credential_assignments(
-                    text, text_label, resource_name, meta, snapshot, findings,
+                    text,
+                    text_label,
+                    resource_name,
+                    meta,
+                    snapshot,
+                    findings,
                 )
 
             # Check URI specifically for embedded credentials
@@ -95,38 +105,42 @@ class CredentialsInResourcesCheck(BaseCheck):
                     password = match.group(2)
                     # Mask the password
                     masked_password = password[:2] + "*" * max(0, len(password) - 2)
-                    findings.append(Finding(
-                        check_id=meta.check_id,
-                        check_title=meta.title,
-                        status=Status.FAIL,
-                        severity=meta.severity,
-                        server_name=snapshot.server_name,
-                        server_transport=snapshot.transport_type,
-                        resource_type="resource",
-                        resource_name=resource_name,
-                        status_extended=(
-                            f"Resource '{resource_name}' URI contains embedded credentials "
-                            f"in the format '://user:password@host'."
-                        ),
-                        evidence=f"Username: {username}, Password: {masked_password}",
-                        remediation=meta.remediation,
-                        owasp_mcp=meta.owasp_mcp,
-                    ))
+                    findings.append(
+                        Finding(
+                            check_id=meta.check_id,
+                            check_title=meta.title,
+                            status=Status.FAIL,
+                            severity=meta.severity,
+                            server_name=snapshot.server_name,
+                            server_transport=snapshot.transport_type,
+                            resource_type="resource",
+                            resource_name=resource_name,
+                            status_extended=(
+                                f"Resource '{resource_name}' URI contains embedded credentials "
+                                f"in the format '://user:password@host'."
+                            ),
+                            evidence=f"Username: {username}, Password: {masked_password}",
+                            remediation=meta.remediation,
+                            owasp_mcp=meta.owasp_mcp,
+                        )
+                    )
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended="No credentials detected in resource descriptions or URIs.",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No credentials detected in resource descriptions or URIs.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings
 
     def _check_secret_prefixes(
@@ -144,23 +158,25 @@ class CredentialsInResourcesCheck(BaseCheck):
                 start = max(0, idx - 10)
                 end = min(len(text), idx + len(prefix) + 20)
                 snippet = text[start:end]
-                findings.append(Finding(
-                    check_id=meta.check_id,
-                    check_title=meta.title,
-                    status=Status.FAIL,
-                    severity=meta.severity,
-                    server_name=snapshot.server_name,
-                    server_transport=snapshot.transport_type,
-                    resource_type="resource",
-                    resource_name=resource_name,
-                    status_extended=(
-                        f"Resource '{resource_name}' {text_label} contains a string "
-                        f"matching known secret prefix '{prefix}'."
-                    ),
-                    evidence=f"Snippet: ...{snippet}...",
-                    remediation=meta.remediation,
-                    owasp_mcp=meta.owasp_mcp,
-                ))
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="resource",
+                        resource_name=resource_name,
+                        status_extended=(
+                            f"Resource '{resource_name}' {text_label} contains a string "
+                            f"matching known secret prefix '{prefix}'."
+                        ),
+                        evidence=f"Snippet: ...{snippet}...",
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
                 break  # One prefix finding per text field
 
     def _check_credential_assignments(
@@ -175,21 +191,23 @@ class CredentialsInResourcesCheck(BaseCheck):
         matches = _CREDENTIAL_ASSIGNMENT_RE.findall(text)
         for match_value in matches:
             if len(match_value) >= 6:
-                findings.append(Finding(
-                    check_id=meta.check_id,
-                    check_title=meta.title,
-                    status=Status.FAIL,
-                    severity=meta.severity,
-                    server_name=snapshot.server_name,
-                    server_transport=snapshot.transport_type,
-                    resource_type="resource",
-                    resource_name=resource_name,
-                    status_extended=(
-                        f"Resource '{resource_name}' {text_label} contains a credential "
-                        f"assignment pattern with a value of length {len(match_value)}."
-                    ),
-                    evidence=f"Pattern match: <key>={match_value[:4]}****",
-                    remediation=meta.remediation,
-                    owasp_mcp=meta.owasp_mcp,
-                ))
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="resource",
+                        resource_name=resource_name,
+                        status_extended=(
+                            f"Resource '{resource_name}' {text_label} contains a credential "
+                            f"assignment pattern with a value of length {len(match_value)}."
+                        ),
+                        evidence=f"Pattern match: <key>={match_value[:4]}****",
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
                 break  # One assignment finding per text field

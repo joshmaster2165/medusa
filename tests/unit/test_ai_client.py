@@ -73,9 +73,7 @@ class TestClaudeClient:
 
         mock_response = httpx.Response(
             status_code=200,
-            json={
-                "content": [{"type": "text", "text": "not valid json"}]
-            },
+            json={"content": [{"type": "text", "text": "not valid json"}]},
         )
 
         with patch.object(
@@ -180,9 +178,7 @@ class TestBackendProxiedClient:
             dashboard_url="https://example.com",
         )
 
-        fail_resp = httpx.Response(
-            status_code=502, text="Bad Gateway"
-        )
+        fail_resp = httpx.Response(status_code=502, text="Bad Gateway")
         ok_resp = httpx.Response(
             status_code=200,
             json={"findings": []},
@@ -205,9 +201,7 @@ class TestBackendProxiedClient:
             dashboard_url="https://example.com",
         )
 
-        fail_resp = httpx.Response(
-            status_code=429, text="Rate limited"
-        )
+        fail_resp = httpx.Response(status_code=429, text="Rate limited")
         ok_resp = httpx.Response(
             status_code=200,
             json={"findings": []},
@@ -230,9 +224,7 @@ class TestBackendProxiedClient:
             dashboard_url="https://example.com",
         )
 
-        fail_resp = httpx.Response(
-            status_code=502, text="Bad Gateway"
-        )
+        fail_resp = httpx.Response(status_code=502, text="Bad Gateway")
 
         with patch.object(
             client._client,
@@ -251,9 +243,7 @@ class TestBackendProxiedClient:
             dashboard_url="https://example.com",
         )
 
-        mock_response = httpx.Response(
-            status_code=401, text="Unauthorized"
-        )
+        mock_response = httpx.Response(status_code=401, text="Unauthorized")
 
         with patch.object(
             client._client,

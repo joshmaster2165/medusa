@@ -1903,9 +1903,7 @@ class TestDP032BulkDataExport:
         assert meta.check_id == "dp032"
         assert meta.category == "data_protection"
 
-    async def test_fails_on_dump_tool_without_pagination(
-        self, check: BulkDataExportCheck
-    ) -> None:
+    async def test_fails_on_dump_tool_without_pagination(self, check: BulkDataExportCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -1926,9 +1924,7 @@ class TestDP032BulkDataExport:
         assert "dump_all_users" in fail_findings[0].status_extended
         assert "pagination" in fail_findings[0].evidence
 
-    async def test_passes_on_bulk_tool_with_limit_param(
-        self, check: BulkDataExportCheck
-    ) -> None:
+    async def test_passes_on_bulk_tool_with_limit_param(self, check: BulkDataExportCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -1950,9 +1946,7 @@ class TestDP032BulkDataExport:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) == 1
 
-    async def test_passes_on_bulk_tool_with_page_param(
-        self, check: BulkDataExportCheck
-    ) -> None:
+    async def test_passes_on_bulk_tool_with_page_param(self, check: BulkDataExportCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -1972,9 +1966,7 @@ class TestDP032BulkDataExport:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0
 
-    async def test_fails_on_description_bulk_indicator(
-        self, check: BulkDataExportCheck
-    ) -> None:
+    async def test_fails_on_description_bulk_indicator(self, check: BulkDataExportCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {

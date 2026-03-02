@@ -24,9 +24,7 @@ class MissingSamplingCheck(BaseCheck):
         data = yaml.safe_load(meta_path.read_text())
         return CheckMetadata(**data)
 
-    async def execute(
-        self, snapshot: ServerSnapshot
-    ) -> list[Finding]:
+    async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
         meta = self.metadata()
         findings: list[Finding] = []
 
@@ -41,85 +39,82 @@ class MissingSamplingCheck(BaseCheck):
                 ToolRisk.DESTRUCTIVE,
                 ToolRisk.PRIVILEGED,
             ):
-                dangerous_tools.append(
-                    tool.get("name", "unknown")
-                )
+                dangerous_tools.append(tool.get("name", "unknown"))
 
         if not dangerous_tools:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    "No destructive or privileged tools "
-                    "detected; sampling capability not "
-                    "required."
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        "No destructive or privileged tools "
+                        "detected; sampling capability not "
+                        "required."
+                    ),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
             return findings
 
         # Check if server declares sampling capability
-        has_sampling = bool(
-            snapshot.capabilities.get("sampling")
-        )
+        has_sampling = bool(snapshot.capabilities.get("sampling"))
 
         if has_sampling:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    "Server declares sampling capability "
-                    "and has destructive/privileged tools. "
-                    "Human review can be requested before "
-                    "dangerous operations."
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        "Server declares sampling capability "
+                        "and has destructive/privileged tools. "
+                        "Human review can be requested before "
+                        "dangerous operations."
+                    ),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         else:
             sample = dangerous_tools[:5]
             suffix = ""
             if len(dangerous_tools) > 5:
-                suffix = (
-                    f" and {len(dangerous_tools) - 5} more"
+                suffix = f" and {len(dangerous_tools) - 5} more"
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.FAIL,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        f"Server has "
+                        f"{len(dangerous_tools)} destructive/"
+                        f"privileged tool(s) but does not "
+                        f"declare the 'sampling' capability. "
+                        f"The server cannot request human "
+                        f"review before executing dangerous "
+                        f"operations."
+                    ),
+                    evidence=(f"Dangerous tools: {', '.join(sample)}{suffix}"),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
                 )
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.FAIL,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    f"Server has "
-                    f"{len(dangerous_tools)} destructive/"
-                    f"privileged tool(s) but does not "
-                    f"declare the 'sampling' capability. "
-                    f"The server cannot request human "
-                    f"review before executing dangerous "
-                    f"operations."
-                ),
-                evidence=(
-                    f"Dangerous tools: "
-                    f"{', '.join(sample)}{suffix}"
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            )
 
         return findings

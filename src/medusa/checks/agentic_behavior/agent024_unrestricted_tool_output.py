@@ -46,46 +46,45 @@ class UnrestrictedToolOutputCheck(BaseCheck):
                 continue
 
             risk_label = (
-                "data-reading" if risk == ToolRisk.READ_ONLY
-                else "potentially exfiltrative"
+                "data-reading" if risk == ToolRisk.READ_ONLY else "potentially exfiltrative"
             )
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.FAIL,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="tool",
-                resource_name=tool_name,
-                status_extended=(
-                    f"Tool '{tool_name}' is {risk_label} but has no outputSchema "
-                    f"defined. Without output constraints, the tool can return "
-                    f"arbitrarily large or malicious responses."
-                ),
-                evidence=(
-                    f"Tool: {tool_name}, Risk: {risk.value}, "
-                    f"outputSchema: missing"
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.FAIL,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="tool",
+                    resource_name=tool_name,
+                    status_extended=(
+                        f"Tool '{tool_name}' is {risk_label} but has no outputSchema "
+                        f"defined. Without output constraints, the tool can return "
+                        f"arbitrarily large or malicious responses."
+                    ),
+                    evidence=(f"Tool: {tool_name}, Risk: {risk.value}, outputSchema: missing"),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    "No data-reading or exfiltrative tools with unrestricted "
-                    "output detected."
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        "No data-reading or exfiltrative tools with unrestricted output detected."
+                    ),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings

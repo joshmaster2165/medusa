@@ -73,30 +73,8 @@ class SecretsInArgsCheck(BaseCheck):
             if flag_match:
                 value = flag_match.group(1)
                 masked = value[:4] + "*" * max(0, len(value) - 4) if len(value) > 4 else "****"
-                findings.append(Finding(
-                    check_id=meta.check_id,
-                    check_title=meta.title,
-                    status=Status.FAIL,
-                    severity=meta.severity,
-                    server_name=snapshot.server_name,
-                    server_transport=snapshot.transport_type,
-                    resource_type="server",
-                    resource_name=snapshot.server_name,
-                    status_extended=(
-                        f"Command-line argument at position {i} passes a credential "
-                        f"via a flag (e.g., --password=, --token=)."
-                    ),
-                    evidence=f"Arg[{i}]: {arg.split('=')[0]}={masked}",
-                    remediation=meta.remediation,
-                    owasp_mcp=meta.owasp_mcp,
-                ))
-                continue
-
-            # Check for known secret prefix patterns
-            for prefix in _SECRET_PREFIXES:
-                if arg.startswith(prefix) and len(arg) > len(prefix) + 4:
-                    masked = arg[:len(prefix) + 4] + "*" * (len(arg) - len(prefix) - 4)
-                    findings.append(Finding(
+                findings.append(
+                    Finding(
                         check_id=meta.check_id,
                         check_title=meta.title,
                         status=Status.FAIL,
@@ -106,21 +84,22 @@ class SecretsInArgsCheck(BaseCheck):
                         resource_type="server",
                         resource_name=snapshot.server_name,
                         status_extended=(
-                            f"Command-line argument at position {i} matches known "
-                            f"secret prefix '{prefix}'."
+                            f"Command-line argument at position {i} passes a credential "
+                            f"via a flag (e.g., --password=, --token=)."
                         ),
-                        evidence=f"Arg[{i}]: {masked}",
+                        evidence=f"Arg[{i}]: {arg.split('=')[0]}={masked}",
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
-                    ))
-                    break
-            else:
-                # Check for high-entropy strings (skip short args and flags)
-                if not arg.startswith("-") and len(arg) >= 8:
-                    is_secret, confidence = is_likely_secret("arg", arg)
-                    if is_secret and confidence >= 0.6:
-                        masked = arg[:4] + "*" * (len(arg) - 4)
-                        findings.append(Finding(
+                    )
+                )
+                continue
+
+            # Check for known secret prefix patterns
+            for prefix in _SECRET_PREFIXES:
+                if arg.startswith(prefix) and len(arg) > len(prefix) + 4:
+                    masked = arg[: len(prefix) + 4] + "*" * (len(arg) - len(prefix) - 4)
+                    findings.append(
+                        Finding(
                             check_id=meta.check_id,
                             check_title=meta.title,
                             status=Status.FAIL,
@@ -130,26 +109,56 @@ class SecretsInArgsCheck(BaseCheck):
                             resource_type="server",
                             resource_name=snapshot.server_name,
                             status_extended=(
-                                f"Command-line argument at position {i} has high entropy "
-                                f"(confidence: {confidence:.0%}), suggesting a potential secret."
+                                f"Command-line argument at position {i} matches known "
+                                f"secret prefix '{prefix}'."
                             ),
                             evidence=f"Arg[{i}]: {masked}",
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,
-                        ))
+                        )
+                    )
+                    break
+            else:
+                # Check for high-entropy strings (skip short args and flags)
+                if not arg.startswith("-") and len(arg) >= 8:
+                    is_secret, confidence = is_likely_secret("arg", arg)
+                    if is_secret and confidence >= 0.6:
+                        masked = arg[:4] + "*" * (len(arg) - 4)
+                        findings.append(
+                            Finding(
+                                check_id=meta.check_id,
+                                check_title=meta.title,
+                                status=Status.FAIL,
+                                severity=meta.severity,
+                                server_name=snapshot.server_name,
+                                server_transport=snapshot.transport_type,
+                                resource_type="server",
+                                resource_name=snapshot.server_name,
+                                status_extended=(
+                                    f"Command-line argument at position {i} has high"
+                                    f" entropy (confidence: {confidence:.0%}),"
+                                    f" suggesting a potential secret."
+                                ),
+                                evidence=f"Arg[{i}]: {masked}",
+                                remediation=meta.remediation,
+                                owasp_mcp=meta.owasp_mcp,
+                            )
+                        )
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended="No secrets detected in command-line arguments.",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No secrets detected in command-line arguments.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings

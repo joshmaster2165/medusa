@@ -77,60 +77,66 @@ class SecretsInToolDescriptionsCheck(BaseCheck):
                     start = max(0, idx - 10)
                     end = min(len(description), idx + len(prefix) + 20)
                     snippet = description[start:end]
-                    findings.append(Finding(
-                        check_id=meta.check_id,
-                        check_title=meta.title,
-                        status=Status.FAIL,
-                        severity=meta.severity,
-                        server_name=snapshot.server_name,
-                        server_transport=snapshot.transport_type,
-                        resource_type="tool",
-                        resource_name=tool_name,
-                        status_extended=(
-                            f"Tool '{tool_name}' description contains a string matching "
-                            f"known secret prefix '{prefix}'."
-                        ),
-                        evidence=f"Snippet: ...{snippet}...",
-                        remediation=meta.remediation,
-                        owasp_mcp=meta.owasp_mcp,
-                    ))
+                    findings.append(
+                        Finding(
+                            check_id=meta.check_id,
+                            check_title=meta.title,
+                            status=Status.FAIL,
+                            severity=meta.severity,
+                            server_name=snapshot.server_name,
+                            server_transport=snapshot.transport_type,
+                            resource_type="tool",
+                            resource_name=tool_name,
+                            status_extended=(
+                                f"Tool '{tool_name}' description contains a string matching "
+                                f"known secret prefix '{prefix}'."
+                            ),
+                            evidence=f"Snippet: ...{snippet}...",
+                            remediation=meta.remediation,
+                            owasp_mcp=meta.owasp_mcp,
+                        )
+                    )
                     break  # One finding per tool for prefix matches
 
             # Check for credential assignment patterns
             matches = _CREDENTIAL_ASSIGNMENT_RE.findall(description)
             for match_value in matches:
                 if len(match_value) >= 6:  # Ignore very short values
-                    findings.append(Finding(
-                        check_id=meta.check_id,
-                        check_title=meta.title,
-                        status=Status.FAIL,
-                        severity=meta.severity,
-                        server_name=snapshot.server_name,
-                        server_transport=snapshot.transport_type,
-                        resource_type="tool",
-                        resource_name=tool_name,
-                        status_extended=(
-                            f"Tool '{tool_name}' description contains a credential "
-                            f"assignment pattern with a value of length {len(match_value)}."
-                        ),
-                        evidence=f"Pattern match: <key>={match_value[:4]}****",
-                        remediation=meta.remediation,
-                        owasp_mcp=meta.owasp_mcp,
-                    ))
+                    findings.append(
+                        Finding(
+                            check_id=meta.check_id,
+                            check_title=meta.title,
+                            status=Status.FAIL,
+                            severity=meta.severity,
+                            server_name=snapshot.server_name,
+                            server_transport=snapshot.transport_type,
+                            resource_type="tool",
+                            resource_name=tool_name,
+                            status_extended=(
+                                f"Tool '{tool_name}' description contains a credential "
+                                f"assignment pattern with a value of length {len(match_value)}."
+                            ),
+                            evidence=f"Pattern match: <key>={match_value[:4]}****",
+                            remediation=meta.remediation,
+                            owasp_mcp=meta.owasp_mcp,
+                        )
+                    )
                     break  # One finding per tool for assignment patterns
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended="No secrets detected in tool descriptions.",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No secrets detected in tool descriptions.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings

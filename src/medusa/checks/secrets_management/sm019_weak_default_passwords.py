@@ -73,23 +73,29 @@ class WeakDefaultPasswordsCheck(BaseCheck):
             properties = schema.get("properties") or {}
 
             self._walk_properties(
-                properties, tool_name, meta, snapshot, findings,
+                properties,
+                tool_name,
+                meta,
+                snapshot,
+                findings,
             )
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended="No weak default passwords detected in tool parameters.",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No weak default passwords detected in tool parameters.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings
 
     def _walk_properties(
@@ -111,34 +117,40 @@ class WeakDefaultPasswordsCheck(BaseCheck):
 
             # Only check params whose names suggest passwords
             is_password_param = any(
-                indicator in param_lower
-                for indicator in _PASSWORD_PARAM_INDICATORS
+                indicator in param_lower for indicator in _PASSWORD_PARAM_INDICATORS
             )
 
             if is_password_param:
                 default = param_def.get("default")
                 if isinstance(default, str) and default.lower() in _WEAK_PASSWORDS:
-                    findings.append(Finding(
-                        check_id=meta.check_id,
-                        check_title=meta.title,
-                        status=Status.FAIL,
-                        severity=meta.severity,
-                        server_name=snapshot.server_name,
-                        server_transport=snapshot.transport_type,
-                        resource_type="tool",
-                        resource_name=tool_name,
-                        status_extended=(
-                            f"Tool '{tool_name}' parameter '{full_name}' has a weak "
-                            f"default password value."
-                        ),
-                        evidence=f"Parameter: {full_name}, Default: {default}",
-                        remediation=meta.remediation,
-                        owasp_mcp=meta.owasp_mcp,
-                    ))
+                    findings.append(
+                        Finding(
+                            check_id=meta.check_id,
+                            check_title=meta.title,
+                            status=Status.FAIL,
+                            severity=meta.severity,
+                            server_name=snapshot.server_name,
+                            server_transport=snapshot.transport_type,
+                            resource_type="tool",
+                            resource_name=tool_name,
+                            status_extended=(
+                                f"Tool '{tool_name}' parameter '{full_name}' has a weak "
+                                f"default password value."
+                            ),
+                            evidence=f"Parameter: {full_name}, Default: {default}",
+                            remediation=meta.remediation,
+                            owasp_mcp=meta.owasp_mcp,
+                        )
+                    )
 
             # Recurse into nested object properties
             nested_props = param_def.get("properties")
             if isinstance(nested_props, dict):
                 self._walk_properties(
-                    nested_props, tool_name, meta, snapshot, findings, full_name,
+                    nested_props,
+                    tool_name,
+                    meta,
+                    snapshot,
+                    findings,
+                    full_name,
                 )

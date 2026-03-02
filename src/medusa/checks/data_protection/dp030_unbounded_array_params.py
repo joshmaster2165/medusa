@@ -55,9 +55,7 @@ class UnboundedArrayParamsCheck(BaseCheck):
                             status=Status.FAIL,
                             severity=meta.severity,
                             server_name=snapshot.server_name,
-                            server_transport=(
-                                snapshot.transport_type
-                            ),
+                            server_transport=(snapshot.transport_type),
                             resource_type="tool",
                             resource_name=tool_name,
                             status_extended=(
@@ -65,10 +63,7 @@ class UnboundedArrayParamsCheck(BaseCheck):
                                 f"'{param_name}' is type array "
                                 f"without maxItems constraint."
                             ),
-                            evidence=(
-                                f"param={param_name}, "
-                                f"type=array, maxItems=missing"
-                            ),
+                            evidence=(f"param={param_name}, type=array, maxItems=missing"),
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,
                         )

@@ -66,17 +66,11 @@ class ScanEngine:
         )
         # Filter checks based on scan mode
         if scan_mode == "ai":
-            self.checks = [
-                c for c in all_checks
-                if c.metadata().check_id.startswith("ai")
-            ]
+            self.checks = [c for c in all_checks if c.metadata().check_id.startswith("ai")]
         elif scan_mode == "full":
             self.checks = all_checks
         else:  # "static" (default)
-            self.checks = [
-                c for c in all_checks
-                if not c.metadata().check_id.startswith("ai")
-            ]
+            self.checks = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
         self.max_concurrency = max_concurrency
         self.progress_callback = progress_callback
 
@@ -201,28 +195,16 @@ class ScanEngine:
 
             # Phase 2: AI Reasoning (post-process static findings)
             if self.enable_reasoning:
-                reasoning_result = await self._run_reasoning(
-                    snapshot, findings
-                )
+                reasoning_result = await self._run_reasoning(snapshot, findings)
                 if reasoning_result is not None:
-                    self._reasoning_results[
-                        snapshot.server_name
-                    ] = reasoning_result
+                    self._reasoning_results[snapshot.server_name] = reasoning_result
                     # Convert gap findings into standard Finding objects
-                    gap_findings = self._gaps_to_findings(
-                        reasoning_result, snapshot
-                    )
+                    gap_findings = self._gaps_to_findings(reasoning_result, snapshot)
                     findings.extend(gap_findings)
                 self._emit("check_done", "ai_reasoning")
 
-            check_ids_run = {
-                f.check_id
-                for f in findings
-                if f.status != Status.SKIPPED
-            }
-            server_score = calculate_server_score(
-                findings, len(check_ids_run)
-            )
+            check_ids_run = {f.check_id for f in findings if f.status != Status.SKIPPED}
+            server_score = calculate_server_score(findings, len(check_ids_run))
             self._emit("server_done", connector.name)
             return findings, server_score
 
@@ -274,9 +256,7 @@ class ScanEngine:
                     check_id=f"ai_gap_{i:03d}",
                     check_title=f"[AI Reasoning] {gap.title}",
                     status=Status.FAIL,
-                    severity=severity_map.get(
-                        gap.severity.lower(), Severity.MEDIUM
-                    ),
+                    severity=severity_map.get(gap.severity.lower(), Severity.MEDIUM),
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
                     resource_type=gap.resource_type,
@@ -334,9 +314,7 @@ class ScanEngine:
         if self.enable_reasoning and self._reasoning_results:
             for name, r in self._reasoning_results.items():
                 try:
-                    reasoning_results[name] = r.model_dump(
-                        mode="json"
-                    )
+                    reasoning_results[name] = r.model_dump(mode="json")
                 except Exception:
                     logger.warning(
                         "Failed to serialize reasoning for '%s'",
@@ -349,9 +327,7 @@ class ScanEngine:
             medusa_version=__version__,
             scan_duration_seconds=round(duration, 2),
             servers_scanned=servers_scanned,
-            total_findings=sum(
-                1 for f in all_findings if f.status == Status.FAIL
-            ),
+            total_findings=sum(1 for f in all_findings if f.status == Status.FAIL),
             findings=all_findings,
             server_scores=server_scores,
             aggregate_score=aggregate,

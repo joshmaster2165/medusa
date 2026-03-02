@@ -178,9 +178,7 @@ class TestIsLikelySecret:
         assert conf >= 0.6
 
     def test_real_password_detected(self) -> None:
-        is_secret, conf = is_likely_secret(
-            "DB_PASSWORD", "aB3$xZ9#mK2@pL5&wQ8!rT6"
-        )
+        is_secret, conf = is_likely_secret("DB_PASSWORD", "aB3$xZ9#mK2@pL5&wQ8!rT6")
         assert is_secret is True
         assert conf >= 0.6
 
@@ -194,25 +192,17 @@ class TestIsLikelySecret:
     def test_secret_named_key_lower_threshold(self) -> None:
         """Keys with 'secret' in the name have a lower entropy threshold."""
         # A moderately random value should still trigger for secret-named keys
-        is_secret, conf = is_likely_secret(
-            "my_secret_value", "x7Kp2mN9qR4wL6tY8vB3jH5"
-        )
+        is_secret, conf = is_likely_secret("my_secret_value", "x7Kp2mN9qR4wL6tY8vB3jH5")
         assert is_secret is True
 
     def test_confidence_is_bounded(self) -> None:
-        _, conf = is_likely_secret(
-            "API_KEY", "aB3$xZ9#mK2@pL5&wQ8!rT6vY1cF0dG7hJ4kM8nP2qS5"
-        )
+        _, conf = is_likely_secret("API_KEY", "aB3$xZ9#mK2@pL5&wQ8!rT6vY1cF0dG7hJ4kM8nP2qS5")
         assert 0.0 <= conf <= 1.0
 
     def test_long_value_boost(self) -> None:
         """Values >= 32 chars get a confidence boost."""
-        _, conf_short = is_likely_secret(
-            "TOKEN", "aB3$xZ9#mK2@pL5&wQ8!"
-        )
-        _, conf_long = is_likely_secret(
-            "TOKEN", "aB3$xZ9#mK2@pL5&wQ8!rT6vY1cF0dG"
-        )
+        _, conf_short = is_likely_secret("TOKEN", "aB3$xZ9#mK2@pL5&wQ8!")
+        _, conf_long = is_likely_secret("TOKEN", "aB3$xZ9#mK2@pL5&wQ8!rT6vY1cF0dG")
         # Both should be detected; long one should have >= confidence
         if conf_short > 0 and conf_long > 0:
             assert conf_long >= conf_short

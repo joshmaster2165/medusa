@@ -123,9 +123,7 @@ def save_baseline(baseline: Baseline, path: str | Path) -> None:
     """Save a baseline to a JSON file."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        baseline.model_dump_json(indent=2)
-    )
+    path.write_text(baseline.model_dump_json(indent=2))
 
 
 def filter_new_findings(
@@ -151,9 +149,7 @@ def filter_new_findings(
     baseline_fps: dict[str, BaselineEntry] = {
         entry.fingerprint: entry for entry in baseline.entries
     }
-    suppressed_fps = {
-        fp for fp, entry in baseline_fps.items() if entry.suppressed
-    }
+    suppressed_fps = {fp for fp, entry in baseline_fps.items() if entry.suppressed}
 
     new_findings: list[Finding] = []
     baselined_findings: list[Finding] = []
@@ -175,10 +171,7 @@ def filter_new_findings(
             new_findings.append(finding)
 
     # Find resolved: baseline entries not seen in current scan
-    resolved_fps = [
-        fp for fp in baseline_fps
-        if fp not in seen_fps and fp not in suppressed_fps
-    ]
+    resolved_fps = [fp for fp in baseline_fps if fp not in seen_fps and fp not in suppressed_fps]
 
     return new_findings, baselined_findings, resolved_fps
 

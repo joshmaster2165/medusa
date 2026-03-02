@@ -39,9 +39,7 @@ class RegexDosCheck(BaseCheck):
             tool_name: str = tool.get("name", "<unnamed>")
             input_schema: dict | None = tool.get("inputSchema")
 
-            if not input_schema or not isinstance(
-                input_schema, dict
-            ):
+            if not input_schema or not isinstance(input_schema, dict):
                 continue
 
             properties: dict = input_schema.get("properties", {})
@@ -76,9 +74,7 @@ class RegexDosCheck(BaseCheck):
                         server_name=snapshot.server_name,
                         server_transport=snapshot.transport_type,
                         resource_type="tool",
-                        resource_name=(
-                            f"{tool_name}.{param_name}"
-                        ),
+                        resource_name=(f"{tool_name}.{param_name}"),
                         status_extended=(
                             f"Tool '{tool_name}' parameter "
                             f"'{param_name}' has a pattern with "
@@ -109,8 +105,7 @@ class RegexDosCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No ReDoS risks detected across "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"No ReDoS risks detected across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

@@ -354,9 +354,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     # ── Resolve scan mode ─────────────────────────────────────────
     mode_flags = [flag_static, flag_ai, flag_all]
     if sum(mode_flags) > 1:
-        console.print(
-            "\n  [red]Use only one of --static, --ai, or --all.[/red]"
-        )
+        console.print("\n  [red]Use only one of --static, --ai, or --all.[/red]")
         sys.exit(2)
 
     if flag_reason and flag_ai:
@@ -455,8 +453,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         if len(connectors) > 5:
             names += f" (+{len(connectors) - 5} more)"
         console.print(
-            f"  [green]▸ Found {len(connectors)} {server_word}:[/green] "
-            f"[dim]{names}[/dim]"
+            f"  [green]▸ Found {len(connectors)} {server_word}:[/green] [dim]{names}[/dim]"
         )
 
     # Discover and filter checks
@@ -477,9 +474,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     # ── AI scanning setup ─────────────────────────────────────────
     needs_ai = scan_mode in ("ai", "full") or enable_reasoning
     if needs_ai:
-        _setup_ai_scan(
-            ctx, ai_mode, claude_api_key, api_key, quiet
-        )
+        _setup_ai_scan(ctx, ai_mode, claude_api_key, api_key, quiet)
         # Single credit deduction for the entire AI scan
         if not _deduct_ai_scan_credit(quiet):
             sys.exit(2)
@@ -503,9 +498,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
     if not quiet:
         check_word = "check" if num_checks == 1 else "checks"
-        reasoning_label = (
-            " + AI reasoning" if enable_reasoning else ""
-        )
+        reasoning_label = " + AI reasoning" if enable_reasoning else ""
         if scan_mode == "ai":
             console.print(
                 f"  [green]▸ Running {num_checks} AI"
@@ -545,19 +538,14 @@ def scan(  # noqa: C901, PLR0912, PLR0913
                     progress.update(
                         task,
                         advance=1,
-                        description=(
-                            "[bright_magenta]AI Reasoning..."
-                            "[/bright_magenta]"
-                        ),
+                        description=("[bright_magenta]AI Reasoning...[/bright_magenta]"),
                     )
                 else:
                     progress.update(task, advance=1)
             elif event == "server_start":
                 progress.update(
                     task,
-                    description=(
-                        f"Scanning [cyan]{detail}[/cyan]..."
-                    ),
+                    description=(f"Scanning [cyan]{detail}[/cyan]..."),
                 )
 
         engine.progress_callback = on_progress
@@ -585,21 +573,15 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
         try:
             baseline = load_baseline(baseline_path)
-            new_findings, baselined_findings, resolved_fps = (
-                filter_new_findings(result, baseline)
-            )
+            new_findings, baselined_findings, resolved_fps = filter_new_findings(result, baseline)
             baseline_stats = {
-                "new": sum(
-                    1 for f in new_findings if f.status == Status.FAIL
-                ),
+                "new": sum(1 for f in new_findings if f.status == Status.FAIL),
                 "baselined": len(baselined_findings),
                 "resolved": len(resolved_fps),
             }
 
             # Replace findings in result with only new findings
-            result = result.model_copy(
-                update={"findings": new_findings}
-            )
+            result = result.model_copy(update={"findings": new_findings})
 
             if not quiet:
                 console.print(
@@ -610,14 +592,10 @@ def scan(  # noqa: C901, PLR0912, PLR0913
                 )
         except FileNotFoundError:
             if not quiet:
-                console.print(
-                    f"  [yellow]⚠ Baseline not found: {baseline_path}[/yellow]"
-                )
+                console.print(f"  [yellow]⚠ Baseline not found: {baseline_path}[/yellow]")
         except ValueError as e:
             if not quiet:
-                console.print(
-                    f"  [yellow]⚠ Invalid baseline: {e}[/yellow]"
-                )
+                console.print(f"  [yellow]⚠ Invalid baseline: {e}[/yellow]")
 
     # Evaluate compliance if requested
     compliance_name = compliance or (
@@ -632,8 +610,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         except FileNotFoundError:
             if not quiet:
                 console.print(
-                    f"[yellow]⚠ Compliance framework not found: "
-                    f"{compliance_name}[/yellow]"
+                    f"[yellow]⚠ Compliance framework not found: {compliance_name}[/yellow]"
                 )
 
     # Generate report
@@ -701,11 +678,7 @@ def _setup_ai_scan(
     mode = ai_mode or user_config.ai_mode or "byok"
 
     # Resolve Medusa API key (needed for credits in both modes)
-    medusa_key = (
-        api_key
-        or os.environ.get("MEDUSA_API_KEY", "")
-        or (user_config.api_key or "")
-    )
+    medusa_key = api_key or os.environ.get("MEDUSA_API_KEY", "") or (user_config.api_key or "")
 
     if mode == "byok":
         # Resolve Claude API key: flag > env > config
@@ -815,9 +788,7 @@ def _deduct_ai_scan_credit(quiet: bool) -> bool:
             return False
         return True
     except Exception as e:
-        logger.warning(
-            "Credit deduction failed: %s — continuing anyway", e
-        )
+        logger.warning("Credit deduction failed: %s — continuing anyway", e)
         return True
 
 
@@ -832,11 +803,7 @@ def _upload_results(result, api_key: str | None, quiet: bool) -> None:
     upload_url = user_config.dashboard_url
 
     # Resolve API key: --api-key flag > env var > saved config
-    resolved_key = (
-        api_key
-        or os.environ.get("MEDUSA_API_KEY", "")
-        or (user_config.api_key or "")
-    )
+    resolved_key = api_key or os.environ.get("MEDUSA_API_KEY", "") or (user_config.api_key or "")
 
     if not resolved_key:
         console.print()
@@ -871,18 +838,13 @@ def _upload_results(result, api_key: str | None, quiet: bool) -> None:
                     dash = upload_url.rsplit("/api/", 1)[0]
                 else:
                     dash = upload_url
-                console.print(
-                    f"  [green]▸ Uploaded to dashboard:[/green] "
-                    f"[dim]{dash}[/dim]"
-                )
+                console.print(f"  [green]▸ Uploaded to dashboard:[/green] [dim]{dash}[/dim]")
         else:
             try:
                 detail = resp.json().get("error", resp.text)
             except (ValueError, KeyError):
                 detail = resp.text[:200] or f"HTTP {resp.status_code}"
-            console.print(
-                f"  [red]✗ Upload failed ({resp.status_code}):[/red] {detail}"
-            )
+            console.print(f"  [red]✗ Upload failed ({resp.status_code}):[/red] {detail}")
     except httpx.HTTPError as exc:
         console.print(f"  [red]✗ Upload failed:[/red] {exc}")
 
@@ -1039,9 +1001,7 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
 @cli.command()
 @click.option("--api-key", type=str, default=None, help="Medusa dashboard API key.")
 @click.option("--dashboard-url", type=str, default=None, help="Dashboard API URL.")
-@click.option(
-    "--claude-api-key", type=str, default=None, help="Anthropic API key for AI scans."
-)
+@click.option("--claude-api-key", type=str, default=None, help="Anthropic API key for AI scans.")
 @click.option(
     "--ai-mode",
     type=click.Choice(["byok", "proxied"]),
@@ -1077,9 +1037,7 @@ def configure(
     config = load_user_config()
 
     # Interactive prompts if no flags provided
-    no_flags = all(
-        v is None for v in [api_key, dashboard_url, claude_api_key, ai_mode]
-    )
+    no_flags = all(v is None for v in [api_key, dashboard_url, claude_api_key, ai_mode])
     if no_flags:
         if not quiet:
             console.print(
@@ -1136,9 +1094,7 @@ def configure(
 
     if not quiet:
         console.print()
-        console.print(
-            f"  [green]▸ Configuration saved to {CONFIG_FILE}[/green]"
-        )
+        console.print(f"  [green]▸ Configuration saved to {CONFIG_FILE}[/green]")
         console.print()
 
 
@@ -1163,9 +1119,7 @@ def settings(ctx: click.Context) -> None:
         console.print()
 
     # ── Dashboard section
-    dash_table = Table(
-        show_header=False, box=None, padding=(0, 2), pad_edge=False
-    )
+    dash_table = Table(show_header=False, box=None, padding=(0, 2), pad_edge=False)
     dash_table.add_column("Key", style="bold", width=20)
     dash_table.add_column("Value")
 
@@ -1187,9 +1141,7 @@ def settings(ctx: click.Context) -> None:
     )
 
     # ── AI section
-    ai_table = Table(
-        show_header=False, box=None, padding=(0, 2), pad_edge=False
-    )
+    ai_table = Table(show_header=False, box=None, padding=(0, 2), pad_edge=False)
     ai_table.add_column("Key", style="bold", width=20)
     ai_table.add_column("Value")
 
@@ -1282,12 +1234,8 @@ def diff(
     quiet = ctx.obj.get("quiet", False)
 
     try:
-        before = ScanResult.model_validate_json(
-            Path(before_file).read_text()
-        )
-        after = ScanResult.model_validate_json(
-            Path(after_file).read_text()
-        )
+        before = ScanResult.model_validate_json(Path(before_file).read_text())
+        after = ScanResult.model_validate_json(Path(after_file).read_text())
     except Exception as e:
         console.print(f"  [red]Failed to parse scan results: {e}[/red]")
         sys.exit(2)
@@ -1566,13 +1514,10 @@ def baseline_suppress(
     if suppress_finding(baseline, fingerprint, reason):
         save_baseline(baseline, baseline_file)
         console.print(
-            f"  [green]▸ Suppressed:[/green] {fingerprint}  "
-            f'[dim]reason: "{reason}"[/dim]'
+            f'  [green]▸ Suppressed:[/green] {fingerprint}  [dim]reason: "{reason}"[/dim]'
         )
     else:
-        console.print(
-            f"  [yellow]Fingerprint not found in baseline: {fingerprint}[/yellow]"
-        )
+        console.print(f"  [yellow]Fingerprint not found in baseline: {fingerprint}[/yellow]")
         sys.exit(2)
 
 
@@ -1603,13 +1548,9 @@ def baseline_unsuppress(
 
     if unsuppress_finding(baseline, fingerprint):
         save_baseline(baseline, baseline_file)
-        console.print(
-            f"  [green]▸ Unsuppressed:[/green] {fingerprint}"
-        )
+        console.print(f"  [green]▸ Unsuppressed:[/green] {fingerprint}")
     else:
-        console.print(
-            f"  [yellow]Fingerprint not found in baseline: {fingerprint}[/yellow]"
-        )
+        console.print(f"  [yellow]Fingerprint not found in baseline: {fingerprint}[/yellow]")
         sys.exit(2)
 
 

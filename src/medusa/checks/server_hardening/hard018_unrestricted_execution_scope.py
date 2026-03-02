@@ -52,9 +52,7 @@ class UnrestrictedExecutionScopeCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -83,9 +81,7 @@ class UnrestrictedExecutionScopeCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(

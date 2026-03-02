@@ -92,10 +92,7 @@ class XxeInjectionCheck(BaseCheck):
                             f"to read local files, perform SSRF, or cause DoS "
                             f"via entity expansion."
                         ),
-                        evidence=(
-                            f"param={param_name}, type=string, "
-                            f"pattern=N/A, enum=N/A"
-                        ),
+                        evidence=(f"param={param_name}, type=string, pattern=N/A, enum=N/A"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )
@@ -113,8 +110,7 @@ class XxeInjectionCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No XXE injection risks detected across "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"No XXE injection risks detected across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

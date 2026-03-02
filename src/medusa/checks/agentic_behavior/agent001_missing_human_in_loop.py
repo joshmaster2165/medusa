@@ -46,10 +46,7 @@ class MissingHumanInLoopCheck(BaseCheck):
 
         if high_risk_tools and not has_confirmation:
             tool_names = [name for name, _ in high_risk_tools[:5]]
-            risk_details = ", ".join(
-                f"{name} ({risk.value})"
-                for name, risk in high_risk_tools[:5]
-            )
+            risk_details = ", ".join(f"{name} ({risk.value})" for name, risk in high_risk_tools[:5])
             findings.append(
                 Finding(
                     check_id=meta.check_id,

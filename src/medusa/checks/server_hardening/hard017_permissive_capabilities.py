@@ -44,9 +44,7 @@ class PermissiveCapabilitiesCheck(BaseCheck):
             if value:
                 enabled.append(cap)
 
-        all_enabled = len(enabled) == len(
-            _MAJOR_CAPABILITIES
-        )
+        all_enabled = len(enabled) == len(_MAJOR_CAPABILITIES)
 
         if all_enabled:
             findings.append(
@@ -56,9 +54,7 @@ class PermissiveCapabilitiesCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -68,10 +64,7 @@ class PermissiveCapabilitiesCheck(BaseCheck):
                         f"This violates the principle of "
                         f"least privilege."
                     ),
-                    evidence=(
-                        f"enabled_capabilities="
-                        f"{', '.join(enabled)}"
-                    ),
+                    evidence=(f"enabled_capabilities={', '.join(enabled)}"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -84,9 +77,7 @@ class PermissiveCapabilitiesCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(

@@ -19,9 +19,7 @@ _MAX_SAFE_DEPTH: int = 5
 _RECURSION_LIMIT: int = 10
 
 
-def _max_depth(
-    schema: dict, depth: int = 0, max_d: int = 10
-) -> int:
+def _max_depth(schema: dict, depth: int = 0, max_d: int = 10) -> int:
     """Recursively measure nesting depth of a JSON Schema.
 
     Walks properties and items to find the deepest nesting level.
@@ -42,34 +40,24 @@ def _max_depth(
             if not isinstance(prop_def, dict):
                 continue
             prop_type = prop_def.get("type", "")
-            if prop_type == "object" or prop_def.get(
-                "properties"
-            ):
+            if prop_type == "object" or prop_def.get("properties"):
                 result = max(
                     result,
-                    _max_depth(
-                        prop_def, depth + 1, max_d
-                    ),
+                    _max_depth(prop_def, depth + 1, max_d),
                 )
             elif prop_type == "array":
                 items = prop_def.get("items")
                 if isinstance(items, dict) and (
-                    items.get("type") == "object"
-                    or items.get("properties")
+                    items.get("type") == "object" or items.get("properties")
                 ):
                     result = max(
                         result,
-                        _max_depth(
-                            items, depth + 1, max_d
-                        ),
+                        _max_depth(items, depth + 1, max_d),
                     )
 
     # Check array items at current level
     items = schema.get("items")
-    if isinstance(items, dict) and (
-        items.get("type") == "object"
-        or items.get("properties")
-    ):
+    if isinstance(items, dict) and (items.get("type") == "object" or items.get("properties")):
         result = max(
             result,
             _max_depth(items, depth + 1, max_d),
@@ -136,9 +124,7 @@ class DeeplyNestedSchemaCheck(BaseCheck):
 
             issues = []
             if too_deep:
-                issues.append(
-                    f"depth={depth} > {_MAX_SAFE_DEPTH}"
-                )
+                issues.append(f"depth={depth} > {_MAX_SAFE_DEPTH}")
             if has_ref:
                 issues.append("contains $ref (recursion)")
 

@@ -20,13 +20,20 @@ from medusa.utils.heuristics import ToolRisk, classify_tool_risk
 
 # Read-only prefixes in tool names.
 _READ_ONLY_PREFIXES: tuple[str, ...] = (
-    "get_", "get-",
-    "read_", "read-",
-    "list_", "list-",
-    "fetch_", "fetch-",
-    "search_", "search-",
-    "view_", "view-",
-    "show_", "show-",
+    "get_",
+    "get-",
+    "read_",
+    "read-",
+    "list_",
+    "list-",
+    "fetch_",
+    "fetch-",
+    "search_",
+    "search-",
+    "view_",
+    "view-",
+    "show_",
+    "show-",
 )
 
 # Destructive / exfiltrative keywords in descriptions.

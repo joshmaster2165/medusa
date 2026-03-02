@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 class CreditCheckResult:
     """Result of a credit pre-flight check."""
 
-    def __init__(
-        self, available: int, required: int, sufficient: bool
-    ) -> None:
+    def __init__(self, available: int, required: int, sufficient: bool) -> None:
         self.available = available
         self.required = required
         self.sufficient = sufficient
@@ -54,28 +52,20 @@ class CreditManager:
         try:
             resp = await self._client.get(f"{self._base}/balance")
         except httpx.HTTPError as e:
-            raise CreditError(
-                f"Failed to check credit balance: {e}"
-            ) from e
+            raise CreditError(f"Failed to check credit balance: {e}") from e
 
         if resp.status_code == 401:
-            raise CreditError(
-                "Invalid Medusa API key. Run 'medusa configure'."
-            )
+            raise CreditError("Invalid Medusa API key. Run 'medusa configure'.")
 
         if resp.status_code != 200:
-            raise CreditError(
-                f"Credit check failed ({resp.status_code})"
-            )
+            raise CreditError(f"Credit check failed ({resp.status_code})")
 
         try:
             data = resp.json()
             self._balance = int(data.get("available", 0))
             return self._balance
         except (ValueError, KeyError) as e:
-            raise CreditError(
-                f"Invalid credit balance response: {e}"
-            ) from e
+            raise CreditError(f"Invalid credit balance response: {e}") from e
 
     async def preflight(self, required: int) -> CreditCheckResult:
         """Pre-flight check: does the user have enough credits?"""
@@ -85,19 +75,13 @@ class CreditManager:
                 json={"required": required},
             )
         except httpx.HTTPError as e:
-            raise CreditError(
-                f"Credit pre-flight failed: {e}"
-            ) from e
+            raise CreditError(f"Credit pre-flight failed: {e}") from e
 
         if resp.status_code == 401:
-            raise CreditError(
-                "Invalid Medusa API key. Run 'medusa configure'."
-            )
+            raise CreditError("Invalid Medusa API key. Run 'medusa configure'.")
 
         if resp.status_code != 200:
-            raise CreditError(
-                f"Credit pre-flight failed ({resp.status_code})"
-            )
+            raise CreditError(f"Credit pre-flight failed ({resp.status_code})")
 
         try:
             data = resp.json()
@@ -110,9 +94,7 @@ class CreditManager:
                 sufficient=sufficient,
             )
         except (ValueError, KeyError) as e:
-            raise CreditError(
-                f"Invalid credit pre-flight response: {e}"
-            ) from e
+            raise CreditError(f"Invalid credit pre-flight response: {e}") from e
 
     async def deduct(
         self,
@@ -135,22 +117,16 @@ class CreditManager:
                 },
             )
         except httpx.HTTPError as e:
-            raise CreditError(
-                f"Credit deduction failed: {e}"
-            ) from e
+            raise CreditError(f"Credit deduction failed: {e}") from e
 
         if resp.status_code == 402:
             return False
 
         if resp.status_code == 401:
-            raise CreditError(
-                "Invalid Medusa API key. Run 'medusa configure'."
-            )
+            raise CreditError("Invalid Medusa API key. Run 'medusa configure'.")
 
         if resp.status_code != 200:
-            raise CreditError(
-                f"Credit deduction failed ({resp.status_code})"
-            )
+            raise CreditError(f"Credit deduction failed ({resp.status_code})")
 
         try:
             data = resp.json()

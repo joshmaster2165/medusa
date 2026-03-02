@@ -153,9 +153,7 @@ class TestAiCategoryCheckExecution:
     """Tests for the execute() flow in BaseAiCategoryCheck."""
 
     @pytest.mark.asyncio
-    async def test_execute_returns_error_when_not_configured(
-        self, snapshot
-    ):
+    async def test_execute_returns_error_when_not_configured(self, snapshot):
         """When AI isn't configured, check returns ERROR finding."""
         check = AiToolPoisoningCheck()
         findings = await check.execute(snapshot)
@@ -167,9 +165,7 @@ class TestAiCategoryCheckExecution:
     async def test_execute_pass_when_no_issues(self, snapshot):
         """AI finds no issues -> single PASS finding."""
         mock_client = MagicMock()
-        mock_client.analyze = AsyncMock(
-            return_value={"findings": []}
-        )
+        mock_client.analyze = AsyncMock(return_value={"findings": []})
 
         configure_ai(client=mock_client)
 
@@ -181,9 +177,7 @@ class TestAiCategoryCheckExecution:
         assert findings[0].check_id == "ai001"
 
     @pytest.mark.asyncio
-    async def test_execute_fail_findings_with_static_check_id(
-        self, snapshot
-    ):
+    async def test_execute_fail_findings_with_static_check_id(self, snapshot):
         """AI detects issues -> FAIL findings with static check_ids."""
         mock_client = MagicMock()
         mock_client.analyze = AsyncMock(
@@ -220,9 +214,7 @@ class TestAiCategoryCheckExecution:
     async def test_execute_error_on_api_failure(self, snapshot):
         """Claude API error -> ERROR finding."""
         mock_client = MagicMock()
-        mock_client.analyze = AsyncMock(
-            side_effect=Exception("API timeout")
-        )
+        mock_client.analyze = AsyncMock(side_effect=Exception("API timeout"))
 
         configure_ai(client=mock_client)
 
@@ -281,15 +273,11 @@ class TestAiCategoryCheckExecution:
     async def test_no_per_check_credit_deduction(self, snapshot):
         """Credits are NOT deducted per-check (handled once at scan start)."""
         mock_client = MagicMock()
-        mock_client.analyze = AsyncMock(
-            return_value={"findings": []}
-        )
+        mock_client.analyze = AsyncMock(return_value={"findings": []})
         mock_credit_mgr = MagicMock()
         mock_credit_mgr.deduct = AsyncMock(return_value=True)
 
-        configure_ai(
-            client=mock_client, credit_manager=mock_credit_mgr
-        )
+        configure_ai(client=mock_client, credit_manager=mock_credit_mgr)
 
         check = AiToolPoisoningCheck()
         await check.execute(snapshot)
@@ -298,9 +286,7 @@ class TestAiCategoryCheckExecution:
         mock_credit_mgr.deduct.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_coverage_logging_low_coverage(
-        self, snapshot, caplog
-    ):
+    async def test_coverage_logging_low_coverage(self, snapshot, caplog):
         """Low coverage triggers a warning log."""
         mock_client = MagicMock()
         mock_client.analyze = AsyncMock(
@@ -317,15 +303,10 @@ class TestAiCategoryCheckExecution:
             await check.execute(snapshot)
 
         # tool_poisoning has 25 checks; 2/25 = 8% < 80% threshold
-        assert any(
-            "below 80%" in record.message
-            for record in caplog.records
-        )
+        assert any("below 80%" in record.message for record in caplog.records)
 
     @pytest.mark.asyncio
-    async def test_coverage_logging_good_coverage(
-        self, snapshot, caplog
-    ):
+    async def test_coverage_logging_good_coverage(self, snapshot, caplog):
         """Good coverage doesn't trigger a warning."""
         # Build a complete checks_evaluated list
         check_obj = AiToolPoisoningCheck()
@@ -344,10 +325,7 @@ class TestAiCategoryCheckExecution:
         with caplog.at_level(logging.WARNING):
             await check_obj.execute(snapshot)
 
-        assert not any(
-            "below 80%" in record.message
-            for record in caplog.records
-        )
+        assert not any("below 80%" in record.message for record in caplog.records)
 
 
 class TestFirstSentence:

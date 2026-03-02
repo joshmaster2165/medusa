@@ -25,9 +25,7 @@ _HEX_PATTERN: re.Pattern[str] = re.compile(r"(?:0x)?[0-9a-fA-F]{32,}")
 _UUID_PATTERN: re.Pattern[str] = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
-_SHA_IN_URL_PATTERN: re.Pattern[str] = re.compile(
-    r"(?:https?://|git[@:])\S+[0-9a-fA-F]{32,}"
-)
+_SHA_IN_URL_PATTERN: re.Pattern[str] = re.compile(r"(?:https?://|git[@:])\S+[0-9a-fA-F]{32,}")
 
 # Common safe hex-like strings (e.g. colour codes repeated, version hashes).
 _SAFE_HEX_LENGTHS: set[int] = {32, 40, 64}  # MD5, SHA1, SHA256
@@ -126,9 +124,7 @@ class EncodedPayloadInMetadataCheck(BaseCheck):
                                 f"malicious instructions from human review."
                             ),
                             evidence=(
-                                f"encoding={encoding_type}, "
-                                f"location={location}, "
-                                f"sample={matched}"
+                                f"encoding={encoding_type}, location={location}, sample={matched}"
                             ),
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,

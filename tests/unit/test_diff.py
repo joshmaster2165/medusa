@@ -181,12 +181,16 @@ class TestDiffScanResults:
         ]
 
         before = _make_result(
-            scan_id="a", server_scores=before_scores,
-            aggregate_score=8.0, aggregate_grade="B",
+            scan_id="a",
+            server_scores=before_scores,
+            aggregate_score=8.0,
+            aggregate_grade="B",
         )
         after = _make_result(
-            scan_id="b", server_scores=after_scores,
-            aggregate_score=6.0, aggregate_grade="C",
+            scan_id="b",
+            server_scores=after_scores,
+            aggregate_score=6.0,
+            aggregate_grade="C",
         )
 
         d = diff_scan_results(before, after)
@@ -210,12 +214,8 @@ class TestDiffScanResults:
         assert severities == ["critical", "medium", "low"]
 
     def test_aggregate_score_tracking(self):
-        before = _make_result(
-            scan_id="a", aggregate_score=9.0, aggregate_grade="A"
-        )
-        after = _make_result(
-            scan_id="b", aggregate_score=5.0, aggregate_grade="C"
-        )
+        before = _make_result(scan_id="a", aggregate_score=9.0, aggregate_grade="A")
+        after = _make_result(scan_id="b", aggregate_score=5.0, aggregate_grade="C")
 
         d = diff_scan_results(before, after)
         assert d.aggregate_score_before == 9.0

@@ -90,10 +90,7 @@ class LdapInjectionCheck(BaseCheck):
                             f"Attackers can inject LDAP filter expressions to manipulate "
                             f"directory queries."
                         ),
-                        evidence=(
-                            f"param={param_name}, type=string, "
-                            f"pattern=N/A, enum=N/A"
-                        ),
+                        evidence=(f"param={param_name}, type=string, pattern=N/A, enum=N/A"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )
@@ -111,8 +108,7 @@ class LdapInjectionCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No LDAP injection risks detected across "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"No LDAP injection risks detected across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

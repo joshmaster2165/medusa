@@ -67,16 +67,12 @@ class PathTraversalCheck(BaseCheck):
 
                 pattern = param_def.get("pattern", "")
                 if pattern:
-                    strength = assess_pattern_strength(
-                        pattern, PATH_TRAVERSAL_VECTORS
-                    )
+                    strength = assess_pattern_strength(pattern, PATH_TRAVERSAL_VECTORS)
                     if strength == PatternStrength.STRONG:
                         continue  # Pattern blocks ≥90% of traversal vectors
 
                     if strength == PatternStrength.MODERATE:
-                        pct = pattern_block_percentage(
-                            pattern, PATH_TRAVERSAL_VECTORS
-                        )
+                        pct = pattern_block_percentage(pattern, PATH_TRAVERSAL_VECTORS)
                         findings.append(
                             Finding(
                                 check_id=meta.check_id,

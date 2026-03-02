@@ -117,9 +117,7 @@ class TestMissingHumanInLoopCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Privileged tool should be flagged"
 
-    async def test_passes_on_read_only_tools(
-        self, check: MissingHumanInLoopCheck
-    ) -> None:
+    async def test_passes_on_read_only_tools(self, check: MissingHumanInLoopCheck) -> None:
         """Read-only tools should PASS even without confirmation."""
         snapshot = make_snapshot(
             tools=[
@@ -140,9 +138,7 @@ class TestMissingHumanInLoopCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1, "Read-only tools should not require confirmation"
 
-    async def test_passes_with_confirmation_config(
-        self, check: MissingHumanInLoopCheck
-    ) -> None:
+    async def test_passes_with_confirmation_config(self, check: MissingHumanInLoopCheck) -> None:
         """Destructive tool with confirmation config should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -158,9 +154,7 @@ class TestMissingHumanInLoopCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1, "Confirmation config should satisfy the check"
 
-    async def test_risk_classification_in_evidence(
-        self, check: MissingHumanInLoopCheck
-    ) -> None:
+    async def test_risk_classification_in_evidence(self, check: MissingHumanInLoopCheck) -> None:
         """Evidence should include risk classification labels."""
         snapshot = make_snapshot(
             tools=[
@@ -644,9 +638,7 @@ class TestMissingToolAnnotationsCheck:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_not_applicable_when_no_tools(
-        self, check: MissingToolAnnotationsCheck
-    ) -> None:
+    async def test_not_applicable_when_no_tools(self, check: MissingToolAnnotationsCheck) -> None:
         """No tools means no findings."""
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
@@ -670,9 +662,7 @@ class TestConflictingToolNamesCheck:
         assert meta.check_id == "agent023"
         assert meta.category == "agentic_behavior"
 
-    async def test_fails_on_conflicting_tool_names(
-        self, check: ConflictingToolNamesCheck
-    ) -> None:
+    async def test_fails_on_conflicting_tool_names(self, check: ConflictingToolNamesCheck) -> None:
         """Tools with normalized name collisions should FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -693,9 +683,7 @@ class TestConflictingToolNamesCheck:
         assert len(fail_findings) >= 1
         assert "file" in fail_findings[0].evidence.lower()
 
-    async def test_passes_on_distinct_tool_names(
-        self, check: ConflictingToolNamesCheck
-    ) -> None:
+    async def test_passes_on_distinct_tool_names(self, check: ConflictingToolNamesCheck) -> None:
         """Tools with distinct names should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -714,9 +702,7 @@ class TestConflictingToolNamesCheck:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_fails_on_exact_duplicate_names(
-        self, check: ConflictingToolNamesCheck
-    ) -> None:
+    async def test_fails_on_exact_duplicate_names(self, check: ConflictingToolNamesCheck) -> None:
         """Exact duplicate tool names should FAIL with HIGH severity."""
         snapshot = make_snapshot(
             tools=[
@@ -826,9 +812,7 @@ class TestUnrestrictedToolOutputCheck:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_not_applicable_when_no_tools(
-        self, check: UnrestrictedToolOutputCheck
-    ) -> None:
+    async def test_not_applicable_when_no_tools(self, check: UnrestrictedToolOutputCheck) -> None:
         """No tools means no findings."""
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
@@ -871,9 +855,7 @@ class TestMissingSamplingCheck:
         assert len(fail_findings) >= 1
         assert "delete_user" in fail_findings[0].evidence
 
-    async def test_passes_with_sampling_capability(
-        self, check: MissingSamplingCheck
-    ) -> None:
+    async def test_passes_with_sampling_capability(self, check: MissingSamplingCheck) -> None:
         """Destructive tool with sampling capability declared should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -888,9 +870,7 @@ class TestMissingSamplingCheck:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_when_no_dangerous_tools(
-        self, check: MissingSamplingCheck
-    ) -> None:
+    async def test_passes_when_no_dangerous_tools(self, check: MissingSamplingCheck) -> None:
         """Non-destructive tools without sampling should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -905,9 +885,7 @@ class TestMissingSamplingCheck:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_not_applicable_when_no_tools(
-        self, check: MissingSamplingCheck
-    ) -> None:
+    async def test_not_applicable_when_no_tools(self, check: MissingSamplingCheck) -> None:
         """No tools means no findings."""
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)

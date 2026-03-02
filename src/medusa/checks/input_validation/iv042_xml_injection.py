@@ -49,9 +49,7 @@ class XmlInjectionCheck(BaseCheck):
             tool_name: str = tool.get("name", "<unnamed>")
             input_schema: dict | None = tool.get("inputSchema")
 
-            if not input_schema or not isinstance(
-                input_schema, dict
-            ):
+            if not input_schema or not isinstance(input_schema, dict):
                 continue
 
             properties: dict = input_schema.get("properties", {})
@@ -84,9 +82,7 @@ class XmlInjectionCheck(BaseCheck):
                         server_name=snapshot.server_name,
                         server_transport=snapshot.transport_type,
                         resource_type="tool",
-                        resource_name=(
-                            f"{tool_name}.{param_name}"
-                        ),
+                        resource_name=(f"{tool_name}.{param_name}"),
                         status_extended=(
                             f"Tool '{tool_name}' has XML-related "
                             f"parameter '{param_name}' without "
@@ -95,10 +91,7 @@ class XmlInjectionCheck(BaseCheck):
                             f"(<!DOCTYPE>, <!ENTITY>) to read "
                             f"files or perform SSRF."
                         ),
-                        evidence=(
-                            f"param={param_name}, type=string, "
-                            f"pattern=N/A, enum=N/A"
-                        ),
+                        evidence=(f"param={param_name}, type=string, pattern=N/A, enum=N/A"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )
@@ -116,8 +109,7 @@ class XmlInjectionCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No XML injection risks detected "
-                        f"across {len(snapshot.tools)} tool(s)."
+                        f"No XML injection risks detected across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

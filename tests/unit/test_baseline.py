@@ -185,9 +185,7 @@ class TestFilterNewFindings:
         new_finding = _make_finding(check_id="tp002")
 
         result = _make_result([old_finding, new_finding])
-        baseline = generate_baseline(
-            _make_result([old_finding])
-        )
+        baseline = generate_baseline(_make_result([old_finding]))
 
         new, baselined, resolved = filter_new_findings(result, baseline)
 
@@ -201,9 +199,7 @@ class TestFilterNewFindings:
         old_finding = _make_finding(check_id="tp001")
         result = _make_result([])  # No findings in current scan
 
-        baseline = generate_baseline(
-            _make_result([old_finding])
-        )
+        baseline = generate_baseline(_make_result([old_finding]))
 
         new, baselined, resolved = filter_new_findings(result, baseline)
         assert len(resolved) == 1

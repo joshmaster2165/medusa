@@ -38,23 +38,29 @@ class HighEntropyDefaultsCheck(BaseCheck):
             properties = schema.get("properties") or {}
 
             self._walk_properties(
-                properties, tool_name, meta, snapshot, findings,
+                properties,
+                tool_name,
+                meta,
+                snapshot,
+                findings,
             )
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended="No high-entropy default values detected in tool parameters.",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended="No high-entropy default values detected in tool parameters.",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings
 
     def _walk_properties(
@@ -79,28 +85,35 @@ class HighEntropyDefaultsCheck(BaseCheck):
                 if is_secret and confidence >= 0.6:
                     # Mask the secret in evidence
                     masked = default[:4] + "*" * (len(default) - 4)
-                    findings.append(Finding(
-                        check_id=meta.check_id,
-                        check_title=meta.title,
-                        status=Status.FAIL,
-                        severity=meta.severity,
-                        server_name=snapshot.server_name,
-                        server_transport=snapshot.transport_type,
-                        resource_type="tool",
-                        resource_name=tool_name,
-                        status_extended=(
-                            f"Tool '{tool_name}' parameter '{full_name}' has a high-entropy "
-                            f"default value (confidence: {confidence:.0%}) that may be a "
-                            f"hardcoded secret."
-                        ),
-                        evidence=f"Parameter: {full_name}, Default: {masked}",
-                        remediation=meta.remediation,
-                        owasp_mcp=meta.owasp_mcp,
-                    ))
+                    findings.append(
+                        Finding(
+                            check_id=meta.check_id,
+                            check_title=meta.title,
+                            status=Status.FAIL,
+                            severity=meta.severity,
+                            server_name=snapshot.server_name,
+                            server_transport=snapshot.transport_type,
+                            resource_type="tool",
+                            resource_name=tool_name,
+                            status_extended=(
+                                f"Tool '{tool_name}' parameter '{full_name}' has a high-entropy "
+                                f"default value (confidence: {confidence:.0%}) that may be a "
+                                f"hardcoded secret."
+                            ),
+                            evidence=f"Parameter: {full_name}, Default: {masked}",
+                            remediation=meta.remediation,
+                            owasp_mcp=meta.owasp_mcp,
+                        )
+                    )
 
             # Recurse into nested object properties
             nested_props = param_def.get("properties")
             if isinstance(nested_props, dict):
                 self._walk_properties(
-                    nested_props, tool_name, meta, snapshot, findings, full_name,
+                    nested_props,
+                    tool_name,
+                    meta,
+                    snapshot,
+                    findings,
+                    full_name,
                 )

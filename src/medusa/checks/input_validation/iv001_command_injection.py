@@ -69,16 +69,12 @@ class CommandInjectionCheck(BaseCheck):
 
                 pattern = param_def.get("pattern")
                 if pattern:
-                    strength = assess_pattern_strength(
-                        pattern, COMMAND_INJECTION_VECTORS
-                    )
+                    strength = assess_pattern_strength(pattern, COMMAND_INJECTION_VECTORS)
                     if strength == PatternStrength.STRONG:
                         continue  # Pattern blocks ≥90% of attack vectors
 
                     if strength == PatternStrength.MODERATE:
-                        pct = pattern_block_percentage(
-                            pattern, COMMAND_INJECTION_VECTORS
-                        )
+                        pct = pattern_block_percentage(pattern, COMMAND_INJECTION_VECTORS)
                         findings.append(
                             Finding(
                                 check_id=meta.check_id,

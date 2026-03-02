@@ -48,9 +48,7 @@ class MissingServerVersionCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -76,9 +74,7 @@ class MissingServerVersionCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -99,9 +95,7 @@ class MissingServerVersionCheck(BaseCheck):
                     status=Status.FAIL,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
@@ -110,10 +104,7 @@ class MissingServerVersionCheck(BaseCheck):
                         f"'{version}' instead of a real "
                         f"version number."
                     ),
-                    evidence=(
-                        f"version='{version}' "
-                        f"(placeholder)"
-                    ),
+                    evidence=(f"version='{version}' (placeholder)"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -126,14 +117,11 @@ class MissingServerVersionCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server '{snapshot.server_name}' "
-                        f"declares version '{version}'."
+                        f"Server '{snapshot.server_name}' declares version '{version}'."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

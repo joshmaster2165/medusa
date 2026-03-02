@@ -80,9 +80,7 @@ class HeaderInjectionCheck(BaseCheck):
                     continue
 
                 # A printable-ASCII-only pattern also blocks CRLF
-                if pattern_val and re.search(
-                    r"\^?\[\\x20-\\x7[eE]\]", pattern_val
-                ):
+                if pattern_val and re.search(r"\^?\[\\x20-\\x7[eE]\]", pattern_val):
                     continue
 
                 findings.append(

@@ -424,23 +424,15 @@ class TestMissingToolNamespaceCheck:
     async def test_fails_on_many_tools_without_namespace(
         self, check: MissingToolNamespaceCheck
     ) -> None:
-        tools = [
-            {"name": f"tool_{i}", "description": f"Tool {i}"}
-            for i in range(10)
-        ]
+        tools = [{"name": f"tool_{i}", "description": f"Tool {i}"} for i in range(10)]
         snapshot = make_snapshot(tools=tools)
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1
         assert "10/10" in fail_findings[0].status_extended
 
-    async def test_passes_on_namespaced_tools(
-        self, check: MissingToolNamespaceCheck
-    ) -> None:
-        tools = [
-            {"name": f"org.service.tool_{i}", "description": f"Tool {i}"}
-            for i in range(10)
-        ]
+    async def test_passes_on_namespaced_tools(self, check: MissingToolNamespaceCheck) -> None:
+        tools = [{"name": f"org.service.tool_{i}", "description": f"Tool {i}"} for i in range(10)]
         snapshot = make_snapshot(tools=tools)
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
@@ -448,25 +440,15 @@ class TestMissingToolNamespaceCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) == 1
 
-    async def test_passes_on_double_colon_namespace(
-        self, check: MissingToolNamespaceCheck
-    ) -> None:
-        tools = [
-            {"name": f"myorg::tool_{i}", "description": f"Tool {i}"}
-            for i in range(10)
-        ]
+    async def test_passes_on_double_colon_namespace(self, check: MissingToolNamespaceCheck) -> None:
+        tools = [{"name": f"myorg::tool_{i}", "description": f"Tool {i}"} for i in range(10)]
         snapshot = make_snapshot(tools=tools)
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0
 
-    async def test_passes_on_five_or_fewer_tools(
-        self, check: MissingToolNamespaceCheck
-    ) -> None:
-        tools = [
-            {"name": f"tool_{i}", "description": f"Tool {i}"}
-            for i in range(5)
-        ]
+    async def test_passes_on_five_or_fewer_tools(self, check: MissingToolNamespaceCheck) -> None:
+        tools = [{"name": f"tool_{i}", "description": f"Tool {i}"} for i in range(5)]
         snapshot = make_snapshot(tools=tools)
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
@@ -474,9 +456,7 @@ class TestMissingToolNamespaceCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) == 1
 
-    async def test_empty_tools_returns_empty(
-        self, check: MissingToolNamespaceCheck
-    ) -> None:
+    async def test_empty_tools_returns_empty(self, check: MissingToolNamespaceCheck) -> None:
         snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
         assert findings == []
@@ -484,12 +464,8 @@ class TestMissingToolNamespaceCheck:
     async def test_mixed_namespaced_and_non_namespaced(
         self, check: MissingToolNamespaceCheck
     ) -> None:
-        tools = [
-            {"name": f"org.tool_{i}", "description": f"Tool {i}"}
-            for i in range(7)
-        ] + [
-            {"name": f"plain_tool_{i}", "description": f"Tool {i}"}
-            for i in range(3)
+        tools = [{"name": f"org.tool_{i}", "description": f"Tool {i}"} for i in range(7)] + [
+            {"name": f"plain_tool_{i}", "description": f"Tool {i}"} for i in range(3)
         ]
         snapshot = make_snapshot(tools=tools)
         findings = await check.execute(snapshot)
@@ -515,21 +491,15 @@ class TestMissingServerVersionCheck:
         assert meta.check_id == "gov022"
         assert meta.category == "governance"
 
-    async def test_fails_on_empty_server_info(
-        self, check: MissingServerVersionCheck
-    ) -> None:
+    async def test_fails_on_empty_server_info(self, check: MissingServerVersionCheck) -> None:
         snapshot = make_snapshot(server_info={})
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1
         assert "server_info=missing" in fail_findings[0].evidence
 
-    async def test_passes_on_valid_version(
-        self, check: MissingServerVersionCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={"name": "my-server", "version": "1.2.3"}
-        )
+    async def test_passes_on_valid_version(self, check: MissingServerVersionCheck) -> None:
+        snapshot = make_snapshot(server_info={"name": "my-server", "version": "1.2.3"})
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0
@@ -537,44 +507,28 @@ class TestMissingServerVersionCheck:
         assert len(pass_findings) == 1
         assert "1.2.3" in pass_findings[0].status_extended
 
-    async def test_fails_on_missing_version_key(
-        self, check: MissingServerVersionCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={"name": "my-server"}
-        )
+    async def test_fails_on_missing_version_key(self, check: MissingServerVersionCheck) -> None:
+        snapshot = make_snapshot(server_info={"name": "my-server"})
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1
         assert "version=empty" in fail_findings[0].evidence
 
-    async def test_fails_on_placeholder_version(
-        self, check: MissingServerVersionCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={"name": "my-server", "version": "0.0.0"}
-        )
+    async def test_fails_on_placeholder_version(self, check: MissingServerVersionCheck) -> None:
+        snapshot = make_snapshot(server_info={"name": "my-server", "version": "0.0.0"})
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1
         assert "placeholder" in fail_findings[0].evidence
 
-    async def test_fails_on_dev_version(
-        self, check: MissingServerVersionCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={"name": "my-server", "version": "dev"}
-        )
+    async def test_fails_on_dev_version(self, check: MissingServerVersionCheck) -> None:
+        snapshot = make_snapshot(server_info={"name": "my-server", "version": "dev"})
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 1
 
-    async def test_passes_on_semver_version(
-        self, check: MissingServerVersionCheck
-    ) -> None:
-        snapshot = make_snapshot(
-            server_info={"name": "my-server", "version": "2.5.1-beta.1"}
-        )
+    async def test_passes_on_semver_version(self, check: MissingServerVersionCheck) -> None:
+        snapshot = make_snapshot(server_info={"name": "my-server", "version": "2.5.1-beta.1"})
         findings = await check.execute(snapshot)
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) == 1

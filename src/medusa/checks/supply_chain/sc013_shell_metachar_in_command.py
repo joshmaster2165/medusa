@@ -60,9 +60,7 @@ class ShellMetacharInCommandCheck(BaseCheck):
 
         # Check the command itself.
         if snapshot.command:
-            cmd_metacharacters = _scan_for_metacharacters(
-                snapshot.command
-            )
+            cmd_metacharacters = _scan_for_metacharacters(snapshot.command)
             if cmd_metacharacters:
                 display_cmd = snapshot.command[:200] + (
                     "..." if len(snapshot.command) > 200 else ""
@@ -100,9 +98,7 @@ class ShellMetacharInCommandCheck(BaseCheck):
         for idx, arg in enumerate(snapshot.args):
             arg_metacharacters = _scan_for_metacharacters(arg)
             if arg_metacharacters:
-                display_arg = arg[:200] + (
-                    "..." if len(arg) > 200 else ""
-                )
+                display_arg = arg[:200] + ("..." if len(arg) > 200 else "")
                 findings.append(
                     Finding(
                         check_id=meta.check_id,

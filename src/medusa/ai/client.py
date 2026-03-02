@@ -22,9 +22,7 @@ _RETRY_BACKOFF = [1.0, 2.0, 4.0]
 class AiClient(Protocol):
     """Protocol for AI analysis clients (BYOK and proxied)."""
 
-    async def analyze(
-        self, system_prompt: str, user_content: str
-    ) -> dict:
+    async def analyze(self, system_prompt: str, user_content: str) -> dict:
         """Send analysis request and return parsed JSON response."""
         ...
 
@@ -59,9 +57,7 @@ class ClaudeClient:
             timeout=timeout,
         )
 
-    async def analyze(
-        self, system_prompt: str, user_content: str
-    ) -> dict:
+    async def analyze(self, system_prompt: str, user_content: str) -> dict:
         """Send a prompt to Claude and return the parsed JSON response."""
         payload = {
             "model": self.model,
@@ -73,17 +69,14 @@ class ClaudeClient:
         last_error: Exception | None = None
         for attempt in range(_MAX_RETRIES):
             try:
-                resp = await self._client.post(
-                    "/v1/messages", json=payload
-                )
+                resp = await self._client.post("/v1/messages", json=payload)
 
                 if resp.status_code == 200:
                     return self._parse_response(resp.json())
 
                 if resp.status_code == 401:
                     raise AiApiError(
-                        "Invalid Anthropic API key. "
-                        "Check your key with 'medusa settings'."
+                        "Invalid Anthropic API key. Check your key with 'medusa settings'."
                     )
 
                 # Retry on rate-limit or server errors
@@ -96,22 +89,16 @@ class ClaudeClient:
                         _MAX_RETRIES,
                         wait,
                     )
-                    last_error = AiApiError(
-                        f"Claude API returned {resp.status_code}"
-                    )
+                    last_error = AiApiError(f"Claude API returned {resp.status_code}")
                     await asyncio.sleep(wait)
                     continue
 
                 # Non-retryable error
                 try:
-                    detail = resp.json().get("error", {}).get(
-                        "message", resp.text[:200]
-                    )
+                    detail = resp.json().get("error", {}).get("message", resp.text[:200])
                 except (ValueError, KeyError):
                     detail = resp.text[:200]
-                raise AiApiError(
-                    f"Claude API error ({resp.status_code}): {detail}"
-                )
+                raise AiApiError(f"Claude API error ({resp.status_code}): {detail}")
 
             except httpx.HTTPError as e:
                 last_error = AiApiError(f"HTTP error: {e}")
@@ -146,9 +133,7 @@ class ClaudeClient:
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:
-            raise AiApiError(
-                f"Claude returned invalid JSON: {e}"
-            ) from e
+            raise AiApiError(f"Claude returned invalid JSON: {e}") from e
 
     async def close(self) -> None:
         """Close the underlying HTTP client."""
@@ -182,9 +167,7 @@ class BackendProxiedClient:
             timeout=timeout,
         )
 
-    async def analyze(
-        self, system_prompt: str, user_content: str
-    ) -> dict:
+    async def analyze(self, system_prompt: str, user_content: str) -> dict:
         """Send analysis request through the dashboard backend.
 
         Retries on 429/5xx with exponential backoff, matching
@@ -198,13 +181,9 @@ class BackendProxiedClient:
         last_error: Exception | None = None
         for attempt in range(_MAX_RETRIES):
             try:
-                resp = await self._client.post(
-                    self._ai_url, json=payload
-                )
+                resp = await self._client.post(self._ai_url, json=payload)
             except httpx.HTTPError as e:
-                last_error = AiApiError(
-                    f"Dashboard AI proxy error: {e}"
-                )
+                last_error = AiApiError(f"Dashboard AI proxy error: {e}")
                 if attempt < _MAX_RETRIES - 1:
                     wait = _RETRY_BACKOFF[attempt]
                     logger.warning(
@@ -222,20 +201,15 @@ class BackendProxiedClient:
                 try:
                     return resp.json()
                 except (ValueError, KeyError) as e:
-                    raise AiApiError(
-                        f"AI proxy returned invalid JSON: {e}"
-                    ) from e
+                    raise AiApiError(f"AI proxy returned invalid JSON: {e}") from e
 
             if resp.status_code == 401:
                 raise AiApiError(
-                    "Invalid Medusa API key for AI proxy. "
-                    "Run 'medusa configure' to update."
+                    "Invalid Medusa API key for AI proxy. Run 'medusa configure' to update."
                 )
 
             if resp.status_code == 402:
-                raise AiApiError(
-                    "Insufficient credits for AI analysis."
-                )
+                raise AiApiError("Insufficient credits for AI analysis.")
 
             # Retry on rate-limit or server errors
             if resp.status_code in {429, 500, 502, 503, 529}:
@@ -247,9 +221,7 @@ class BackendProxiedClient:
                     _MAX_RETRIES,
                     wait,
                 )
-                last_error = AiApiError(
-                    f"AI proxy returned {resp.status_code}"
-                )
+                last_error = AiApiError(f"AI proxy returned {resp.status_code}")
                 await asyncio.sleep(wait)
                 continue
 
@@ -258,9 +230,7 @@ class BackendProxiedClient:
                 detail = resp.json().get("error", resp.text[:200])
             except (ValueError, KeyError):
                 detail = resp.text[:200]
-            raise AiApiError(
-                f"AI proxy error ({resp.status_code}): {detail}"
-            )
+            raise AiApiError(f"AI proxy error ({resp.status_code}): {detail}")
 
         raise last_error or AiApiError("Max retries exceeded")
 
@@ -291,9 +261,7 @@ def configure_ai(
 def get_client() -> AiClient:
     """Return the configured AI client, or raise."""
     if _client is None:
-        raise AiApiError(
-            "AI client not configured. Use --ai-scan to enable."
-        )
+        raise AiApiError("AI client not configured. Use --ai-scan to enable.")
     return _client
 
 

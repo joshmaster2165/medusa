@@ -538,7 +538,7 @@ class TestCodeEvalInArgsCheck:
         snapshot = make_snapshot(
             transport_type="stdio",
             command="python",
-            args=["-c", "eval('__import__(\"os\").system(\"whoami\")')"],
+            args=["-c", 'eval(\'__import__("os").system("whoami")\')'],
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
@@ -702,9 +702,7 @@ class TestInsecureHttpTransportCheck:
         assert meta.category == "supply_chain"
         assert meta.severity == Severity.HIGH
 
-    async def test_fails_on_plain_http_remote_url(
-        self, check: InsecureHttpTransportCheck
-    ) -> None:
+    async def test_fails_on_plain_http_remote_url(self, check: InsecureHttpTransportCheck) -> None:
         snapshot = make_snapshot(
             transport_type="http",
             transport_url="http://remote-server.example.com:8080/mcp",
@@ -715,9 +713,7 @@ class TestInsecureHttpTransportCheck:
         assert len(fail_findings) >= 1
         assert "insecure" in fail_findings[0].status_extended.lower()
 
-    async def test_fails_on_sse_with_plain_http(
-        self, check: InsecureHttpTransportCheck
-    ) -> None:
+    async def test_fails_on_sse_with_plain_http(self, check: InsecureHttpTransportCheck) -> None:
         snapshot = make_snapshot(
             transport_type="sse",
             transport_url="http://api.example.com/events",

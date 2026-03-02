@@ -18,12 +18,12 @@ from medusa.core.models import CheckMetadata, Finding, Status
 
 # Patterns that indicate wildcard / glob usage in a URI
 _WILDCARD_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"\*\*"),          # recursive glob
+    re.compile(r"\*\*"),  # recursive glob
     re.compile(r"(?<!\*)\*(?!\*)"),  # single glob star (not **)
-    re.compile(r"\?"),            # single-char wildcard
-    re.compile(r"\{[^}]+\}"),    # brace expansion {a,b}
-    re.compile(r"\[[^\]]+\]"),   # character class [abc]
-    re.compile(r"\(\.\*\)"),     # regex wildcard (.*)
+    re.compile(r"\?"),  # single-char wildcard
+    re.compile(r"\{[^}]+\}"),  # brace expansion {a,b}
+    re.compile(r"\[[^\]]+\]"),  # character class [abc]
+    re.compile(r"\(\.\*\)"),  # regex wildcard (.*)
 ]
 
 

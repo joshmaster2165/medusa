@@ -784,9 +784,7 @@ class TestSecretsInToolDescriptionsCheck:
         assert len(fail_findings) >= 1
         assert "sk-" in fail_findings[0].status_extended
 
-    async def test_passes_on_clean_description(
-        self, check: SecretsInToolDescriptionsCheck
-    ) -> None:
+    async def test_passes_on_clean_description(self, check: SecretsInToolDescriptionsCheck) -> None:
         """Tool description with no secret patterns should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -843,9 +841,7 @@ class TestCredentialsInResourcesCheck:
         assert meta.check_id == "sm018"
         assert meta.category == "secrets_management"
 
-    async def test_fails_on_credentials_in_uri(
-        self, check: CredentialsInResourcesCheck
-    ) -> None:
+    async def test_fails_on_credentials_in_uri(self, check: CredentialsInResourcesCheck) -> None:
         """Resource URI with embedded credentials should FAIL."""
         snapshot = make_snapshot(
             resources=[
@@ -861,9 +857,7 @@ class TestCredentialsInResourcesCheck:
         assert len(fail_findings) >= 1
         assert "admin" in fail_findings[0].evidence
 
-    async def test_passes_on_clean_resource_uri(
-        self, check: CredentialsInResourcesCheck
-    ) -> None:
+    async def test_passes_on_clean_resource_uri(self, check: CredentialsInResourcesCheck) -> None:
         """Resource with clean URI and description should PASS."""
         snapshot = make_snapshot(
             resources=[
@@ -920,9 +914,7 @@ class TestWeakDefaultPasswordsCheck:
         assert meta.check_id == "sm019"
         assert meta.category == "secrets_management"
 
-    async def test_fails_on_weak_password_default(
-        self, check: WeakDefaultPasswordsCheck
-    ) -> None:
+    async def test_fails_on_weak_password_default(self, check: WeakDefaultPasswordsCheck) -> None:
         """Tool parameter named 'password' with weak default should FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -946,9 +938,7 @@ class TestWeakDefaultPasswordsCheck:
         assert len(fail_findings) >= 1
         assert "password" in fail_findings[0].status_extended
 
-    async def test_passes_on_strong_default(
-        self, check: WeakDefaultPasswordsCheck
-    ) -> None:
+    async def test_passes_on_strong_default(self, check: WeakDefaultPasswordsCheck) -> None:
         """Tool parameter named 'password' with a strong default should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -970,9 +960,7 @@ class TestWeakDefaultPasswordsCheck:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_fails_on_changeme_default(
-        self, check: WeakDefaultPasswordsCheck
-    ) -> None:
+    async def test_fails_on_changeme_default(self, check: WeakDefaultPasswordsCheck) -> None:
         """Tool parameter named 'auth_password' with 'changeme' default should FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -995,9 +983,7 @@ class TestWeakDefaultPasswordsCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
 
-    async def test_not_applicable_when_no_tools(
-        self, check: WeakDefaultPasswordsCheck
-    ) -> None:
+    async def test_not_applicable_when_no_tools(self, check: WeakDefaultPasswordsCheck) -> None:
         """No tools means no findings."""
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)

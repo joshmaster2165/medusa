@@ -54,9 +54,7 @@ class UntypedPromptArgumentsCheck(BaseCheck):
                                 f"lacks a description. Without type or format "
                                 f"guidance, clients may supply unexpected input."
                             ),
-                            evidence=(
-                                f"Argument '{arg_name}' has no description."
-                            ),
+                            evidence=(f"Argument '{arg_name}' has no description."),
                             remediation=meta.remediation,
                             owasp_mcp=meta.owasp_mcp,
                         )

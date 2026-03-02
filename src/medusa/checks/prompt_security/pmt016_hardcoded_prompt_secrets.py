@@ -28,9 +28,7 @@ _SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("AWS access key", re.compile(r"AKIA[0-9A-Z]{16}")),
     ("GitHub PAT", re.compile(r"ghp_[A-Za-z0-9]{36}")),
     ("GitHub OAuth", re.compile(r"gho_[A-Za-z0-9]{36}")),
-    ("Private key", re.compile(
-        r"-----BEGIN\s+\w+\s+PRIVATE\s+KEY"
-    )),
+    ("Private key", re.compile(r"-----BEGIN\s+\w+\s+PRIVATE\s+KEY")),
     ("Slack token", re.compile(r"xoxb-[A-Za-z0-9\-]{20,}")),
     ("Slack token", re.compile(r"xoxp-[A-Za-z0-9\-]{20,}")),
     ("Slack token", re.compile(r"xoxa-[A-Za-z0-9\-]{20,}")),
@@ -70,9 +68,7 @@ class HardcodedPromptSecretsCheck(BaseCheck):
             for word in description.split():
                 word_clean = word.strip(".,;:!?()[]{}\"'")
                 if len(word_clean) >= 16:
-                    is_secret, _confidence = is_likely_secret(
-                        "prompt_value", word_clean
-                    )
+                    is_secret, _confidence = is_likely_secret("prompt_value", word_clean)
                     if is_secret:
                         detected.append(f"High-entropy value: {word_clean[:8]}...")
                         break  # one entropy match is sufficient

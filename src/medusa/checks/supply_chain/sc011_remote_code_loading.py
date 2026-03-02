@@ -16,9 +16,7 @@ from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Severity, Status
 
 # URL pattern: matches http://, https://, ftp:// URLs.
-_URL_PATTERN: re.Pattern[str] = re.compile(
-    r"(https?://|ftp://)\S+", re.IGNORECASE
-)
+_URL_PATTERN: re.Pattern[str] = re.compile(r"(https?://|ftp://)\S+", re.IGNORECASE)
 
 # Patterns indicating remote code execution when combined with URLs.
 _EXEC_PATTERNS: list[re.Pattern[str]] = [
@@ -72,8 +70,7 @@ class RemoteCodeLoadingCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"No remote URLs detected in server arguments for "
-                        f"'{snapshot.server_name}'."
+                        f"No remote URLs detected in server arguments for '{snapshot.server_name}'."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
@@ -133,10 +130,7 @@ class RemoteCodeLoadingCheck(BaseCheck):
                         f"that may be used for remote resource loading: "
                         f"{', '.join(urls_found[:3])}."
                     ),
-                    evidence=(
-                        f"urls={urls_found[:3]}, "
-                        f"args={display_args}"
-                    ),
+                    evidence=(f"urls={urls_found[:3]}, args={display_args}"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )

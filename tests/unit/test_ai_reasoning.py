@@ -260,9 +260,7 @@ class TestChunker:
             _make_finding(check_id="tp002", status=Status.PASS),
             _make_finding(check_id="iv001", status=Status.FAIL),
         ]
-        chunks = chunk_findings_for_reasoning(
-            snapshot, findings, max_tokens_per_chunk=100_000
-        )
+        chunks = chunk_findings_for_reasoning(snapshot, findings, max_tokens_per_chunk=100_000)
         # Fits in one chunk, so all findings (including PASS) returned
         assert len(chunks) == 1
         assert len(chunks[0]) == 3
@@ -279,9 +277,7 @@ class TestChunker:
             for i in range(50)
         ]
         # Very small budget to force splitting
-        chunks = chunk_findings_for_reasoning(
-            snapshot, findings, max_tokens_per_chunk=500
-        )
+        chunks = chunk_findings_for_reasoning(snapshot, findings, max_tokens_per_chunk=500)
         # Should have more than 1 chunk with such a small budget
         assert len(chunks) >= 1
 
@@ -293,9 +289,7 @@ class TestChunker:
             _make_finding(check_id="iv001", status=Status.FAIL),
             _make_finding(check_id="iv002", status=Status.FAIL),
         ]
-        chunks = chunk_findings_for_reasoning(
-            snapshot, findings, max_tokens_per_chunk=100_000
-        )
+        chunks = chunk_findings_for_reasoning(snapshot, findings, max_tokens_per_chunk=100_000)
         # Should fit in one chunk
         assert len(chunks) == 1
 

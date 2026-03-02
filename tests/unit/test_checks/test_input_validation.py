@@ -298,9 +298,9 @@ class TestIV001CommandInjection:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         # Depending on the exact block percentage, it may be MEDIUM or CRITICAL
         if fail_findings:
-            assert any(
-                f.severity in (Severity.MEDIUM, Severity.CRITICAL) for f in fail_findings
-            ), "Moderate pattern should have reduced or full severity"
+            assert any(f.severity in (Severity.MEDIUM, Severity.CRITICAL) for f in fail_findings), (
+                "Moderate pattern should have reduced or full severity"
+            )
 
     async def test_strong_pattern_passes(self, check: CommandInjectionCheck) -> None:
         """A strict pattern blocking ≥90% of vectors should PASS."""
@@ -3033,14 +3033,10 @@ class TestIV036LdapInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag unconstrained 'ldap_query' string parameter"
-        )
+        assert len(fail_findings) >= 1, "Should flag unconstrained 'ldap_query' string parameter"
         assert any("ldap_query" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_pattern_constraint(
-        self, check: LdapInjectionCheckV2
-    ) -> None:
+    async def test_passes_with_pattern_constraint(self, check: LdapInjectionCheckV2) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3063,9 +3059,7 @@ class TestIV036LdapInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_with_enum_constraint(
-        self, check: LdapInjectionCheckV2
-    ) -> None:
+    async def test_passes_with_enum_constraint(self, check: LdapInjectionCheckV2) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3088,9 +3082,7 @@ class TestIV036LdapInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: LdapInjectionCheckV2
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: LdapInjectionCheckV2) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []
 
@@ -3135,14 +3127,10 @@ class TestIV037TemplateInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag unconstrained 'template' string parameter"
-        )
+        assert len(fail_findings) >= 1, "Should flag unconstrained 'template' string parameter"
         assert any("template" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_enum_constraint(
-        self, check: TemplateInjectionCheck
-    ) -> None:
+    async def test_passes_with_enum_constraint(self, check: TemplateInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3165,9 +3153,7 @@ class TestIV037TemplateInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_with_pattern_constraint(
-        self, check: TemplateInjectionCheck
-    ) -> None:
+    async def test_passes_with_pattern_constraint(self, check: TemplateInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3190,9 +3176,7 @@ class TestIV037TemplateInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: TemplateInjectionCheck
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: TemplateInjectionCheck) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []
 
@@ -3237,14 +3221,10 @@ class TestIV038HeaderInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag 'user_agent' without CRLF-blocking pattern"
-        )
+        assert len(fail_findings) >= 1, "Should flag 'user_agent' without CRLF-blocking pattern"
         assert any("user_agent" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_crlf_blocking_pattern(
-        self, check: HeaderInjectionCheckV2
-    ) -> None:
+    async def test_passes_with_crlf_blocking_pattern(self, check: HeaderInjectionCheckV2) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3267,9 +3247,7 @@ class TestIV038HeaderInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_fails_with_non_crlf_pattern(
-        self, check: HeaderInjectionCheckV2
-    ) -> None:
+    async def test_fails_with_non_crlf_pattern(self, check: HeaderInjectionCheckV2) -> None:
         """A pattern that does NOT block CRLF should still FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -3295,9 +3273,7 @@ class TestIV038HeaderInjection:
             "A generic pattern that does not block CRLF should still fail"
         )
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: HeaderInjectionCheckV2
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: HeaderInjectionCheckV2) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []
 
@@ -3342,14 +3318,10 @@ class TestIV039NosqlInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag unconstrained 'mongo_query' string parameter"
-        )
+        assert len(fail_findings) >= 1, "Should flag unconstrained 'mongo_query' string parameter"
         assert any("mongo_query" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_pattern_constraint(
-        self, check: NosqlInjectionCheckV2
-    ) -> None:
+    async def test_passes_with_pattern_constraint(self, check: NosqlInjectionCheckV2) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3372,9 +3344,7 @@ class TestIV039NosqlInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_with_enum_constraint(
-        self, check: NosqlInjectionCheckV2
-    ) -> None:
+    async def test_passes_with_enum_constraint(self, check: NosqlInjectionCheckV2) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3397,9 +3367,7 @@ class TestIV039NosqlInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: NosqlInjectionCheckV2
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: NosqlInjectionCheckV2) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []
 
@@ -3444,9 +3412,7 @@ class TestIV040CsvFormulaInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag unconstrained 'cell_value' string parameter"
-        )
+        assert len(fail_findings) >= 1, "Should flag unconstrained 'cell_value' string parameter"
         assert any("cell_value" in f.resource_name for f in fail_findings)
 
     async def test_passes_with_formula_blocking_pattern(
@@ -3474,9 +3440,7 @@ class TestIV040CsvFormulaInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_with_enum_constraint(
-        self, check: CsvFormulaInjectionCheck
-    ) -> None:
+    async def test_passes_with_enum_constraint(self, check: CsvFormulaInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3550,9 +3514,7 @@ class TestIV041RegexDos:
             "Should flag pattern with nested quantifiers and no maxLength"
         )
 
-    async def test_passes_with_max_length(
-        self, check: RegexDosCheckV2
-    ) -> None:
+    async def test_passes_with_max_length(self, check: RegexDosCheckV2) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3576,9 +3538,7 @@ class TestIV041RegexDos:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_with_safe_pattern(
-        self, check: RegexDosCheckV2
-    ) -> None:
+    async def test_passes_with_safe_pattern(self, check: RegexDosCheckV2) -> None:
         """A pattern without nested quantifiers should not trigger a finding."""
         snapshot = make_snapshot(
             tools=[
@@ -3602,9 +3562,7 @@ class TestIV041RegexDos:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: RegexDosCheckV2
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: RegexDosCheckV2) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []
 
@@ -3626,9 +3584,7 @@ class TestIV042XmlInjection:
         assert meta.check_id == "iv042"
         assert meta.category == "input_validation"
 
-    async def test_fails_on_unconstrained_xml_data_param(
-        self, check: XmlInjectionCheck
-    ) -> None:
+    async def test_fails_on_unconstrained_xml_data_param(self, check: XmlInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3649,14 +3605,10 @@ class TestIV042XmlInjection:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag unconstrained 'xml_data' string parameter"
-        )
+        assert len(fail_findings) >= 1, "Should flag unconstrained 'xml_data' string parameter"
         assert any("xml_data" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_pattern_constraint(
-        self, check: XmlInjectionCheck
-    ) -> None:
+    async def test_passes_with_pattern_constraint(self, check: XmlInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3679,9 +3631,7 @@ class TestIV042XmlInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_passes_with_enum_constraint(
-        self, check: XmlInjectionCheck
-    ) -> None:
+    async def test_passes_with_enum_constraint(self, check: XmlInjectionCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3704,9 +3654,7 @@ class TestIV042XmlInjection:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: XmlInjectionCheck
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: XmlInjectionCheck) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []
 
@@ -3751,14 +3699,10 @@ class TestIV043UnboundedNumericRange:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag integer parameter without minimum and maximum"
-        )
+        assert len(fail_findings) >= 1, "Should flag integer parameter without minimum and maximum"
         assert any("page_size" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_both_min_and_max(
-        self, check: UnboundedNumericRangeCheck
-    ) -> None:
+    async def test_passes_with_both_min_and_max(self, check: UnboundedNumericRangeCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3782,9 +3726,7 @@ class TestIV043UnboundedNumericRange:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_fails_with_only_minimum(
-        self, check: UnboundedNumericRangeCheck
-    ) -> None:
+    async def test_fails_with_only_minimum(self, check: UnboundedNumericRangeCheck) -> None:
         """Having only minimum (no maximum) should still FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -3806,9 +3748,7 @@ class TestIV043UnboundedNumericRange:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag integer with minimum but no maximum"
-        )
+        assert len(fail_findings) >= 1, "Should flag integer with minimum but no maximum"
 
     async def test_empty_snapshot_returns_no_findings(
         self, check: UnboundedNumericRangeCheck
@@ -3858,14 +3798,10 @@ class TestIV044IntegerOverflowRisk:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag integer with maximum > 2^53 - 1"
-        )
+        assert len(fail_findings) >= 1, "Should flag integer with maximum > 2^53 - 1"
         assert any("max_id" in f.resource_name for f in fail_findings)
 
-    async def test_passes_with_safe_integer_range(
-        self, check: IntegerOverflowRiskCheck
-    ) -> None:
+    async def test_passes_with_safe_integer_range(self, check: IntegerOverflowRiskCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3914,9 +3850,7 @@ class TestIV044IntegerOverflowRisk:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag integer with minimum < -(2^53 - 1)"
-        )
+        assert len(fail_findings) >= 1, "Should flag integer with minimum < -(2^53 - 1)"
 
     async def test_empty_snapshot_returns_no_findings(
         self, check: IntegerOverflowRiskCheck
@@ -3942,9 +3876,7 @@ class TestIV045DeeplyNestedSchema:
         assert meta.check_id == "iv045"
         assert meta.category == "input_validation"
 
-    async def test_fails_on_deeply_nested_schema(
-        self, check: DeeplyNestedSchemaCheck
-    ) -> None:
+    async def test_fails_on_deeply_nested_schema(self, check: DeeplyNestedSchemaCheck) -> None:
         """A schema nested 6+ levels deep should FAIL (max safe depth is 5)."""
         # Build a 7-level deep nested object schema
         deep_schema: dict = {"type": "string"}
@@ -3966,13 +3898,9 @@ class TestIV045DeeplyNestedSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag schema with nesting depth > 5"
-        )
+        assert len(fail_findings) >= 1, "Should flag schema with nesting depth > 5"
 
-    async def test_passes_with_shallow_schema(
-        self, check: DeeplyNestedSchemaCheck
-    ) -> None:
+    async def test_passes_with_shallow_schema(self, check: DeeplyNestedSchemaCheck) -> None:
         snapshot = make_snapshot(
             tools=[
                 {
@@ -3993,9 +3921,7 @@ class TestIV045DeeplyNestedSchema:
         findings = await check.execute(snapshot)
         assert all(f.status == Status.PASS for f in findings)
 
-    async def test_fails_on_schema_with_ref(
-        self, check: DeeplyNestedSchemaCheck
-    ) -> None:
+    async def test_fails_on_schema_with_ref(self, check: DeeplyNestedSchemaCheck) -> None:
         """A schema containing $ref should be flagged for potential recursion."""
         snapshot = make_snapshot(
             tools=[
@@ -4022,12 +3948,8 @@ class TestIV045DeeplyNestedSchema:
         )
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
-        assert len(fail_findings) >= 1, (
-            "Should flag schema containing $ref (recursion risk)"
-        )
+        assert len(fail_findings) >= 1, "Should flag schema containing $ref (recursion risk)"
 
-    async def test_empty_snapshot_returns_no_findings(
-        self, check: DeeplyNestedSchemaCheck
-    ) -> None:
+    async def test_empty_snapshot_returns_no_findings(self, check: DeeplyNestedSchemaCheck) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []

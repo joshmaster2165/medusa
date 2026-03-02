@@ -44,40 +44,44 @@ class ExcessiveToolCountCheck(BaseCheck):
                 effective_severity = meta.severity
                 level = "excessive"
 
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.FAIL,
-                severity=effective_severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    f"Server '{snapshot.server_name}' exposes {tool_count} tools, "
-                    f"which is {level} (threshold: >{_THRESHOLD_MEDIUM}). Large tool "
-                    f"counts increase attack surface and may overwhelm LLM context."
-                ),
-                evidence=f"Tool count: {tool_count}",
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.FAIL,
+                    severity=effective_severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        f"Server '{snapshot.server_name}' exposes {tool_count} tools, "
+                        f"which is {level} (threshold: >{_THRESHOLD_MEDIUM}). Large tool "
+                        f"counts increase attack surface and may overwhelm LLM context."
+                    ),
+                    evidence=f"Tool count: {tool_count}",
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
 
         if not findings:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    f"Server '{snapshot.server_name}' exposes {tool_count} tools, "
-                    f"within acceptable limits."
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        f"Server '{snapshot.server_name}' exposes {tool_count} tools, "
+                        f"within acceptable limits."
+                    ),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
         return findings

@@ -192,13 +192,8 @@ def build_reasoning_user_payload(
     ]
 
     for f in fail_findings:
-        lines.append(
-            f"[{f.severity.value.upper()}] {f.check_id}: "
-            f"{f.check_title}"
-        )
-        lines.append(
-            f"  Resource: {f.resource_type}/{f.resource_name}"
-        )
+        lines.append(f"[{f.severity.value.upper()}] {f.check_id}: {f.check_title}")
+        lines.append(f"  Resource: {f.resource_type}/{f.resource_name}")
         # Truncate long details to save tokens
         detail = f.status_extended
         if len(detail) > 200:

@@ -73,9 +73,7 @@ class PromptInjectionCheck(BaseCheck):
                         # Fallback: phrase came from regex, treat as confirmed
                         confirmed.append((phrase, 1.0))
                         continue
-                    ctx_score = score_injection_context(
-                        text, start, start + len(phrase)
-                    )
+                    ctx_score = score_injection_context(text, start, start + len(phrase))
                     if ctx_score >= _CONTEXT_SCORE_THRESHOLD:
                         confirmed.append((phrase, ctx_score))
 
@@ -85,9 +83,7 @@ class PromptInjectionCheck(BaseCheck):
                 phrases_only = [p for p, _ in confirmed]
                 scores_only = [s for _, s in confirmed]
                 avg_score = sum(scores_only) / len(scores_only)
-                phrase_list = ", ".join(
-                    f"'{p}'" for p in phrases_only[:5]
-                )
+                phrase_list = ", ".join(f"'{p}'" for p in phrases_only[:5])
 
                 # Downgrade severity for borderline matches
                 severity = meta.severity
@@ -109,8 +105,7 @@ class PromptInjectionCheck(BaseCheck):
                             f"prompt injection phrase(s): {phrase_list}"
                         ),
                         evidence=(
-                            "; ".join(phrases_only[:10])
-                            + f" [avg_context_score={avg_score:.2f}]"
+                            "; ".join(phrases_only[:10]) + f" [avg_context_score={avg_score:.2f}]"
                         ),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,

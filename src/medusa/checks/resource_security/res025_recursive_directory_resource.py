@@ -18,9 +18,9 @@ from medusa.core.models import CheckMetadata, Finding, Status
 
 # URI patterns indicating directory-level access
 _DIR_URI_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(r"/\*\*\s*$"),   # ends with /**
-    re.compile(r"/\*\s*$"),     # ends with /*
-    re.compile(r"/\s*$"),       # ends with /
+    re.compile(r"/\*\*\s*$"),  # ends with /**
+    re.compile(r"/\*\s*$"),  # ends with /*
+    re.compile(r"/\s*$"),  # ends with /
 ]
 
 # Description keywords suggesting recursive access

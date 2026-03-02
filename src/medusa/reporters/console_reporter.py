@@ -66,8 +66,7 @@ class ConsoleReporter(BaseReporter):
         console.print(Rule("[bold]SCAN RESULTS[/bold]", style="green"))
         ts = result.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")
         console.print(
-            f"  [dim]Scan {result.scan_id}  ·  {ts}  ·  "
-            f"Medusa v{result.medusa_version}[/dim]"
+            f"  [dim]Scan {result.scan_id}  ·  {ts}  ·  Medusa v{result.medusa_version}[/dim]"
         )
         console.print()
 
@@ -84,9 +83,7 @@ class ConsoleReporter(BaseReporter):
         )
         console.print(panel)
 
-    def _print_severity_summary(
-        self, result: ScanResult, console: Console
-    ) -> None:
+    def _print_severity_summary(self, result: ScanResult, console: Console) -> None:
         failed = [f for f in result.findings if f.status == Status.FAIL]
         counts: dict[Severity, int] = {s: 0 for s in Severity}
         for f in failed:
@@ -118,9 +115,7 @@ class ConsoleReporter(BaseReporter):
             console.print(line)
         console.print()
 
-    def _print_server_breakdown(
-        self, result: ScanResult, console: Console
-    ) -> None:
+    def _print_server_breakdown(self, result: ScanResult, console: Console) -> None:
         console.print(Rule("[bold]Server Breakdown[/bold]"))
         console.print()
         for ss in result.server_scores:
@@ -144,9 +139,7 @@ class ConsoleReporter(BaseReporter):
             )
         console.print()
 
-    def _print_findings_table(
-        self, result: ScanResult, console: Console
-    ) -> None:
+    def _print_findings_table(self, result: ScanResult, console: Console) -> None:
         failed = [f for f in result.findings if f.status == Status.FAIL]
         failed.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 99))
 
@@ -154,15 +147,11 @@ class ConsoleReporter(BaseReporter):
         console.print()
 
         if not failed:
-            console.print(
-                "  [green]✓ No failed findings — all checks passed![/]"
-            )
+            console.print("  [green]✓ No failed findings — all checks passed![/]")
             console.print()
             return
 
-        table = Table(
-            show_header=True, header_style="bold", show_lines=False
-        )
+        table = Table(show_header=True, header_style="bold", show_lines=False)
         table.add_column("Sev", width=10)
         table.add_column("ID", style="cyan", width=8)
         table.add_column("Title", max_width=42, overflow="ellipsis")
@@ -178,9 +167,7 @@ class ConsoleReporter(BaseReporter):
             # AI findings get a purple dot prefix
             title_display = f.check_title
             if f.check_id.startswith("ai"):
-                title_display = (
-                    f"[bright_magenta]●[/bright_magenta] {f.check_title}"
-                )
+                title_display = f"[bright_magenta]●[/bright_magenta] {f.check_title}"
 
             table.add_row(
                 f"[{sev_style}]{f.severity.value.upper()}[/{sev_style}]",
@@ -194,21 +181,11 @@ class ConsoleReporter(BaseReporter):
         console.print(table)
         console.print()
 
-    def _print_status_counts(
-        self, result: ScanResult, console: Console
-    ) -> None:
-        passed = sum(
-            1 for f in result.findings if f.status == Status.PASS
-        )
-        failed = sum(
-            1 for f in result.findings if f.status == Status.FAIL
-        )
-        skipped = sum(
-            1 for f in result.findings if f.status == Status.SKIPPED
-        )
-        errors = sum(
-            1 for f in result.findings if f.status == Status.ERROR
-        )
+    def _print_status_counts(self, result: ScanResult, console: Console) -> None:
+        passed = sum(1 for f in result.findings if f.status == Status.PASS)
+        failed = sum(1 for f in result.findings if f.status == Status.FAIL)
+        skipped = sum(1 for f in result.findings if f.status == Status.SKIPPED)
+        errors = sum(1 for f in result.findings if f.status == Status.ERROR)
         console.print(
             f"  [green]{passed}[/] passed  ·  "
             f"[red]{failed}[/] failed  ·  "
@@ -217,9 +194,7 @@ class ConsoleReporter(BaseReporter):
         )
         console.print()
 
-    def _print_compliance(
-        self, result: ScanResult, console: Console
-    ) -> None:
+    def _print_compliance(self, result: ScanResult, console: Console) -> None:
         console.print(Rule("[bold]Compliance[/bold]"))
         console.print()
         for framework_name, requirements in result.compliance_results.items():
@@ -230,24 +205,14 @@ class ConsoleReporter(BaseReporter):
                         status = req_data.get("status", "unknown")
                         icon = "✓" if status == "pass" else "✗"
                         style = "green" if status == "pass" else "red"
-                        console.print(
-                            f"    [{style}]{icon} {status.upper()}[/{style}]"
-                            f"  {req_name}"
-                        )
+                        console.print(f"    [{style}]{icon} {status.upper()}[/{style}]  {req_name}")
                     else:
                         console.print(f"    {req_name}: {req_data}")
             console.print()
 
-    def _print_reasoning(
-        self, result: ScanResult, console: Console
-    ) -> None:
+    def _print_reasoning(self, result: ScanResult, console: Console) -> None:
         """Print AI Reasoning Layer output."""
-        console.print(
-            Rule(
-                "[bold bright_magenta]AI Reasoning Analysis"
-                "[/bold bright_magenta]"
-            )
-        )
+        console.print(Rule("[bold bright_magenta]AI Reasoning Analysis[/bold bright_magenta]"))
         console.print()
 
         for server_name, reasoning in result.reasoning_results.items():
@@ -260,10 +225,7 @@ class ConsoleReporter(BaseReporter):
                 console.print(
                     Panel(
                         summary,
-                        title=(
-                            f"[bold]{server_name}[/bold] — "
-                            f"Executive Summary"
-                        ),
+                        title=(f"[bold]{server_name}[/bold] — Executive Summary"),
                         border_style="bright_magenta",
                         padding=(1, 2),
                     )
@@ -273,8 +235,7 @@ class ConsoleReporter(BaseReporter):
             priorities = reasoning.get("top_priorities", [])
             if priorities:
                 console.print(
-                    "  [bold bright_magenta]Top Remediation "
-                    "Priorities:[/bold bright_magenta]"
+                    "  [bold bright_magenta]Top Remediation Priorities:[/bold bright_magenta]"
                 )
                 for i, p in enumerate(priorities[:5], 1):
                     console.print(f"    {i}. {p}")
@@ -283,21 +244,16 @@ class ConsoleReporter(BaseReporter):
             # Attack Chains
             chains = reasoning.get("attack_chains", [])
             if chains:
-                console.print(
-                    Rule(
-                        f"[bold]Attack Chains ({len(chains)})"
-                        f"[/bold]"
-                    )
-                )
+                console.print(Rule(f"[bold]Attack Chains ({len(chains)})[/bold]"))
                 console.print()
                 for chain in chains:
                     sev = chain.get("severity", "medium")
-                    sev_style = SEVERITY_STYLES.get(
-                        Severity(sev), ""
-                    ) if sev in {s.value for s in Severity} else "yellow"
-                    ids = ", ".join(
-                        chain.get("finding_check_ids", [])
+                    sev_style = (
+                        SEVERITY_STYLES.get(Severity(sev), "")
+                        if sev in {s.value for s in Severity}
+                        else "yellow"
                     )
+                    ids = ", ".join(chain.get("finding_check_ids", []))
                     body = (
                         f"[{sev_style}]{sev.upper()}"
                         f"[/{sev_style}] "
@@ -310,10 +266,7 @@ class ConsoleReporter(BaseReporter):
                     console.print(
                         Panel(
                             body,
-                            title=(
-                                f"[bold]{chain.get('chain_id', '')}"
-                                f"[/bold]"
-                            ),
+                            title=(f"[bold]{chain.get('chain_id', '')}[/bold]"),
                             border_style="red",
                         )
                     )
@@ -325,16 +278,10 @@ class ConsoleReporter(BaseReporter):
                 a
                 for a in annotations
                 if isinstance(a, dict)
-                and a.get("confidence")
-                in ("false_positive", "likely_false_positive")
+                and a.get("confidence") in ("false_positive", "likely_false_positive")
             ]
             if fps:
-                console.print(
-                    Rule(
-                        f"[bold]Likely False Positives "
-                        f"({len(fps)})[/bold]"
-                    )
-                )
+                console.print(Rule(f"[bold]Likely False Positives ({len(fps)})[/bold]"))
                 console.print()
                 for fp in fps:
                     reason = fp.get("reasoning", "No reason given")
@@ -348,12 +295,7 @@ class ConsoleReporter(BaseReporter):
             # Gap Findings
             gaps = reasoning.get("gap_findings", [])
             if gaps:
-                console.print(
-                    Rule(
-                        f"[bold]AI-Discovered Gaps ({len(gaps)})"
-                        f"[/bold]"
-                    )
-                )
+                console.print(Rule(f"[bold]AI-Discovered Gaps ({len(gaps)})[/bold]"))
                 console.print()
                 for gap in gaps:
                     sev = gap.get("severity", "medium")
@@ -362,16 +304,12 @@ class ConsoleReporter(BaseReporter):
                         f"[bold]{gap.get('title', '')}[/bold] "
                         f"({sev.upper()})"
                     )
-                    console.print(
-                        f"    {gap.get('description', '')[:120]}"
-                    )
+                    console.print(f"    {gap.get('description', '')[:120]}")
                 console.print()
 
             # Token usage
             usage = reasoning.get("token_usage", {})
-            duration = reasoning.get(
-                "reasoning_duration_seconds", 0
-            )
+            duration = reasoning.get("reasoning_duration_seconds", 0)
             if usage.get("input_tokens"):
                 console.print(
                     f"  [dim]Reasoning: "
@@ -387,7 +325,6 @@ class ConsoleReporter(BaseReporter):
         server_word = "server" if servers == 1 else "servers"
         duration = result.scan_duration_seconds
         console.print(
-            f"  Scanned {servers} {server_word} in {duration}s  ·  "
-            f"[dim]medusa.security[/dim]"
+            f"  Scanned {servers} {server_word} in {duration}s  ·  [dim]medusa.security[/dim]"
         )
         console.print()

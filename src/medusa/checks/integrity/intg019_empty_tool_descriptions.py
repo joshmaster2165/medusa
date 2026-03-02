@@ -42,9 +42,7 @@ class EmptyToolDescriptionsCheck(BaseCheck):
                         status=Status.FAIL,
                         severity=meta.severity,
                         server_name=snapshot.server_name,
-                        server_transport=(
-                            snapshot.transport_type
-                        ),
+                        server_transport=(snapshot.transport_type),
                         resource_type="tool",
                         resource_name=tool_name,
                         status_extended=(
@@ -54,8 +52,7 @@ class EmptyToolDescriptionsCheck(BaseCheck):
                             f"or use this tool."
                         ),
                         evidence=(
-                            f"description="
-                            f"{'empty' if description == '' else 'whitespace_only'}"
+                            f"description={'empty' if description == '' else 'whitespace_only'}"
                         ),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
@@ -70,15 +67,11 @@ class EmptyToolDescriptionsCheck(BaseCheck):
                     status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
-                    server_transport=(
-                        snapshot.transport_type
-                    ),
+                    server_transport=(snapshot.transport_type),
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"All tools have descriptions "
-                        f"across "
-                        f"{len(snapshot.tools)} tool(s)."
+                        f"All tools have descriptions across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
