@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import sys
+from pathlib import Path
 
 import click
 import httpx
@@ -27,6 +28,7 @@ from medusa.compliance.framework import evaluate_compliance, load_framework
 from medusa.connectors.config_discovery import discover_servers
 from medusa.connectors.http import HttpConnector
 from medusa.connectors.stdio import StdioConnector
+from medusa.core.models import Status
 from medusa.core.registry import CheckRegistry
 from medusa.core.scanner import ScanEngine, has_findings_above_threshold
 from medusa.reporters.console_reporter import ConsoleReporter
@@ -58,10 +60,12 @@ Quick start:
   medusa scan --reason                                Static + AI reasoning
   medusa scan -o html --output-file report.html       HTML dashboard
   medusa scan -o json --fail-on high                  CI/CD integration
-  medusa scan --compliance owasp_mcp_top10            OWASP compliance
+  medusa scan --generate-baseline .medusa-baseline.json   Save baseline
+  medusa scan --baseline .medusa-baseline.json        Show only new findings
+  medusa diff before.json after.json                  Compare two scans
+  medusa baseline show .medusa-baseline.json          View baseline
   medusa list-checks                                  Browse all checks
   medusa configure                                    Setup wizard
-  medusa settings                                     Show configuration
 
 Docs: https://medusa.security/docs
 """
@@ -274,6 +278,20 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     default=None,
     help="AI key mode: bring-your-own-key or dashboard proxy.",
 )
+@click.option(
+    "--baseline",
+    "baseline_path",
+    type=str,
+    default=None,
+    help="Path to baseline file. Only show NEW findings not in the baseline.",
+)
+@click.option(
+    "--generate-baseline",
+    "generate_baseline_path",
+    type=str,
+    default=None,
+    help="Generate a baseline file from scan results.",
+)
 @click.pass_context
 def scan(  # noqa: C901, PLR0912, PLR0913
     ctx: click.Context,
@@ -300,6 +318,8 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     flag_reason: bool,
     claude_api_key: str | None,
     ai_mode: str | None,
+    baseline_path: str | None,
+    generate_baseline_path: str | None,
 ) -> None:
     """Scan MCP servers for security vulnerabilities.
 
@@ -542,6 +562,62 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
         engine.progress_callback = on_progress
         result = asyncio.run(engine.scan())
+
+    # ── Baseline handling ────────────────────────────────────────
+    if generate_baseline_path:
+        from medusa.core.baseline import generate_baseline, save_baseline
+
+        baseline = generate_baseline(result)
+        save_baseline(baseline, generate_baseline_path)
+        if not quiet:
+            console.print(
+                f"  [green]▸ Baseline saved:[/green] "
+                f"{generate_baseline_path} "
+                f"[dim]({len(baseline.entries)} findings)[/dim]"
+            )
+
+    baseline_stats: dict[str, int] | None = None
+    if baseline_path:
+        from medusa.core.baseline import (
+            filter_new_findings,
+            load_baseline,
+        )
+
+        try:
+            baseline = load_baseline(baseline_path)
+            new_findings, baselined_findings, resolved_fps = (
+                filter_new_findings(result, baseline)
+            )
+            baseline_stats = {
+                "new": sum(
+                    1 for f in new_findings if f.status == Status.FAIL
+                ),
+                "baselined": len(baselined_findings),
+                "resolved": len(resolved_fps),
+            }
+
+            # Replace findings in result with only new findings
+            result = result.model_copy(
+                update={"findings": new_findings}
+            )
+
+            if not quiet:
+                console.print(
+                    f"  [green]▸ Baseline:[/green] "
+                    f"[cyan]{baseline_stats['new']}[/cyan] new, "
+                    f"[dim]{baseline_stats['baselined']} baselined, "
+                    f"{baseline_stats['resolved']} resolved[/dim]"
+                )
+        except FileNotFoundError:
+            if not quiet:
+                console.print(
+                    f"  [yellow]⚠ Baseline not found: {baseline_path}[/yellow]"
+                )
+        except ValueError as e:
+            if not quiet:
+                console.print(
+                    f"  [yellow]⚠ Invalid baseline: {e}[/yellow]"
+                )
 
     # Evaluate compliance if requested
     compliance_name = compliance or (
@@ -1150,6 +1226,391 @@ def _mask_key(key: str) -> str:
     if len(key) > 12:
         return key[:12] + "..."
     return key
+
+
+# ── diff ─────────────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.argument("before_file", type=click.Path(exists=True))
+@click.argument("after_file", type=click.Path(exists=True))
+@click.option(
+    "-o",
+    "--output",
+    "output_format",
+    type=click.Choice(["console", "json"]),
+    default="console",
+    help="Output format.  [default: console]",
+)
+@click.option(
+    "--output-file",
+    type=str,
+    default=None,
+    help="Write diff to file instead of stdout.",
+)
+@click.option(
+    "--fail-on-new",
+    is_flag=True,
+    default=False,
+    help="Exit code 1 if new findings are detected.",
+)
+@click.pass_context
+def diff(
+    ctx: click.Context,
+    before_file: str,
+    after_file: str,
+    output_format: str,
+    output_file: str | None,
+    fail_on_new: bool,
+) -> None:
+    """Compare two scan results and show changes.
+
+    Compares BEFORE_FILE and AFTER_FILE (JSON scan results) to show
+    new findings, resolved findings, severity changes, and score changes.
+
+    Perfect for CI/CD: "did this change introduce new security issues?"
+
+    \b
+    Examples:
+      medusa diff scan-before.json scan-after.json
+      medusa diff baseline.json latest.json --fail-on-new
+      medusa diff old.json new.json -o json --output-file changes.json
+    """
+    from medusa.core.diff import diff_scan_results
+    from medusa.core.models import ScanResult
+
+    quiet = ctx.obj.get("quiet", False)
+
+    try:
+        before = ScanResult.model_validate_json(
+            Path(before_file).read_text()
+        )
+        after = ScanResult.model_validate_json(
+            Path(after_file).read_text()
+        )
+    except Exception as e:
+        console.print(f"  [red]Failed to parse scan results: {e}[/red]")
+        sys.exit(2)
+
+    scan_diff = diff_scan_results(before, after)
+
+    if output_format == "json":
+        content = scan_diff.model_dump_json(indent=2)
+        if output_file:
+            Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+            Path(output_file).write_text(content)
+            if not quiet:
+                console.print(f"  [green]▸ Diff saved:[/green] {output_file}")
+        else:
+            click.echo(content)
+    else:
+        _print_diff(scan_diff, quiet)
+
+    if fail_on_new and scan_diff.total_new > 0:
+        sys.exit(1)
+
+
+def _print_diff(scan_diff, quiet: bool) -> None:
+    """Pretty-print a ScanDiff to the console."""
+    from medusa.core.diff import ScanDiff
+
+    d: ScanDiff = scan_diff
+
+    # Score change header
+    score_delta = d.aggregate_score_after - d.aggregate_score_before
+    if score_delta > 0:
+        delta_str = f"[green]+{score_delta:.1f}[/green]"
+    elif score_delta < 0:
+        delta_str = f"[red]{score_delta:.1f}[/red]"
+    else:
+        delta_str = "[dim]+0.0[/dim]"
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]Score:[/bold] {d.aggregate_score_before}/10 "
+            f"({d.aggregate_grade_before}) → "
+            f"{d.aggregate_score_after}/10 "
+            f"({d.aggregate_grade_after})  "
+            f"[{delta_str}]\n\n"
+            f"[cyan]{d.total_new}[/cyan] new findings  |  "
+            f"[green]{d.total_resolved}[/green] resolved  |  "
+            f"[yellow]{d.total_severity_changes}[/yellow] severity changes",
+            title="[bold]Scan Diff[/bold]",
+            border_style="bright_blue",
+            padding=(1, 2),
+        )
+    )
+
+    severity_styles = {
+        "critical": "bold red",
+        "high": "red",
+        "medium": "yellow",
+        "low": "blue",
+        "info": "dim",
+    }
+
+    # New findings
+    if d.new_findings:
+        console.print()
+        console.print("  [bold red]New Findings[/bold red]")
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Severity", width=10)
+        table.add_column("Check ID", style="cyan", width=10)
+        table.add_column("Title")
+        table.add_column("Server")
+        table.add_column("Resource")
+
+        for f in d.new_findings:
+            sev_style = severity_styles.get(f.severity, "")
+            table.add_row(
+                f"[{sev_style}]{f.severity}[/{sev_style}]",
+                f.check_id,
+                f.check_title,
+                f.server_name,
+                f.resource_name,
+            )
+        console.print(table)
+
+    # Resolved findings
+    if d.resolved_findings:
+        console.print()
+        console.print("  [bold green]Resolved Findings[/bold green]")
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Severity", width=10)
+        table.add_column("Check ID", style="cyan", width=10)
+        table.add_column("Title")
+        table.add_column("Server")
+
+        for f in d.resolved_findings:
+            sev_style = severity_styles.get(f.severity, "")
+            table.add_row(
+                f"[{sev_style}]{f.severity}[/{sev_style}]",
+                f.check_id,
+                f.check_title,
+                f.server_name,
+            )
+        console.print(table)
+
+    # Severity changes
+    if d.severity_changes:
+        console.print()
+        console.print("  [bold yellow]Severity Changes[/bold yellow]")
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Check ID", style="cyan", width=10)
+        table.add_column("Server")
+        table.add_column("Old Severity")
+        table.add_column("New Severity")
+
+        for c in d.severity_changes:
+            old_style = severity_styles.get(c.old_severity, "")
+            new_style = severity_styles.get(c.new_severity, "")
+            table.add_row(
+                c.check_id,
+                c.server_name,
+                f"[{old_style}]{c.old_severity}[/{old_style}]",
+                f"[{new_style}]{c.new_severity}[/{new_style}]",
+            )
+        console.print(table)
+
+    # Server score changes
+    if d.server_score_changes:
+        console.print()
+        console.print("  [bold]Server Score Changes[/bold]")
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Server")
+        table.add_column("Before")
+        table.add_column("After")
+        table.add_column("Delta")
+
+        for s in d.server_score_changes:
+            if s.score_delta > 0:
+                delta = f"[green]+{s.score_delta:.1f}[/green]"
+            elif s.score_delta < 0:
+                delta = f"[red]{s.score_delta:.1f}[/red]"
+            else:
+                delta = "[dim]+0.0[/dim]"
+            table.add_row(
+                s.server_name,
+                f"{s.old_score}/10 ({s.old_grade})",
+                f"{s.new_score}/10 ({s.new_grade})",
+                delta,
+            )
+        console.print(table)
+
+    console.print()
+
+
+# ── baseline ─────────────────────────────────────────────────────────────
+
+
+@cli.group("baseline")
+def baseline_group() -> None:
+    """Manage scan baselines for suppression and tracking.
+
+    \b
+    Commands:
+      show       Display baseline contents
+      suppress   Suppress a finding by fingerprint
+      unsuppress Remove suppression from a finding
+    """
+
+
+@baseline_group.command("show")
+@click.argument("baseline_file", type=click.Path(exists=True))
+@click.option(
+    "--suppressed-only",
+    is_flag=True,
+    default=False,
+    help="Show only suppressed findings.",
+)
+@click.pass_context
+def baseline_show(
+    ctx: click.Context,
+    baseline_file: str,
+    suppressed_only: bool,
+) -> None:
+    """Display contents of a baseline file."""
+    from medusa.core.baseline import load_baseline
+
+    try:
+        baseline = load_baseline(baseline_file)
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"  [red]{e}[/red]")
+        sys.exit(2)
+
+    entries = baseline.entries
+    if suppressed_only:
+        entries = [e for e in entries if e.suppressed]
+
+    console.print()
+    console.print(
+        f"  [bold]Baseline:[/bold] {baseline_file}  "
+        f"[dim]({len(baseline.entries)} findings, "
+        f"{sum(1 for e in baseline.entries if e.suppressed)} suppressed)[/dim]"
+    )
+    console.print(f"  [dim]Created: {baseline.created_at}  |  Scan: {baseline.scan_id}[/dim]")
+    console.print()
+
+    if not entries:
+        console.print("  [dim]No findings to show.[/dim]")
+        return
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Fingerprint", style="cyan", width=18)
+    table.add_column("Check ID", width=10)
+    table.add_column("Server")
+    table.add_column("Resource")
+    table.add_column("Severity", width=10)
+    table.add_column("Suppressed")
+
+    severity_styles = {
+        "critical": "bold red",
+        "high": "red",
+        "medium": "yellow",
+        "low": "blue",
+        "info": "dim",
+    }
+
+    for entry in entries:
+        sev_style = severity_styles.get(entry.severity, "")
+        if entry.suppressed:
+            sup_text = f"[dim]{entry.suppression_reason or 'yes'}[/dim]"
+        else:
+            sup_text = "-"
+        table.add_row(
+            entry.fingerprint,
+            entry.check_id,
+            entry.server_name,
+            entry.resource_name,
+            f"[{sev_style}]{entry.severity}[/{sev_style}]",
+            sup_text,
+        )
+
+    console.print(table)
+    console.print()
+
+
+@baseline_group.command("suppress")
+@click.argument("baseline_file", type=click.Path(exists=True))
+@click.argument("fingerprint")
+@click.option(
+    "--reason",
+    type=str,
+    required=True,
+    help='Reason for suppression (e.g. "accepted risk per JIRA-1234").',
+)
+def baseline_suppress(
+    baseline_file: str,
+    fingerprint: str,
+    reason: str,
+) -> None:
+    """Suppress a finding in a baseline by its fingerprint.
+
+    \b
+    Examples:
+      medusa baseline suppress .medusa-baseline.json a1b2c3d4 --reason "accepted risk"
+    """
+    from medusa.core.baseline import (
+        load_baseline,
+        save_baseline,
+        suppress_finding,
+    )
+
+    try:
+        baseline = load_baseline(baseline_file)
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"  [red]{e}[/red]")
+        sys.exit(2)
+
+    if suppress_finding(baseline, fingerprint, reason):
+        save_baseline(baseline, baseline_file)
+        console.print(
+            f"  [green]▸ Suppressed:[/green] {fingerprint}  "
+            f'[dim]reason: "{reason}"[/dim]'
+        )
+    else:
+        console.print(
+            f"  [yellow]Fingerprint not found in baseline: {fingerprint}[/yellow]"
+        )
+        sys.exit(2)
+
+
+@baseline_group.command("unsuppress")
+@click.argument("baseline_file", type=click.Path(exists=True))
+@click.argument("fingerprint")
+def baseline_unsuppress(
+    baseline_file: str,
+    fingerprint: str,
+) -> None:
+    """Remove suppression from a finding.
+
+    \b
+    Examples:
+      medusa baseline unsuppress .medusa-baseline.json a1b2c3d4
+    """
+    from medusa.core.baseline import (
+        load_baseline,
+        save_baseline,
+        unsuppress_finding,
+    )
+
+    try:
+        baseline = load_baseline(baseline_file)
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"  [red]{e}[/red]")
+        sys.exit(2)
+
+    if unsuppress_finding(baseline, fingerprint):
+        save_baseline(baseline, baseline_file)
+        console.print(
+            f"  [green]▸ Unsuppressed:[/green] {fingerprint}"
+        )
+    else:
+        console.print(
+            f"  [yellow]Fingerprint not found in baseline: {fingerprint}[/yellow]"
+        )
+        sys.exit(2)
 
 
 if __name__ == "__main__":

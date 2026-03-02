@@ -1,0 +1,70 @@
+site_name: Medusa Documentation
+site_description: Security scanner for Model Context Protocol (MCP) servers
+site_url: https://medusa.security/docs
+repo_url: https://github.com/joshmaster2165/medusa
+repo_name: joshmaster2165/medusa
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.tabs.link
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list
+  - def_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Scanning: guide/scanning.md
+    - AI Reasoning Engine: guide/ai-reasoning.md
+    - Baselines & Diff: guide/baselines.md
+    - Output Formats: guide/output-formats.md
+    - CI/CD Integration: guide/ci-cd.md
+    - OWASP MCP Top 10: guide/owasp-mcp.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Check System: architecture/checks.md
+    - Scoring Algorithm: architecture/scoring.md
+  - Development:
+    - Writing Custom Checks: development/custom-checks.md
+    - Contributing: development/contributing.md
+  - CLI Reference: cli-reference.md
