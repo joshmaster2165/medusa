@@ -1,0 +1,60 @@
+name: Security Self-Scan
+
+on:
+  schedule:
+    # Run weekly on Monday at 6 AM UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  dogfood:
+    name: Scan MCP Servers (Dogfooding)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install Medusa
+        run: poetry install --no-interaction
+
+      - name: Run Medusa self-scan (SARIF)
+        run: |
+          poetry run medusa scan \
+            --no-auto-discover \
+            --scan-config examples/ci_pipeline.yaml \
+            -o sarif \
+            --output-file medusa-results.sarif \
+            -q || true
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: medusa-results.sarif
+        continue-on-error: true
+
+      - name: Run Medusa self-scan (HTML report)
+        run: |
+          poetry run medusa scan \
+            --no-auto-discover \
+            --scan-config examples/ci_pipeline.yaml \
+            -o html \
+            --output-file medusa-report.html \
+            -q || true
+        continue-on-error: true
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: medusa-security-report
+          path: medusa-report.html
+          retention-days: 30
