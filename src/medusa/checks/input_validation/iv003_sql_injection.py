@@ -13,7 +13,13 @@ from pathlib import Path
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.core.models import CheckMetadata, Finding, Severity, Status
+from medusa.utils.heuristics import (
+    SQL_INJECTION_VECTORS,
+    PatternStrength,
+    assess_pattern_strength,
+    pattern_block_percentage,
+)
 from medusa.utils.pattern_matching import SQL_PARAM_NAMES
 
 
@@ -55,19 +61,57 @@ class SqlInjectionCheck(BaseCheck):
                     continue
 
                 # Check for constraining keywords
-                has_pattern = bool(param_def.get("pattern"))
                 has_enum = bool(param_def.get("enum"))
                 has_max_length = (
-                    isinstance(param_def.get("maxLength"), int) and param_def["maxLength"] <= 128
+                    isinstance(param_def.get("maxLength"), int)
+                    and param_def["maxLength"] <= 128
                 )
 
-                if has_pattern or has_enum:
-                    continue
+                if has_enum:
+                    continue  # Enum is genuinely constrained
 
+                pattern = param_def.get("pattern")
+                if pattern:
+                    strength = assess_pattern_strength(
+                        pattern, SQL_INJECTION_VECTORS
+                    )
+                    if strength == PatternStrength.STRONG:
+                        continue  # Pattern blocks ≥90% of SQL payloads
+
+                    if strength == PatternStrength.MODERATE:
+                        pct = pattern_block_percentage(
+                            pattern, SQL_INJECTION_VECTORS
+                        )
+                        findings.append(
+                            Finding(
+                                check_id=meta.check_id,
+                                check_title=meta.title,
+                                status=Status.FAIL,
+                                severity=Severity.MEDIUM,
+                                server_name=snapshot.server_name,
+                                server_transport=snapshot.transport_type,
+                                resource_type="tool",
+                                resource_name=f"{tool_name}.{param_name}",
+                                status_extended=(
+                                    f"Tool '{tool_name}' parameter "
+                                    f"'{param_name}' has a pattern constraint "
+                                    f"but it only blocks {pct}% of test "
+                                    f"SQL-injection payloads."
+                                ),
+                                evidence=(
+                                    f"param={param_name}, type=string, "
+                                    f"pattern={pattern!r}, "
+                                    f"strength={strength}, blocked={pct}%"
+                                ),
+                                remediation=meta.remediation,
+                                owasp_mcp=meta.owasp_mcp,
+                            )
+                        )
+                        continue
+
+                # WEAK pattern or no constraint — full severity
                 severity_note = ""
                 if has_max_length:
-                    # A short maxLength reduces risk slightly but does not
-                    # eliminate it -- still flag but note the partial control.
                     severity_note = (
                         f" A maxLength of {param_def['maxLength']} is set, "
                         f"which limits but does not prevent SQL injection."
@@ -86,7 +130,7 @@ class SqlInjectionCheck(BaseCheck):
                         status_extended=(
                             f"Tool '{tool_name}' has a parameter "
                             f"'{param_name}' that suggests raw SQL input "
-                            f"but lacks `pattern` or `enum` constraints.{severity_note}"
+                            f"but lacks adequate constraints.{severity_note}"
                         ),
                         evidence=(
                             f"param={param_name}, type=string, "

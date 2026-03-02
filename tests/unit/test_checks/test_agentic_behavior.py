@@ -1,4 +1,4 @@
-"""Unit tests for Agentic Behavior checks (auto-generated stubs)."""
+"""Unit tests for Agentic Behavior checks (agent001-agent025)."""
 
 from __future__ import annotations
 
@@ -44,6 +44,22 @@ from medusa.checks.agentic_behavior.agent019_agent_resource_exhaustion import (
 from medusa.checks.agentic_behavior.agent020_missing_agent_audit_trail import (
     MissingAgentAuditTrailCheck,
 )
+from medusa.checks.agentic_behavior.agent021_excessive_tool_count import (
+    ExcessiveToolCountCheck,
+)
+from medusa.checks.agentic_behavior.agent022_missing_tool_annotations import (
+    MissingToolAnnotationsCheck,
+)
+from medusa.checks.agentic_behavior.agent023_conflicting_tool_names import (
+    ConflictingToolNamesCheck,
+)
+from medusa.checks.agentic_behavior.agent024_unrestricted_tool_output import (
+    UnrestrictedToolOutputCheck,
+)
+from medusa.checks.agentic_behavior.agent025_missing_sampling import (
+    MissingSamplingCheck,
+)
+from medusa.core.models import Status
 from tests.conftest import make_snapshot
 
 
@@ -63,6 +79,103 @@ class TestMissingHumanInLoopCheck:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+    async def test_fails_on_destructive_tool_no_confirmation(
+        self, check: MissingHumanInLoopCheck
+    ) -> None:
+        """Destructive tool without confirmation should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently removes a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Destructive tool should be flagged"
+        assert "delete_user" in fail_findings[0].status_extended
+
+    async def test_fails_on_privileged_tool_no_confirmation(
+        self, check: MissingHumanInLoopCheck
+    ) -> None:
+        """Privileged tool without confirmation should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_command",
+                    "description": "Execute a shell command on the server.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Privileged tool should be flagged"
+
+    async def test_passes_on_read_only_tools(
+        self, check: MissingHumanInLoopCheck
+    ) -> None:
+        """Read-only tools should PASS even without confirmation."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Fetch weather data for a city.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "search_users",
+                    "description": "Search for users by name.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1, "Read-only tools should not require confirmation"
+
+    async def test_passes_with_confirmation_config(
+        self, check: MissingHumanInLoopCheck
+    ) -> None:
+        """Destructive tool with confirmation config should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently removes a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            config_raw={"command": "node", "confirmation": True},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1, "Confirmation config should satisfy the check"
+
+    async def test_risk_classification_in_evidence(
+        self, check: MissingHumanInLoopCheck
+    ) -> None:
+        """Evidence should include risk classification labels."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Remove a user.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            config_raw={"command": "node"},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "destructive" in fail_findings[0].evidence.lower()
 
 
 class TestAutonomousActionRiskCheck:
@@ -405,3 +518,397 @@ class TestMissingAgentAuditTrailCheck:
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert isinstance(findings, list)
+
+
+# ==========================================================================
+# AGENT-021: Excessive Tool Count
+# ==========================================================================
+
+
+class TestExcessiveToolCountCheck:
+    """Tests for ExcessiveToolCountCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ExcessiveToolCountCheck:
+        return ExcessiveToolCountCheck()
+
+    async def test_metadata_loads_correctly(self, check: ExcessiveToolCountCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "agent021"
+        assert meta.category == "agentic_behavior"
+
+    async def test_fails_on_excessive_tool_count(self, check: ExcessiveToolCountCheck) -> None:
+        """Server with 60 tools (above threshold of 50) should FAIL."""
+        tools = [
+            {
+                "name": f"tool_{i}",
+                "description": f"Tool number {i}.",
+                "inputSchema": {"type": "object", "properties": {}},
+            }
+            for i in range(60)
+        ]
+        snapshot = make_snapshot(tools=tools)
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "60" in fail_findings[0].evidence
+
+    async def test_passes_on_small_tool_count(self, check: ExcessiveToolCountCheck) -> None:
+        """Server with 5 tools should PASS."""
+        tools = [
+            {
+                "name": f"tool_{i}",
+                "description": f"Tool number {i}.",
+                "inputSchema": {"type": "object", "properties": {}},
+            }
+            for i in range(5)
+        ]
+        snapshot = make_snapshot(tools=tools)
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_not_applicable_when_no_tools(self, check: ExcessiveToolCountCheck) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# AGENT-022: Missing Tool Annotations
+# ==========================================================================
+
+
+class TestMissingToolAnnotationsCheck:
+    """Tests for MissingToolAnnotationsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingToolAnnotationsCheck:
+        return MissingToolAnnotationsCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingToolAnnotationsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "agent022"
+        assert meta.category == "agentic_behavior"
+
+    async def test_fails_on_tools_without_annotations(
+        self, check: MissingToolAnnotationsCheck
+    ) -> None:
+        """Tools lacking annotation hints should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Delete a user from the system.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "get_data",
+                    "description": "Retrieve data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_tools_with_annotations(
+        self, check: MissingToolAnnotationsCheck
+    ) -> None:
+        """Tools with proper annotation hints should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Returns weather data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                    "annotations": {
+                        "readOnlyHint": True,
+                        "destructiveHint": False,
+                        "idempotentHint": True,
+                        "openWorldHint": False,
+                    },
+                },
+                {
+                    "name": "search_users",
+                    "description": "Search for users.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                    "annotations": {
+                        "readOnlyHint": True,
+                        "destructiveHint": False,
+                    },
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_not_applicable_when_no_tools(
+        self, check: MissingToolAnnotationsCheck
+    ) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# AGENT-023: Conflicting Tool Names
+# ==========================================================================
+
+
+class TestConflictingToolNamesCheck:
+    """Tests for ConflictingToolNamesCheck."""
+
+    @pytest.fixture()
+    def check(self) -> ConflictingToolNamesCheck:
+        return ConflictingToolNamesCheck()
+
+    async def test_metadata_loads_correctly(self, check: ConflictingToolNamesCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "agent023"
+        assert meta.category == "agentic_behavior"
+
+    async def test_fails_on_conflicting_tool_names(
+        self, check: ConflictingToolNamesCheck
+    ) -> None:
+        """Tools with normalized name collisions should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_file",
+                    "description": "Get a file.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "fetch_file",
+                    "description": "Fetch a file.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "file" in fail_findings[0].evidence.lower()
+
+    async def test_passes_on_distinct_tool_names(
+        self, check: ConflictingToolNamesCheck
+    ) -> None:
+        """Tools with distinct names should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "send_email",
+                    "description": "Send an email.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "get_weather",
+                    "description": "Get weather data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_exact_duplicate_names(
+        self, check: ConflictingToolNamesCheck
+    ) -> None:
+        """Exact duplicate tool names should FAIL with HIGH severity."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "read_file",
+                    "description": "Read a file (v1).",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "read_file",
+                    "description": "Read a file (v2).",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "duplicate" in fail_findings[0].status_extended.lower()
+
+    async def test_not_applicable_when_fewer_than_two_tools(
+        self, check: ConflictingToolNamesCheck
+    ) -> None:
+        """Fewer than 2 tools means no findings."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "solo_tool",
+                    "description": "Only tool.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# AGENT-024: Unrestricted Tool Output
+# ==========================================================================
+
+
+class TestUnrestrictedToolOutputCheck:
+    """Tests for UnrestrictedToolOutputCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UnrestrictedToolOutputCheck:
+        return UnrestrictedToolOutputCheck()
+
+    async def test_metadata_loads_correctly(self, check: UnrestrictedToolOutputCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "agent024"
+        assert meta.category == "agentic_behavior"
+
+    async def test_fails_on_exfiltrative_tool_without_output_schema(
+        self, check: UnrestrictedToolOutputCheck
+    ) -> None:
+        """Exfiltrative tool without outputSchema should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "export_all",
+                    "description": "Export and returns all records from the database.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "export_all" in fail_findings[0].status_extended
+
+    async def test_passes_on_normal_tool(self, check: UnrestrictedToolOutputCheck) -> None:
+        """Tool that is not data-reading or exfiltrative should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_item",
+                    "description": "Delete an item from the database.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_on_read_tool_with_output_schema(
+        self, check: UnrestrictedToolOutputCheck
+    ) -> None:
+        """Read-only tool with an outputSchema defined should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Get a user record.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                    "outputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "email": {"type": "string"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_not_applicable_when_no_tools(
+        self, check: UnrestrictedToolOutputCheck
+    ) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# AGENT-025: Missing Sampling Capability
+# ==========================================================================
+
+
+class TestMissingSamplingCheck:
+    """Tests for MissingSamplingCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingSamplingCheck:
+        return MissingSamplingCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingSamplingCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "agent025"
+        assert meta.category == "agentic_behavior"
+
+    async def test_fails_on_destructive_tool_without_sampling(
+        self, check: MissingSamplingCheck
+    ) -> None:
+        """Destructive tool with no sampling capability should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently delete a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            capabilities={},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "delete_user" in fail_findings[0].evidence
+
+    async def test_passes_with_sampling_capability(
+        self, check: MissingSamplingCheck
+    ) -> None:
+        """Destructive tool with sampling capability declared should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently delete a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            capabilities={"sampling": {"enabled": True}},
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_when_no_dangerous_tools(
+        self, check: MissingSamplingCheck
+    ) -> None:
+        """Non-destructive tools without sampling should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Get the current weather.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+            capabilities={},
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_not_applicable_when_no_tools(
+        self, check: MissingSamplingCheck
+    ) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []

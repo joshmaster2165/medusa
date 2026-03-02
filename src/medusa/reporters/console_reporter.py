@@ -54,6 +54,8 @@ class ConsoleReporter(BaseReporter):
         self._print_severity_summary(result, console)
         self._print_server_breakdown(result, console)
         self._print_findings_table(result, console)
+        if result.reasoning_results:
+            self._print_reasoning(result, console)
         self._print_status_counts(result, console)
         if result.compliance_results:
             self._print_compliance(result, console)
@@ -235,6 +237,149 @@ class ConsoleReporter(BaseReporter):
                     else:
                         console.print(f"    {req_name}: {req_data}")
             console.print()
+
+    def _print_reasoning(
+        self, result: ScanResult, console: Console
+    ) -> None:
+        """Print AI Reasoning Layer output."""
+        console.print(
+            Rule(
+                "[bold bright_magenta]AI Reasoning Analysis"
+                "[/bold bright_magenta]"
+            )
+        )
+        console.print()
+
+        for server_name, reasoning in result.reasoning_results.items():
+            if not isinstance(reasoning, dict):
+                continue
+
+            # Executive Summary
+            summary = reasoning.get("executive_summary", "")
+            if summary:
+                console.print(
+                    Panel(
+                        summary,
+                        title=(
+                            f"[bold]{server_name}[/bold] — "
+                            f"Executive Summary"
+                        ),
+                        border_style="bright_magenta",
+                        padding=(1, 2),
+                    )
+                )
+
+            # Top Priorities
+            priorities = reasoning.get("top_priorities", [])
+            if priorities:
+                console.print(
+                    "  [bold bright_magenta]Top Remediation "
+                    "Priorities:[/bold bright_magenta]"
+                )
+                for i, p in enumerate(priorities[:5], 1):
+                    console.print(f"    {i}. {p}")
+                console.print()
+
+            # Attack Chains
+            chains = reasoning.get("attack_chains", [])
+            if chains:
+                console.print(
+                    Rule(
+                        f"[bold]Attack Chains ({len(chains)})"
+                        f"[/bold]"
+                    )
+                )
+                console.print()
+                for chain in chains:
+                    sev = chain.get("severity", "medium")
+                    sev_style = SEVERITY_STYLES.get(
+                        Severity(sev), ""
+                    ) if sev in {s.value for s in Severity} else "yellow"
+                    ids = ", ".join(
+                        chain.get("finding_check_ids", [])
+                    )
+                    body = (
+                        f"[{sev_style}]{sev.upper()}"
+                        f"[/{sev_style}] "
+                        f"{chain.get('title', '')}\n\n"
+                        f"{chain.get('attack_narrative', '')}\n\n"
+                        f"[bold]Impact:[/bold] "
+                        f"{chain.get('impact', '-')}\n"
+                        f"[bold]Findings:[/bold] {ids}"
+                    )
+                    console.print(
+                        Panel(
+                            body,
+                            title=(
+                                f"[bold]{chain.get('chain_id', '')}"
+                                f"[/bold]"
+                            ),
+                            border_style="red",
+                        )
+                    )
+                console.print()
+
+            # False Positives
+            annotations = reasoning.get("annotations", [])
+            fps = [
+                a
+                for a in annotations
+                if isinstance(a, dict)
+                and a.get("confidence")
+                in ("false_positive", "likely_false_positive")
+            ]
+            if fps:
+                console.print(
+                    Rule(
+                        f"[bold]Likely False Positives "
+                        f"({len(fps)})[/bold]"
+                    )
+                )
+                console.print()
+                for fp in fps:
+                    reason = fp.get("reasoning", "No reason given")
+                    console.print(
+                        f"  [dim]~[/dim] {fp.get('check_id', '?')} "
+                        f"on {fp.get('resource_name', '?')}: "
+                        f"{reason}"
+                    )
+                console.print()
+
+            # Gap Findings
+            gaps = reasoning.get("gap_findings", [])
+            if gaps:
+                console.print(
+                    Rule(
+                        f"[bold]AI-Discovered Gaps ({len(gaps)})"
+                        f"[/bold]"
+                    )
+                )
+                console.print()
+                for gap in gaps:
+                    sev = gap.get("severity", "medium")
+                    console.print(
+                        f"  [bright_magenta]●[/bright_magenta] "
+                        f"[bold]{gap.get('title', '')}[/bold] "
+                        f"({sev.upper()})"
+                    )
+                    console.print(
+                        f"    {gap.get('description', '')[:120]}"
+                    )
+                console.print()
+
+            # Token usage
+            usage = reasoning.get("token_usage", {})
+            duration = reasoning.get(
+                "reasoning_duration_seconds", 0
+            )
+            if usage.get("input_tokens"):
+                console.print(
+                    f"  [dim]Reasoning: "
+                    f"{usage.get('input_tokens', 0):,} input + "
+                    f"{usage.get('output_tokens', 0):,} output "
+                    f"tokens in {duration}s[/dim]"
+                )
+                console.print()
 
     def _print_footer(self, result: ScanResult, console: Console) -> None:
         console.print(Rule(style="dim"))

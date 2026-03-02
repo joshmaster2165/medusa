@@ -134,6 +134,40 @@ class TestCred001SecretsInConfig:
         assert len(fail_findings) >= 1
         assert "***" in fail_findings[0].evidence, "Secret values should be redacted"
 
+    async def test_entropy_detects_non_standard_secret(self, check: SecretsInConfigCheck) -> None:
+        """Entropy-based detection should catch high-randomness values."""
+        snapshot = make_snapshot(
+            config_raw={
+                "my_custom_token": "aB3xZ9mK2pL5wQ8rT6vY1cF0dG7hJ4kM8nP2qS5uX",
+            },
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "High-entropy value should be detected"
+        assert any("entropy" in f.evidence for f in fail_findings)
+
+    async def test_entropy_ignores_short_values(self, check: SecretsInConfigCheck) -> None:
+        """Short values should not be flagged by entropy detection."""
+        snapshot = make_snapshot(
+            config_raw={"short_key": "abc123"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_entropy_ignores_placeholders(self, check: SecretsInConfigCheck) -> None:
+        """Placeholder values should not be flagged by entropy detection."""
+        snapshot = make_snapshot(
+            config_raw={"api_key": "test_placeholder_value_for_testing"},
+        )
+        findings = await check.execute(snapshot)
+        # Should not have entropy-based findings for placeholder
+        entropy_findings = [
+            f for f in findings
+            if f.status == Status.FAIL and "entropy" in (f.evidence or "")
+        ]
+        assert len(entropy_findings) == 0, "Placeholder should not trigger entropy detection"
+
 
 # ==========================================================================
 # CRED-002: Environment Variable Leakage
@@ -211,6 +245,29 @@ class TestCred002EnvLeakage:
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Env vars ending in _SECRET should be flagged"
+
+    async def test_entropy_detects_non_standard_env_secret(
+        self, check: EnvLeakageCheck
+    ) -> None:
+        """Entropy-based detection catches high-randomness env values."""
+        snapshot = make_snapshot(
+            env={
+                "CUSTOM_AUTH_TOKEN": "aB3xZ9mK2pL5wQ8rT6vY1cF0dG7hJ4kM8nP2qS5uX",
+            },
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        # Should be caught by either regex (AUTH_TOKEN suffix) or entropy
+        assert len(fail_findings) >= 1
+
+    async def test_entropy_ignores_safe_env(self, check: EnvLeakageCheck) -> None:
+        """Non-secret env values should not be flagged."""
+        snapshot = make_snapshot(
+            env={"APP_NAME": "my-application-server"},
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
 
 
 # ==========================================================================

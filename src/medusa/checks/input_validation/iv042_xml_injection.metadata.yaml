@@ -1,0 +1,35 @@
+check_id: iv042
+title: XML External Entity Injection (XXE)
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters with XML-related names that lack input validation
+  constraints. Unvalidated XML parameters allow attackers to inject XXE
+  payloads like <!DOCTYPE> and <!ENTITY> to read local files, perform
+  server-side request forgery, or cause denial of service via entity
+  expansion (billion laughs attack).
+risk_explanation: >
+  XML External Entity (XXE) injection enables attackers to define external
+  entities in XML documents that reference local files, internal network
+  resources, or recursive entity definitions. This can lead to sensitive
+  file disclosure (/etc/passwd, application configs), SSRF attacks against
+  internal services, denial of service through entity expansion bombs, and
+  in some cases remote code execution. MCP tools accepting raw XML input
+  without validation are prime targets for XXE attacks.
+remediation: >
+  Add strict pattern constraints to XML parameters using JSON Schema regex
+  patterns that reject DOCTYPE and ENTITY declarations. Use enum constraints
+  where possible. Configure XML parsers to disable external entity processing
+  and DTD loading. Use defusedxml or equivalent safe XML parsing libraries.
+  Consider accepting structured JSON instead of raw XML input.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - xxe
+  - xml_injection
+  - entity_expansion

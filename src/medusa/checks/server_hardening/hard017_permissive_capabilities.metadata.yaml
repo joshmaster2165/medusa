@@ -1,0 +1,31 @@
+check_id: hard017
+title: Permissive Server Capabilities
+category: server_hardening
+severity: medium
+description: >
+  Detects servers that declare all major MCP capabilities (tools,
+  resources, prompts, sampling, logging) without restrictions.
+  Enabling all capabilities suggests no principle of least privilege
+  is applied to the server configuration.
+risk_explanation: >
+  A server that enables every capability exposes a larger attack
+  surface than necessary. The principle of least privilege requires
+  that servers only declare capabilities they actually need. Over-
+  provisioned capabilities can be exploited by attackers to access
+  functionality the server does not intentionally provide, such as
+  sampling or prompt injection through unnecessary prompt capabilities.
+remediation: >
+  Review the server's declared capabilities and disable those not
+  required for the server's intended functionality. Only enable
+  tools if the server provides tool functionality. Only enable
+  resources if the server exposes resources. Disable sampling and
+  logging capabilities unless they are explicitly needed. Document
+  the rationale for each enabled capability.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP07:2025"
+tags:
+  - server_hardening
+  - least_privilege
+  - capabilities

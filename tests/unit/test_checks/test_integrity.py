@@ -40,6 +40,8 @@ from medusa.checks.integrity.intg016_config_file_permissions import ConfigFilePe
 from medusa.checks.integrity.intg017_timestamp_verification_missing import (
     TimestampVerificationMissingCheck,
 )
+from medusa.checks.integrity.intg018_schemaless_tools import SchemalessToolsCheck
+from medusa.checks.integrity.intg019_empty_tool_descriptions import EmptyToolDescriptionsCheck
 from medusa.core.models import Severity, Status
 from tests.conftest import make_snapshot
 
@@ -954,3 +956,247 @@ class TestTimestampVerificationMissingCheck:
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
+
+
+# ==========================================================================
+# INTG-018: Schema-Less Tools
+# ==========================================================================
+
+
+class TestIntg018SchemalessTools:
+    """Tests for SchemalessToolsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SchemalessToolsCheck:
+        return SchemalessToolsCheck()
+
+    async def test_metadata_loads_correctly(self, check: SchemalessToolsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg018"
+        assert meta.category == "integrity"
+
+    async def test_fails_on_tool_without_input_schema(
+        self, check: SchemalessToolsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mystery_tool",
+                    "description": "Does something.",
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "mystery_tool" in fail_findings[0].status_extended
+        assert "missing" in fail_findings[0].evidence
+
+    async def test_passes_on_tool_with_valid_schema(
+        self, check: SchemalessToolsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Get weather for a city.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "city": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) == 1
+
+    async def test_fails_on_empty_input_schema(
+        self, check: SchemalessToolsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "empty_schema_tool",
+                    "description": "Has an empty schema.",
+                    "inputSchema": {},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "empty" in fail_findings[0].evidence
+
+    async def test_fails_on_schema_without_properties_key(
+        self, check: SchemalessToolsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "no_props_tool",
+                    "description": "Schema but no properties.",
+                    "inputSchema": {"type": "object"},
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "no properties" in fail_findings[0].evidence
+
+    async def test_skips_tool_that_genuinely_has_no_params(
+        self, check: SchemalessToolsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "health_check",
+                    "description": "Health check endpoint. Takes no input.",
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_empty_tools_returns_empty(self, check: SchemalessToolsCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# INTG-019: Empty Tool Descriptions
+# ==========================================================================
+
+
+class TestIntg019EmptyToolDescriptions:
+    """Tests for EmptyToolDescriptionsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> EmptyToolDescriptionsCheck:
+        return EmptyToolDescriptionsCheck()
+
+    async def test_metadata_loads_correctly(self, check: EmptyToolDescriptionsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "intg019"
+        assert meta.category == "integrity"
+
+    async def test_fails_on_tool_with_empty_description(
+        self, check: EmptyToolDescriptionsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "undocumented_tool",
+                    "description": "",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"x": {"type": "string"}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "undocumented_tool" in fail_findings[0].status_extended
+        assert "empty" in fail_findings[0].evidence
+
+    async def test_passes_on_tool_with_description(
+        self, check: EmptyToolDescriptionsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "documented_tool",
+                    "description": "This tool does useful work.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"x": {"type": "string"}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) == 1
+
+    async def test_fails_on_tool_with_missing_description(
+        self, check: EmptyToolDescriptionsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "no_desc_tool",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"x": {"type": "string"}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+
+    async def test_fails_on_whitespace_only_description(
+        self, check: EmptyToolDescriptionsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "whitespace_tool",
+                    "description": "   ",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"x": {"type": "string"}},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+
+    async def test_empty_tools_returns_empty(
+        self, check: EmptyToolDescriptionsCheck
+    ) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_multiple_tools_mixed_descriptions(
+        self, check: EmptyToolDescriptionsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "good_tool",
+                    "description": "A well-documented tool.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"x": {"type": "string"}},
+                    },
+                },
+                {
+                    "name": "bad_tool",
+                    "description": "",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"x": {"type": "string"}},
+                    },
+                },
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert fail_findings[0].resource_name == "bad_tool"

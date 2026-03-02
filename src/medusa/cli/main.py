@@ -260,6 +260,13 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     default=None,
     help="AI key mode: bring your own key or use dashboard proxy.",
 )
+@click.option(
+    "--reason",
+    "flag_reason",
+    is_flag=True,
+    default=False,
+    help="Enable AI reasoning layer (validates, correlates, and prioritizes findings).",
+)
 @click.pass_context
 def scan(  # noqa: C901, PLR0912, PLR0913
     ctx: click.Context,
@@ -285,22 +292,24 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     flag_all: bool,
     claude_api_key: str | None,
     ai_mode: str | None,
+    flag_reason: bool,
 ) -> None:
     """Scan MCP servers for security vulnerabilities.
 
-    Run 435+ static security checks against your MCP servers. Use --ai for
-    AI-only analysis or --all for both static + AI combined.
+    Run 511+ static security checks against your MCP servers. Use --reason
+    for AI-powered reasoning or --ai for legacy AI-only analysis.
 
     \b
     Scan modes (mutually exclusive):
       --static   Static checks only (default)
-      --ai       AI analysis only (requires Claude key + credits)
-      --all      Both static checks and AI analysis
+      --ai       Legacy AI analysis only (requires Claude key + credits)
+      --all      Both static checks and legacy AI analysis
+      --reason   Static + AI reasoning layer (recommended AI mode)
 
     \b
     Examples:
       medusa scan --http http://localhost:3000/mcp
-      medusa scan --http http://localhost:3000/mcp --ai
+      medusa scan --http http://localhost:3000/mcp --reason
       medusa scan --http http://localhost:3000/mcp --all
       medusa scan --config-file ~/.cursor/mcp.json
       medusa scan -o html --output-file report.html
@@ -315,12 +324,22 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         )
         sys.exit(2)
 
+    if flag_reason and flag_ai:
+        console.print(
+            "\n  [red]Cannot combine --ai with --reason.[/red]\n"
+            "  Use [cyan]--reason[/cyan] alone or "
+            "[cyan]--all --reason[/cyan]."
+        )
+        sys.exit(2)
+
     if flag_ai:
         scan_mode = "ai"
     elif flag_all:
         scan_mode = "full"
     else:
         scan_mode = "static"
+
+    enable_reasoning = flag_reason
 
     # Load scan config
     config = load_config(scan_config)
@@ -421,7 +440,8 @@ def scan(  # noqa: C901, PLR0912, PLR0913
             exclude_ids = config_excludes
 
     # ── AI scanning setup ─────────────────────────────────────────
-    if scan_mode in ("ai", "full"):
+    needs_ai = scan_mode in ("ai", "full") or enable_reasoning
+    if needs_ai:
         _setup_ai_scan(
             ctx, ai_mode, claude_api_key, api_key, quiet
         )
@@ -438,10 +458,13 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         exclude_ids=exclude_ids,
         max_concurrency=max_concurrency,
         scan_mode=scan_mode,
+        enable_reasoning=enable_reasoning,
     )
 
     num_checks = len(engine.checks)
-    total_work = len(connectors) * num_checks
+    # Add 1 work unit per server for reasoning step
+    reasoning_extra = len(connectors) if enable_reasoning else 0
+    total_work = len(connectors) * num_checks + reasoning_extra
 
     if not quiet:
         check_word = "check" if num_checks == 1 else "checks"
@@ -471,9 +494,12 @@ def scan(  # noqa: C901, PLR0912, PLR0913
                 f"[/dim]"
             )
         else:
+            reasoning_label = (
+                " + AI reasoning" if enable_reasoning else ""
+            )
             console.print(
                 f"  [green]▸ Running {num_checks} {check_word}[/green] "
-                f"[dim](static)[/dim]"
+                f"[dim](static{reasoning_label})[/dim]"
             )
         console.print()
 
@@ -491,11 +517,23 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
         def on_progress(event: str, detail: str) -> None:
             if event == "check_done":
-                progress.update(task, advance=1)
+                if detail == "ai_reasoning":
+                    progress.update(
+                        task,
+                        advance=1,
+                        description=(
+                            "[bright_magenta]AI Reasoning..."
+                            "[/bright_magenta]"
+                        ),
+                    )
+                else:
+                    progress.update(task, advance=1)
             elif event == "server_start":
                 progress.update(
                     task,
-                    description=f"Scanning [cyan]{detail}[/cyan]...",
+                    description=(
+                        f"Scanning [cyan]{detail}[/cyan]..."
+                    ),
                 )
 
         engine.progress_callback = on_progress

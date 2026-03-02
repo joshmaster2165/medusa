@@ -13,7 +13,13 @@ from pathlib import Path
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.core.models import CheckMetadata, Finding, Severity, Status
+from medusa.utils.heuristics import (
+    COMMAND_INJECTION_VECTORS,
+    PatternStrength,
+    assess_pattern_strength,
+    pattern_block_percentage,
+)
 from medusa.utils.pattern_matching import SHELL_PARAM_NAMES
 
 
@@ -57,14 +63,55 @@ class CommandInjectionCheck(BaseCheck):
                     continue
 
                 # Check whether the schema constrains the value
-                has_pattern = bool(param_def.get("pattern"))
                 has_enum = bool(param_def.get("enum"))
+                if has_enum:
+                    continue  # Enum is genuinely constrained
 
-                if has_pattern or has_enum:
-                    continue
+                pattern = param_def.get("pattern")
+                if pattern:
+                    strength = assess_pattern_strength(
+                        pattern, COMMAND_INJECTION_VECTORS
+                    )
+                    if strength == PatternStrength.STRONG:
+                        continue  # Pattern blocks ≥90% of attack vectors
 
-                # Unconstrained shell parameter -- flag it
-                constraint_hint = "No `pattern` or `enum` constraint is defined"
+                    if strength == PatternStrength.MODERATE:
+                        pct = pattern_block_percentage(
+                            pattern, COMMAND_INJECTION_VECTORS
+                        )
+                        findings.append(
+                            Finding(
+                                check_id=meta.check_id,
+                                check_title=meta.title,
+                                status=Status.FAIL,
+                                severity=Severity.MEDIUM,
+                                server_name=snapshot.server_name,
+                                server_transport=snapshot.transport_type,
+                                resource_type="tool",
+                                resource_name=f"{tool_name}.{param_name}",
+                                status_extended=(
+                                    f"Tool '{tool_name}' parameter "
+                                    f"'{param_name}' has a pattern constraint "
+                                    f"but it only blocks {pct}% of test "
+                                    f"command-injection payloads."
+                                ),
+                                evidence=(
+                                    f"param={param_name}, type=string, "
+                                    f"pattern={pattern!r}, "
+                                    f"strength={strength}, blocked={pct}%"
+                                ),
+                                remediation=meta.remediation,
+                                owasp_mcp=meta.owasp_mcp,
+                            )
+                        )
+                        continue
+
+                # WEAK pattern or no constraint at all — full severity
+                constraint_hint = (
+                    "No `pattern` or `enum` constraint is defined"
+                    if not pattern
+                    else f"Pattern {pattern!r} is too weak (blocks <50% of attack vectors)"
+                )
                 findings.append(
                     Finding(
                         check_id=meta.check_id,

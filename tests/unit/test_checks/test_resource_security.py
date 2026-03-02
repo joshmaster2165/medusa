@@ -54,6 +54,21 @@ from medusa.checks.resource_security.res019_resource_quota_missing import Resour
 from medusa.checks.resource_security.res020_resource_dependency_chain import (
     ResourceDependencyChainCheck,
 )
+from medusa.checks.resource_security.res021_wildcard_resource_uri import (
+    WildcardResourceUriCheck,
+)
+from medusa.checks.resource_security.res022_sensitive_file_extension import (
+    SensitiveFileExtensionCheck,
+)
+from medusa.checks.resource_security.res023_missing_mime_type import (
+    MissingMimeTypeCheck,
+)
+from medusa.checks.resource_security.res024_uri_template_injection import (
+    UriTemplateInjectionCheck,
+)
+from medusa.checks.resource_security.res025_recursive_directory_resource import (
+    RecursiveDirectoryResourceCheck,
+)
 from medusa.core.models import Status
 from tests.conftest import make_snapshot
 
@@ -952,3 +967,347 @@ class TestResourceDependencyChainCheck:
         snapshot = make_snapshot(resources=[])
         findings = await check.execute(snapshot)
         assert findings == [] or all(f.status == Status.PASS for f in findings)
+
+
+# ==========================================================================
+# RES-021: Wildcard Resource URI
+# ==========================================================================
+
+
+class TestWildcardResourceUriCheck:
+    """Tests for WildcardResourceUriCheck."""
+
+    @pytest.fixture()
+    def check(self) -> WildcardResourceUriCheck:
+        return WildcardResourceUriCheck()
+
+    async def test_metadata_loads_correctly(self, check: WildcardResourceUriCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "res021"
+        assert meta.category == "resource_security"
+
+    async def test_fails_on_wildcard_glob_uri(self, check: WildcardResourceUriCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "data_glob", "uri": "file://data/*"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_recursive_glob_uri(self, check: WildcardResourceUriCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "deep_glob", "uri": "file://data/**"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_question_mark_wildcard(self, check: WildcardResourceUriCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "single_char", "uri": "file://data/file?.txt"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_static_uri(self, check: WildcardResourceUriCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "specific_file", "uri": "file://data/file.txt"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_resources_returns_empty(self, check: WildcardResourceUriCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# RES-022: Sensitive File Extension
+# ==========================================================================
+
+
+class TestSensitiveFileExtensionCheck:
+    """Tests for SensitiveFileExtensionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SensitiveFileExtensionCheck:
+        return SensitiveFileExtensionCheck()
+
+    async def test_metadata_loads_correctly(self, check: SensitiveFileExtensionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "res022"
+        assert meta.category == "resource_security"
+
+    async def test_fails_on_env_file(self, check: SensitiveFileExtensionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "config", "uri": "file://config/app.env"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_pem_file(self, check: SensitiveFileExtensionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "cert", "uri": "file://certs/server.pem"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_key_file(self, check: SensitiveFileExtensionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "private_key", "uri": "file://keys/id_rsa.key"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_safe_extension(self, check: SensitiveFileExtensionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "report", "uri": "file://data/report.pdf"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_txt_extension(self, check: SensitiveFileExtensionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "notes", "uri": "file://data/notes.txt"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_resources_returns_empty(self, check: SensitiveFileExtensionCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# RES-023: Missing MIME Type
+# ==========================================================================
+
+
+class TestMissingMimeTypeCheck:
+    """Tests for MissingMimeTypeCheck."""
+
+    @pytest.fixture()
+    def check(self) -> MissingMimeTypeCheck:
+        return MissingMimeTypeCheck()
+
+    async def test_metadata_loads_correctly(self, check: MissingMimeTypeCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "res023"
+        assert meta.category == "resource_security"
+
+    async def test_fails_on_resource_without_mime_type(self, check: MissingMimeTypeCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "data", "uri": "file://data/file.txt"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_empty_mime_type(self, check: MissingMimeTypeCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "data", "uri": "file://data/file.txt", "mimeType": ""}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_resource_with_mime_type(self, check: MissingMimeTypeCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "data", "uri": "file://data/file.txt", "mimeType": "text/plain"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_json_mime_type(self, check: MissingMimeTypeCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {"name": "config", "uri": "file://config.json", "mimeType": "application/json"},
+            ],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_resources_returns_empty(self, check: MissingMimeTypeCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# RES-024: URI Template Injection
+# ==========================================================================
+
+
+class TestUriTemplateInjectionCheck:
+    """Tests for UriTemplateInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UriTemplateInjectionCheck:
+        return UriTemplateInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: UriTemplateInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "res024"
+        assert meta.category == "resource_security"
+
+    async def test_fails_on_template_param_with_file_scheme(
+        self, check: UriTemplateInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "dynamic", "uri": "file://{path}/data"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_template_param_with_exec_scheme(
+        self, check: UriTemplateInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "runner", "uri": "exec://{command}"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_template_param_with_non_sensitive_scheme(
+        self, check: UriTemplateInjectionCheck
+    ) -> None:
+        # Template params with non-sensitive schemes still produce a FAIL (medium severity)
+        snapshot = make_snapshot(
+            resources=[{"name": "api_data", "uri": "https://api.example.com/{resource_id}"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_static_uri(self, check: UriTemplateInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "static", "uri": "file:///var/data/report.txt"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_static_https_uri(self, check: UriTemplateInjectionCheck) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "api", "uri": "https://api.example.com/data"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_resources_returns_empty(self, check: UriTemplateInjectionCheck) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# RES-025: Recursive Directory Resource
+# ==========================================================================
+
+
+class TestRecursiveDirectoryResourceCheck:
+    """Tests for RecursiveDirectoryResourceCheck."""
+
+    @pytest.fixture()
+    def check(self) -> RecursiveDirectoryResourceCheck:
+        return RecursiveDirectoryResourceCheck()
+
+    async def test_metadata_loads_correctly(self, check: RecursiveDirectoryResourceCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "res025"
+        assert meta.category == "resource_security"
+
+    async def test_fails_on_uri_ending_with_star(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "all_files", "uri": "file:///var/data/*"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_uri_ending_with_double_star(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "deep_scan", "uri": "file:///var/data/**"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_description_with_recursive_keyword(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "name": "project_files",
+                    "uri": "file:///project/src",
+                    "description": "Provides recursive access to all project source files.",
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_fails_on_uri_ending_with_slash(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "directory", "uri": "file:///var/data/"}],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_passes_on_specific_file_uri(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[{"name": "report", "uri": "file:///var/data/report.txt"}],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_clean_description(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "name": "config",
+                    "uri": "file:///app/config.json",
+                    "description": "Application configuration file.",
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_empty_resources_returns_empty(
+        self, check: RecursiveDirectoryResourceCheck
+    ) -> None:
+        snapshot = make_snapshot(resources=[])
+        findings = await check.execute(snapshot)
+        assert findings == []

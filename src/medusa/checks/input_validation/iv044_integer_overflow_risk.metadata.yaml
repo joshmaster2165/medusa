@@ -1,0 +1,35 @@
+check_id: iv044
+title: Integer Overflow Risk
+category: input_validation
+severity: medium
+description: >
+  Detects integer parameters with maximum values exceeding safe integer
+  ranges. JSON numbers are IEEE 754 doubles, so integers above 2^53 - 1
+  (9007199254740991) lose precision. On 32-bit systems, values above
+  2^31 - 1 can cause integer overflow.
+risk_explanation: >
+  Integer overflow occurs when a numeric value exceeds the storage
+  capacity of its data type. In JSON, all numbers are IEEE 754 double-
+  precision floats, making integers above 2^53 - 1 lose precision
+  silently. When these imprecise values are cast to 32-bit integers on
+  backend systems, they can wrap around to negative values, enabling
+  buffer overflows, logic bypasses, and incorrect calculations. This
+  is especially dangerous for parameters controlling array sizes,
+  memory allocations, or financial calculations.
+remediation: >
+  Ensure integer parameter bounds do not exceed the JSON safe integer
+  range (-9007199254740991 to 9007199254740991). For parameters that
+  will be processed as 32-bit integers, limit the range to -2147483648
+  to 2147483647. Use string representations for values that need
+  arbitrary precision (e.g., BigInt). Validate integer bounds both in
+  the JSON Schema and server-side before use.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - integer_overflow
+  - numeric_precision
+  - safe_integer

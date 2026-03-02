@@ -1,0 +1,37 @@
+check_id: iv046
+title: Missing Required Field Declaration
+category: input_validation
+severity: low
+description: >
+  Detects tool input schemas that declare properties but have an empty
+  or missing required array. When no fields are marked as required,
+  attackers can call the tool with an empty object, potentially
+  triggering unintended default behaviors, null reference errors, or
+  bypassing expected input validation.
+risk_explanation: >
+  Tools without required field declarations accept calls with missing
+  parameters. This can trigger server-side default values that may be
+  insecure, cause null pointer exceptions or undefined behavior when
+  the server assumes parameters are present, or allow attackers to
+  bypass validation logic that only runs when a parameter is provided.
+  Missing required declarations also make it harder for LLM clients
+  to construct correct tool calls, increasing the chance of
+  unintended operations.
+remediation: >
+  Declare all essential parameters in the JSON Schema "required" array.
+  At minimum, parameters that the tool cannot function without should
+  be listed as required. Review each tool's server-side implementation
+  to identify parameters that have no safe default value and mark them
+  as required. Document the behavior when optional parameters are
+  omitted.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+  - "https://json-schema.org/understanding-json-schema/reference/object#required"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - required_fields
+  - schema_validation
+  - missing_constraints

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -89,3 +90,4 @@ class ScanResult(BaseModel):
     aggregate_score: float
     aggregate_grade: str
     compliance_results: dict[str, dict] = {}
+    reasoning_results: dict[str, Any] = {}

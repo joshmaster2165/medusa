@@ -1,0 +1,32 @@
+check_id: sc009
+title: Writable Directory Binary Path
+category: supply_chain
+severity: high
+description: >
+  Detects when the MCP server command binary is located in a world-writable
+  or temporary directory such as /tmp, /var/tmp, /dev/shm, or the user's
+  Downloads/Desktop folders. Binaries in these locations can be replaced
+  by any local user or process.
+risk_explanation: >
+  World-writable directories like /tmp allow any user or process on the
+  system to create, modify, or replace files. If an MCP server binary
+  resides in such a directory, a local attacker can replace it with a
+  malicious binary that executes arbitrary code with the server's
+  privileges. This is a classic binary planting / DLL hijacking attack
+  vector adapted to the MCP ecosystem.
+remediation: >
+  Move the MCP server binary to a directory with restricted write
+  permissions (e.g. /usr/local/bin, /opt, or a dedicated application
+  directory). Ensure the binary and its parent directory are owned by
+  root or a dedicated service account with appropriate permissions
+  (755 for directories, 755 for executables). Never run MCP servers
+  from /tmp, Downloads, or other shared writable locations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP09:2025"
+tags:
+  - supply_chain
+  - binary_path
+  - writable_directory
+  - binary_planting

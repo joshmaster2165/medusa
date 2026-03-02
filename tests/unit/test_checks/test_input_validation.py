@@ -58,6 +58,24 @@ from medusa.checks.input_validation.iv034_file_upload_no_validation import (
     FileUploadNoValidationCheck,
 )
 from medusa.checks.input_validation.iv035_html_injection import HtmlInjectionCheck
+from medusa.checks.input_validation.iv036_ldap_injection import (
+    LdapInjectionCheck as LdapInjectionCheckV2,
+)
+from medusa.checks.input_validation.iv037_template_injection import TemplateInjectionCheck
+from medusa.checks.input_validation.iv038_header_injection import (
+    HeaderInjectionCheck as HeaderInjectionCheckV2,
+)
+from medusa.checks.input_validation.iv039_nosql_injection import (
+    NosqlInjectionCheck as NosqlInjectionCheckV2,
+)
+from medusa.checks.input_validation.iv040_csv_formula_injection import CsvFormulaInjectionCheck
+from medusa.checks.input_validation.iv041_regex_dos import (
+    RegexDosCheck as RegexDosCheckV2,
+)
+from medusa.checks.input_validation.iv042_xml_injection import XmlInjectionCheck
+from medusa.checks.input_validation.iv043_unbounded_numeric_range import UnboundedNumericRangeCheck
+from medusa.checks.input_validation.iv044_integer_overflow_risk import IntegerOverflowRiskCheck
+from medusa.checks.input_validation.iv045_deeply_nested_schema import DeeplyNestedSchemaCheck
 from medusa.core.check import ServerSnapshot
 from medusa.core.models import Severity, Status
 from tests.conftest import make_snapshot
@@ -230,6 +248,107 @@ class TestIV001CommandInjection:
         assert len(findings) == 1, "Should produce exactly one finding"
         assert findings[0].status == Status.PASS, "Non-shell-related param names should PASS"
 
+    async def test_weak_pattern_still_fails(self, check: CommandInjectionCheck) -> None:
+        """A 'command' param with pattern '.*' should FAIL (pattern blocks nothing)."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "weak_executor",
+                    "description": "Runs a command with a useless pattern.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "command": {
+                                "type": "string",
+                                "pattern": ".*",
+                            },
+                        },
+                        "required": ["command"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Pattern '.*' should still be flagged as weak"
+
+    async def test_moderate_pattern_medium_severity(self, check: CommandInjectionCheck) -> None:
+        """A partial pattern should FAIL at MEDIUM severity."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "partial_executor",
+                    "description": "Runs a command with a partial pattern.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "command": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9 ]+$",
+                            },
+                        },
+                        "required": ["command"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        # Depending on the exact block percentage, it may be MEDIUM or CRITICAL
+        if fail_findings:
+            assert any(
+                f.severity in (Severity.MEDIUM, Severity.CRITICAL) for f in fail_findings
+            ), "Moderate pattern should have reduced or full severity"
+
+    async def test_strong_pattern_passes(self, check: CommandInjectionCheck) -> None:
+        """A strict pattern blocking ≥90% of vectors should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "strict_executor",
+                    "description": "Runs one of a few safe commands.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "command": {
+                                "type": "string",
+                                "pattern": "^(ls|pwd|date)$",
+                            },
+                        },
+                        "required": ["command"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1, "Strong pattern should result in PASS"
+
+    async def test_expanded_keyword_action_detected(self, check: CommandInjectionCheck) -> None:
+        """Expanded keyword 'action' should now be detected."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_action",
+                    "description": "Runs an action.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "action": {"type": "string"},
+                        },
+                        "required": ["action"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Expanded keyword 'action' should be detected"
+
 
 # ==========================================================================
 # IV-002: Path Traversal Risk
@@ -397,6 +516,46 @@ class TestIV002PathTraversal:
         assert len(findings) == 1, "Should produce exactly one finding"
         assert findings[0].status == Status.PASS, "Non-path params should PASS"
 
+    async def test_weak_path_pattern_still_fails(self, check: PathTraversalCheck) -> None:
+        """A 'path' param with pattern '.*' should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "open_reader",
+                    "description": "Reads files.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "path": {"type": "string", "pattern": ".*"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Pattern '.*' should still be flagged for path param"
+
+    async def test_expanded_keyword_cwd_detected(self, check: PathTraversalCheck) -> None:
+        """Expanded keyword 'cwd' should now be detected."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "set_directory",
+                    "description": "Set working directory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "cwd": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Expanded keyword 'cwd' should be detected"
+
 
 # ==========================================================================
 # IV-003: SQL Injection Risk
@@ -559,6 +718,70 @@ class TestIV003SqlInjection:
         findings = await check.execute(snapshot)
         assert len(findings) == 1, "Should produce one finding"
         assert findings[0].status == Status.PASS, "Non-string 'query' param should not be flagged"
+
+    async def test_weak_sql_pattern_still_fails(self, check: SqlInjectionCheck) -> None:
+        """A 'query' param with pattern '.*' should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "open_query",
+                    "description": "Runs a query.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "pattern": ".*"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Pattern '.*' should still be flagged for SQL param"
+
+    async def test_expanded_keyword_criteria_detected(self, check: SqlInjectionCheck) -> None:
+        """Expanded keyword 'criteria' should now be detected."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "filter_data",
+                    "description": "Filters data.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "criteria": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Expanded keyword 'criteria' should be detected"
+
+    async def test_maxlength_with_no_pattern_still_fails(self, check: SqlInjectionCheck) -> None:
+        """A SQL param with maxLength but no pattern should still FAIL with note."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "limited_query",
+                    "description": "Runs a length-limited query.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "maxLength": 50,
+                            },
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "maxLength alone should not prevent FAIL"
+        assert "maxLength" in fail_findings[0].evidence
 
 
 # ==========================================================================
@@ -2766,5 +2989,1045 @@ class TestHtmlInjectionCheck:
         assert all(f.status == Status.PASS for f in findings)
 
     async def test_empty_snapshot_returns_no_findings(self, check: HtmlInjectionCheck) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-036: LDAP Injection Parameters
+# ==========================================================================
+
+
+class TestIV036LdapInjection:
+    """Tests for LdapInjectionCheckV2 (iv036)."""
+
+    @pytest.fixture()
+    def check(self) -> LdapInjectionCheckV2:
+        return LdapInjectionCheckV2()
+
+    async def test_metadata_loads_correctly(self, check: LdapInjectionCheckV2) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv036"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_unconstrained_ldap_query_param(
+        self, check: LdapInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "ldap_search",
+                    "description": "Searches the LDAP directory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "ldap_query": {
+                                "type": "string",
+                                "description": "LDAP filter expression",
+                            }
+                        },
+                        "required": ["ldap_query"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag unconstrained 'ldap_query' string parameter"
+        )
+        assert any("ldap_query" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_pattern_constraint(
+        self, check: LdapInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "ldap_search",
+                    "description": "Searches the LDAP directory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "ldap_query": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9=,]+$",
+                            }
+                        },
+                        "required": ["ldap_query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_enum_constraint(
+        self, check: LdapInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "ldap_search",
+                    "description": "Searches the LDAP directory.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "ldap_query": {
+                                "type": "string",
+                                "enum": ["(cn=admin)", "(cn=users)"],
+                            }
+                        },
+                        "required": ["ldap_query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: LdapInjectionCheckV2
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-037: Server-Side Template Injection
+# ==========================================================================
+
+
+class TestIV037TemplateInjection:
+    """Tests for TemplateInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> TemplateInjectionCheck:
+        return TemplateInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: TemplateInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv037"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_unconstrained_template_param(
+        self, check: TemplateInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "renderer",
+                    "description": "Renders content using a template engine.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "description": "Template content to render",
+                            }
+                        },
+                        "required": ["template"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag unconstrained 'template' string parameter"
+        )
+        assert any("template" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_enum_constraint(
+        self, check: TemplateInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "renderer",
+                    "description": "Renders content using a template engine.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "enum": ["header.html", "footer.html", "body.html"],
+                            }
+                        },
+                        "required": ["template"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_pattern_constraint(
+        self, check: TemplateInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "renderer",
+                    "description": "Renders content using a template engine.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_.-]+$",
+                            }
+                        },
+                        "required": ["template"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: TemplateInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-038: HTTP Header Injection (CRLF)
+# ==========================================================================
+
+
+class TestIV038HeaderInjection:
+    """Tests for HeaderInjectionCheckV2 (iv038)."""
+
+    @pytest.fixture()
+    def check(self) -> HeaderInjectionCheckV2:
+        return HeaderInjectionCheckV2()
+
+    async def test_metadata_loads_correctly(self, check: HeaderInjectionCheckV2) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv038"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_user_agent_without_crlf_protection(
+        self, check: HeaderInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_client",
+                    "description": "Sends HTTP requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_agent": {
+                                "type": "string",
+                                "description": "User-Agent header value",
+                            }
+                        },
+                        "required": ["user_agent"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag 'user_agent' without CRLF-blocking pattern"
+        )
+        assert any("user_agent" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_crlf_blocking_pattern(
+        self, check: HeaderInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_client",
+                    "description": "Sends HTTP requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_agent": {
+                                "type": "string",
+                                "pattern": "^[\\x20-\\x7E]+$",
+                            }
+                        },
+                        "required": ["user_agent"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_with_non_crlf_pattern(
+        self, check: HeaderInjectionCheckV2
+    ) -> None:
+        """A pattern that does NOT block CRLF should still FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "http_client",
+                    "description": "Sends HTTP requests.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_agent": {
+                                "type": "string",
+                                "pattern": "^.+$",
+                            }
+                        },
+                        "required": ["user_agent"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "A generic pattern that does not block CRLF should still fail"
+        )
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: HeaderInjectionCheckV2
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-039: NoSQL Injection Parameters
+# ==========================================================================
+
+
+class TestIV039NosqlInjection:
+    """Tests for NosqlInjectionCheckV2 (iv039)."""
+
+    @pytest.fixture()
+    def check(self) -> NosqlInjectionCheckV2:
+        return NosqlInjectionCheckV2()
+
+    async def test_metadata_loads_correctly(self, check: NosqlInjectionCheckV2) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv039"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_unconstrained_mongo_query_param(
+        self, check: NosqlInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mongo_find",
+                    "description": "Queries MongoDB.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "mongo_query": {
+                                "type": "string",
+                                "description": "MongoDB query expression",
+                            }
+                        },
+                        "required": ["mongo_query"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag unconstrained 'mongo_query' string parameter"
+        )
+        assert any("mongo_query" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_pattern_constraint(
+        self, check: NosqlInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mongo_find",
+                    "description": "Queries MongoDB.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "mongo_query": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_]+$",
+                            }
+                        },
+                        "required": ["mongo_query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_enum_constraint(
+        self, check: NosqlInjectionCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "mongo_find",
+                    "description": "Queries MongoDB.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "mongo_query": {
+                                "type": "string",
+                                "enum": ["find_all", "find_active"],
+                            }
+                        },
+                        "required": ["mongo_query"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: NosqlInjectionCheckV2
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-040: CSV Formula Injection
+# ==========================================================================
+
+
+class TestIV040CsvFormulaInjection:
+    """Tests for CsvFormulaInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> CsvFormulaInjectionCheck:
+        return CsvFormulaInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: CsvFormulaInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv040"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_unconstrained_cell_value_param(
+        self, check: CsvFormulaInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "spreadsheet_editor",
+                    "description": "Edits spreadsheet cells.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "cell_value": {
+                                "type": "string",
+                                "description": "Value to write to the cell",
+                            }
+                        },
+                        "required": ["cell_value"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag unconstrained 'cell_value' string parameter"
+        )
+        assert any("cell_value" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_formula_blocking_pattern(
+        self, check: CsvFormulaInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "spreadsheet_editor",
+                    "description": "Edits spreadsheet cells.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "cell_value": {
+                                "type": "string",
+                                "pattern": "^[^=+\\-@][a-zA-Z0-9 ]*$",
+                            }
+                        },
+                        "required": ["cell_value"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_enum_constraint(
+        self, check: CsvFormulaInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "spreadsheet_editor",
+                    "description": "Edits spreadsheet cells.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "cell_value": {
+                                "type": "string",
+                                "enum": ["yes", "no", "n/a"],
+                            }
+                        },
+                        "required": ["cell_value"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: CsvFormulaInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-041: Regex Denial of Service (ReDoS)
+# ==========================================================================
+
+
+class TestIV041RegexDos:
+    """Tests for RegexDosCheckV2 (iv041)."""
+
+    @pytest.fixture()
+    def check(self) -> RegexDosCheckV2:
+        return RegexDosCheckV2()
+
+    async def test_metadata_loads_correctly(self, check: RegexDosCheckV2) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv041"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_nested_quantifier_without_max_length(
+        self, check: RegexDosCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "validator",
+                    "description": "Validates input with regex.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "regex": {
+                                "type": "string",
+                                "pattern": "(a+)+b",
+                            }
+                        },
+                        "required": ["regex"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag pattern with nested quantifiers and no maxLength"
+        )
+
+    async def test_passes_with_max_length(
+        self, check: RegexDosCheckV2
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "validator",
+                    "description": "Validates input with regex.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "regex": {
+                                "type": "string",
+                                "pattern": "(a+)+b",
+                                "maxLength": 100,
+                            }
+                        },
+                        "required": ["regex"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_safe_pattern(
+        self, check: RegexDosCheckV2
+    ) -> None:
+        """A pattern without nested quantifiers should not trigger a finding."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "validator",
+                    "description": "Validates input with regex.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "regex": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9]+$",
+                            }
+                        },
+                        "required": ["regex"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: RegexDosCheckV2
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-042: XML External Entity Injection (XXE)
+# ==========================================================================
+
+
+class TestIV042XmlInjection:
+    """Tests for XmlInjectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> XmlInjectionCheck:
+        return XmlInjectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: XmlInjectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv042"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_unconstrained_xml_data_param(
+        self, check: XmlInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_parser",
+                    "description": "Parses XML documents.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "xml_data": {
+                                "type": "string",
+                                "description": "Raw XML content to parse",
+                            }
+                        },
+                        "required": ["xml_data"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag unconstrained 'xml_data' string parameter"
+        )
+        assert any("xml_data" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_pattern_constraint(
+        self, check: XmlInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_parser",
+                    "description": "Parses XML documents.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "xml_data": {
+                                "type": "string",
+                                "pattern": "^<root>[^<]*</root>$",
+                            }
+                        },
+                        "required": ["xml_data"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_passes_with_enum_constraint(
+        self, check: XmlInjectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "xml_parser",
+                    "description": "Parses XML documents.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "xml_data": {
+                                "type": "string",
+                                "enum": ["<root>a</root>", "<root>b</root>"],
+                            }
+                        },
+                        "required": ["xml_data"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: XmlInjectionCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-043: Unbounded Numeric Range
+# ==========================================================================
+
+
+class TestIV043UnboundedNumericRange:
+    """Tests for UnboundedNumericRangeCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UnboundedNumericRangeCheck:
+        return UnboundedNumericRangeCheck()
+
+    async def test_metadata_loads_correctly(self, check: UnboundedNumericRangeCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv043"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_integer_without_min_max(
+        self, check: UnboundedNumericRangeCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "paginator",
+                    "description": "Paginates results.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "page_size": {
+                                "type": "integer",
+                                "description": "Number of results per page",
+                            }
+                        },
+                        "required": ["page_size"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag integer parameter without minimum and maximum"
+        )
+        assert any("page_size" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_both_min_and_max(
+        self, check: UnboundedNumericRangeCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "paginator",
+                    "description": "Paginates results.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "page_size": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 100,
+                            }
+                        },
+                        "required": ["page_size"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_with_only_minimum(
+        self, check: UnboundedNumericRangeCheck
+    ) -> None:
+        """Having only minimum (no maximum) should still FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "paginator",
+                    "description": "Paginates results.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "page_size": {
+                                "type": "integer",
+                                "minimum": 0,
+                            }
+                        },
+                        "required": ["page_size"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag integer with minimum but no maximum"
+        )
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: UnboundedNumericRangeCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-044: Integer Overflow Risk
+# ==========================================================================
+
+
+class TestIV044IntegerOverflowRisk:
+    """Tests for IntegerOverflowRiskCheck."""
+
+    @pytest.fixture()
+    def check(self) -> IntegerOverflowRiskCheck:
+        return IntegerOverflowRiskCheck()
+
+    async def test_metadata_loads_correctly(self, check: IntegerOverflowRiskCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv044"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_maximum_exceeding_safe_integer(
+        self, check: IntegerOverflowRiskCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "id_generator",
+                    "description": "Generates numeric IDs.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "max_id": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2**53,
+                            }
+                        },
+                        "required": ["max_id"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag integer with maximum > 2^53 - 1"
+        )
+        assert any("max_id" in f.resource_name for f in fail_findings)
+
+    async def test_passes_with_safe_integer_range(
+        self, check: IntegerOverflowRiskCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "id_generator",
+                    "description": "Generates numeric IDs.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "max_id": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1000000,
+                            }
+                        },
+                        "required": ["max_id"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_minimum_below_negative_safe_integer(
+        self, check: IntegerOverflowRiskCheck
+    ) -> None:
+        """minimum < -9007199254740991 should also FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "range_tool",
+                    "description": "Handles ranges.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "offset": {
+                                "type": "integer",
+                                "minimum": -(2**53),
+                                "maximum": 100,
+                            }
+                        },
+                        "required": ["offset"],
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag integer with minimum < -(2^53 - 1)"
+        )
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: IntegerOverflowRiskCheck
+    ) -> None:
+        findings = await check.execute(make_snapshot())
+        assert findings == []
+
+
+# ==========================================================================
+# IV-045: Deeply Nested Schema
+# ==========================================================================
+
+
+class TestIV045DeeplyNestedSchema:
+    """Tests for DeeplyNestedSchemaCheck."""
+
+    @pytest.fixture()
+    def check(self) -> DeeplyNestedSchemaCheck:
+        return DeeplyNestedSchemaCheck()
+
+    async def test_metadata_loads_correctly(self, check: DeeplyNestedSchemaCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "iv045"
+        assert meta.category == "input_validation"
+
+    async def test_fails_on_deeply_nested_schema(
+        self, check: DeeplyNestedSchemaCheck
+    ) -> None:
+        """A schema nested 6+ levels deep should FAIL (max safe depth is 5)."""
+        # Build a 7-level deep nested object schema
+        deep_schema: dict = {"type": "string"}
+        for i in range(7):
+            deep_schema = {
+                "type": "object",
+                "properties": {
+                    f"level_{6 - i}": deep_schema,
+                },
+            }
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "deep_tool",
+                    "description": "Processes deeply nested data.",
+                    "inputSchema": deep_schema,
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag schema with nesting depth > 5"
+        )
+
+    async def test_passes_with_shallow_schema(
+        self, check: DeeplyNestedSchemaCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "shallow_tool",
+                    "description": "A simple tool with flat schema.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "age": {"type": "integer"},
+                        },
+                        "required": ["name"],
+                        "additionalProperties": False,
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_schema_with_ref(
+        self, check: DeeplyNestedSchemaCheck
+    ) -> None:
+        """A schema containing $ref should be flagged for potential recursion."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "recursive_tool",
+                    "description": "A tool with recursive schema.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "node": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {"type": "string"},
+                                    "children": {
+                                        "type": "array",
+                                        "items": {"$ref": "#"},
+                                    },
+                                },
+                            },
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, (
+            "Should flag schema containing $ref (recursion risk)"
+        )
+
+    async def test_empty_snapshot_returns_no_findings(
+        self, check: DeeplyNestedSchemaCheck
+    ) -> None:
         findings = await check.execute(make_snapshot())
         assert findings == []

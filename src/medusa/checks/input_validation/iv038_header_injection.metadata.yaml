@@ -1,0 +1,34 @@
+check_id: iv038
+title: HTTP Header Injection (CRLF)
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters with HTTP header-related names that lack
+  CRLF protection. Without rejecting carriage return and line feed
+  characters, attackers can inject additional HTTP headers, enabling
+  response splitting, session fixation, and cache poisoning attacks.
+risk_explanation: >
+  HTTP header injection via CRLF sequences allows attackers to insert
+  arbitrary headers into HTTP responses. This enables response
+  splitting attacks where the attacker controls an entire second HTTP
+  response, session fixation via injected Set-Cookie headers, cache
+  poisoning, and cross-site scripting through injected Content-Type
+  headers. Header injection is a gateway to many downstream attacks.
+remediation: >
+  Add pattern constraints to header parameters that reject carriage
+  return (\\r) and line feed (\\n) characters. Use a whitelist pattern
+  such as "^[\\x20-\\x7E]+$" to allow only printable ASCII without
+  control characters. Validate and sanitize header values server-side
+  before including them in HTTP responses. Use enum constraints for
+  headers with known valid values.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://owasp.org/www-community/attacks/HTTP_Response_Splitting"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - header_injection
+  - crlf
+  - http_response_splitting

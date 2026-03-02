@@ -1,0 +1,30 @@
+check_id: dp030
+title: Unbounded Array Parameters
+category: data_protection
+severity: medium
+description: >
+  Detects tool parameters with type "array" that lack maxItems constraints.
+  Without maxItems, attackers can send arbitrarily large arrays causing
+  memory exhaustion or enabling bulk data operations that bypass intended
+  access controls.
+risk_explanation: >
+  Array parameters without maxItems allow clients to send payloads of
+  unlimited size. An attacker or compromised LLM can exploit this to
+  cause denial of service through memory exhaustion, trigger bulk
+  operations that process thousands of records in a single call, or
+  bypass rate limiting by batching requests into a single array
+  parameter.
+remediation: >
+  Add maxItems constraints to all array-type parameters in tool input
+  schemas. Set reasonable upper bounds based on the intended use case.
+  Implement server-side validation that rejects arrays exceeding the
+  declared maxItems limit. Consider adding minItems where appropriate
+  to enforce required minimum inputs.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - data_protection
+  - input_validation
+  - schema

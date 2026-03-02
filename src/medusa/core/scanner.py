@@ -50,10 +50,13 @@ class ScanEngine:
         max_concurrency: int = 4,
         progress_callback: ProgressCallback | None = None,
         scan_mode: str = "static",
+        enable_reasoning: bool = False,
     ) -> None:
         self.connectors = connectors
         self.registry = registry
         self.scan_mode = scan_mode
+        self.enable_reasoning = enable_reasoning
+        self._reasoning_results: dict[str, object] = {}
 
         all_checks = registry.get_checks(
             categories=categories,
@@ -196,10 +199,95 @@ class ScanEngine:
 
             findings = await self._scan_server(snapshot)
 
-            check_ids_run = {f.check_id for f in findings if f.status != Status.SKIPPED}
-            server_score = calculate_server_score(findings, len(check_ids_run))
+            # Phase 2: AI Reasoning (post-process static findings)
+            if self.enable_reasoning:
+                reasoning_result = await self._run_reasoning(
+                    snapshot, findings
+                )
+                if reasoning_result is not None:
+                    self._reasoning_results[
+                        snapshot.server_name
+                    ] = reasoning_result
+                    # Convert gap findings into standard Finding objects
+                    gap_findings = self._gaps_to_findings(
+                        reasoning_result, snapshot
+                    )
+                    findings.extend(gap_findings)
+                self._emit("check_done", "ai_reasoning")
+
+            check_ids_run = {
+                f.check_id
+                for f in findings
+                if f.status != Status.SKIPPED
+            }
+            server_score = calculate_server_score(
+                findings, len(check_ids_run)
+            )
             self._emit("server_done", connector.name)
             return findings, server_score
+
+    async def _run_reasoning(
+        self,
+        snapshot: ServerSnapshot,
+        findings: list[Finding],
+    ) -> object | None:
+        """Run the AI reasoning engine over static findings.
+
+        Returns a ReasoningResult on success, or None on failure.
+        """
+        try:
+            from medusa.ai.client import get_client
+            from medusa.ai.reasoning.engine import ReasoningEngine
+
+            client = get_client()
+            engine = ReasoningEngine(client=client)
+            return await engine.reason(snapshot, findings)
+        except Exception:
+            logger.exception(
+                "AI reasoning failed for '%s'",
+                snapshot.server_name,
+            )
+            return None
+
+    def _gaps_to_findings(
+        self,
+        reasoning_result: object,
+        snapshot: ServerSnapshot,
+    ) -> list[Finding]:
+        """Convert AI-discovered gap findings into standard Findings."""
+        from medusa.core.models import Severity
+
+        severity_map = {
+            "critical": Severity.CRITICAL,
+            "high": Severity.HIGH,
+            "medium": Severity.MEDIUM,
+            "low": Severity.LOW,
+            "informational": Severity.INFORMATIONAL,
+        }
+
+        result: list[Finding] = []
+        # Access gap_findings from the ReasoningResult
+        gap_findings = getattr(reasoning_result, "gap_findings", [])
+        for i, gap in enumerate(gap_findings):
+            result.append(
+                Finding(
+                    check_id=f"ai_gap_{i:03d}",
+                    check_title=f"[AI Reasoning] {gap.title}",
+                    status=Status.FAIL,
+                    severity=severity_map.get(
+                        gap.severity.lower(), Severity.MEDIUM
+                    ),
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type=gap.resource_type,
+                    resource_name=gap.resource_name,
+                    status_extended=gap.description,
+                    evidence=gap.evidence,
+                    remediation=gap.remediation,
+                    owasp_mcp=gap.owasp_mcp,
+                )
+            )
+        return result
 
     async def scan(self) -> ScanResult:
         """Execute the full scan across all configured servers.
@@ -241,17 +329,34 @@ class ScanEngine:
         duration = time.monotonic() - start_time
         aggregate = calculate_aggregate_score(server_scores)
 
+        # Serialize reasoning results if present
+        reasoning_results: dict = {}
+        if self.enable_reasoning and self._reasoning_results:
+            for name, r in self._reasoning_results.items():
+                try:
+                    reasoning_results[name] = r.model_dump(
+                        mode="json"
+                    )
+                except Exception:
+                    logger.warning(
+                        "Failed to serialize reasoning for '%s'",
+                        name,
+                    )
+
         return ScanResult(
             scan_id=scan_id,
             timestamp=datetime.now(UTC),
             medusa_version=__version__,
             scan_duration_seconds=round(duration, 2),
             servers_scanned=servers_scanned,
-            total_findings=sum(1 for f in all_findings if f.status == Status.FAIL),
+            total_findings=sum(
+                1 for f in all_findings if f.status == Status.FAIL
+            ),
             findings=all_findings,
             server_scores=server_scores,
             aggregate_score=aggregate,
             aggregate_grade=score_to_grade(aggregate),
+            reasoning_results=reasoning_results,
         )
 
 

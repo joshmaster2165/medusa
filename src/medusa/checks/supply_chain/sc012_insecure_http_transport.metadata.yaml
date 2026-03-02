@@ -1,0 +1,33 @@
+check_id: sc012
+title: Insecure HTTP Transport
+category: supply_chain
+severity: high
+description: >
+  Detects MCP servers configured with plain HTTP (non-HTTPS) transport URLs.
+  Unencrypted HTTP connections expose all client-server communications to
+  man-in-the-middle attacks, including tool invocations, credentials, and
+  response data. Localhost connections are exempted as they are acceptable
+  for local development.
+risk_explanation: >
+  Plain HTTP transport sends all MCP protocol messages in cleartext. An
+  attacker on the same network can intercept, read, and modify tool
+  invocations and responses in real time. This enables credential theft,
+  data exfiltration, and injection of malicious tool responses. In
+  enterprise environments with shared networks, this is a critical risk
+  that can compromise the entire MCP pipeline.
+remediation: >
+  Configure all non-local MCP server connections to use HTTPS with valid
+  TLS certificates. Enforce TLS 1.2 or higher. For development environments,
+  use localhost connections or configure self-signed certificates. Implement
+  certificate pinning for high-security deployments. Reject plain HTTP
+  connections in production MCP client configurations.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - supply_chain
+  - transport_security
+  - http
+  - tls
+  - mitm

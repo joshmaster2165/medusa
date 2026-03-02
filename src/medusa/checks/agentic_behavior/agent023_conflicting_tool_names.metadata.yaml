@@ -1,0 +1,35 @@
+check_id: agent023
+title: Conflicting Tool Names
+category: agentic_behavior
+severity: medium
+description: >
+  Detects multiple tools with semantically similar names that could
+  cause confusion or shadowing in LLM tool selection. Normalizes tool
+  names by lowercasing, replacing delimiters, and stripping common
+  prefixes/suffixes (get_, set_, create_, _v2, _new, _old) to find
+  collisions. Also detects exact duplicate tool registrations.
+risk_explanation: >
+  When multiple tools have similar names, LLM agents may select the
+  wrong tool, leading to unintended actions. Tool name shadowing can
+  be exploited by attackers to redirect tool calls to malicious
+  implementations. For example, if both 'delete_user' and
+  'delete-user-v2' exist, an agent may inconsistently choose between
+  them, making behavior unpredictable and security policies harder
+  to enforce. Exact duplicate names are especially dangerous as they
+  create non-deterministic tool selection.
+remediation: >
+  Ensure all tool names are distinct and unambiguous. Avoid creating
+  multiple versions of the same tool with minor name variations.
+  Instead, use explicit versioning in tool descriptions or remove
+  deprecated versions entirely. Implement tool name validation in
+  your server registration logic to prevent duplicate or
+  near-duplicate names from being registered.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - agentic_behavior
+  - tool_naming
+  - confusion

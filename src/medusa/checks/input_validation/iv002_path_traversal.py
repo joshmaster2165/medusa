@@ -8,40 +8,19 @@ sequences.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.core.models import CheckMetadata, Finding, Severity, Status
+from medusa.utils.heuristics import (
+    PATH_TRAVERSAL_VECTORS,
+    PatternStrength,
+    assess_pattern_strength,
+    pattern_block_percentage,
+)
 from medusa.utils.pattern_matching import PATH_PARAM_NAMES
-
-# Patterns that, if present in a schema `pattern`, indicate the author at least
-# attempted to block path traversal.
-_TRAVERSAL_BLOCK_HINTS: list[re.Pattern[str]] = [
-    re.compile(r"\.\.", re.IGNORECASE),  # literal ".." in regex
-    re.compile(r"\\\.\\.", re.IGNORECASE),  # escaped "\.\." in regex
-    re.compile(r"\^[a-zA-Z]", re.IGNORECASE),  # anchored to safe prefix
-]
-
-
-def _pattern_blocks_traversal(pattern: str) -> bool:
-    """Heuristic: return *True* if the JSON Schema ``pattern`` appears to
-    reject ``../`` sequences.  This is intentionally conservative -- only a
-    genuine server-side check can provide real safety."""
-    for hint in _TRAVERSAL_BLOCK_HINTS:
-        if hint.search(pattern):
-            return True
-    # A pattern that doesn't allow '/' at all also blocks traversal
-    if "/" not in pattern and "\\/" not in pattern:
-        # A very restrictive pattern like ^[a-zA-Z0-9_]+$ implicitly blocks
-        try:
-            if not re.fullmatch(pattern, "../etc/passwd"):
-                return True
-        except re.error:
-            pass
-    return False
 
 
 class PathTraversalCheck(BaseCheck):
@@ -81,16 +60,51 @@ class PathTraversalCheck(BaseCheck):
                 if normalised not in PATH_PARAM_NAMES:
                     continue
 
-                # Check if the schema has a pattern that blocks traversal
-                pattern = param_def.get("pattern", "")
+                # Check if the schema constrains the value
                 has_enum = bool(param_def.get("enum"))
-
                 if has_enum:
-                    continue
+                    continue  # Enum is genuinely constrained
 
-                if pattern and _pattern_blocks_traversal(pattern):
-                    continue
+                pattern = param_def.get("pattern", "")
+                if pattern:
+                    strength = assess_pattern_strength(
+                        pattern, PATH_TRAVERSAL_VECTORS
+                    )
+                    if strength == PatternStrength.STRONG:
+                        continue  # Pattern blocks ≥90% of traversal vectors
 
+                    if strength == PatternStrength.MODERATE:
+                        pct = pattern_block_percentage(
+                            pattern, PATH_TRAVERSAL_VECTORS
+                        )
+                        findings.append(
+                            Finding(
+                                check_id=meta.check_id,
+                                check_title=meta.title,
+                                status=Status.FAIL,
+                                severity=Severity.MEDIUM,
+                                server_name=snapshot.server_name,
+                                server_transport=snapshot.transport_type,
+                                resource_type="tool",
+                                resource_name=f"{tool_name}.{param_name}",
+                                status_extended=(
+                                    f"Tool '{tool_name}' parameter "
+                                    f"'{param_name}' has a pattern constraint "
+                                    f"but it only blocks {pct}% of test "
+                                    f"path-traversal payloads."
+                                ),
+                                evidence=(
+                                    f"param={param_name}, type=string, "
+                                    f"pattern={pattern!r}, "
+                                    f"strength={strength}, blocked={pct}%"
+                                ),
+                                remediation=meta.remediation,
+                                owasp_mcp=meta.owasp_mcp,
+                            )
+                        )
+                        continue
+
+                # WEAK pattern or no constraint — full severity
                 findings.append(
                     Finding(
                         check_id=meta.check_id,
@@ -103,8 +117,8 @@ class PathTraversalCheck(BaseCheck):
                         resource_name=f"{tool_name}.{param_name}",
                         status_extended=(
                             f"Tool '{tool_name}' has a path parameter "
-                            f"'{param_name}' that does not constrain "
-                            f"path-traversal sequences (e.g. '../'). "
+                            f"'{param_name}' that does not adequately "
+                            f"constrain path-traversal sequences. "
                             f"An attacker could escape the intended "
                             f"directory."
                         ),

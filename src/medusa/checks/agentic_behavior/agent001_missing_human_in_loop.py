@@ -1,8 +1,9 @@
 """AGENT-001: Missing Human-in-the-Loop.
 
-Checks if tools with destructive action keywords in their name/description
-have a corresponding confirmation/approval mechanism in config. Flags servers
-where high-risk tools can be invoked without human approval.
+Checks if tools with destructive or privileged risk profiles have a
+corresponding confirmation/approval mechanism in config.  Uses semantic
+tool-risk classification from name + description analysis rather than
+simple keyword substring matching.
 """
 
 from __future__ import annotations
@@ -14,10 +15,8 @@ import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
-from medusa.utils.patterns.agentic import (
-    CONFIRMATION_CONFIG_KEYS,
-    DESTRUCTIVE_ACTION_KEYWORDS,
-)
+from medusa.utils.heuristics import ToolRisk, classify_tool_risk
+from medusa.utils.patterns.agentic import CONFIRMATION_CONFIG_KEYS
 
 
 class MissingHumanInLoopCheck(BaseCheck):
@@ -37,15 +36,20 @@ class MissingHumanInLoopCheck(BaseCheck):
 
         has_confirmation = _walk_config_for_keys(snapshot.config_raw, CONFIRMATION_CONFIG_KEYS)
 
-        destructive_tools: list[str] = []
+        # Classify each tool's risk using semantic analysis
+        high_risk_tools: list[tuple[str, ToolRisk]] = []
         for tool in snapshot.tools:
-            name: str = tool.get("name", "").lower()
-            desc: str = tool.get("description", "").lower()
-            combined = f"{name} {desc}"
-            if any(kw in combined for kw in DESTRUCTIVE_ACTION_KEYWORDS):
-                destructive_tools.append(tool.get("name", "<unnamed>"))
+            risk = classify_tool_risk(tool)
+            if risk in (ToolRisk.DESTRUCTIVE, ToolRisk.PRIVILEGED):
+                tool_name = tool.get("name", "<unnamed>")
+                high_risk_tools.append((tool_name, risk))
 
-        if destructive_tools and not has_confirmation:
+        if high_risk_tools and not has_confirmation:
+            tool_names = [name for name, _ in high_risk_tools[:5]]
+            risk_details = ", ".join(
+                f"{name} ({risk.value})"
+                for name, risk in high_risk_tools[:5]
+            )
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -57,11 +61,11 @@ class MissingHumanInLoopCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server exposes {len(destructive_tools)} destructive tool(s) "
-                        f"({', '.join(destructive_tools[:5])}) without a confirmation "
+                        f"Server exposes {len(high_risk_tools)} high-risk tool(s) "
+                        f"({', '.join(tool_names)}) without a confirmation "
                         f"mechanism in configuration."
                     ),
-                    evidence=f"destructive_tools={destructive_tools[:5]}",
+                    evidence=f"high_risk_tools=[{risk_details}]",
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -78,7 +82,7 @@ class MissingHumanInLoopCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        "No unguarded destructive tools detected, or confirmation "
+                        "No unguarded high-risk tools detected, or confirmation "
                         "mechanism is present in configuration."
                     ),
                     remediation=meta.remediation,

@@ -1,4 +1,4 @@
-"""Unit tests for Secrets Management checks (sm001-sm015)."""
+"""Unit tests for Secrets Management checks (sm001-sm020)."""
 
 from __future__ import annotations
 
@@ -41,6 +41,19 @@ from medusa.checks.secrets_management.sm014_secrets_in_logs import SecretsInLogs
 from medusa.checks.secrets_management.sm015_missing_secret_access_control import (
     MissingSecretAccessControlCheck,
 )
+from medusa.checks.secrets_management.sm016_high_entropy_defaults import (
+    HighEntropyDefaultsCheck,
+)
+from medusa.checks.secrets_management.sm017_secrets_in_tool_descriptions import (
+    SecretsInToolDescriptionsCheck,
+)
+from medusa.checks.secrets_management.sm018_credentials_in_resources import (
+    CredentialsInResourcesCheck,
+)
+from medusa.checks.secrets_management.sm019_weak_default_passwords import (
+    WeakDefaultPasswordsCheck,
+)
+from medusa.checks.secrets_management.sm020_secrets_in_args import SecretsInArgsCheck
 from medusa.core.models import Status
 from tests.conftest import make_snapshot
 
@@ -661,6 +674,391 @@ class TestMissingSecretAccessControlCheck:
     async def test_not_applicable_returns_empty(
         self, check: MissingSecretAccessControlCheck
     ) -> None:
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# SM-016: High-Entropy Default Values
+# ==========================================================================
+
+
+class TestHighEntropyDefaultsCheck:
+    """Tests for HighEntropyDefaultsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> HighEntropyDefaultsCheck:
+        return HighEntropyDefaultsCheck()
+
+    async def test_metadata_loads_correctly(self, check: HighEntropyDefaultsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "sm016"
+        assert meta.category == "secrets_management"
+
+    async def test_fails_on_high_entropy_default(self, check: HighEntropyDefaultsCheck) -> None:
+        """Tool parameter with a high-entropy default should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "connect_api",
+                    "description": "Connect to API.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "api_key": {
+                                "type": "string",
+                                "default": "aB3$xZ9#mK2@pL5&wQ8!rT6vY1",
+                            },
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "api_key" in fail_findings[0].status_extended
+
+    async def test_passes_on_normal_default(self, check: HighEntropyDefaultsCheck) -> None:
+        """Tool parameter with a simple low-entropy default should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "greet",
+                    "description": "Greet a user.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "greeting": {
+                                "type": "string",
+                                "default": "hello",
+                            },
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_not_applicable_when_no_tools(self, check: HighEntropyDefaultsCheck) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# SM-017: Secrets in Tool Descriptions
+# ==========================================================================
+
+
+class TestSecretsInToolDescriptionsCheck:
+    """Tests for SecretsInToolDescriptionsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SecretsInToolDescriptionsCheck:
+        return SecretsInToolDescriptionsCheck()
+
+    async def test_metadata_loads_correctly(self, check: SecretsInToolDescriptionsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "sm017"
+        assert meta.category == "secrets_management"
+
+    async def test_fails_on_secret_prefix_in_description(
+        self, check: SecretsInToolDescriptionsCheck
+    ) -> None:
+        """Tool description containing a known secret prefix should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "auth_tool",
+                    "description": "Use key sk-ant-abc123def456789012345678",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "sk-" in fail_findings[0].status_extended
+
+    async def test_passes_on_clean_description(
+        self, check: SecretsInToolDescriptionsCheck
+    ) -> None:
+        """Tool description with no secret patterns should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "weather_tool",
+                    "description": "Returns the current weather for a city.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_credential_assignment_pattern(
+        self, check: SecretsInToolDescriptionsCheck
+    ) -> None:
+        """Tool description containing password=<value> pattern should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "db_connect",
+                    "description": "Connect to db with password=supersecretvalue123",
+                    "inputSchema": {"type": "object", "properties": {}},
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_not_applicable_when_no_tools(
+        self, check: SecretsInToolDescriptionsCheck
+    ) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# SM-018: Credentials in Resources
+# ==========================================================================
+
+
+class TestCredentialsInResourcesCheck:
+    """Tests for CredentialsInResourcesCheck."""
+
+    @pytest.fixture()
+    def check(self) -> CredentialsInResourcesCheck:
+        return CredentialsInResourcesCheck()
+
+    async def test_metadata_loads_correctly(self, check: CredentialsInResourcesCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "sm018"
+        assert meta.category == "secrets_management"
+
+    async def test_fails_on_credentials_in_uri(
+        self, check: CredentialsInResourcesCheck
+    ) -> None:
+        """Resource URI with embedded credentials should FAIL."""
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "postgres://admin:password123@db:5432",
+                    "name": "Database",
+                    "description": "Production database.",
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "admin" in fail_findings[0].evidence
+
+    async def test_passes_on_clean_resource_uri(
+        self, check: CredentialsInResourcesCheck
+    ) -> None:
+        """Resource with clean URI and description should PASS."""
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "file:///app/data/users.json",
+                    "name": "User Data",
+                    "description": "Public user directory listing.",
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_secret_prefix_in_description(
+        self, check: CredentialsInResourcesCheck
+    ) -> None:
+        """Resource description containing a secret prefix should FAIL."""
+        snapshot = make_snapshot(
+            resources=[
+                {
+                    "uri": "config://settings",
+                    "name": "Settings",
+                    "description": "Use token ghp_abcdef1234567890abcdef to authenticate.",
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_not_applicable_when_no_resources(
+        self, check: CredentialsInResourcesCheck
+    ) -> None:
+        """No resources means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# SM-019: Weak Default Passwords
+# ==========================================================================
+
+
+class TestWeakDefaultPasswordsCheck:
+    """Tests for WeakDefaultPasswordsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> WeakDefaultPasswordsCheck:
+        return WeakDefaultPasswordsCheck()
+
+    async def test_metadata_loads_correctly(self, check: WeakDefaultPasswordsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "sm019"
+        assert meta.category == "secrets_management"
+
+    async def test_fails_on_weak_password_default(
+        self, check: WeakDefaultPasswordsCheck
+    ) -> None:
+        """Tool parameter named 'password' with weak default should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "db_connect",
+                    "description": "Connect to database.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "password": {
+                                "type": "string",
+                                "default": "admin123",
+                            },
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "password" in fail_findings[0].status_extended
+
+    async def test_passes_on_strong_default(
+        self, check: WeakDefaultPasswordsCheck
+    ) -> None:
+        """Tool parameter named 'password' with a strong default should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "db_connect",
+                    "description": "Connect to database.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "password": {
+                                "type": "string",
+                                "default": "Xt9$kL3!mQ7#wR2@bN6&jF4vP8",
+                            },
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_changeme_default(
+        self, check: WeakDefaultPasswordsCheck
+    ) -> None:
+        """Tool parameter named 'auth_password' with 'changeme' default should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "setup",
+                    "description": "Initial setup.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "auth_password": {
+                                "type": "string",
+                                "default": "changeme",
+                            },
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_not_applicable_when_no_tools(
+        self, check: WeakDefaultPasswordsCheck
+    ) -> None:
+        """No tools means no findings."""
+        snapshot = make_snapshot()
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+
+# ==========================================================================
+# SM-020: Secrets in Command-Line Arguments
+# ==========================================================================
+
+
+class TestSecretsInArgsCheck:
+    """Tests for SecretsInArgsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> SecretsInArgsCheck:
+        return SecretsInArgsCheck()
+
+    async def test_metadata_loads_correctly(self, check: SecretsInArgsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "sm020"
+        assert meta.category == "secrets_management"
+
+    async def test_fails_on_token_flag_in_args(self, check: SecretsInArgsCheck) -> None:
+        """Args containing --token=<secret> should FAIL."""
+        snapshot = make_snapshot(
+            args=["server.js", "--token=sk-abc123def456"],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+        assert "--token=" in fail_findings[0].evidence
+
+    async def test_passes_on_normal_args(self, check: SecretsInArgsCheck) -> None:
+        """Normal command-line args should PASS."""
+        snapshot = make_snapshot(
+            args=["server.js", "--port=3000", "--host=localhost"],
+        )
+        findings = await check.execute(snapshot)
+        assert all(f.status == Status.PASS for f in findings)
+
+    async def test_fails_on_password_flag_in_args(self, check: SecretsInArgsCheck) -> None:
+        """Args containing --password=<value> should FAIL."""
+        snapshot = make_snapshot(
+            args=["--password=mysecretpassword123"],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1
+
+    async def test_not_applicable_for_http_transport(self, check: SecretsInArgsCheck) -> None:
+        """HTTP transport should return no findings (args not applicable)."""
+        snapshot = make_snapshot(
+            transport_type="http",
+            args=["--token=sk-abc123def456"],
+        )
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_not_applicable_when_no_args(self, check: SecretsInArgsCheck) -> None:
+        """No args means no findings."""
         snapshot = make_snapshot()
         findings = await check.execute(snapshot)
         assert findings == []

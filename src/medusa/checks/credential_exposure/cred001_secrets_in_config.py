@@ -1,7 +1,9 @@
 """CRED-001: Secrets in MCP Configuration Files.
 
 Scans the raw MCP configuration (env block, args, and other string values)
-for hardcoded secrets using known credential patterns.
+for hardcoded secrets using known credential patterns.  Additionally uses
+Shannon-entropy analysis to detect high-randomness values that may be
+secrets even when they don't match a known regex pattern.
 """
 
 from __future__ import annotations
@@ -11,7 +13,8 @@ from pathlib import Path
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.core.models import CheckMetadata, Finding, Severity, Status
+from medusa.utils.heuristics import is_likely_secret
 from medusa.utils.pattern_matching import SECRET_PATTERNS
 
 
@@ -106,6 +109,47 @@ class SecretsInConfigCheck(BaseCheck):
                             f"with read access."
                         ),
                         evidence=f"{pattern_name}: {_redact(matched)}",
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        # ── Entropy-based scan ──────────────────────────────────────
+        # Catch secrets that don't match known regex patterns by
+        # looking for high-entropy values in keys that suggest secrets.
+        regex_flagged_locations = {f.resource_name for f in findings}
+
+        for location, value in scan_targets:
+            if location in regex_flagged_locations:
+                continue  # Already caught by regex scan
+
+            if not isinstance(value, str) or len(value) < 16:
+                continue
+
+            likely, confidence = is_likely_secret(location, value)
+            if likely and confidence >= 0.7:
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=Severity.MEDIUM,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="config",
+                        resource_name=location,
+                        status_extended=(
+                            f"Value for '{location}' has high entropy "
+                            f"suggesting a potential secret "
+                            f"(confidence: {confidence:.0%}). "
+                            f"Consider using environment variable references "
+                            f"instead of hardcoded values."
+                        ),
+                        evidence=(
+                            f"entropy-based detection: "
+                            f"{_redact(value)}, "
+                            f"confidence={confidence:.0%}"
+                        ),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )

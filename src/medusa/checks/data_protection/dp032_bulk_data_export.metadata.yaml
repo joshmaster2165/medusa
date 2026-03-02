@@ -1,0 +1,31 @@
+check_id: dp032
+title: Bulk Data Export Tool
+category: data_protection
+severity: high
+description: >
+  Detects tools that allow bulk data export, dump, or backup operations
+  without pagination or limit constraints. Unbounded bulk export tools
+  can leak entire datasets to connected LLM clients in a single
+  invocation.
+risk_explanation: >
+  Bulk export tools without pagination allow an LLM or attacker to
+  extract entire databases or data stores in a single call. This
+  dramatically increases the blast radius of any prompt injection or
+  tool-poisoning attack by providing unrestricted access to all data.
+  Combined with exfiltration tools, this enables complete data theft
+  with minimal interaction.
+remediation: >
+  Add pagination parameters (limit, offset, page, cursor) to any tool
+  that returns collections of data. Enforce a maximum page size on the
+  server side regardless of client-specified limits. Consider whether
+  bulk export functionality is necessary in an MCP context and remove
+  it if not required. Implement server-side access controls that
+  restrict the volume of data returned per request.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - data_protection
+  - bulk_export
+  - pagination

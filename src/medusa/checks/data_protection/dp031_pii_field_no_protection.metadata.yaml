@@ -1,0 +1,31 @@
+check_id: dp031
+title: PII Field Without Protection
+category: data_protection
+severity: medium
+description: >
+  Detects parameters named with PII indicators (email, phone, ssn,
+  credit_card, passport, etc.) that lack validation constraints such
+  as pattern, enum, or format. Unvalidated PII fields increase the
+  risk of data injection and leakage.
+risk_explanation: >
+  PII parameters without format validation accept arbitrary input,
+  allowing attackers to inject malicious payloads through fields
+  intended for personal data. Without pattern or format constraints,
+  there is no schema-level assurance that the data conforms to
+  expected PII formats, making it easier to exploit injection
+  vulnerabilities or exfiltrate data through improperly validated
+  fields.
+remediation: >
+  Add appropriate validation constraints to all PII-related parameters.
+  Use format (e.g., "email", "date") for standardized types, pattern
+  for custom regex validation, or enum for restricted value sets.
+  Implement server-side validation that enforces these constraints
+  regardless of client behavior.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP06:2025"
+tags:
+  - data_protection
+  - pii
+  - input_validation

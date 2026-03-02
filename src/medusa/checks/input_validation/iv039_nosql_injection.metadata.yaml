@@ -1,0 +1,35 @@
+check_id: iv039
+title: NoSQL Injection Parameters
+category: input_validation
+severity: high
+description: >
+  Detects tool parameters with NoSQL or document database-related names
+  that lack input validation constraints. Unvalidated NoSQL parameters
+  allow attackers to inject query operators and manipulate database
+  queries to bypass authentication, exfiltrate data, or modify records.
+risk_explanation: >
+  NoSQL injection exploits the lack of parameterized queries in document
+  databases like MongoDB, CouchDB, and DynamoDB. Attackers can inject
+  operator expressions ($gt, $ne, $regex) into query parameters to
+  bypass authentication filters, enumerate collections, extract data
+  beyond intended scope, and in some cases execute server-side
+  JavaScript. Unlike SQL injection, NoSQL injection often works through
+  JSON object manipulation rather than string concatenation.
+remediation: >
+  Add strict pattern constraints or enum values to NoSQL query
+  parameters. Validate that parameters match expected types and do not
+  contain MongoDB operator prefixes ($). Use parameterized queries
+  provided by the database driver. Reject object-type parameters where
+  only primitive values are expected. Implement server-side input
+  sanitization that strips or rejects query operator keys.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - nosql_injection
+  - mongodb
+  - document_database

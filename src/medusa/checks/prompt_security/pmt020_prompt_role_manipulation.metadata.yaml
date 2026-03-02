@@ -1,0 +1,33 @@
+check_id: pmt020
+title: Prompt Role Manipulation
+category: prompt_security
+severity: high
+description: >
+  Detects prompts whose names or descriptions contain phrases that
+  attempt to manipulate the LLM's role or identity. Phrases like
+  "ignore previous", "you are now", "act as root", "unrestricted",
+  or "bypass" indicate attempts to override the LLM's intended
+  behavior, security boundaries, or access controls.
+risk_explanation: >
+  Role manipulation prompts attempt to override the LLM's behavioral
+  constraints and security policies. An attacker can use these prompts
+  to escalate privileges by assuming administrator roles, bypass
+  content filters and safety restrictions, access data or functions
+  beyond the intended scope, and undermine the trust boundaries
+  established by the system prompt and MCP server configuration.
+remediation: >
+  Review and remove prompts that contain role manipulation phrases.
+  Implement a prompt content policy that prohibits identity overrides
+  and privilege escalation language. Add server-side validation that
+  rejects prompt definitions containing manipulation keywords. Use
+  prompt signing or approval workflows to prevent unauthorized prompt
+  modifications.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/prompts"
+owasp_mcp:
+  - "MCP05:2025"
+tags:
+  - prompt_security
+  - role_manipulation
+  - jailbreak

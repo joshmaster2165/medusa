@@ -1,0 +1,35 @@
+check_id: iv045
+title: Deeply Nested Schema
+category: input_validation
+severity: medium
+description: >
+  Detects tool schemas with excessive nesting depth where objects
+  contain objects that contain further objects. Deeply nested schemas
+  increase parsing overhead, make comprehensive validation difficult,
+  and can be exploited for amplification attacks or to hide malicious
+  payloads in deeply buried properties.
+risk_explanation: >
+  Deeply nested schemas create exponentially complex validation
+  surfaces. Each nesting level multiplies the number of potential
+  attack paths, making it impractical to validate all properties
+  thoroughly. Attackers can exploit deep nesting to cause stack
+  overflow during recursive parsing, amplify resource consumption
+  through nested object expansion, and smuggle dangerous values past
+  shallow validation logic that only inspects top-level properties.
+remediation: >
+  Flatten deeply nested schemas by extracting nested objects into
+  separate parameters or using dot-notation for nested paths. Limit
+  schema nesting depth to 5 levels or fewer. Implement server-side
+  depth checking that rejects input exceeding the maximum nesting
+  depth before parsing the full structure. Use JSON Schema
+  definitions and references ($ref) to reduce structural complexity.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - nested_schema
+  - schema_depth
+  - amplification_attack

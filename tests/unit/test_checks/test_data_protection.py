@@ -63,6 +63,13 @@ from medusa.checks.data_protection.dp028_data_portability_missing import DataPor
 from medusa.checks.data_protection.dp029_right_to_deletion_missing import (
     RightToDeletionMissingCheck,
 )
+from medusa.checks.data_protection.dp030_unbounded_array_params import (
+    UnboundedArrayParamsCheck,
+)
+from medusa.checks.data_protection.dp031_pii_field_no_protection import (
+    PiiFieldNoProtectionCheck,
+)
+from medusa.checks.data_protection.dp032_bulk_data_export import BulkDataExportCheck
 from medusa.core.check import ServerSnapshot
 from medusa.core.models import Severity, Status
 from tests.conftest import make_snapshot
@@ -1599,3 +1606,411 @@ class TestRightToDeletionMissingCheck:
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1
+
+
+# ==========================================================================
+# DP-030: Unbounded Array Parameters
+# ==========================================================================
+
+
+class TestDP030UnboundedArrayParams:
+    """Tests for UnboundedArrayParamsCheck."""
+
+    @pytest.fixture()
+    def check(self) -> UnboundedArrayParamsCheck:
+        return UnboundedArrayParamsCheck()
+
+    async def test_metadata_loads_correctly(self, check: UnboundedArrayParamsCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "dp030"
+        assert meta.category == "data_protection"
+
+    async def test_fails_on_array_param_without_max_items(
+        self, check: UnboundedArrayParamsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "bulk_insert",
+                    "description": "Insert multiple records.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "items": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "items" in fail_findings[0].status_extended
+        assert "maxItems" in fail_findings[0].evidence
+
+    async def test_passes_on_array_param_with_max_items(
+        self, check: UnboundedArrayParamsCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "bulk_insert",
+                    "description": "Insert multiple records.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "maxItems": 100,
+                            },
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) == 1
+
+    async def test_skips_non_array_params(self, check: UnboundedArrayParamsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Get a user.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_empty_tools_returns_empty(self, check: UnboundedArrayParamsCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_multiple_arrays_mixed(self, check: UnboundedArrayParamsCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "process",
+                    "description": "Process data.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "bounded": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "maxItems": 10,
+                            },
+                            "unbounded": {
+                                "type": "array",
+                                "items": {"type": "integer"},
+                            },
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "unbounded" in fail_findings[0].status_extended
+
+
+# ==========================================================================
+# DP-031: PII Field Without Protection
+# ==========================================================================
+
+
+class TestDP031PiiFieldNoProtection:
+    """Tests for PiiFieldNoProtectionCheck."""
+
+    @pytest.fixture()
+    def check(self) -> PiiFieldNoProtectionCheck:
+        return PiiFieldNoProtectionCheck()
+
+    async def test_metadata_loads_correctly(self, check: PiiFieldNoProtectionCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "dp031"
+        assert meta.category == "data_protection"
+
+    async def test_fails_on_email_param_without_constraints(
+        self, check: PiiFieldNoProtectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "create_user",
+                    "description": "Create a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "email": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "email" in fail_findings[0].status_extended
+        assert fail_findings[0].resource_name == "create_user"
+
+    async def test_passes_on_email_param_with_format_constraint(
+        self, check: PiiFieldNoProtectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "create_user",
+                    "description": "Create a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "email": {"type": "string", "format": "email"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) == 1
+
+    async def test_passes_on_pii_param_with_pattern_constraint(
+        self, check: PiiFieldNoProtectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "lookup",
+                    "description": "Lookup a phone number.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "phone": {
+                                "type": "string",
+                                "pattern": "^\\+?[0-9]{10,15}$",
+                            },
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_passes_on_pii_param_with_enum_constraint(
+        self, check: PiiFieldNoProtectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "contact",
+                    "description": "Contact info.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "email": {
+                                "type": "string",
+                                "enum": ["admin@example.com", "support@example.com"],
+                            },
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_fails_on_ssn_param_without_constraints(
+        self, check: PiiFieldNoProtectionCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "verify_identity",
+                    "description": "Verify identity.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "ssn": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "ssn" in fail_findings[0].evidence
+
+    async def test_empty_tools_returns_empty(self, check: PiiFieldNoProtectionCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []
+
+    async def test_non_pii_param_passes(self, check: PiiFieldNoProtectionCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Get weather.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "city": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+
+# ==========================================================================
+# DP-032: Bulk Data Export
+# ==========================================================================
+
+
+class TestDP032BulkDataExport:
+    """Tests for BulkDataExportCheck."""
+
+    @pytest.fixture()
+    def check(self) -> BulkDataExportCheck:
+        return BulkDataExportCheck()
+
+    async def test_metadata_loads_correctly(self, check: BulkDataExportCheck) -> None:
+        meta = check.metadata()
+        assert meta.check_id == "dp032"
+        assert meta.category == "data_protection"
+
+    async def test_fails_on_dump_tool_without_pagination(
+        self, check: BulkDataExportCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "dump_all_users",
+                    "description": "Dump all user records.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "format": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert "dump_all_users" in fail_findings[0].status_extended
+        assert "pagination" in fail_findings[0].evidence
+
+    async def test_passes_on_bulk_tool_with_limit_param(
+        self, check: BulkDataExportCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "dump_all_users",
+                    "description": "Dump user records.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "format": {"type": "string"},
+                            "limit": {"type": "integer"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) == 1
+
+    async def test_passes_on_bulk_tool_with_page_param(
+        self, check: BulkDataExportCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "export_data",
+                    "description": "Export all records.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "page": {"type": "integer"},
+                            "page_size": {"type": "integer"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_fails_on_description_bulk_indicator(
+        self, check: BulkDataExportCheck
+    ) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_records",
+                    "description": "Returns all records from the database.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+
+    async def test_passes_on_non_bulk_tool(self, check: BulkDataExportCheck) -> None:
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Get a single user by ID.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                        },
+                    },
+                }
+            ]
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_empty_tools_returns_empty(self, check: BulkDataExportCheck) -> None:
+        snapshot = make_snapshot(tools=[])
+        findings = await check.execute(snapshot)
+        assert findings == []

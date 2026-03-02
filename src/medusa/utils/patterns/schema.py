@@ -18,6 +18,13 @@ SHELL_PARAM_NAMES: set[str] = {
     "subprocess",
     "system",
     "eval",
+    "action",
+    "operation",
+    "task",
+    "instruction",
+    "process",
+    "spawn",
+    "invoke",
 }
 
 # Parameter names suggesting file path handling
@@ -36,6 +43,14 @@ PATH_PARAM_NAMES: set[str] = {
     "destination",
     "dest",
     "src",
+    "location",
+    "root",
+    "base_path",
+    "base_dir",
+    "working_dir",
+    "cwd",
+    "output_path",
+    "input_path",
 }
 
 # Parameter names suggesting SQL queries
@@ -48,6 +63,13 @@ SQL_PARAM_NAMES: set[str] = {
     "expression",
     "statement",
     "select",
+    "criteria",
+    "search",
+    "lookup",
+    "predicate",
+    "clause",
+    "db_query",
+    "raw_query",
 }
 
 # Data dump / bulk export tool name patterns

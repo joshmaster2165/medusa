@@ -1,0 +1,36 @@
+check_id: iv040
+title: CSV Formula Injection
+category: input_validation
+severity: medium
+description: >
+  Detects tool parameters related to CSV or spreadsheet data that lack
+  formula injection protection. Without validation, attackers can inject
+  spreadsheet formulas starting with =, +, -, or @ that execute when
+  the data is opened in spreadsheet applications like Excel or Google
+  Sheets.
+risk_explanation: >
+  CSV formula injection (also called CSV injection or spreadsheet
+  injection) allows attackers to embed formulas in data fields that
+  execute when imported into spreadsheet software. Malicious formulas
+  can exfiltrate data via external requests, execute system commands
+  through DDE (Dynamic Data Exchange), read local files, and
+  manipulate displayed data to mislead users. This is especially
+  dangerous when MCP tools export data to CSV or spreadsheet formats.
+remediation: >
+  Add pattern constraints to CSV-related parameters that reject values
+  starting with formula-triggering characters (=, +, -, @, tab, or
+  carriage return). Prefix cell values with a single quote (') to
+  prevent formula interpretation. Implement server-side sanitization
+  that escapes or strips formula characters from data before including
+  it in CSV output. Use enum constraints where applicable.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+  - "https://owasp.org/www-community/attacks/CSV_Injection"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+owasp_mcp:
+  - "MCP04:2025"
+tags:
+  - input_validation
+  - csv_injection
+  - formula_injection
+  - spreadsheet

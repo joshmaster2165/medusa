@@ -49,17 +49,19 @@ class HttpConnector(BaseConnector):
                         command=None,
                         args=[],
                         env={},
-                        tools=[t.model_dump() for t in tools_result.tools],
-                        resources=[r.model_dump() for r in resources_result.resources],
-                        prompts=[p.model_dump() for p in prompts_result.prompts],
+                        tools=[t.model_dump(mode="json") for t in tools_result.tools],
+                        resources=[r.model_dump(mode="json") for r in resources_result.resources],
+                        prompts=[p.model_dump(mode="json") for p in prompts_result.prompts],
                         capabilities=(
-                            init_result.capabilities.model_dump()
+                            init_result.capabilities.model_dump(mode="json")
                             if init_result.capabilities
                             else {}
                         ),
                         protocol_version=init_result.protocolVersion,
                         server_info=(
-                            init_result.serverInfo.model_dump() if init_result.serverInfo else {}
+                            init_result.serverInfo.model_dump(mode="json")
+                            if init_result.serverInfo
+                            else {}
                         ),
                         config_file_path=self.config_file_path,
                         config_raw=self.config_raw,

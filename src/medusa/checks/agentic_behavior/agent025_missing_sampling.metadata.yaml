@@ -1,0 +1,31 @@
+check_id: agent025
+title: Missing Sampling Capability
+category: agentic_behavior
+severity: medium
+description: >
+  Detects servers that have destructive or privileged tools but do not
+  declare the 'sampling' capability. Without sampling, the server
+  cannot request human review before executing dangerous operations,
+  removing a critical safety layer for agentic workflows.
+risk_explanation: >
+  The MCP sampling capability allows servers to request the client to
+  perform a completion, which can be used to implement human-in-the-loop
+  review for dangerous operations. When a server exposes destructive
+  tools (delete, drop, wipe) or privileged tools (execute, admin, sudo)
+  without sampling capability, there is no mechanism for the server to
+  request confirmation before executing irreversible actions. This
+  increases the risk of unintended data loss, unauthorized modifications,
+  or privilege escalation through automated tool invocation.
+remediation: >
+  Declare the 'sampling' capability in the server's capabilities
+  response. Implement human-in-the-loop review for destructive and
+  privileged operations by using the sampling API to request
+  confirmation before executing dangerous tools. Consider implementing
+  a confirmation workflow that clearly describes the action and its
+  consequences before proceeding.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+owasp_mcp:
+  - "MCP01:2025"
+tags:
+  - agentic_behavior

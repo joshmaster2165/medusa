@@ -2,6 +2,9 @@
 
 Flags sensitive-looking environment variables passed to MCP server
 processes, which expose credentials beyond what the server requires.
+Additionally uses Shannon-entropy analysis to detect high-randomness
+env values that may be secrets even when the variable name doesn't
+match a known pattern.
 """
 
 from __future__ import annotations
@@ -12,7 +15,8 @@ from pathlib import Path
 import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
-from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.core.models import CheckMetadata, Finding, Severity, Status
+from medusa.utils.heuristics import is_likely_secret
 
 # Environment variable name patterns that typically contain secrets.
 # Each entry is (human_label, compiled_regex).
@@ -110,6 +114,47 @@ class EnvLeakageCheck(BaseCheck):
                         )
                     )
                     break  # One match per env var is sufficient.
+
+        # ── Entropy-based scan ──────────────────────────────────────
+        # Catch secrets in env vars whose names don't match known
+        # patterns but whose values look like high-entropy secrets.
+        regex_flagged = {f.resource_name for f in findings}
+
+        for env_name, env_value in sorted(snapshot.env.items()):
+            resource_name = f"env.{env_name}"
+            if resource_name in regex_flagged:
+                continue  # Already flagged by regex
+
+            if not isinstance(env_value, str) or len(env_value) < 16:
+                continue
+
+            likely, confidence = is_likely_secret(env_name, env_value)
+            if likely and confidence >= 0.7:
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=Severity.MEDIUM,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="config",
+                        resource_name=resource_name,
+                        status_extended=(
+                            f"Environment variable '{env_name}' has a "
+                            f"high-entropy value suggesting a potential "
+                            f"secret (confidence: {confidence:.0%}). "
+                            f"The server and all its tools have access "
+                            f"to this credential."
+                        ),
+                        evidence=(
+                            f"{env_name} = {_redact_value(env_value)} "
+                            f"[entropy-based, confidence={confidence:.0%}]"
+                        ),
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
 
         # If no sensitive env vars were found, emit a PASS.
         if not findings:
