@@ -31,10 +31,10 @@ class TestSeverityEnum:
         assert Severity.LOW.value == "low"
 
     def test_informational_value(self):
-        assert Severity.INFORMATIONAL.value == "informational"
+        assert Severity.INFORMATIONAL.value == "info"
 
     def test_all_values(self):
-        expected = {"critical", "high", "medium", "low", "informational"}
+        expected = {"critical", "high", "medium", "low", "info"}
         actual = {s.value for s in Severity}
         assert actual == expected
 

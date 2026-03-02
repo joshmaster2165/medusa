@@ -1,7 +1,7 @@
 check_id: intg020
 title: Inconsistent Tool Naming Convention
 category: integrity
-severity: informational
+severity: info
 description: >
   Detects tools within the same server that use inconsistent naming
   conventions (mixing camelCase, snake_case, kebab-case, PascalCase).

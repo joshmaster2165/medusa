@@ -53,13 +53,15 @@ class _OrderedGroup(click.Group):
 EPILOG = """
 \b
 Quick start:
-  medusa scan --http http://localhost:3000/mcp
-  medusa scan --http http://localhost:3000/mcp --ai
-  medusa scan --http http://localhost:3000/mcp --all
-  medusa scan --http http://localhost:3000/mcp --upload
-  medusa scan -o html --output-file report.html
-  medusa configure
-  medusa settings
+  medusa scan                                         Auto-discover & scan
+  medusa scan --http http://localhost:3000/mcp        Scan specific server
+  medusa scan --reason                                Static + AI reasoning
+  medusa scan -o html --output-file report.html       HTML dashboard
+  medusa scan -o json --fail-on high                  CI/CD integration
+  medusa scan --compliance owasp_mcp_top10            OWASP compliance
+  medusa list-checks                                  Browse all checks
+  medusa configure                                    Setup wizard
+  medusa settings                                     Show configuration
 
 Docs: https://medusa.security/docs
 """
@@ -91,7 +93,9 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     """Medusa — Security scanner for MCP servers.
 
     Scans Model Context Protocol (MCP) servers for security vulnerabilities
-    using 435+ static checks and optional AI-powered analysis.
+    using 487 checks across 24 categories, with an optional AI reasoning
+    engine for finding validation, attack chain correlation, and gap
+    discovery.
     """
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
@@ -232,40 +236,43 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     "flag_static",
     is_flag=True,
     default=False,
-    help="Run static checks only (default behavior).",
+    help="Static checks only (default).",
 )
 @click.option(
     "--ai",
     "flag_ai",
     is_flag=True,
     default=False,
-    help="Run AI analysis only (requires Claude API key).",
+    help="Legacy AI-only analysis (use --reason instead).",
 )
 @click.option(
     "--all",
     "flag_all",
     is_flag=True,
     default=False,
-    help="Run both static checks and AI analysis.",
-)
-@click.option(
-    "--claude-api-key",
-    type=str,
-    default=None,
-    help="Anthropic API key for AI analysis (overrides env/config).",
-)
-@click.option(
-    "--ai-mode",
-    type=click.Choice(["byok", "proxied"]),
-    default=None,
-    help="AI key mode: bring your own key or use dashboard proxy.",
+    help="Legacy static + AI combined (use --reason instead).",
 )
 @click.option(
     "--reason",
     "flag_reason",
     is_flag=True,
     default=False,
-    help="Enable AI reasoning layer (validates, correlates, and prioritizes findings).",
+    help=(
+        "Enable AI reasoning engine. Validates findings, detects "
+        "attack chains, identifies false positives, and discovers gaps."
+    ),
+)
+@click.option(
+    "--claude-api-key",
+    type=str,
+    default=None,
+    help="Anthropic API key (overrides ANTHROPIC_API_KEY env var).",
+)
+@click.option(
+    "--ai-mode",
+    type=click.Choice(["byok", "proxied"]),
+    default=None,
+    help="AI key mode: bring-your-own-key or dashboard proxy.",
 )
 @click.pass_context
 def scan(  # noqa: C901, PLR0912, PLR0913
@@ -290,29 +297,37 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     flag_static: bool,
     flag_ai: bool,
     flag_all: bool,
+    flag_reason: bool,
     claude_api_key: str | None,
     ai_mode: str | None,
-    flag_reason: bool,
 ) -> None:
     """Scan MCP servers for security vulnerabilities.
 
-    Run 511+ static security checks against your MCP servers. Use --reason
-    for AI-powered reasoning or --ai for legacy AI-only analysis.
+    Run 487 security checks across 24 categories against your MCP servers.
+    Use --reason to enable the AI reasoning engine that validates findings,
+    detects attack chains, identifies false positives, and discovers gaps.
 
     \b
-    Scan modes (mutually exclusive):
-      --static   Static checks only (default)
-      --ai       Legacy AI analysis only (requires Claude key + credits)
-      --all      Both static checks and legacy AI analysis
-      --reason   Static + AI reasoning layer (recommended AI mode)
+    Scan modes:
+      (default)  Static checks only — 487 checks, fast, free
+      --reason   Static + AI reasoning engine (recommended)
+
+    \b
+    Output formats:
+      -o console   Rich terminal tables with scoring (default)
+      -o json      Machine-readable JSON
+      -o html      Interactive HTML dashboard
+      -o markdown  Markdown report
+      -o sarif     SARIF for GitHub/IDE integration
 
     \b
     Examples:
-      medusa scan --http http://localhost:3000/mcp
-      medusa scan --http http://localhost:3000/mcp --reason
-      medusa scan --http http://localhost:3000/mcp --all
-      medusa scan --config-file ~/.cursor/mcp.json
-      medusa scan -o html --output-file report.html
+      medusa scan                                     Auto-discover & scan
+      medusa scan --http http://localhost:3000/mcp     Scan specific server
+      medusa scan --reason                             Static + AI reasoning
+      medusa scan -o html --output-file report.html    HTML dashboard
+      medusa scan -o json --fail-on high               CI/CD gate
+      medusa scan --compliance owasp_mcp_top10         OWASP compliance
     """
     quiet = ctx.obj.get("quiet", False)
 
@@ -468,37 +483,26 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
     if not quiet:
         check_word = "check" if num_checks == 1 else "checks"
+        reasoning_label = (
+            " + AI reasoning" if enable_reasoning else ""
+        )
         if scan_mode == "ai":
-            # AI mode: show category count + total static checks covered
-            ai_count = num_checks
-            static_covered = sum(
-                1
-                for c in registry.get_checks()
-                if not c.metadata().check_id.startswith("ai")
-            )
             console.print(
-                f"  [green]▸ Running {ai_count} AI {check_word}[/green] "
-                f"[dim]({ai_count} categories · {static_covered}+ checks "
-                f"covered)[/dim]"
+                f"  [green]▸ Running {num_checks} AI"
+                f" {check_word}[/green] "
+                f"[dim](legacy mode){reasoning_label}[/dim]"
             )
         elif scan_mode == "full":
-            ai_count = sum(
-                1
-                for c in engine.checks
-                if c.metadata().check_id.startswith("ai")
-            )
-            static_count = num_checks - ai_count
             console.print(
-                f"  [green]▸ Running {num_checks} {check_word}[/green] "
-                f"[dim]({static_count} static + {ai_count} AI categories)"
-                f"[/dim]"
+                f"  [green]▸ Running {num_checks}"
+                f" {check_word}[/green] "
+                f"[dim](static + legacy AI)"
+                f"{reasoning_label}[/dim]"
             )
         else:
-            reasoning_label = (
-                " + AI reasoning" if enable_reasoning else ""
-            )
             console.print(
-                f"  [green]▸ Running {num_checks} {check_word}[/green] "
+                f"  [green]▸ Running {num_checks}"
+                f" {check_word}[/green] "
                 f"[dim](static{reasoning_label})[/dim]"
             )
         console.print()
@@ -913,13 +917,7 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
         click.echo(json.dumps(data, indent=2))
         return
 
-    # Count static vs AI
-    static = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
-    ai = [c for c in all_checks if c.metadata().check_id.startswith("ai")]
-
-    title = f"Medusa Security Checks — {len(static)} static"
-    if ai:
-        title += f" + {len(ai)} AI"
+    title = f"Medusa Security Checks — {len(all_checks)} checks"
 
     table = Table(
         title=title,
@@ -937,7 +935,7 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
         "high": "red",
         "medium": "yellow",
         "low": "blue",
-        "informational": "dim",
+        "info": "dim",
     }
 
     for check in all_checks:

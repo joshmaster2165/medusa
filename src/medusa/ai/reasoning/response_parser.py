@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Valid values for validation
 _VALID_CONFIDENCES = {c.value for c in Confidence}
 _VALID_FP_REASONS = {r.value for r in FalsePositiveReason}
-_VALID_SEVERITIES = {"critical", "high", "medium", "low", "informational"}
+_VALID_SEVERITIES = {"critical", "high", "medium", "low", "info"}
 
 
 def parse_reasoning_response(

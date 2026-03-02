@@ -13,7 +13,7 @@ _SEVERITY_MAP = {
     "high": Severity.HIGH,
     "medium": Severity.MEDIUM,
     "low": Severity.LOW,
-    "informational": Severity.INFORMATIONAL,
+    "info": Severity.INFORMATIONAL,
 }
 
 _VALID_RESOURCE_TYPES = {"tool", "resource", "prompt", "server"}

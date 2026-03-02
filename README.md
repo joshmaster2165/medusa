@@ -8,12 +8,13 @@
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License: Apache 2.0"></a>
-  <a href="#check-categories"><img src="https://img.shields.io/badge/checks-435-brightgreen.svg" alt="Checks: 435"></a>
+  <a href="#check-categories"><img src="https://img.shields.io/badge/checks-487-brightgreen.svg" alt="Checks: 487"></a>
+  <a href="#check-categories"><img src="https://img.shields.io/badge/categories-24-brightgreen.svg" alt="Categories: 24"></a>
   <a href="#owasp-mcp-top-10-compliance"><img src="https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange.svg" alt="OWASP MCP Top 10"></a>
 </p>
 
 <p align="center">
-  Medusa is an open-source CLI tool that connects to <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> servers, runs <strong>435 security checks</strong> across <strong>24 categories</strong>, scores findings on a 0–10 scale, and generates reports and dashboards. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+  Medusa is an open-source CLI tool that connects to <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> servers, runs <strong>487 security checks</strong> across <strong>24 categories</strong>, scores findings on a 0–10 scale, and generates reports and dashboards. An optional <strong>AI reasoning engine</strong> validates findings, detects attack chains, and discovers gaps. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
 </p>
 
 ---
@@ -21,9 +22,10 @@
 ## Features
 
 - **Auto-discovery** -- finds MCP servers from Claude Desktop, Cursor, Windsurf, and custom config files without manual configuration.
-- **435 built-in checks** across 24 categories including tool poisoning, authentication, input validation, credential exposure, privilege/scope, transport security, data protection, integrity, session management, error handling, rate limiting, SSRF/network, agentic behavior, sampling security, context security, resource security, multi-tenant isolation, secrets management, server hardening, governance, audit logging, supply chain, and server identity.
+- **487 built-in checks** across 24 categories including tool poisoning, input validation, credential exposure, authentication, data protection, agentic behavior, resource security, privilege/scope, prompt security, governance, integrity, transport security, session management, SSRF/network, secrets management, server hardening, rate limiting, error handling, sampling security, supply chain, context security, multi-tenant isolation, audit logging, and server identity.
+- **AI reasoning layer** -- run static checks first, then send findings to Claude for validation, false-positive detection, attack chain correlation, gap discovery, and prioritized remediation (`--reason`).
 - **Severity scoring** -- each server receives a 0--10 numeric score and an A--F letter grade.
-- **Multiple output formats** -- JSON (machine-readable), HTML (interactive dashboard), and Markdown.
+- **Multiple output formats** -- Console (Rich tables), JSON (machine-readable), HTML (interactive dashboard), Markdown, and SARIF.
 - **CI/CD integration** -- `--fail-on` flag returns a non-zero exit code when findings meet or exceed a severity threshold.
 - **OWASP MCP Top 10 compliance** -- map findings to the OWASP MCP Top 10 2025 framework.
 - **Extensible** -- add custom checks by dropping a `.py` + `.metadata.yaml` pair into the checks directory.
@@ -69,6 +71,12 @@ medusa scan
 medusa scan --http https://mcp.example.com
 ```
 
+### Static scan + AI reasoning (recommended AI mode)
+
+```bash
+medusa scan --reason --claude-api-key sk-ant-...
+```
+
 ### Generate an HTML dashboard
 
 ```bash
@@ -106,40 +114,86 @@ medusa scan --severity critical
 medusa scan --exclude-checks tp005,iv005
 ```
 
+### Scan modes
+
+| Flag | Behavior |
+|------|----------|
+| *(default)* | Static checks only (487 checks, fast, free) |
+| `--reason` | Static + AI reasoning engine (recommended) |
+
+The `--reason` flag runs all 487 static checks first, then sends the findings and server snapshot to Claude as a reasoning engine. The AI validates findings, identifies false positives, discovers attack chains across categories, finds gaps the static checks missed, and produces an executive summary with prioritized remediation.
+
 ---
 
 ## Check Categories
 
-Medusa ships with **435 checks** across **24 categories**:
+Medusa ships with **487 checks** across **24 categories**:
 
-| Category               | Prefix     | Checks | Description                                                                 |
-|------------------------|------------|--------|-----------------------------------------------------------------------------|
-| Tool Poisoning         | `tp0xx`    | 15     | Hidden instructions, prompt injection, tool shadowing, rug pull detection, cross-server collisions |
-| Authentication         | `auth0xx`  | 30     | Missing auth, weak OAuth, token storage, JWT issues, CSRF, MFA, credential rotation |
-| Input Validation       | `iv0xx`    | 30     | Command injection, path traversal, SQL injection, schema validation, deserialization |
-| Credential Exposure    | `cred0xx`  | 10     | Secrets in config, env var leakage, secrets in definitions, hardcoded tokens |
-| Privilege & Scope      | `priv0xx`  | 15     | Filesystem access, network access, shell execution, privilege escalation |
-| Transport Security     | `ts0xx`    | 20     | Unencrypted transport, TLS validation, certificate issues, CORS, WebSocket security |
-| Data Protection        | `dp0xx`    | 29     | PII exposure, data leakage, encryption, consent, COPPA, health/financial data |
-| Integrity              | `intg0xx`  | 17     | Version pinning, lockfiles, SBOM, dependency confusion, typosquatting |
-| Session Management     | `sess0xx`  | 20     | Session fixation, timeout, hijacking, cookie security, WebSocket sessions |
-| Error Handling         | `err0xx`   | 15     | Stack traces, error codes, injection, graceful degradation, log injection |
-| Rate Limiting          | `rl0xx`    | 15     | Missing rate limits, DDoS protection, burst control, cost-based limiting |
-| SSRF & Network         | `ssrf0xx`  | 15     | Private IP access, cloud metadata, DNS rebinding, egress control |
-| Agentic Behavior       | `agent0xx` | 20     | Unauthorized tool chaining, goal drift, memory poisoning, self-modification |
-| Sampling Security      | `samp0xx`  | 15     | Sampling abuse, model manipulation, prompt leakage, budget exhaustion |
-| Context Security       | `ctx0xx`   | 10     | Context overflow, token exhaustion, role confusion, multi-turn manipulation |
-| Resource Security      | `res0xx`   | 20     | URI injection, unauthorized access, SSRF via resources, dependency chains |
-| Multi-Tenant           | `mt0xx`    | 10     | Tenant isolation, cross-tenant access, data leakage, impersonation |
-| Secrets Management     | `sm0xx`    | 10     | Plaintext secrets, rotation, vault integration, encryption at rest |
-| Server Hardening       | `sh0xx`    | 15     | Default configs, unnecessary features, security headers, directory listing |
-| Governance             | `gov0xx`   | 20     | Security policies, access review, vulnerability management, compliance |
-| Audit Logging          | `audit0xx` | 10     | Missing logging, audit trails, log integrity, rotation, forensic capability |
-| Supply Chain           | `sc0xx`    | 8      | Untrusted sources, abandoned deps, install scripts, native binaries |
-| Server Identity        | `shadow0xx`| 7      | Duplicate names, missing metadata, suspicious origins, version spoofing |
-| Prompt Security        | `pi0xx`    | 39     | Prompt injection patterns, encoding attacks, multi-language injection |
+| Category               | Prefix      | Checks | Description                                                                 |
+|------------------------|-------------|--------|-----------------------------------------------------------------------------|
+| Input Validation       | `iv0xx`     | 46     | Command injection, path traversal, SQL/NoSQL injection, LDAP, SSRF, XXE, SSTI, header injection, regex DoS, schema validation, deserialization |
+| Data Protection        | `dp0xx`     | 32     | PII exposure, data leakage, encryption, consent, COPPA, health/financial data, data retention |
+| Tool Poisoning         | `tp0xx`     | 30     | Hidden instructions, prompt injection, tool shadowing, rug pull detection, cross-server collisions, obfuscation, steganographic payloads |
+| Authentication         | `auth0xx`   | 29     | Missing auth, weak OAuth, token storage, JWT issues, CSRF, MFA, credential rotation |
+| Resource Security      | `res0xx`    | 25     | URI injection, unauthorized access, SSRF via resources, dependency chains, template injection |
+| Agentic Behavior       | `agent0xx`  | 25     | Unauthorized tool chaining, goal drift, memory poisoning, self-modification, shadow tool invocation |
+| Credential Exposure    | `cred0xx`   | 23     | Secrets in config, env var leakage, hardcoded tokens, API key patterns, cloud credentials, JWT secrets |
+| Privilege & Scope      | `priv0xx`   | 23     | Filesystem access, network access, shell execution, privilege escalation, container escape |
+| Governance             | `gov0xx`    | 22     | Security policies, access review, vulnerability management, compliance, data classification |
+| Integrity              | `intg0xx`   | 20     | Version pinning, lockfiles, SBOM, dependency confusion, typosquatting, reproducible builds |
+| Prompt Security        | `pmt0xx`    | 20     | Prompt injection patterns, encoding attacks, multi-language injection, delimiter abuse |
+| Session Management     | `sess0xx`   | 20     | Session fixation, timeout, hijacking, cookie security, WebSocket sessions |
+| SSRF & Network         | `ssrf0xx`   | 20     | Private IP access, cloud metadata, DNS rebinding, egress control, IPv6 bypass |
+| Secrets Management     | `sm0xx`     | 20     | Plaintext secrets, rotation, vault integration, encryption at rest, key derivation |
+| Transport Security     | `ts0xx`     | 19     | Unencrypted transport, TLS validation, certificate issues, CORS, WebSocket security |
+| Server Hardening       | `hard0xx`   | 18     | Default configs, unnecessary features, security headers, directory listing, debug endpoints |
+| Error Handling         | `err0xx`    | 15     | Stack traces, error codes, injection, graceful degradation, log injection |
+| Rate Limiting          | `dos0xx`    | 15     | Missing rate limits, DDoS protection, burst control, cost-based limiting |
+| Sampling Security      | `samp0xx`   | 15     | Sampling abuse, model manipulation, prompt leakage, budget exhaustion |
+| Supply Chain           | `sc0xx`     | 13     | Untrusted sources, abandoned deps, install scripts, native binaries, lockfile poisoning |
+| Context Security       | `ctx0xx`    | 10     | Context overflow, token exhaustion, role confusion, multi-turn manipulation |
+| Multi-Tenant           | `mt0xx`     | 10     | Tenant isolation, cross-tenant access, data leakage, impersonation |
+| Audit Logging          | `audit0xx`  | 10     | Missing logging, audit trails, log integrity, rotation, forensic capability |
+| Server Identity        | `shadow0xx` | 7      | Duplicate names, missing metadata, suspicious origins, version spoofing |
 
 Run `medusa list-checks` to see the full table with OWASP MCP mappings.
+
+---
+
+## AI Reasoning Layer
+
+The `--reason` flag enables a two-phase architecture: **static checks first, AI reasoning second**.
+
+```
+Phase 1: Static Scan (fast, free, deterministic)
+  ServerSnapshot -> 487 static checks -> list[Finding]
+
+Phase 2: AI Reasoning Engine (1-2 API calls per server)
+  (snapshot + findings) -> Claude -> ReasoningResult
+    A. Validate: confidence score per finding (0.0-1.0)
+    B. Filter: false positive identification with reasoning
+    C. Correlate: attack chain detection across findings
+    D. Discover: gap findings static checks missed
+    E. Prioritize: executive summary + remediation order
+```
+
+The reasoning layer receives the compact static results instead of re-analyzing raw data, making it ~90% cheaper than legacy `--ai` mode (1-2 API calls vs 24). The AI sees all findings at once, enabling cross-category correlation that isolated checks cannot detect.
+
+```bash
+# Run static + AI reasoning
+medusa scan --reason --claude-api-key sk-ant-...
+
+# Or set the key via environment variable
+export ANTHROPIC_API_KEY=sk-ant-...
+medusa scan --reason
+```
+
+The enhanced report includes:
+- **Confidence annotations** on each finding (confirmed / likely / uncertain / likely false positive)
+- **Attack chains** linking related findings into exploitation narratives
+- **False positive identification** with specific reason codes
+- **Gap discoveries** for issues the static checks missed
+- **Executive summary** with top remediation priorities
 
 ---
 

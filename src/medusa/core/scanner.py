@@ -262,7 +262,7 @@ class ScanEngine:
             "high": Severity.HIGH,
             "medium": Severity.MEDIUM,
             "low": Severity.LOW,
-            "informational": Severity.INFORMATIONAL,
+            "info": Severity.INFORMATIONAL,
         }
 
         result: list[Finding] = []
@@ -367,7 +367,7 @@ def has_findings_above_threshold(result: ScanResult, threshold: str) -> bool:
         "high": 3,
         "medium": 2,
         "low": 1,
-        "informational": 0,
+        "info": 0,
     }
     threshold_level = severity_order.get(threshold.lower(), 3)
 

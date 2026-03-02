@@ -16,7 +16,7 @@ class Severity(StrEnum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-    INFORMATIONAL = "informational"
+    INFORMATIONAL = "info"
 
 
 class Status(StrEnum):

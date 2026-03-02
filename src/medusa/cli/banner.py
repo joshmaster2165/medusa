@@ -55,19 +55,25 @@ MEDUSA_LETTERS = r"""
 
 
 def _count_checks() -> tuple[int, int]:
-    """Count available checks and categories (cached)."""
+    """Count available static checks and categories.
+
+    Returns (check_count, category_count).
+    """
     try:
         from medusa.core.registry import CheckRegistry
 
         registry = CheckRegistry()
         registry.discover_checks()
         all_checks = registry.get_checks()
-        # Exclude the AI-only category from the static count display
-        static = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
-        static_cats = {c.metadata().category for c in static}
-        return len(static), len(static_cats)
+        static = [
+            c
+            for c in all_checks
+            if not c.metadata().check_id.startswith("ai")
+        ]
+        cats = {c.metadata().category for c in static}
+        return len(static), len(cats)
     except Exception:
-        return 435, 24  # fallback
+        return 487, 24  # fallback
 
 
 def print_banner(console: Console, version: str) -> None:
@@ -89,13 +95,15 @@ def print_banner(console: Console, version: str) -> None:
         highlight=False,
     )
     console.print(
-        f"  [dim green]v{version} | {num_checks}+ checks"
-        f" | {num_cats} categories | static + AI | OWASP MCP Top 10"
+        f"  [dim green]v{version} | {num_checks} checks"
+        f" | {num_cats} categories"
+        f" | AI reasoning engine | OWASP MCP Top 10"
         f"[/dim green]",
         highlight=False,
     )
     console.print(
-        "  [dim]──────────────────────────────────────────────────────[/dim]",
+        "  [dim]────────────────────────────────────────────────"
+        "──────────────────────────[/dim]",
         highlight=False,
     )
     console.print()
