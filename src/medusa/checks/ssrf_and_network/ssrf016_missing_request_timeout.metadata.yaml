@@ -1,7 +1,7 @@
 check_id: ssrf016
 title: Missing Request Timeout
 category: ssrf_and_network
-severity: medium
+severity: info
 description: >
   Detects MCP server tools that make network requests without
   configuring timeouts. Missing timeouts allow requests to hang

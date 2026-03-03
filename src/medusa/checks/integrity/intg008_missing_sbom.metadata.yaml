@@ -1,7 +1,7 @@
 check_id: intg008
 title: Missing Software Bill of Materials
 category: integrity
-severity: medium
+severity: info
 description: >
   Checks whether the MCP server provides a Software Bill of Materials
   (SBOM). An SBOM lists all components and dependencies, enabling supply

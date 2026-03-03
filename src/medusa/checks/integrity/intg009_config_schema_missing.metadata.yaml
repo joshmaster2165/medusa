@@ -1,7 +1,7 @@
 check_id: intg009
 title: Missing Configuration Schema
 category: integrity
-severity: low
+severity: info
 description: >
   Checks whether the MCP server defines a schema for its configuration
   file. Without a schema, invalid or malicious configuration values may

@@ -1,7 +1,7 @@
 check_id: ts004
 title: Missing Transport Authentication Headers
 category: transport_security
-severity: high
+severity: info
 description: >
   Detects HTTP/SSE MCP servers that lack authentication headers such as
   Authorization or X-API-Key in their transport configuration. Without

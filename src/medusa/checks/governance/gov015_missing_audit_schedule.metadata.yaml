@@ -1,7 +1,7 @@
 check_id: gov015
 title: Missing Audit Schedule
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a defined schedule for
   security audits and assessments. Without regular audits, security

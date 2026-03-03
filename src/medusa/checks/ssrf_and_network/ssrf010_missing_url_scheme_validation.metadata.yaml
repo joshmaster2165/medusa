@@ -1,7 +1,7 @@
 check_id: ssrf010
 title: Missing URL Scheme Validation
 category: ssrf_and_network
-severity: high
+severity: info
 description: >
   Detects MCP server tools that accept URLs without validating the URL
   scheme or protocol. Without scheme validation, attackers can use non-

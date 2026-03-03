@@ -1,7 +1,7 @@
 check_id: audit008
 title: Missing Access Logging
 category: audit_logging
-severity: medium
+severity: info
 description: >
   Checks whether the MCP server logs resource access events. Without
   access logging, there is no record of which resources were accessed,

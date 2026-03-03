@@ -1,7 +1,7 @@
 check_id: gov012
 title: Missing Disaster Recovery Plan
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a disaster recovery plan for
   restoring service after catastrophic events including data center

@@ -1,7 +1,7 @@
 check_id: gov011
 title: Missing Business Continuity Plan
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a business continuity plan
   for maintaining MCP server operations during disruptions including

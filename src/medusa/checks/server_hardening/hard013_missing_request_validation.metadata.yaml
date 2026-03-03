@@ -1,7 +1,7 @@
 check_id: hard013
 title: Missing Request Validation
 category: server_hardening
-severity: medium
+severity: info
 description: >
   Detects MCP servers that do not validate the structure, content type,
   and size of incoming requests at the transport level before

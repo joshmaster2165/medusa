@@ -1,7 +1,7 @@
 check_id: gov006
 title: Missing Change Management Process
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a formal change management
   process for tool modifications, server configuration changes, and

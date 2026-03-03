@@ -1,7 +1,7 @@
 check_id: intg017
 title: Missing Timestamp Verification
 category: integrity
-severity: medium
+severity: info
 description: >
   Detects signed artifacts that lack timestamp verification. Without
   trusted timestamps, signatures remain valid even after the signing key

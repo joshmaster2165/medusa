@@ -1,7 +1,7 @@
 check_id: shadow004
 title: Missing Server Metadata
 category: server_identity
-severity: medium
+severity: info
 description: >
   Detects MCP servers that lack descriptive metadata such as a human-
   readable description, author information, contact details, or homepage

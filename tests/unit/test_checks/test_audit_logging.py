@@ -46,7 +46,7 @@ class TestAudit001MissingLogging:
         meta = check.metadata()
         assert meta.check_id == "audit001", "Check ID should be audit001"
         assert meta.category == "audit_logging", "Category should be audit_logging"
-        assert meta.severity == Severity.MEDIUM, "Severity should be MEDIUM"
+        assert meta.severity == Severity.INFORMATIONAL, "Severity should be INFO"
 
     async def test_fails_on_no_logging_config(self, check: MissingLoggingCheck) -> None:
         snapshot = make_snapshot(

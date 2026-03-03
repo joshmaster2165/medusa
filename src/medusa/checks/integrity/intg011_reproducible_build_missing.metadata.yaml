@@ -1,7 +1,7 @@
 check_id: intg011
 title: Missing Reproducible Build
 category: integrity
-severity: medium
+severity: info
 description: >
   Checks whether the MCP server can be built reproducibly from source.
   Without reproducible builds, there is no way to verify that the

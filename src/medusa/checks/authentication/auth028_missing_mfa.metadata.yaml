@@ -1,7 +1,7 @@
 check_id: auth028
 title: Missing Multi-Factor Authentication
 category: authentication
-severity: medium
+severity: info
 description: >
   Detects MCP server configurations without support for multi-factor
   authentication. MFA provides an additional layer of security beyond

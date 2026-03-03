@@ -1,7 +1,7 @@
 check_id: sm004
 title: Missing Vault Integration
 category: secrets_management
-severity: medium
+severity: info
 description: >
   Detects MCP servers that manage secrets directly rather than using a
   dedicated secrets management service or vault. Direct secret

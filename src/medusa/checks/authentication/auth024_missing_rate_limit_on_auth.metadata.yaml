@@ -1,7 +1,7 @@
 check_id: auth024
 title: Missing Rate Limit on Auth Endpoints
 category: authentication
-severity: medium
+severity: info
 description: >
   Detects authentication endpoints without rate limiting or brute-force
   protection. Endpoints that accept unlimited authentication attempts

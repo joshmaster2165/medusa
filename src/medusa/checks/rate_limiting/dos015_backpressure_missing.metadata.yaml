@@ -1,7 +1,7 @@
 check_id: dos015
 title: Missing Backpressure Mechanism
 category: rate_limiting
-severity: medium
+severity: info
 description: >
   Detects MCP server configurations that lack backpressure mechanisms
   for managing flow control between the LLM client and the server.

@@ -1,7 +1,7 @@
 check_id: ts007
 title: Missing HSTS Header
 category: transport_security
-severity: medium
+severity: info
 description: >
   Detects HTTP endpoints served without the Strict-Transport-Security
   (HSTS) header. Without HSTS, browsers and clients may connect over

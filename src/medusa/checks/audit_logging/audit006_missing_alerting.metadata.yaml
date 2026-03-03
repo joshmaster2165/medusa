@@ -1,7 +1,7 @@
 check_id: audit006
 title: Missing Security Alerting
 category: audit_logging
-severity: medium
+severity: info
 description: >
   Checks whether the MCP server has alerting configured for security-
   relevant events. Without alerting, security incidents are only

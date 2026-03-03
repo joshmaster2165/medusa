@@ -1,7 +1,7 @@
 check_id: agent001
 title: Missing Human-in-the-Loop
 category: agentic_behavior
-severity: high
+severity: info
 description: >
   Detects MCP server configurations where destructive or irreversible
   tool invocations can be executed without requiring explicit user

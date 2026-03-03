@@ -1,7 +1,7 @@
 check_id: sess014
 title: Missing Session Encryption
 category: session_management
-severity: high
+severity: info
 description: >
   Detects MCP server sessions where session data is stored or
   transmitted without encryption. Unencrypted session tokens and session

@@ -1,7 +1,7 @@
 check_id: audit005
 title: Missing Log Rotation
 category: audit_logging
-severity: low
+severity: info
 description: >
   Checks whether the MCP server has a log rotation policy configured.
   Without log rotation, log files grow unbounded, eventually exhausting

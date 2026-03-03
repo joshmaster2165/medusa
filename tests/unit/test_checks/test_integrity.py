@@ -362,7 +362,7 @@ class TestIntg004MissingIntegrityVerification:
         meta = check.metadata()
         assert meta.check_id == "intg004"
         assert meta.category == "integrity"
-        assert meta.severity == Severity.HIGH
+        assert meta.severity == Severity.INFORMATIONAL
 
     async def test_fails_on_tools_without_baseline(
         self, check: MissingIntegrityVerificationCheck

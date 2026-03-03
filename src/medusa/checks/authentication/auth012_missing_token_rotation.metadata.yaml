@@ -1,7 +1,7 @@
 check_id: auth012
 title: Missing Token Rotation
 category: authentication
-severity: medium
+severity: info
 description: >
   Detects long-lived authentication tokens without a rotation mechanism.
   Tokens that persist for extended periods without rotation increase the

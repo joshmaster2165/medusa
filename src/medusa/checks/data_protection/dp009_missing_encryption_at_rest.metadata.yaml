@@ -1,7 +1,7 @@
 check_id: dp009
 title: Missing Encryption at Rest
 category: data_protection
-severity: high
+severity: info
 description: >
   Detects MCP server configurations where stored data, caches, or
   persistent state lack encryption at rest. Unencrypted data on disk is

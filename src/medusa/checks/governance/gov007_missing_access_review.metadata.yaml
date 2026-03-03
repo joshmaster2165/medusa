@@ -1,7 +1,7 @@
 check_id: gov007
 title: Missing Access Review Process
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack periodic access reviews to
   verify that user permissions, tool access grants, and API keys remain

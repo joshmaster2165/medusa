@@ -1,7 +1,7 @@
 check_id: gov019
 title: Missing Data Classification Policy
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a data classification policy
   defining sensitivity levels and handling requirements for data

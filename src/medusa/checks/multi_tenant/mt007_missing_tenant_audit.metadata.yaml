@@ -1,7 +1,7 @@
 check_id: mt007
 title: Missing Tenant-Specific Audit
 category: multi_tenant
-severity: medium
+severity: info
 description: >
   Detects MCP servers that lack tenant-specific audit logging, making it
   impossible to track which tenant performed which operations. Without

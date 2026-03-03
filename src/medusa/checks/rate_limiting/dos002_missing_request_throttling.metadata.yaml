@@ -1,7 +1,7 @@
 check_id: dos002
 title: Missing Request Throttling
 category: rate_limiting
-severity: medium
+severity: info
 description: >
   Detects MCP server API endpoints that lack request throttling
   mechanisms. Without throttling, burst traffic from LLM agents can

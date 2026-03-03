@@ -1,7 +1,7 @@
 check_id: sess005
 title: Missing Session Invalidation on Logout
 category: session_management
-severity: medium
+severity: info
 description: >
   Detects MCP servers that fail to properly invalidate sessions when a
   user or LLM client disconnects or logs out. Without explicit session

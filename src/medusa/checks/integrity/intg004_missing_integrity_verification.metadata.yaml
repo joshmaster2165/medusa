@@ -1,7 +1,7 @@
 check_id: intg004
 title: Missing Integrity Verification for Tool Definitions
 category: integrity
-severity: high
+severity: info
 description: >
   Detects MCP servers that expose tools but have no integrity verification
   baseline (hashes, checksums, or integrity block) in their configuration.

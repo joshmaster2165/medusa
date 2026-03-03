@@ -1,7 +1,7 @@
 check_id: hard003
 title: Missing Security Headers
 category: server_hardening
-severity: medium
+severity: info
 description: >
   Detects MCP servers using HTTP-based transports that do not set
   security-relevant response headers such as Content-Security-Policy,

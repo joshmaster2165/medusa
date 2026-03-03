@@ -1,7 +1,7 @@
 check_id: mt004
 title: Missing Tenant Context Validation
 category: multi_tenant
-severity: high
+severity: info
 description: >
   Detects MCP server requests that are processed without validating the
   tenant context, or where the tenant identifier is derived from client-

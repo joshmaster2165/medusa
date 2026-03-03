@@ -1,7 +1,7 @@
 check_id: res012
 title: Missing Resource Lifetime Management
 category: resource_security
-severity: medium
+severity: info
 description: >
   Detects MCP resources that lack explicit lifetime management,
   including expiration, cleanup, and invalidation mechanisms. Resources

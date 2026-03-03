@@ -1,7 +1,7 @@
 check_id: auth008
 title: Missing OAuth PKCE
 category: authentication
-severity: high
+severity: info
 description: >
   Detects OAuth 2.0 authorization flows that do not implement Proof Key
   for Code Exchange (PKCE). Without PKCE, authorization codes are

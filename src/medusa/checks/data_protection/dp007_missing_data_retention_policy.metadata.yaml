@@ -1,7 +1,7 @@
 check_id: dp007
 title: Missing Data Retention Policy
 category: data_protection
-severity: medium
+severity: info
 description: >
   Checks whether the MCP server defines a data retention and lifecycle
   policy. Servers that store or cache data without a defined retention

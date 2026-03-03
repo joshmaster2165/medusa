@@ -1,7 +1,7 @@
 check_id: res009
 title: Missing Resource Size Limit
 category: resource_security
-severity: medium
+severity: info
 description: >
   Detects MCP resource handlers that do not enforce size limits on
   resource content, allowing extremely large resources to be requested

@@ -1,7 +1,7 @@
 check_id: gov017
 title: Missing Asset Inventory
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a comprehensive inventory of
   all MCP servers, tools, resources, integrations, and dependencies.

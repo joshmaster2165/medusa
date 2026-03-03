@@ -1,7 +1,7 @@
 check_id: audit001
 title: Missing Logging Configuration
 category: audit_logging
-severity: medium
+severity: info
 description: >
   Checks whether the MCP server's configuration or environment variables
   include any logging or observability settings. Servers without logging

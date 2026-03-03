@@ -1,7 +1,7 @@
 check_id: dp028
 title: Missing Data Portability
 category: data_protection
-severity: low
+severity: info
 description: >
   Checks whether the MCP server provides a mechanism for users to export
   their data in a portable format. Data portability is a right under

@@ -1,7 +1,7 @@
 check_id: hard011
 title: Missing Server Resource Limits
 category: server_hardening
-severity: medium
+severity: info
 description: >
   Detects MCP servers that do not enforce limits on system resource
   consumption including memory usage, CPU time, file descriptor count,

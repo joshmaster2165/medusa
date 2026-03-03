@@ -1,7 +1,7 @@
 check_id: gov001
 title: Missing Security Policy
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a documented security policy
   defining security requirements, controls, and responsibilities for the

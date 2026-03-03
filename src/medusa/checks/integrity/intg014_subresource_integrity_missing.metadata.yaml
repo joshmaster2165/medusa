@@ -1,7 +1,7 @@
 check_id: intg014
 title: Missing Subresource Integrity
 category: integrity
-severity: medium
+severity: info
 description: >
   Detects MCP servers that load remote resources (scripts, stylesheets,
   data files) without Subresource Integrity (SRI) hashes. Without SRI,

@@ -1,7 +1,7 @@
 check_id: gov016
 title: Missing Security Training Program
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments where developers and operators have not
   received security training covering MCP-specific threats including

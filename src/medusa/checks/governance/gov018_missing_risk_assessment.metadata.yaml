@@ -1,7 +1,7 @@
 check_id: gov018
 title: Missing Risk Assessment
 category: governance
-severity: high
+severity: info
 description: >
   Detects MCP server deployments that have not undergone a formal risk
   assessment identifying threats, vulnerabilities, and potential impacts

@@ -1,7 +1,7 @@
 check_id: priv022
 title: Missing Least Privilege
 category: privilege_scope
-severity: medium
+severity: info
 description: >
   Detects MCP servers requesting more permissions than their tools
   require. Servers that request broad filesystem, network, or system

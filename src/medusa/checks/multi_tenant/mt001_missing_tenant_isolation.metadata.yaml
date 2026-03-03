@@ -1,7 +1,7 @@
 check_id: mt001
 title: Missing Tenant Isolation
 category: multi_tenant
-severity: critical
+severity: info
 description: >
   Detects MCP servers that handle multiple tenants without implementing
   proper isolation between tenant contexts. Missing isolation allows one

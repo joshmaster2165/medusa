@@ -1,7 +1,7 @@
 check_id: agent020
 title: Missing Agent Audit Trail
 category: agentic_behavior
-severity: medium
+severity: info
 description: >
   Detects MCP configurations that lack comprehensive audit logging of
   agent decisions, tool selections, invocation parameters, and outcomes.

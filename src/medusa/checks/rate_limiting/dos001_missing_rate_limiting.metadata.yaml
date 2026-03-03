@@ -1,7 +1,7 @@
 check_id: dos001
 title: Missing Rate Limiting
 category: rate_limiting
-severity: high
+severity: info
 description: >
   Detects MCP server configurations that lack rate limiting on tool
   invocations. Without rate limits, an attacker or compromised LLM agent

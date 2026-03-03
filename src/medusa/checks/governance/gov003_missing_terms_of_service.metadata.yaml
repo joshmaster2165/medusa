@@ -1,7 +1,7 @@
 check_id: gov003
 title: Missing Terms of Service
 category: governance
-severity: low
+severity: info
 description: >
   Detects MCP server deployments that lack terms of service defining
   acceptable use, limitations of liability, and user responsibilities.

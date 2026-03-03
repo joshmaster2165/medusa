@@ -1,7 +1,7 @@
 check_id: gov020
 title: Missing Vendor Security Assessment
 category: governance
-severity: high
+severity: info
 description: >
   Detects MCP server deployments that use third-party MCP servers,
   tools, or LLM providers without conducting vendor security

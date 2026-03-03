@@ -1,7 +1,7 @@
 check_id: gov009
 title: Missing Data Governance Framework
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a data governance framework
   defining data ownership, classification, handling requirements, and

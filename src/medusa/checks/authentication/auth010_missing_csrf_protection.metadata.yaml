@@ -1,7 +1,7 @@
 check_id: auth010
 title: Missing CSRF Protection
 category: authentication
-severity: high
+severity: info
 description: >
   Detects HTTP transport endpoints without Cross-Site Request Forgery
   protection. MCP servers exposed over HTTP without CSRF tokens or same-

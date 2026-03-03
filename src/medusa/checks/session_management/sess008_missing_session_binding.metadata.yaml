@@ -1,7 +1,7 @@
 check_id: sess008
 title: Missing Session-IP Binding
 category: session_management
-severity: medium
+severity: info
 description: >
   Detects MCP server sessions that are not bound to the originating
   client IP address or other client fingerprint. Without session

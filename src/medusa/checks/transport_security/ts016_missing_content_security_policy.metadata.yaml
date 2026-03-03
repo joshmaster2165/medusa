@@ -1,7 +1,7 @@
 check_id: ts016
 title: Missing Content Security Policy
 category: transport_security
-severity: medium
+severity: info
 description: >
   Detects MCP server HTTP responses without Content-Security-Policy
   headers. CSP headers prevent cross-site scripting, clickjacking, and

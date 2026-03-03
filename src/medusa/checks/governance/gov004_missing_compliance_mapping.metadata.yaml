@@ -1,7 +1,7 @@
 check_id: gov004
 title: Missing Compliance Mapping
 category: governance
-severity: medium
+severity: info
 description: >
   Detects MCP server deployments that lack a mapping between security
   controls and applicable compliance frameworks such as SOC 2, ISO

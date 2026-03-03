@@ -1,7 +1,7 @@
 check_id: auth020
 title: Missing Authorization Header
 category: authentication
-severity: high
+severity: info
 description: >
   Detects MCP servers using HTTP transport without any Authorization
   header configuration. Servers that do not expect or validate

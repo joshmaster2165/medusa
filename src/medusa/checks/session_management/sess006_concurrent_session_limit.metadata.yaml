@@ -1,7 +1,7 @@
 check_id: sess006
 title: Missing Concurrent Session Limit
 category: session_management
-severity: medium
+severity: info
 description: >
   Detects MCP server configurations that allow unlimited concurrent
   sessions for a single user or identity. Without concurrent session

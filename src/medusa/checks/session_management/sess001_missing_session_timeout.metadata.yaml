@@ -1,7 +1,7 @@
 check_id: sess001
 title: Missing Session Timeout
 category: session_management
-severity: high
+severity: info
 description: >
   Detects MCP server configurations that lack session timeout settings
   for client connections. When sessions between LLM clients and MCP

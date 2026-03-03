@@ -1,7 +1,7 @@
 check_id: mt010
 title: Missing Tenant Configuration Isolation
 category: multi_tenant
-severity: high
+severity: info
 description: >
   Detects MCP servers where tenant-specific configuration such as
   security policies, feature flags, access controls, and operational

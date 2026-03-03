@@ -1,7 +1,7 @@
 check_id: auth026
 title: Missing Logout Mechanism
 category: authentication
-severity: medium
+severity: info
 description: >
   Detects MCP server configurations without a mechanism to invalidate
   active sessions or tokens on logout. Without logout functionality,

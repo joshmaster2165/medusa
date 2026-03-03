@@ -1,7 +1,7 @@
 check_id: err010
 title: Missing Graceful Degradation
 category: error_handling
-severity: medium
+severity: info
 description: >
   Detects MCP servers that fail completely when dependent services
   become unavailable rather than degrading gracefully. Missing

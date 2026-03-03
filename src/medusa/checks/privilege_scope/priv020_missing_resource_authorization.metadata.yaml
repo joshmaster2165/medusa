@@ -1,7 +1,7 @@
 check_id: priv020
 title: Missing Resource Authorization
 category: privilege_scope
-severity: high
+severity: info
 description: >
   Detects MCP resources that can be accessed without authorization
   checks. Resources without access control allow any authenticated user

@@ -1,7 +1,7 @@
 check_id: hard015
 title: Missing Network Segmentation
 category: server_hardening
-severity: medium
+severity: info
 description: >
   Detects MCP servers deployed without network segmentation between
   client-facing interfaces and backend services. Without segmentation, a

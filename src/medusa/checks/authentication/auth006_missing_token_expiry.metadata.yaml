@@ -1,7 +1,7 @@
 check_id: auth006
 title: Missing Token Expiration
 category: authentication
-severity: high
+severity: info
 description: >
   Detects JWT tokens and API keys without expiration claims or time-to-
   live settings. Tokens that never expire remain valid indefinitely,

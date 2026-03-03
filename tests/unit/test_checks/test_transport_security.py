@@ -261,7 +261,7 @@ class TestTS004MissingTransportAuth:
         meta = check.metadata()
         assert meta.check_id == "ts004"
         assert meta.category == "transport_security"
-        assert meta.severity == Severity.HIGH
+        assert meta.severity == Severity.INFORMATIONAL
 
     async def test_fails_on_no_headers(
         self, check: MissingTransportAuthCheck, http_vulnerable_snapshot: ServerSnapshot

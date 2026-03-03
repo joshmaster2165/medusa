@@ -1,7 +1,7 @@
 check_id: res001
 title: Missing Resource Access Control
 category: resource_security
-severity: high
+severity: info
 description: >
   Detects MCP resource endpoints that lack access control checks,
   allowing any authenticated or unauthenticated client to read, list, or

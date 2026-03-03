@@ -1,7 +1,7 @@
 check_id: err004
 title: Missing Error Handling
 category: error_handling
-severity: medium
+severity: info
 description: >
   Detects MCP tool implementations that lack error handling for
   operations that may fail, such as file I/O, network requests, database

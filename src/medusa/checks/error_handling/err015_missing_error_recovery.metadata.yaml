@@ -1,7 +1,7 @@
 check_id: err015
 title: Missing Error Recovery
 category: error_handling
-severity: medium
+severity: info
 description: >
   Detects MCP server implementations that lack automatic error recovery
   mechanisms such as retry logic, connection re-establishment, or state

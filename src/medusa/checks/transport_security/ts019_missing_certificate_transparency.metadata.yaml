@@ -1,7 +1,7 @@
 check_id: ts019
 title: Missing Certificate Transparency
 category: transport_security
-severity: low
+severity: info
 description: >
   Detects absence of Certificate Transparency (CT) log monitoring for
   MCP server certificates. Without CT monitoring, unauthorized

@@ -1,7 +1,7 @@
 check_id: gov010
 title: Missing Third-Party Risk Assessment
 category: governance
-severity: high
+severity: info
 description: >
   Detects MCP server deployments that integrate with external MCP
   servers, APIs, or services without performing third-party risk

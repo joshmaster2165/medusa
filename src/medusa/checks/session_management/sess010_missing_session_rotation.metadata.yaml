@@ -1,7 +1,7 @@
 check_id: sess010
 title: Missing Session ID Rotation
 category: session_management
-severity: high
+severity: info
 description: >
   Detects MCP servers that do not periodically rotate session
   identifiers during active sessions. Without rotation, a session ID

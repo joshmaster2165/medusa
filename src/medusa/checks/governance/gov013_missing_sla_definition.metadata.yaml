@@ -1,7 +1,7 @@
 check_id: gov013
 title: Missing SLA Definition
 category: governance
-severity: low
+severity: info
 description: >
   Detects MCP server deployments that lack defined service level
   agreements (SLAs) specifying availability targets, performance

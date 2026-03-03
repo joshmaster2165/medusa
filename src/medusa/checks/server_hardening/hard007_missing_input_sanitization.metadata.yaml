@@ -1,7 +1,7 @@
 check_id: hard007
 title: Missing Server-Level Input Sanitization
 category: server_hardening
-severity: high
+severity: info
 description: >
   Detects MCP servers that lack a centralized input sanitization layer
   at the server transport boundary. Without server-level sanitization,

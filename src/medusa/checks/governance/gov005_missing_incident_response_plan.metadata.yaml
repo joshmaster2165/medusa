@@ -1,7 +1,7 @@
 check_id: gov005
 title: Missing Incident Response Plan
 category: governance
-severity: high
+severity: info
 description: >
   Detects MCP server deployments that lack a documented incident
   response plan for security events. Without an incident response plan,
