@@ -207,7 +207,11 @@ class ScanEngine:
                     self._filter_stats[snapshot.server_name] = filter_stats
                 self._emit("check_done", "ai_reasoning")
 
-            check_ids_run = {f.check_id for f in findings if f.status != Status.SKIPPED}
+            check_ids_run = {
+                f.check_id
+                for f in findings
+                if f.status != Status.SKIPPED and f.severity != Severity.INFORMATIONAL
+            }
             server_score = calculate_server_score(findings, len(check_ids_run))
             self._emit("server_done", connector.name)
             return findings, server_score

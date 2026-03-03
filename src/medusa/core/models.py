@@ -74,6 +74,7 @@ class ServerScore(BaseModel):
     high_findings: int
     medium_findings: int
     low_findings: int
+    info_findings: int = 0
 
 
 class ScanResult(BaseModel):

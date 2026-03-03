@@ -54,6 +54,7 @@ class ConsoleReporter(BaseReporter):
         self._print_severity_summary(result, console)
         self._print_server_breakdown(result, console)
         self._print_findings_table(result, console)
+        self._print_informational_notes(result, console)
         if result.reasoning_results:
             self._print_analysis_insights(result, console)
         self._print_status_counts(result, console)
@@ -84,10 +85,21 @@ class ConsoleReporter(BaseReporter):
         console.print(panel)
 
     def _print_severity_summary(self, result: ScanResult, console: Console) -> None:
-        failed = [f for f in result.findings if f.status == Status.FAIL]
+        # Only count non-INFO failures in the severity summary
+        failed = [
+            f
+            for f in result.findings
+            if f.status == Status.FAIL and f.severity != Severity.INFORMATIONAL
+        ]
         counts: dict[Severity, int] = {s: 0 for s in Severity}
         for f in failed:
             counts[f.severity] += 1
+
+        info_count = sum(
+            1
+            for f in result.findings
+            if f.status == Status.FAIL and f.severity == Severity.INFORMATIONAL
+        )
 
         parts = []
         if counts[Severity.CRITICAL]:
@@ -98,8 +110,8 @@ class ConsoleReporter(BaseReporter):
             parts.append(f"[yellow]{counts[Severity.MEDIUM]} Medium[/]")
         if counts[Severity.LOW]:
             parts.append(f"[blue]{counts[Severity.LOW]} Low[/]")
-        if counts[Severity.INFORMATIONAL]:
-            parts.append(f"[dim]{counts[Severity.INFORMATIONAL]} Info[/]")
+        if info_count:
+            parts.append(f"[dim]{info_count} Info[/]")
 
         if parts:
             console.print(f"  {' · '.join(parts)}")
@@ -110,11 +122,13 @@ class ConsoleReporter(BaseReporter):
         console.print()
         for ss in result.server_scores:
             color = GRADE_COLORS.get(ss.grade, "white")
+            non_info_failed = ss.failed - ss.info_findings
             body = (
                 f"  Score: [bold]{ss.score}/10[/]  "
                 f"Grade: [{color}]{ss.grade}[/{color}]\n"
                 f"  Passed: [green]{ss.passed}[/]  "
-                f"Failed: [red]{ss.failed}[/]\n"
+                f"Failed: [red]{non_info_failed}[/]  "
+                f"Info: [dim]{ss.info_findings}[/]\n"
                 f"  [bold red]{ss.critical_findings}[/] Critical  ·  "
                 f"[red]{ss.high_findings}[/] High  ·  "
                 f"[yellow]{ss.medium_findings}[/] Medium  ·  "
@@ -130,7 +144,12 @@ class ConsoleReporter(BaseReporter):
         console.print()
 
     def _print_findings_table(self, result: ScanResult, console: Console) -> None:
-        failed = [f for f in result.findings if f.status == Status.FAIL]
+        # Only show non-INFO failures in the main findings table
+        failed = [
+            f
+            for f in result.findings
+            if f.status == Status.FAIL and f.severity != Severity.INFORMATIONAL
+        ]
         failed.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 99))
 
         console.print(Rule(f"[bold]Failed Findings ({len(failed)})[/bold]"))
@@ -166,14 +185,50 @@ class ConsoleReporter(BaseReporter):
         console.print(table)
         console.print()
 
+    def _print_informational_notes(self, result: ScanResult, console: Console) -> None:
+        """Show INFO findings in a separate, compact section."""
+        info_findings = [
+            f
+            for f in result.findings
+            if f.status == Status.FAIL and f.severity == Severity.INFORMATIONAL
+        ]
+        if not info_findings:
+            return
+
+        console.print(Rule(f"[dim]Informational Notes ({len(info_findings)})[/dim]"))
+        console.print()
+
+        table = Table(show_header=True, header_style="dim bold", show_lines=False)
+        table.add_column("ID", style="dim", width=10)
+        table.add_column("Title", style="dim", max_width=50, overflow="ellipsis")
+        table.add_column("Server", style="dim")
+        table.add_column("OWASP", style="dim")
+
+        for f in info_findings:
+            owasp = ", ".join(f.owasp_mcp) if f.owasp_mcp else "-"
+            table.add_row(f.check_id, f.check_title, f.server_name, owasp)
+
+        console.print(table)
+        console.print()
+
     def _print_status_counts(self, result: ScanResult, console: Console) -> None:
         passed = sum(1 for f in result.findings if f.status == Status.PASS)
-        failed = sum(1 for f in result.findings if f.status == Status.FAIL)
+        failed = sum(
+            1
+            for f in result.findings
+            if f.status == Status.FAIL and f.severity != Severity.INFORMATIONAL
+        )
+        info = sum(
+            1
+            for f in result.findings
+            if f.status == Status.FAIL and f.severity == Severity.INFORMATIONAL
+        )
         skipped = sum(1 for f in result.findings if f.status == Status.SKIPPED)
         errors = sum(1 for f in result.findings if f.status == Status.ERROR)
         console.print(
             f"  [green]{passed}[/] passed  ·  "
             f"[red]{failed}[/] failed  ·  "
+            f"[dim]{info}[/] info  ·  "
             f"[dim]{skipped}[/] skipped  ·  "
             f"[red]{errors}[/] errors"
         )

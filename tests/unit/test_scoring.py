@@ -4,6 +4,7 @@ Tests cover:
 - calculate_server_score() with various finding combinations
 - score_to_grade() threshold mapping
 - calculate_aggregate_score() with single and multiple servers
+- apply_severity_caps() grade capping
 - Edge cases (empty findings, zero checks, all same severity)
 """
 
@@ -15,6 +16,7 @@ from medusa.core.models import Finding, ServerScore, Severity, Status
 from medusa.core.scoring import (
     GRADE_THRESHOLDS,
     SEVERITY_WEIGHTS,
+    apply_severity_caps,
     calculate_aggregate_score,
     calculate_server_score,
     score_to_grade,
@@ -121,15 +123,16 @@ class TestCalculateServerScore:
         assert result.medium_findings == 0, "No medium failures"
         assert result.low_findings == 0, "No low failures"
 
-    def test_single_critical_failure(self) -> None:
+    def test_single_critical_failure_capped(self) -> None:
         findings = [
             _make_finding(status=Status.FAIL, severity=Severity.CRITICAL),
             _make_finding(status=Status.PASS, severity=Severity.HIGH),
             _make_finding(status=Status.PASS, severity=Severity.MEDIUM),
         ]
         result = calculate_server_score(findings, total_checks_run=3)
-        # Deduction = 10.0 / (10.0 * 3) * 10.0 = 3.33..., so score = 6.7
-        assert result.score < 10.0, "One CRITICAL failure should lower the score"
+        # Base score = 10 - (10/30)*10 = 6.7, capped at 4.9 by CRITICAL cap
+        assert result.score == 4.9, f"1 CRITICAL should cap score at 4.9, got {result.score}"
+        assert result.grade == "D", f"Expected grade D with 1 CRITICAL, got {result.grade}"
         assert result.critical_findings == 1, "Should count 1 critical finding"
         assert result.failed == 1, "Should count 1 failure"
         assert result.passed == 2, "Should count 2 passed"
@@ -147,7 +150,8 @@ class TestCalculateServerScore:
         assert result.grade == "F", "All CRITICAL failures should give grade F"
         assert result.critical_findings == 3, "Should count 3 critical findings"
 
-    def test_mixed_severities(self) -> None:
+    def test_mixed_severities_no_cap(self) -> None:
+        """1 HIGH + 1 LOW: no caps apply (below thresholds)."""
         findings = [
             _make_finding(status=Status.FAIL, severity=Severity.HIGH),
             _make_finding(status=Status.FAIL, severity=Severity.LOW),
@@ -158,6 +162,7 @@ class TestCalculateServerScore:
         # Deductions: HIGH=7.0, LOW=1.5, total=8.5
         # max_possible = 10.0 * 4 = 40.0
         # score = 10.0 - (8.5 / 40.0) * 10.0 = 10.0 - 2.125 = 7.875 -> 7.9
+        # No caps: 0 CRITICAL, 1 HIGH < 5
         assert result.score == 7.9, f"Expected score 7.9 for mixed severities, got {result.score}"
         assert result.grade == "B", f"Expected grade B, got {result.grade}"
         assert result.high_findings == 1, "Should count 1 high finding"
@@ -174,6 +179,18 @@ class TestCalculateServerScore:
         assert result.score == 10.0, (
             "INFORMATIONAL failures have weight 0.0 and should not lower score"
         )
+        assert result.info_findings == 1, "Should count 1 info finding"
+
+    def test_info_findings_field(self) -> None:
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.INFORMATIONAL, check_id="i1"),
+            _make_finding(status=Status.FAIL, severity=Severity.INFORMATIONAL, check_id="i2"),
+            _make_finding(status=Status.FAIL, severity=Severity.LOW, check_id="l1"),
+        ]
+        result = calculate_server_score(findings, total_checks_run=3)
+        assert result.info_findings == 2
+        assert result.low_findings == 1
+        assert result.failed == 3  # all FAILs still counted in raw total
 
     def test_zero_checks_run_gives_zero_score(self) -> None:
         result = calculate_server_score([], total_checks_run=0)
@@ -211,6 +228,7 @@ class TestCalculateServerScore:
         result = calculate_server_score(findings, total_checks_run=3)
         # Deduction = 4.0 / 30.0 * 10.0 = 1.333...
         # Score = 10.0 - 1.333... = 8.666... -> 8.7
+        # No caps: 0 CRITICAL, 0 HIGH
         assert result.score == 8.7, (
             f"Score should be rounded to 1 decimal place, got {result.score}"
         )
@@ -225,6 +243,134 @@ class TestCalculateServerScore:
         # Score = 10.0 - 0.6 = 9.4
         assert result.score == 9.4, f"Expected score 9.4, got {result.score}"
         assert result.grade == "A", f"Expected grade A, got {result.grade}"
+
+
+# ==========================================================================
+# apply_severity_caps() — direct unit tests
+# ==========================================================================
+
+
+class TestApplySeverityCaps:
+    """Direct tests for the apply_severity_caps function."""
+
+    def test_no_caps_returns_original(self) -> None:
+        assert apply_severity_caps(9.5, critical_count=0, high_count=0) == 9.5
+
+    def test_critical_caps_score(self) -> None:
+        assert apply_severity_caps(9.5, critical_count=1, high_count=0) == 4.9
+
+    def test_high_caps_score(self) -> None:
+        assert apply_severity_caps(9.5, critical_count=0, high_count=5) == 6.9
+
+    def test_many_critical_floors_at_zero(self) -> None:
+        # 11 CRITICAL: cap = max(0, 4.9 - 10*0.5) = max(0, -0.1) = 0.0
+        assert apply_severity_caps(9.5, critical_count=11, high_count=0) == 0.0
+
+    def test_score_below_cap_unchanged(self) -> None:
+        assert apply_severity_caps(2.0, critical_count=1, high_count=0) == 2.0
+
+    def test_high_below_threshold_no_cap(self) -> None:
+        # 4 HIGH findings: below threshold of 5, no cap
+        assert apply_severity_caps(9.5, critical_count=0, high_count=4) == 9.5
+
+
+# ==========================================================================
+# Severity caps via calculate_server_score()
+# ==========================================================================
+
+
+class TestSeverityCaps:
+    """Tests for severity-based score capping in calculate_server_score."""
+
+    def test_one_critical_caps_at_4_9(self) -> None:
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL, check_id="c1"),
+            *[_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(19)],
+        ]
+        result = calculate_server_score(findings, total_checks_run=20)
+        # Base score = 10 - (10/200)*10 = 9.5, capped at 4.9
+        assert result.score == 4.9
+        assert result.grade == "D"
+
+    def test_three_critical_caps_at_3_9(self) -> None:
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL, check_id=f"c{i}")
+            for i in range(3)
+        ] + [_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(17)]
+        result = calculate_server_score(findings, total_checks_run=20)
+        # Cap = max(0, 4.9 - 2*0.5) = 3.9
+        assert result.score == 3.9
+        assert result.grade == "D"
+
+    def test_ten_critical_caps_near_zero(self) -> None:
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL, check_id=f"c{i}")
+            for i in range(10)
+        ] + [_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(90)]
+        result = calculate_server_score(findings, total_checks_run=100)
+        # Cap = max(0, 4.9 - 9*0.5) = max(0, 0.4) = 0.4
+        assert result.score == 0.4
+        assert result.grade == "F"
+
+    def test_five_high_caps_at_6_9(self) -> None:
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.HIGH, check_id=f"h{i}")
+            for i in range(5)
+        ] + [_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(95)]
+        result = calculate_server_score(findings, total_checks_run=100)
+        # Base = 10 - (35/1000)*10 = 9.65 -> 9.7, capped at 6.9
+        assert result.score == 6.9
+        assert result.grade == "C"
+
+    def test_thirty_four_high_caps_low(self) -> None:
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.HIGH, check_id=f"h{i}")
+            for i in range(34)
+        ] + [_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(66)]
+        result = calculate_server_score(findings, total_checks_run=100)
+        # Cap = max(0, 6.9 - 29*0.1) = max(0, 4.0) = 4.0
+        assert result.score == 4.0
+        assert result.grade == "D"
+
+    def test_critical_cap_overrides_high_cap(self) -> None:
+        """When both CRITICAL and HIGH caps apply, the stricter wins."""
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL, check_id="c1"),
+            *[
+                _make_finding(status=Status.FAIL, severity=Severity.HIGH, check_id=f"h{i}")
+                for i in range(10)
+            ],
+            *[_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(89)],
+        ]
+        result = calculate_server_score(findings, total_checks_run=100)
+        # CRITICAL cap = 4.9, HIGH cap = max(0, 6.9 - 5*0.1) = 6.4
+        # min(4.9, 6.4) = 4.9
+        assert result.score == 4.9
+        assert result.grade == "D"
+
+    def test_base_score_below_cap_not_raised(self) -> None:
+        """Caps only lower, never raise the score."""
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.CRITICAL, check_id=f"c{i}")
+            for i in range(3)
+        ]
+        result = calculate_server_score(findings, total_checks_run=3)
+        # Base score = 0.0 (all 3 checks are CRITICAL fails)
+        # Cap = 3.9, but base is already lower
+        assert result.score == 0.0
+        assert result.grade == "F"
+
+    def test_no_cap_when_below_thresholds(self) -> None:
+        """No caps apply when CRITICAL=0 and HIGH<5."""
+        findings = [
+            _make_finding(status=Status.FAIL, severity=Severity.HIGH, check_id=f"h{i}")
+            for i in range(4)
+        ] + [_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(96)]
+        result = calculate_server_score(findings, total_checks_run=100)
+        # Base = 10 - (28/1000)*10 = 10 - 0.28 = 9.72 -> 9.7
+        # No caps apply (4 HIGH < threshold of 5)
+        assert result.score == 9.7
+        assert result.grade == "A"
 
 
 # ==========================================================================

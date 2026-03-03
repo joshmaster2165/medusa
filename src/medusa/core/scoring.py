@@ -20,6 +20,19 @@ GRADE_THRESHOLDS: list[tuple[float, str]] = [
     (0.0, "F"),
 ]
 
+# ---------------------------------------------------------------------------
+# Severity-based score caps
+# ---------------------------------------------------------------------------
+# Prevent inflated grades when critical/high findings exist, regardless of
+# how many checks pass overall.
+
+CRITICAL_CAP_BASE: float = 4.9  # 1 CRITICAL → max score 4.9 (Grade D)
+CRITICAL_CAP_DECAY: float = 0.5  # Each additional CRITICAL lowers cap by 0.5
+
+HIGH_CAP_THRESHOLD: int = 5  # Caps kick in at ≥ 5 HIGH findings
+HIGH_CAP_BASE: float = 6.9  # 5 HIGH → max score 6.9 (Grade C)
+HIGH_CAP_DECAY: float = 0.1  # Each additional HIGH beyond 5 lowers cap by 0.1
+
 
 def score_to_grade(score: float) -> str:
     """Convert a numeric score (0-10) to a letter grade."""
@@ -29,11 +42,36 @@ def score_to_grade(score: float) -> str:
     return "F"
 
 
+def apply_severity_caps(
+    score: float,
+    critical_count: int,
+    high_count: int,
+) -> float:
+    """Apply severity-based score caps.
+
+    Even if the percentage-based score is high, the presence of
+    CRITICAL or many HIGH findings caps the maximum achievable score.
+
+    Returns the capped score (may be lower than input, never higher).
+    """
+    cap = 10.0
+
+    if critical_count >= 1:
+        critical_cap = max(0.0, CRITICAL_CAP_BASE - (critical_count - 1) * CRITICAL_CAP_DECAY)
+        cap = min(cap, critical_cap)
+
+    if high_count >= HIGH_CAP_THRESHOLD:
+        high_cap = max(0.0, HIGH_CAP_BASE - (high_count - HIGH_CAP_THRESHOLD) * HIGH_CAP_DECAY)
+        cap = min(cap, high_cap)
+
+    return min(score, round(cap, 1))
+
+
 def calculate_server_score(findings: list[Finding], total_checks_run: int) -> ServerScore:
     """Calculate a security score for a single server.
 
     Score = 10.0 - (weighted_deductions / max_possible_deduction) * 10.0
-    Clamped to [0.0, 10.0].
+    Clamped to [0.0, 10.0], then severity caps applied.
     """
     if total_checks_run == 0:
         score = 0.0
@@ -47,6 +85,15 @@ def calculate_server_score(findings: list[Finding], total_checks_run: int) -> Se
     passed = sum(1 for f in findings if f.status == Status.PASS)
     failed_count = sum(1 for f in findings if f.status == Status.FAIL)
 
+    critical_count = sum(
+        1 for f in findings if f.status == Status.FAIL and f.severity == Severity.CRITICAL
+    )
+    high_count = sum(1 for f in findings if f.status == Status.FAIL and f.severity == Severity.HIGH)
+
+    # Apply severity-based caps after computing the base score
+    if total_checks_run > 0:
+        score = apply_severity_caps(score, critical_count, high_count)
+
     return ServerScore(
         server_name=findings[0].server_name if findings else "unknown",
         score=score,
@@ -54,17 +101,16 @@ def calculate_server_score(findings: list[Finding], total_checks_run: int) -> Se
         total_checks=total_checks_run,
         passed=passed,
         failed=failed_count,
-        critical_findings=sum(
-            1 for f in findings if f.status == Status.FAIL and f.severity == Severity.CRITICAL
-        ),
-        high_findings=sum(
-            1 for f in findings if f.status == Status.FAIL and f.severity == Severity.HIGH
-        ),
+        critical_findings=critical_count,
+        high_findings=high_count,
         medium_findings=sum(
             1 for f in findings if f.status == Status.FAIL and f.severity == Severity.MEDIUM
         ),
         low_findings=sum(
             1 for f in findings if f.status == Status.FAIL and f.severity == Severity.LOW
+        ),
+        info_findings=sum(
+            1 for f in findings if f.status == Status.FAIL and f.severity == Severity.INFORMATIONAL
         ),
     )
 
