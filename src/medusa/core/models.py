@@ -41,6 +41,9 @@ class CheckMetadata(BaseModel):
     references: list[str] = []
     owasp_mcp: list[str] = []
     tags: list[str] = []
+    audit: str = ""
+    impact: str = ""
+    default_value: str = ""
 
 
 class Finding(BaseModel):
@@ -93,3 +96,4 @@ class ScanResult(BaseModel):
     compliance_results: dict[str, dict] = {}
     reasoning_results: dict[str, Any] = {}
     ai_filter_stats: dict[str, dict[str, int]] = {}
+    changes: dict[str, list[dict]] = {}

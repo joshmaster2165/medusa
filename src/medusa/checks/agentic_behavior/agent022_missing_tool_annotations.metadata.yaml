@@ -1,31 +1,30 @@
 check_id: agent022
-title: Missing Tool Annotations
+title: Ensure Tool Annotations are configured
 category: agentic_behavior
 severity: low
-description: >
-  Detects tools that lack MCP annotations (readOnlyHint,
-  destructiveHint, idempotentHint, openWorldHint) that help LLM
-  clients make informed safety decisions. Without annotations, clients
-  cannot determine whether a tool is read-only, destructive,
-  idempotent, or accesses external resources.
-risk_explanation: >
-  MCP tool annotations provide crucial safety metadata that LLM
-  clients use to make informed decisions about tool invocation. Without
-  readOnlyHint, a client cannot know if a tool modifies state. Without
-  destructiveHint, it cannot warn before irreversible operations.
-  Missing annotations force clients to either block tools entirely or
-  allow them blindly, both of which degrade security and usability.
-  Destructive tools without annotations are especially dangerous.
-remediation: >
-  Add MCP annotations to all tools with appropriate hint values.
-  Set readOnlyHint for tools that only read data. Set destructiveHint
-  for tools that delete or modify data irreversibly. Set idempotentHint
-  for tools that can be safely retried. Set openWorldHint for tools
-  that access external resources. Prioritize annotating destructive
-  and privileged tools first.
+description: Checks for tools that lack MCP annotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint) that
+  help LLM clients make informed safety decisions. Without annotations, clients cannot determine whether a tool is read-only,
+  destructive, idempotent, or accesses external resources.
+risk_explanation: 'MCP tool annotations provide crucial safety metadata that LLM clients use to make informed decisions about
+  tool invocation. Without readOnlyHint, a client cannot know if a tool modifies state. Without destructiveHint, it cannot
+  warn before irreversible operations. Missing annotations force clients to either block tools entirely or allow them blindly,
+  both of which degrade security and usability. Destructive tools without annotations are especially dangerous.
+
+  '
+remediation: '1. Add MCP annotations to all tools with appropriate hint values.
+
+  2. Set readOnlyHint for tools that only read data.
+
+  3. Set destructiveHint for tools that delete or modify data irreversibly.
+
+  4. Set idempotentHint for tools that can be safely retried.
+
+  5. Set openWorldHint for tools that access external resources.
+
+  6. Prioritize annotating destructive and privileged tools first.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP01:2025"
+- MCP01:2025
 tags:
-  - agentic_behavior
+- agentic_behavior

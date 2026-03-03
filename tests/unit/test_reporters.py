@@ -19,7 +19,7 @@ from medusa.reporters.sarif_reporter import SarifReporter
 def sample_finding() -> Finding:
     return Finding(
         check_id="tp001",
-        check_title="Hidden Instructions in Tool Descriptions",
+        check_title="Ensure Tool Descriptions do not contain hidden Instructions",
         status=Status.FAIL,
         severity=Severity.CRITICAL,
         server_name="test-server",
@@ -116,7 +116,7 @@ class TestMarkdownReporter:
     def test_markdown_contains_report_header(self, sample_scan_result):
         reporter = MarkdownReporter()
         output = reporter.generate(sample_scan_result)
-        assert "# Medusa" in output
+        assert "# MCP Security Configuration Assessment Report" in output
 
     def test_markdown_contains_summary_section(self, sample_scan_result):
         reporter = MarkdownReporter()
@@ -327,7 +327,7 @@ class TestConsoleReporter:
         reporter.print_to_console(sample_scan_result, test_console)
         output = string_io.getvalue()
         assert len(output) > 0
-        assert "SCAN RESULTS" in output
+        assert "MCP SECURITY CONFIGURATION ASSESSMENT" in output
         assert "test-server" in output
 
     def test_print_to_console_shows_grade(self, sample_scan_result):
@@ -336,7 +336,7 @@ class TestConsoleReporter:
         test_console = RichConsole(file=string_io, force_terminal=True)
         reporter.print_to_console(sample_scan_result, test_console)
         output = string_io.getvalue()
-        assert "Overall Grade" in output
+        assert "Security Posture Score" in output
         assert "8.5" in output
 
     def test_print_to_console_shows_failed_findings(self, sample_scan_result):
@@ -345,7 +345,7 @@ class TestConsoleReporter:
         test_console = RichConsole(file=string_io, force_terminal=True)
         reporter.print_to_console(sample_scan_result, test_console)
         output = string_io.getvalue()
-        assert "Failed Findings" in output
+        assert "Misconfigurations" in output
         assert "tp001" in output
 
     def test_print_to_console_shows_server_breakdown(self, sample_scan_result):

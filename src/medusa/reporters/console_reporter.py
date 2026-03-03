@@ -58,13 +58,15 @@ class ConsoleReporter(BaseReporter):
         if result.reasoning_results:
             self._print_analysis_insights(result, console)
         self._print_status_counts(result, console)
+        if result.changes:
+            self._print_changes(result, console)
         if result.compliance_results:
             self._print_compliance(result, console)
         self._print_footer(result, console)
 
     def _print_header(self, result: ScanResult, console: Console) -> None:
         console.print()
-        console.print(Rule("[bold]SCAN RESULTS[/bold]", style="green"))
+        console.print(Rule("[bold]MCP SECURITY CONFIGURATION ASSESSMENT[/bold]", style="green"))
         ts = result.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")
         console.print(
             f"  [dim]Scan {result.scan_id}  ·  {ts}  ·  Medusa v{result.medusa_version}[/dim]"
@@ -78,7 +80,7 @@ class ConsoleReporter(BaseReporter):
         grade_text.append(f"{result.aggregate_score} / 10", style=color)
         panel = Panel(
             grade_text,
-            title="[bold]Overall Grade[/bold]",
+            title="[bold]Security Posture Score[/bold]",
             border_style=color,
             padding=(1, 4),
         )
@@ -152,11 +154,11 @@ class ConsoleReporter(BaseReporter):
         ]
         failed.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 99))
 
-        console.print(Rule(f"[bold]Failed Findings ({len(failed)})[/bold]"))
+        console.print(Rule(f"[bold]Misconfigurations ({len(failed)})[/bold]"))
         console.print()
 
         if not failed:
-            console.print("  [green]✓ No failed findings — all checks passed![/]")
+            console.print("  [green]✓ No misconfigurations — all checks passed![/]")
             console.print()
             return
 
@@ -186,7 +188,7 @@ class ConsoleReporter(BaseReporter):
         console.print()
 
     def _print_informational_notes(self, result: ScanResult, console: Console) -> None:
-        """Show INFO findings in a separate, compact section."""
+        """Show INFO findings as configuration advisories in a separate, compact section."""
         info_findings = [
             f
             for f in result.findings
@@ -195,7 +197,7 @@ class ConsoleReporter(BaseReporter):
         if not info_findings:
             return
 
-        console.print(Rule(f"[dim]Informational Notes ({len(info_findings)})[/dim]"))
+        console.print(Rule(f"[dim]Configuration Advisories ({len(info_findings)})[/dim]"))
         console.print()
 
         table = Table(show_header=True, header_style="dim bold", show_lines=False)
@@ -234,6 +236,27 @@ class ConsoleReporter(BaseReporter):
         )
         console.print()
 
+    def _print_changes(self, result: ScanResult, console: Console) -> None:
+        """Show changes detected since last scan."""
+        total = sum(len(changes) for changes in result.changes.values())
+        console.print(Rule(f"[bold]Changes Since Last Scan ({total})[/bold]"))
+        console.print()
+
+        change_icons = {
+            "tool_added": "[green]+[/green]",
+            "tool_removed": "[red]-[/red]",
+            "tool_modified": "[yellow]~[/yellow]",
+            "server_added": "[green]+ server[/green]",
+            "server_removed": "[red]- server[/red]",
+        }
+
+        for server_name, changes in result.changes.items():
+            console.print(f"  [bold]{server_name}[/bold]")
+            for change in changes:
+                icon = change_icons.get(change["type"], "?")
+                console.print(f"    {icon} {change['type']}: {change['name']}")
+            console.print()
+
     def _print_compliance(self, result: ScanResult, console: Console) -> None:
         console.print(Rule("[bold]Compliance[/bold]"))
         console.print()
@@ -252,7 +275,7 @@ class ConsoleReporter(BaseReporter):
 
     def _print_analysis_insights(self, result: ScanResult, console: Console) -> None:
         """Print analysis insights: executive summary, priorities, attack chains."""
-        console.print(Rule("[bold]Analysis Insights[/bold]"))
+        console.print(Rule("[bold]Risk Analysis[/bold]"))
         console.print()
 
         for server_name, reasoning in result.reasoning_results.items():

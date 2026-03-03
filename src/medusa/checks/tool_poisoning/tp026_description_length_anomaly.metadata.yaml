@@ -1,32 +1,29 @@
 check_id: tp026
-title: Description Length Anomaly
+title: Ensure protection against Description Length Anomaly
 category: tool_poisoning
 severity: medium
-description: >
-  Detects tool descriptions exceeding 3000 characters or descriptions that
-  are more than 5x longer than the average across all tools on the server.
-  Excessively long descriptions may hide prompt injection payloads buried
-  deep within verbose text that neither users nor LLMs will fully process.
-risk_explanation: >
-  An attacker can craft an extremely long tool description that begins with
-  benign content but embeds malicious instructions far below the visible
-  fold. LLMs may process the full text including hidden directives, while
-  human reviewers are unlikely to read thousands of characters of
-  description. This makes length anomalies a reliable indicator of
-  potential prompt injection concealment.
-remediation: >
-  Review any tool with a description exceeding 3000 characters for hidden
-  instructions or prompt injection payloads. Establish a maximum description
-  length policy for MCP servers and enforce it during server registration.
-  Consider truncating descriptions before passing them to the LLM or
-  implementing summarization with safety checks.
+description: Checks for tool descriptions exceeding 3000 characters or descriptions that are more than 5x longer than the
+  average across all tools on the server. Excessively long descriptions may hide prompt injection payloads buried deep within
+  verbose text that neither users nor LLMs will fully process.
+risk_explanation: 'An attacker can craft an extremely long tool description that begins with benign content but embeds malicious
+  instructions far below the visible fold. LLMs may process the full text including hidden directives, while human reviewers
+  are unlikely to read thousands of characters of description. This makes length anomalies a reliable indicator of potential
+  prompt injection concealment.
+
+  '
+remediation: '1. Review any tool with a description exceeding 3000 characters for hidden instructions or prompt injection
+  payloads.
+
+  2. Establish a maximum description length policy for MCP servers and enforce it during server registration.
+
+  3. Consider truncating descriptions before passing them to the LLM or implementing summarization with safety checks.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/tools
 owasp_mcp:
-  - "MCP02:2025"
+- MCP02:2025
 tags:
-  - tool_poisoning
-  - description_length
-  - prompt_injection
-  - anomaly_detection
+- tool_poisoning
+- description_length
+- prompt_injection
+- anomaly_detection

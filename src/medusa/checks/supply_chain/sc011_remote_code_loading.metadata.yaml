@@ -1,33 +1,32 @@
 check_id: sc011
-title: Remote Code Loading in Args
+title: Ensure server args do not load remote code
 category: supply_chain
 severity: critical
-description: >
-  Detects server arguments containing URLs that suggest remote code download
-  and execution. Patterns like piping curl/wget output to a shell interpreter
-  or using --eval/--require flags with remote URLs enable arbitrary remote
-  code execution during MCP server startup.
-risk_explanation: >
-  Remote code loading patterns like "curl URL | bash" download and execute
-  code from an external server without any verification. An attacker who
-  controls the URL endpoint (via DNS hijacking, MITM, or server compromise)
-  can serve arbitrary malicious code that executes with the MCP server's
-  full privileges. Even URLs without explicit execution patterns may indicate
+description: Checks for server arguments containing URLs that suggest remote code download and execution. Patterns like piping
+  curl/wget output to a shell interpreter or using --eval/--require flags with remote URLs enable arbitrary remote code execution
+  during MCP server startup.
+risk_explanation: 'Remote code loading patterns like "curl URL | bash" download and execute code from an external server without
+  any verification. An attacker who controls the URL endpoint (via DNS hijacking, MITM, or server compromise) can serve arbitrary
+  malicious code that executes with the MCP server''s full privileges. Even URLs without explicit execution patterns may indicate
   dynamic dependency loading that bypasses local security controls.
-remediation: >
-  Never use curl-pipe-shell patterns in MCP server configurations. Download
-  dependencies ahead of time, verify their integrity with checksums or
-  signatures, and reference only local files in server arguments. If remote
-  resources are required, use a locked dependency manager (npm, pip with
-  hash verification) rather than direct URL fetching. Implement argument
-  validation that rejects URLs in server launch parameters.
+
+  '
+remediation: '1. Never use curl-pipe-shell patterns in MCP server configurations.
+
+  2. Download dependencies ahead of time, verify their integrity with checksums or signatures, and reference only local files
+  in server arguments.
+
+  3. If remote resources are required, use a locked dependency manager (npm, pip with hash verification) rather than direct
+  URL fetching.
+
+  4. Implement argument validation that rejects URLs in server launch parameters.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP09:2025"
+- MCP09:2025
 tags:
-  - supply_chain
-  - remote_code
-  - curl_pipe_bash
-  - code_loading
-  - url_execution
+- supply_chain
+- remote_code
+- curl_pipe_bash
+- code_loading
+- url_execution

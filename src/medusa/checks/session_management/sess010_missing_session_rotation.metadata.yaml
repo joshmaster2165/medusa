@@ -1,31 +1,29 @@
 check_id: sess010
-title: Missing Session ID Rotation
+title: Ensure Session ID Rotation is configured
 category: session_management
 severity: info
-description: >
-  Detects MCP servers that do not periodically rotate session
-  identifiers during active sessions. Without rotation, a session ID
-  remains static for the entire session lifetime, giving attackers an
-  extended window to capture and exploit the token for unauthorized tool
-  invocations.
-risk_explanation: >
-  Static session IDs that persist for the entire session lifetime
-  provide attackers with a long window for capture and exploitation. If
-  a session ID is leaked at any point during a long-running MCP session,
-  the attacker can use it for the remainder of the session. In MCP
-  contexts where sessions may last hours during extended LLM
-  interactions, this risk is amplified.
-remediation: >
-  Implement periodic session ID rotation during active MCP sessions.
-  Rotate the session ID at least every 15-30 minutes and immediately
-  after any privilege level change. Ensure the old session ID is
-  invalidated upon rotation. Maintain session continuity across rotation
-  by migrating session state to the new ID atomically. Log all rotation
-  events for audit purposes.
+description: Checks the MCP server for that do not periodically rotate session identifiers during active sessions. Without
+  rotation, a session ID remains static for the entire session lifetime, giving attackers an extended window to capture and
+  exploit the token for unauthorized tool invocations.
+risk_explanation: 'Static session IDs that persist for the entire session lifetime provide attackers with a long window for
+  capture and exploitation. If a session ID is leaked at any point during a long-running MCP session, the attacker can use
+  it for the remainder of the session. In MCP contexts where sessions may last hours during extended LLM interactions, this
+  risk is amplified.
+
+  '
+remediation: '1. Implement periodic session ID rotation during active MCP sessions.
+
+  2. Rotate the session ID at least every 15-30 minutes and immediately after any privilege level change.
+
+  3. Ensure the old session ID is invalidated upon rotation.
+
+  4. Maintain session continuity across rotation by migrating session state to the new ID atomically.
+
+  5. Log all rotation events for audit purposes.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP01:2025"
+- MCP01:2025
 tags:
-  - session_management
-  - authentication
+- session_management
+- authentication

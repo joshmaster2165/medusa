@@ -1,30 +1,27 @@
 check_id: iv018
-title: CRLF Injection Risk
+title: Ensure protection against CRLF Injection
 category: input_validation
 severity: high
-description: >
-  Detects tool parameters vulnerable to carriage return and line feed
-  injection. CRLF characters (\\r\\n) in parameters used for HTTP
-  headers, log entries, or protocol messages can inject additional
-  content, enabling response splitting and log forgery.
-risk_explanation: >
-  CRLF injection in HTTP headers enables response splitting where the
-  attacker controls part of the HTTP response. This can inject arbitrary
-  headers, set cookies, redirect users, or inject HTML/JavaScript
-  content. In log files, CRLF injection creates fake log entries that
-  can mask attack evidence or trigger monitoring false positives.
-remediation: >
-  Strip or reject CRLF characters (\\r, \\n) from all parameters used in
-  HTTP headers, log messages, or protocol communications. Use framework
-  functions for header setting that automatically prevent CRLF
-  injection. Implement input validation that rejects control characters
-  in string parameters.
+description: Checks for tool parameters vulnerable to carriage return and line feed injection. CRLF characters (\\r\\n) in
+  parameters used for HTTP headers, log entries, or protocol messages can inject additional content, enabling response splitting
+  and log forgery.
+risk_explanation: 'CRLF injection in HTTP headers enables response splitting where the attacker controls part of the HTTP
+  response. This can inject arbitrary headers, set cookies, redirect users, or inject HTML/JavaScript content. In log files,
+  CRLF injection creates fake log entries that can mask attack evidence or trigger monitoring false positives.
+
+  '
+remediation: '1. Strip or reject CRLF characters (\\r, \\n) from all parameters used in HTTP headers, log messages, or protocol
+  communications.
+
+  2. Use framework functions for header setting that automatically prevent CRLF injection.
+
+  3. Implement input validation that rejects control characters in string parameters.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP05:2025"
+- MCP05:2025
 tags:
-  - input_validation
-  - crlf_injection
-  - response_splitting
-  - log_injection
+- input_validation
+- crlf_injection
+- response_splitting
+- log_injection

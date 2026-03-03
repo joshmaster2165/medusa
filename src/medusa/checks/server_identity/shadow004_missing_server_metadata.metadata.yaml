@@ -1,30 +1,26 @@
 check_id: shadow004
-title: Missing Server Metadata
+title: Ensure Server Metadata is configured
 category: server_identity
 severity: info
-description: >
-  Detects MCP servers that lack descriptive metadata such as a human-
-  readable description, author information, contact details, or homepage
-  URL. Missing metadata makes it difficult to verify server legitimacy.
-risk_explanation: >
-  Servers without adequate metadata cannot be easily verified by users
-  or administrators. Missing descriptions prevent users from
-  understanding what a server does before granting it access. Missing
-  contact information prevents reporting security issues. Missing author
-  and homepage details make it impossible to verify the server's
-  provenance and legitimacy.
-remediation: >
-  Ensure all MCP servers include comprehensive metadata: a clear
-  description of functionality, author name and contact information,
-  homepage or repository URL, and license information. Implement server
-  registration policies that require minimum metadata fields. Display
-  server metadata to users during consent and authorization flows.
+description: Verifies that the MCP server has descriptive metadata such as a human- readable description, author information,
+  contact details, or homepage URL. Missing metadata makes it difficult to verify server legitimacy.
+risk_explanation: 'Servers without adequate metadata cannot be easily verified by users or administrators. Missing descriptions
+  prevent users from understanding what a server does before granting it access. Missing contact information prevents reporting
+  security issues. Missing author and homepage details make it impossible to verify the server''s provenance and legitimacy.
+
+  '
+remediation: '1. Ensure all MCP servers include comprehensive metadata: a clear description of functionality, author name
+  and contact information, homepage or repository URL, and license information.
+
+  2. Implement server registration policies that require minimum metadata fields.
+
+  3. Display server metadata to users during consent and authorization flows.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP06:2025"
+- MCP06:2025
 tags:
-  - server_identity
-  - metadata
-  - transparency
-  - verification
+- server_identity
+- metadata
+- transparency
+- verification

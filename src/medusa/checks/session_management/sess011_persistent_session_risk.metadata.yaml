@@ -1,31 +1,28 @@
 check_id: sess011
-title: Persistent Session Risk
+title: Ensure protection against Persistent Session
 category: session_management
 severity: medium
-description: >
-  Detects MCP server configurations that support persistent or "remember
-  me" sessions that survive client restarts, browser closures, or system
-  reboots. Persistent sessions extend the window of exposure for session
-  tokens stored on disk and can be exploited if the client device is
-  compromised.
-risk_explanation: >
-  Persistent MCP sessions store session tokens on disk, making them
-  available to anyone with access to the client filesystem. This is
-  particularly dangerous in shared computing environments or when LLM
-  client devices are lost or stolen. Persistent sessions also survive
-  security events like password changes, meaning compromised sessions
-  may remain valid even after remediation steps are taken.
-remediation: >
-  Avoid persistent sessions for MCP connections by default. If
-  persistent sessions are required, encrypt stored session tokens with a
-  key derived from user credentials. Implement automatic invalidation of
-  persistent sessions when security-relevant events occur such as
-  password changes or permission modifications. Set a maximum lifetime
-  for persistent sessions that is enforced server-side.
+description: Checks the MCP server for configurations that support persistent or "remember me" sessions that survive client
+  restarts, browser closures, or system reboots. Persistent sessions extend the window of exposure for session tokens stored
+  on disk and can be exploited if the client device is compromised.
+risk_explanation: 'Persistent MCP sessions store session tokens on disk, making them available to anyone with access to the
+  client filesystem. This is particularly dangerous in shared computing environments or when LLM client devices are lost or
+  stolen. Persistent sessions also survive security events like password changes, meaning compromised sessions may remain
+  valid even after remediation steps are taken.
+
+  '
+remediation: '1. Avoid persistent sessions for MCP connections by default.
+
+  2. If persistent sessions are required, encrypt stored session tokens with a key derived from user credentials.
+
+  3. Implement automatic invalidation of persistent sessions when security-relevant events occur such as password changes
+  or permission modifications.
+
+  4. Set a maximum lifetime for persistent sessions that is enforced server-side.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP01:2025"
+- MCP01:2025
 tags:
-  - session_management
-  - authentication
+- session_management
+- authentication

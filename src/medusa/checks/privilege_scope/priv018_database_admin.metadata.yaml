@@ -1,30 +1,27 @@
 check_id: priv018
-title: Database Admin Operations
+title: Ensure protection against Database Admin Operations
 category: privilege_scope
 severity: high
-description: >
-  Detects MCP tools with DDL (Data Definition Language) or
-  administrative database privileges. Tools that can CREATE, ALTER,
-  DROP, GRANT, or TRUNCATE have capabilities far beyond data query and
-  manipulation.
-risk_explanation: >
-  Database admin privileges allow an attacker to drop tables (data
-  destruction), create new administrative users (persistence), modify
-  schemas (data corruption), and grant themselves additional permissions
-  (escalation). Admin operations bypass row-level security and can
-  affect the entire database instance.
-remediation: >
-  Restrict MCP tools to the minimum required database privileges
-  (SELECT, INSERT, UPDATE on specific tables). Use separate database
-  accounts for DDL and DML operations. Implement database audit logging
-  for all DDL operations. Never grant GRANT or SUPERUSER privileges to
-  MCP tool database accounts.
+description: Checks for MCP tools with DDL (Data Definition Language) or administrative database privileges. Tools that can
+  CREATE, ALTER, DROP, GRANT, or TRUNCATE have capabilities far beyond data query and manipulation.
+risk_explanation: 'Database admin privileges allow an attacker to drop tables (data destruction), create new administrative
+  users (persistence), modify schemas (data corruption), and grant themselves additional permissions (escalation). Admin operations
+  bypass row-level security and can affect the entire database instance.
+
+  '
+remediation: '1. Restrict MCP tools to the minimum required database privileges (SELECT, INSERT, UPDATE on specific tables).
+
+  2. Use separate database accounts for DDL and DML operations.
+
+  3. Implement database audit logging for all DDL operations.
+
+  4. Never grant GRANT or SUPERUSER privileges to MCP tool database accounts.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP07:2025"
+- MCP07:2025
 tags:
-  - privilege_scope
-  - database_admin
-  - ddl
-  - privilege_escalation
+- privilege_scope
+- database_admin
+- ddl
+- privilege_escalation

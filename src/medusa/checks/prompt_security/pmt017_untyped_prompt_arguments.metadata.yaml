@@ -1,32 +1,29 @@
 check_id: pmt017
-title: Untyped Prompt Arguments
+title: Ensure Prompt Arguments are typed
 category: prompt_security
 severity: medium
-description: >
-  Detects prompt arguments that lack description or type information.
-  Arguments without descriptions make it unclear what input is expected,
-  increasing the risk of injection attacks or unintended behavior when
-  LLM clients generate argument values autonomously.
-risk_explanation: >
-  When prompt arguments lack descriptions, LLM clients must guess the
-  expected format and content. This ambiguity increases the likelihood
-  of injection attacks where malicious input is passed because the
-  client has no guidance on valid values. Undocumented arguments also
-  make security auditing more difficult and reduce the effectiveness
-  of input validation.
-remediation: >
-  Add clear descriptions to all prompt arguments that specify the
-  expected format, valid value ranges, and any constraints. Include
-  type information (string, number, enum) in the description. Consider
-  adding example values to further clarify expected input. Document
-  any security-sensitive arguments with explicit sanitization
-  requirements.
+description: Checks for prompt arguments that lack description or type information. Arguments without descriptions make it
+  unclear what input is expected, increasing the risk of injection attacks or unintended behavior when LLM clients generate
+  argument values autonomously.
+risk_explanation: 'When prompt arguments lack descriptions, LLM clients must guess the expected format and content. This ambiguity
+  increases the likelihood of injection attacks where malicious input is passed because the client has no guidance on valid
+  values. Undocumented arguments also make security auditing more difficult and reduce the effectiveness of input validation.
+
+  '
+remediation: '1. Add clear descriptions to all prompt arguments that specify the expected format, valid value ranges, and
+  any constraints.
+
+  2. Include type information (string, number, enum) in the description.
+
+  3. Consider adding example values to further clarify expected input.
+
+  4. Document any security-sensitive arguments with explicit sanitization requirements.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/prompts"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/prompts
 owasp_mcp:
-  - "MCP05:2025"
+- MCP05:2025
 tags:
-  - prompt_security
-  - documentation
-  - quality
+- prompt_security
+- documentation
+- quality

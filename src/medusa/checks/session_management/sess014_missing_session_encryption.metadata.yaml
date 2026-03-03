@@ -1,30 +1,29 @@
 check_id: sess014
-title: Missing Session Encryption
+title: Ensure Session Encryption is configured
 category: session_management
 severity: info
-description: >
-  Detects MCP server sessions where session data is stored or
-  transmitted without encryption. Unencrypted session tokens and session
-  state can be intercepted in transit or read from storage by attackers
-  with access to network traffic or the storage medium.
-risk_explanation: >
-  Unencrypted MCP session data is vulnerable to interception during
-  transit and unauthorized access at rest. Attackers on the same network
-  can capture session tokens via packet sniffing. Attackers with storage
-  access can read session state including tool invocation history,
-  cached credentials, and intermediate results. This enables session
-  hijacking and data exfiltration.
-remediation: >
-  Encrypt all MCP session data both in transit and at rest. Use TLS 1.2
-  or higher for all session-bearing communications. Encrypt server-side
-  session stores using AES-256 or equivalent. Ensure session tokens
-  transmitted via cookies have the Secure flag set. For session data
-  stored in databases or caches, use transparent data encryption or
-  application-level encryption.
+description: Checks the MCP server for sessions where session data is stored or transmitted without encryption. Unencrypted
+  session tokens and session state can be intercepted in transit or read from storage by attackers with access to network
+  traffic or the storage medium.
+risk_explanation: 'Unencrypted MCP session data is vulnerable to interception during transit and unauthorized access at rest.
+  Attackers on the same network can capture session tokens via packet sniffing. Attackers with storage access can read session
+  state including tool invocation history, cached credentials, and intermediate results. This enables session hijacking and
+  data exfiltration.
+
+  '
+remediation: '1. Encrypt all MCP session data both in transit and at rest.
+
+  2. Use TLS 1.2 or higher for all session-bearing communications.
+
+  3. Encrypt server-side session stores using AES-256 or equivalent.
+
+  4. Ensure session tokens transmitted via cookies have the Secure flag set.
+
+  5. For session data stored in databases or caches, use transparent data encryption or application-level encryption.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP01:2025"
+- MCP01:2025
 tags:
-  - session_management
-  - authentication
+- session_management
+- authentication

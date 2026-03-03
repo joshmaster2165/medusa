@@ -1,33 +1,29 @@
 check_id: res025
-title: Recursive Directory Resource
+title: Ensure Directory Resource recursion is limited
 category: resource_security
 severity: medium
-description: >
-  Detects resources that expose entire directories recursively. URIs
-  ending with /, /*, or /** and descriptions mentioning recursive
-  access or directory listings suggest broad directory-level data
-  exposure. This can leak sensitive files, configuration data, and
-  internal directory structures to connected clients.
-risk_explanation: >
-  Directory-level resource exposure allows clients to enumerate and
-  retrieve all files within a directory tree. An attacker can use this
-  to discover sensitive files (credentials, configuration, source code)
-  that exist in subdirectories but were not intended to be accessible.
-  Recursive access amplifies the risk by traversing the entire
-  directory hierarchy below the exposed path.
-remediation: >
-  Replace directory-level resources with explicit individual resource
-  listings. If directory access is required, implement strict path
-  filtering that limits accessible file types and directory depth.
-  Apply allowlists for permitted file paths rather than exposing
-  entire directory trees. Add access control that restricts directory
-  enumeration to authorized clients.
+description: Checks for resources that expose entire directories recursively. URIs ending with /, /*, or /** and descriptions
+  mentioning recursive access or directory listings suggest broad directory-level data exposure. This can leak sensitive files,
+  configuration data, and internal directory structures to connected clients.
+risk_explanation: 'Directory-level resource exposure allows clients to enumerate and retrieve all files within a directory
+  tree. An attacker can use this to discover sensitive files (credentials, configuration, source code) that exist in subdirectories
+  but were not intended to be accessible. Recursive access amplifies the risk by traversing the entire directory hierarchy
+  below the exposed path.
+
+  '
+remediation: '1. Replace directory-level resources with explicit individual resource listings.
+
+  2. If directory access is required, implement strict path filtering that limits accessible file types and directory depth.
+
+  3. Apply allowlists for permitted file paths rather than exposing entire directory trees.
+
+  4. Add access control that restricts directory enumeration to authorized clients.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/resources"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/resources
 owasp_mcp:
-  - "MCP06:2025"
+- MCP06:2025
 tags:
-  - resource_security
-  - directory_exposure
-  - enumeration
+- resource_security
+- directory_exposure
+- enumeration

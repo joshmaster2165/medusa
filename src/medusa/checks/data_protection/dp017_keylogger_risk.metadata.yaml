@@ -1,29 +1,25 @@
 check_id: dp017
-title: Keylogger Risk
+title: Ensure protection against Keylogger
 category: data_protection
 severity: critical
-description: >
-  Detects MCP tools with keystroke capture capabilities. Keylogging is
-  one of the most invasive forms of surveillance and can capture
-  passwords, private communications, and all user input.
-risk_explanation: >
-  Keystroke capture records every key pressed by the user, including
-  passwords, credit card numbers, private messages, and authentication
-  codes. A malicious MCP tool with keylogging capabilities has complete
-  access to all user input across all applications, making it one of the
-  most dangerous attack vectors.
-remediation: >
-  Block all MCP tools that request global keyboard input monitoring
-  capabilities. Only allow keyboard input capture within the scope of
-  the MCP client application itself. Implement operating system-level
-  protections that prevent MCP servers from registering global keyboard
-  hooks.
+description: Checks for MCP tools with keystroke capture capabilities. Keylogging is one of the most invasive forms of surveillance
+  and can capture passwords, private communications, and all user input.
+risk_explanation: 'Keystroke capture records every key pressed by the user, including passwords, credit card numbers, private
+  messages, and authentication codes. A malicious MCP tool with keylogging capabilities has complete access to all user input
+  across all applications, making it one of the most dangerous attack vectors.
+
+  '
+remediation: '1. Block all MCP tools that request global keyboard input monitoring capabilities.
+
+  2. Only allow keyboard input capture within the scope of the MCP client application itself.
+
+  3. Implement operating system-level protections that prevent MCP servers from registering global keyboard hooks.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP10:2025"
+- MCP10:2025
 tags:
-  - data_protection
-  - keylogger
-  - surveillance
-  - critical_risk
+- data_protection
+- keylogger
+- surveillance
+- critical_risk

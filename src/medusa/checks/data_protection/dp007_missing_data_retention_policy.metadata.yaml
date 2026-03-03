@@ -1,28 +1,25 @@
 check_id: dp007
-title: Missing Data Retention Policy
+title: Ensure Data Retention Policy is configured
 category: data_protection
 severity: info
-description: >
-  Checks whether the MCP server defines a data retention and lifecycle
-  policy. Servers that store or cache data without a defined retention
-  period risk accumulating sensitive information indefinitely.
-risk_explanation: >
-  Without a data retention policy, sensitive data processed by the MCP
-  server may persist in caches, logs, or temporary storage long after it
-  is needed. This increases the blast radius of a data breach and may
-  violate regulatory requirements that mandate data deletion after a
-  defined period.
-remediation: >
-  Define and enforce a data retention policy for all data processed by
-  the MCP server. Implement automated purging of cached data, logs, and
-  temporary files after the retention period expires. Document the
-  retention policy and make it available for compliance audits.
+description: Checks whether the MCP server defines a data retention and lifecycle policy. Servers that store or cache data
+  without a defined retention period risk accumulating sensitive information indefinitely.
+risk_explanation: 'Without a data retention policy, sensitive data processed by the MCP server may persist in caches, logs,
+  or temporary storage long after it is needed. This increases the blast radius of a data breach and may violate regulatory
+  requirements that mandate data deletion after a defined period.
+
+  '
+remediation: '1. Define and enforce a data retention policy for all data processed by the MCP server.
+
+  2. Implement automated purging of cached data, logs, and temporary files after the retention period expires.
+
+  3. Document the retention policy and make it available for compliance audits.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP10:2025"
+- MCP10:2025
 tags:
-  - data_protection
-  - retention
-  - compliance
-  - data_lifecycle
+- data_protection
+- retention
+- compliance
+- data_lifecycle

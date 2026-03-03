@@ -1,33 +1,29 @@
 check_id: priv005
-title: Destructive Operations Without Confirmation
+title: Ensure Confirmation is configured for Destructive Operations
 category: privilege_scope
 severity: high
-description: >
-  Detects MCP tools that perform destructive operations (delete, drop,
-  truncate, purge, destroy) without requiring explicit user
-  confirmation. Destructive operations executed without consent can
-  cause irreversible data loss.
-risk_explanation: >
-  Destructive tools without confirmation gates can be triggered by
-  prompt injection or LLM misinterpretation, causing permanent data
-  loss. An attacker who manipulates the LLM can delete files, drop
-  database tables, or destroy cloud resources without the user ever
-  being asked to confirm. The lack of confirmation makes destructive
-  operations indistinguishable from read operations in the invocation
-  flow.
-remediation: >
-  Implement human-in-the-loop confirmation for all destructive
-  operations. Use the MCP tool annotation destructiveHint=true to signal
-  clients that confirmation is required. Add a confirmation parameter to
-  destructive tools that requires a specific value. Implement soft-
-  delete patterns with recovery windows instead of hard deletes.
+description: Checks for MCP tools that perform destructive operations (delete, drop, truncate, purge, destroy) without requiring
+  explicit user confirmation. Destructive operations executed without consent can cause irreversible data loss.
+risk_explanation: 'Destructive tools without confirmation gates can be triggered by prompt injection or LLM misinterpretation,
+  causing permanent data loss. An attacker who manipulates the LLM can delete files, drop database tables, or destroy cloud
+  resources without the user ever being asked to confirm. The lack of confirmation makes destructive operations indistinguishable
+  from read operations in the invocation flow.
+
+  '
+remediation: '1. Implement human-in-the-loop confirmation for all destructive operations.
+
+  2. Use the MCP tool annotation destructiveHint=true to signal clients that confirmation is required.
+
+  3. Add a confirmation parameter to destructive tools that requires a specific value.
+
+  4. Implement soft- delete patterns with recovery windows instead of hard deletes.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/tools
 owasp_mcp:
-  - "MCP07:2025"
+- MCP07:2025
 tags:
-  - privilege_scope
-  - destructive_operations
-  - confirmation
-  - data_loss
+- privilege_scope
+- destructive_operations
+- confirmation
+- data_loss

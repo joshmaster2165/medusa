@@ -1,33 +1,33 @@
 check_id: iv041
-title: Regex Denial of Service (ReDoS)
+title: Ensure protection against regex denial of service (ReDoS)
 category: input_validation
 severity: medium
-description: >
-  Detects tool parameters that have a pattern constraint with potentially
-  catastrophic backtracking constructs (nested quantifiers) but no maxLength
-  limit. Without a length limit, a long input can cause exponential
-  backtracking in the regex engine, resulting in denial of service.
-risk_explanation: >
-  Regular Expression Denial of Service (ReDoS) occurs when a regex pattern
-  contains nested quantifiers such as (a+)+, (a*)*,or (a|a)* that cause
-  exponential backtracking. Without a maxLength constraint on the input,
-  attackers can submit long strings that trigger worst-case evaluation
-  time, blocking the server thread for minutes or hours and denying
+description: Checks for tool parameters that have a pattern constraint with potentially catastrophic backtracking constructs
+  (nested quantifiers) but no maxLength limit. Without a length limit, a long input can cause exponential backtracking in
+  the regex engine, resulting in denial of service.
+risk_explanation: 'Regular Expression Denial of Service (ReDoS) occurs when a regex pattern contains nested quantifiers such
+  as (a+)+, (a*)*,or (a|a)* that cause exponential backtracking. Without a maxLength constraint on the input, attackers can
+  submit long strings that trigger worst-case evaluation time, blocking the server thread for minutes or hours and denying
   service to all other users.
-remediation: >
-  Add maxLength constraints to all parameters that have pattern validation.
-  A reasonable limit depends on the use case but should prevent extremely
-  long inputs. Refactor regex patterns to avoid nested quantifiers.
-  Consider using regex engines with linear-time guarantees (like RE2).
-  Set execution timeouts for regex matching operations.
+
+  '
+remediation: '1. Add maxLength constraints to all parameters that have pattern validation.
+
+  2. A reasonable limit depends on the use case but should prevent extremely long inputs.
+
+  3. Refactor regex patterns to avoid nested quantifiers.
+
+  4. Consider using regex engines with linear-time guarantees (like RE2).
+
+  5. Set execution timeouts for regex matching operations.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+- https://owasp.org/www-project-mcp-top-10/
+- https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS
+- https://modelcontextprotocol.io/specification/2025-03-26/server/tools
 owasp_mcp:
-  - "MCP04:2025"
+- MCP04:2025
 tags:
-  - input_validation
-  - regex_dos
-  - redos
-  - denial_of_service
+- input_validation
+- regex_dos
+- redos
+- denial_of_service

@@ -68,18 +68,18 @@ class TestCheckMetadata:
     def test_create_with_required_fields(self):
         meta = CheckMetadata(
             check_id="tp001",
-            title="Hidden Instructions in Tool Descriptions",
+            title="Ensure tool descriptions do not contain hidden instructions",
             category="tool_poisoning",
             severity=Severity.CRITICAL,
-            description="Detects hidden instructions",
+            description="Checks for hidden instructions in tools",
             risk_explanation="May trick the LLM",
             remediation="Remove hidden tags",
         )
         assert meta.check_id == "tp001"
-        assert meta.title == "Hidden Instructions in Tool Descriptions"
+        assert meta.title == "Ensure tool descriptions do not contain hidden instructions"
         assert meta.category == "tool_poisoning"
         assert meta.severity == Severity.CRITICAL
-        assert meta.description == "Detects hidden instructions"
+        assert meta.description == "Checks for hidden instructions in tools"
         assert meta.risk_explanation == "May trick the LLM"
         assert meta.remediation == "Remove hidden tags"
 

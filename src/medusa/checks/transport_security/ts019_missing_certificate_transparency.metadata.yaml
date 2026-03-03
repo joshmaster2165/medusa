@@ -1,32 +1,30 @@
 check_id: ts019
-title: Missing Certificate Transparency
+title: Ensure Certificate Transparency is configured
 category: transport_security
 severity: info
-description: >
-  Detects absence of Certificate Transparency (CT) log monitoring for
-  MCP server certificates. Without CT monitoring, unauthorized
-  certificate issuance for the server's domain goes undetected, enabling
-  unnoticed man-in-the-middle attacks.
-risk_explanation: >
-  Certificate Transparency logs provide a public, auditable record of
-  all certificates issued for a domain. Without CT monitoring, a
-  certificate authority can issue a certificate for the server's domain
-  to an attacker without detection. The attacker uses this certificate
-  for MITM attacks that pass standard certificate validation. CT
-  monitoring is the primary mechanism for detecting unauthorized
-  certificate issuance.
-remediation: >
-  Implement Certificate Transparency monitoring for all domains used by
-  MCP servers. Use CT monitoring services (e.g. crt.sh, Facebook CT
-  Monitor, SSLMate Cert Spotter) to receive alerts on new certificate
-  issuance. Configure Expect-CT headers on server responses. Require SCT
-  (Signed Certificate Timestamp) inclusion in server certificates.
+description: Checks for absence of Certificate Transparency (CT) log monitoring for MCP server certificates. Without CT monitoring,
+  unauthorized certificate issuance for the server's domain goes undetected, enabling unnoticed man-in-the-middle attacks.
+risk_explanation: 'Certificate Transparency logs provide a public, auditable record of all certificates issued for a domain.
+  Without CT monitoring, a certificate authority can issue a certificate for the server''s domain to an attacker without detection.
+  The attacker uses this certificate for MITM attacks that pass standard certificate validation. CT monitoring is the primary
+  mechanism for detecting unauthorized certificate issuance.
+
+  '
+remediation: '1. Implement Certificate Transparency monitoring for all domains used by MCP servers.
+
+  2. Use CT monitoring services (e.g.
+
+  3. crt.sh, Facebook CT Monitor, SSLMate Cert Spotter) to receive alerts on new certificate issuance.
+
+  4. Configure Expect-CT headers on server responses.
+
+  5. Require SCT (Signed Certificate Timestamp) inclusion in server certificates.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP03:2025"
+- MCP03:2025
 tags:
-  - transport_security
-  - certificate_transparency
-  - ct_logs
-  - monitoring
+- transport_security
+- certificate_transparency
+- ct_logs
+- monitoring

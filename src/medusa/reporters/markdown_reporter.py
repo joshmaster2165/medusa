@@ -13,7 +13,7 @@ class MarkdownReporter(BaseReporter):
         lines: list[str] = []
 
         # Header
-        lines.append("# Medusa MCP Security Scan Report")
+        lines.append("# MCP Security Configuration Assessment Report")
         lines.append("")
         lines.append(
             f"**Date:** {result.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')} | "
@@ -46,7 +46,7 @@ class MarkdownReporter(BaseReporter):
         # Findings
         failed_findings = [f for f in result.findings if f.status == Status.FAIL]
         if failed_findings:
-            lines.append("## Findings")
+            lines.append("## Security Misconfigurations")
             lines.append("")
 
             # Group by severity
@@ -64,7 +64,7 @@ class MarkdownReporter(BaseReporter):
                         f"- **Server:** {finding.server_name} ({finding.server_transport})"
                     )
                     lines.append(f"- **Resource:** {finding.resource_type}/{finding.resource_name}")
-                    lines.append(f"- **Details:** {finding.status_extended}")
+                    lines.append(f"- **Misconfiguration:** {finding.status_extended}")
                     if finding.evidence:
                         evidence_preview = finding.evidence[:500]
                         if len(finding.evidence) > 500:
@@ -75,9 +75,9 @@ class MarkdownReporter(BaseReporter):
                         lines.append(f"- **OWASP MCP:** {', '.join(finding.owasp_mcp)}")
                     lines.append("")
         else:
-            lines.append("## Findings")
+            lines.append("## Security Misconfigurations")
             lines.append("")
-            lines.append("No security findings detected. All checks passed.")
+            lines.append("No misconfigurations detected. All checks passed.")
             lines.append("")
 
         # Compliance

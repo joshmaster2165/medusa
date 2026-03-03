@@ -1,35 +1,32 @@
 check_id: hard018
-title: Unrestricted Tool Execution Scope
+title: Ensure Tool Execution Scope is restricted
 category: server_hardening
 severity: critical
-description: >
-  Detects servers that have both privileged tools (shell, exec, admin,
-  system) and exfiltrative tools (send, upload, email) without
-  capability restrictions. This combination enables full attack chains
-  from arbitrary code execution to data exfiltration.
-risk_explanation: >
-  When a server provides both privileged execution tools and
-  exfiltrative tools, an attacker who gains tool access through prompt
-  injection or tool poisoning can execute arbitrary commands and
-  immediately exfiltrate the results. This is the most dangerous tool
-  combination as it enables complete system compromise: execute a
-  command to read sensitive data, then use an exfiltration tool to
-  send it to an attacker-controlled endpoint.
-remediation: >
-  Separate privileged execution tools and exfiltrative tools into
-  different MCP servers with independent access controls. If both
-  capabilities are required, implement strict capability restrictions
-  that prevent chaining privileged execution with data exfiltration.
-  Apply the principle of least privilege to limit which tools can be
-  invoked together. Implement approval workflows for privileged
-  operations.
+description: Checks for servers that have both privileged tools (shell, exec, admin, system) and exfiltrative tools (send,
+  upload, email) without capability restrictions. This combination enables full attack chains from arbitrary code execution
+  to data exfiltration.
+risk_explanation: 'When a server provides both privileged execution tools and exfiltrative tools, an attacker who gains tool
+  access through prompt injection or tool poisoning can execute arbitrary commands and immediately exfiltrate the results.
+  This is the most dangerous tool combination as it enables complete system compromise: execute a command to read sensitive
+  data, then use an exfiltration tool to send it to an attacker-controlled endpoint.
+
+  '
+remediation: '1. Separate privileged execution tools and exfiltrative tools into different MCP servers with independent access
+  controls.
+
+  2. If both capabilities are required, implement strict capability restrictions that prevent chaining privileged execution
+  with data exfiltration.
+
+  3. Apply the principle of least privilege to limit which tools can be invoked together.
+
+  4. Implement approval workflows for privileged operations.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP07:2025"
-  - "MCP01:2025"
+- MCP07:2025
+- MCP01:2025
 tags:
-  - server_hardening
-  - execution_scope
-  - least_privilege
-  - critical
+- server_hardening
+- execution_scope
+- least_privilege
+- critical

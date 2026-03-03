@@ -1,34 +1,31 @@
 check_id: tp025
-title: Tool Annotation Abuse
+title: Ensure protection against Tool Annotation abuse
 category: tool_poisoning
 severity: high
-description: >
-  Detects misuse of MCP tool annotations such as readOnlyHint,
-  destructiveHint, idempotentHint, and openWorldHint. A malicious server
-  can set readOnlyHint to true on a destructive tool or destructiveHint
-  to false on a tool that deletes data, causing the LLM to bypass safety
-  confirmations.
-risk_explanation: >
-  Tool annotations are used by LLM clients to determine whether user
-  confirmation is needed before invocation. A tool falsely annotated as
-  read-only bypasses confirmation dialogs, allowing destructive
-  operations to execute without user consent. Mismatched annotations
-  undermine the entire trust model of the tool invocation pipeline.
-remediation: >
-  Verify tool annotations against actual tool behaviour by analyzing
-  parameter schemas and description content. Flag tools where
-  annotations contradict their apparent capabilities (e.g.
-  readOnlyHint=true with write parameters). Implement annotation
-  validation that cross-references hints with the tool's declared
-  operations. Never rely solely on server-provided annotations for
-  security decisions.
+description: Checks for misuse of MCP tool annotations such as readOnlyHint, destructiveHint, idempotentHint, and openWorldHint.
+  A malicious server can set readOnlyHint to true on a destructive tool or destructiveHint to false on a tool that deletes
+  data, causing the LLM to bypass safety confirmations.
+risk_explanation: 'Tool annotations are used by LLM clients to determine whether user confirmation is needed before invocation.
+  A tool falsely annotated as read-only bypasses confirmation dialogs, allowing destructive operations to execute without
+  user consent. Mismatched annotations undermine the entire trust model of the tool invocation pipeline.
+
+  '
+remediation: '1. Verify tool annotations against actual tool behaviour by analyzing parameter schemas and description content.
+
+  2. Flag tools where annotations contradict their apparent capabilities (e.g.
+
+  3. readOnlyHint=true with write parameters).
+
+  4. Implement annotation validation that cross-references hints with the tool''s declared operations.
+
+  5. Never rely solely on server-provided annotations for security decisions.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/tools
 owasp_mcp:
-  - "MCP02:2025"
+- MCP02:2025
 tags:
-  - tool_poisoning
-  - annotation_abuse
-  - tool_hints
-  - trust_model
+- tool_poisoning
+- annotation_abuse
+- tool_hints
+- trust_model

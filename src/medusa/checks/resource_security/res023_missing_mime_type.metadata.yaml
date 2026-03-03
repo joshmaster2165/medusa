@@ -1,31 +1,26 @@
 check_id: res023
-title: Resource Without MIME Type
+title: Ensure MIME Type is configured for Resource
 category: resource_security
 severity: low
-description: >
-  Detects resources that do not specify a MIME type. Without an explicit
-  MIME type, clients must guess the content format, which can lead to
-  MIME confusion attacks where content is interpreted differently than
-  the server intended. This is an informational quality issue that
-  improves the robustness of the MCP resource interface.
-risk_explanation: >
-  When a resource lacks a MIME type, the consuming client or LLM must
-  infer the content format from heuristics. This can cause binary data
-  to be treated as text, executable content to be rendered inline, or
-  structured data to be parsed with the wrong decoder. In security-
-  sensitive contexts this may enable content injection or data
-  corruption attacks.
-remediation: >
-  Specify an explicit MIME type for every resource using the mimeType
-  field. Use standard IANA media types such as application/json,
-  text/plain, or application/octet-stream. Validate that the actual
-  resource content matches the declared MIME type at serving time.
+description: Checks for resources that do not specify a MIME type. Without an explicit MIME type, clients must guess the content
+  format, which can lead to MIME confusion attacks where content is interpreted differently than the server intended. This
+  is an informational quality issue that improves the robustness of the MCP resource interface.
+risk_explanation: 'When a resource lacks a MIME type, the consuming client or LLM must infer the content format from heuristics.
+  This can cause binary data to be treated as text, executable content to be rendered inline, or structured data to be parsed
+  with the wrong decoder. In security- sensitive contexts this may enable content injection or data corruption attacks.
+
+  '
+remediation: '1. Specify an explicit MIME type for every resource using the mimeType field.
+
+  2. Use standard IANA media types such as application/json, text/plain, or application/octet-stream.
+
+  3. Validate that the actual resource content matches the declared MIME type at serving time.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/resources"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/resources
 owasp_mcp:
-  - "MCP06:2025"
+- MCP06:2025
 tags:
-  - resource_security
-  - mime_type
-  - quality
+- resource_security
+- mime_type
+- quality

@@ -1,33 +1,30 @@
 check_id: pmt019
-title: Excessive Prompt Argument Count
+title: Ensure Prompt Argument Count is bounded
 category: prompt_security
 severity: low
-description: >
-  Detects prompts with an excessive number of arguments (more than 10).
-  A large argument count increases the injection surface area, makes
-  input validation more difficult, and increases the complexity of
-  prompt template construction. Each additional argument is a potential
-  vector for injection or manipulation.
-risk_explanation: >
-  Prompts with many arguments are harder to secure because each argument
-  must be individually validated, sanitized, and safely interpolated.
-  The combinatorial complexity of validating interactions between many
-  arguments makes it likely that edge cases are missed. Attackers can
-  exploit the increased surface area by combining benign-looking values
+description: Checks for prompts with an excessive number of arguments (more than 10). A large argument count increases the
+  injection surface area, makes input validation more difficult, and increases the complexity of prompt template construction.
+  Each additional argument is a potential vector for injection or manipulation.
+risk_explanation: 'Prompts with many arguments are harder to secure because each argument must be individually validated,
+  sanitized, and safely interpolated. The combinatorial complexity of validating interactions between many arguments makes
+  it likely that edge cases are missed. Attackers can exploit the increased surface area by combining benign-looking values
   across multiple arguments to achieve injection effects.
-remediation: >
-  Reduce the number of prompt arguments by grouping related parameters
-  into structured objects or using separate prompts for distinct use
-  cases. Implement strict validation for each argument. Consider using
-  argument schemas that enforce type constraints and value ranges.
-  Review whether all arguments are necessary and remove unused or
-  redundant parameters.
+
+  '
+remediation: '1. Reduce the number of prompt arguments by grouping related parameters into structured objects or using separate
+  prompts for distinct use cases.
+
+  2. Implement strict validation for each argument.
+
+  3. Consider using argument schemas that enforce type constraints and value ranges.
+
+  4. Review whether all arguments are necessary and remove unused or redundant parameters.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/prompts"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/prompts
 owasp_mcp:
-  - "MCP05:2025"
+- MCP05:2025
 tags:
-  - prompt_security
-  - complexity
-  - attack_surface
+- prompt_security
+- complexity
+- attack_surface

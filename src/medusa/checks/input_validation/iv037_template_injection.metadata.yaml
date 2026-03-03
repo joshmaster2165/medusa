@@ -1,33 +1,31 @@
 check_id: iv037
-title: Server-Side Template Injection
+title: Ensure protection against Server-Side Template injection
 category: input_validation
 severity: high
-description: >
-  Detects tool parameters with template-related names or descriptions
-  that lack input validation constraints. Unvalidated template parameters
-  allow attackers to inject template directives that execute arbitrary
-  code on the server through template engines like Jinja2, Mustache,
-  or Handlebars.
-risk_explanation: >
-  Server-Side Template Injection (SSTI) enables attackers to inject
-  template syntax into parameters that are processed by a template
-  engine. This can lead to remote code execution, server-side file
-  reads, environment variable leakage, and full server compromise.
-  Even sandboxed template engines often have known escape techniques.
-remediation: >
-  Add strict pattern constraints to template parameters using JSON
-  Schema regex patterns that reject template delimiters ({{ }}, <% %>,
-  ${ }). Use enum constraints where possible. Never pass user input
-  directly to template rendering engines. Use logic-less template
-  languages or sandbox template execution with restricted builtins.
+description: Checks for tool parameters with template-related names or descriptions that lack input validation constraints.
+  Unvalidated template parameters allow attackers to inject template directives that execute arbitrary code on the server
+  through template engines like Jinja2, Mustache, or Handlebars.
+risk_explanation: 'Server-Side Template Injection (SSTI) enables attackers to inject template syntax into parameters that
+  are processed by a template engine. This can lead to remote code execution, server-side file reads, environment variable
+  leakage, and full server compromise. Even sandboxed template engines often have known escape techniques.
+
+  '
+remediation: '1. Add strict pattern constraints to template parameters using JSON Schema regex patterns that reject template
+  delimiters ({{ }}, <% %>, ${ }).
+
+  2. Use enum constraints where possible.
+
+  3. Never pass user input directly to template rendering engines.
+
+  4. Use logic-less template languages or sandbox template execution with restricted builtins.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://portswigger.net/web-security/server-side-template-injection"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+- https://owasp.org/www-project-mcp-top-10/
+- https://portswigger.net/web-security/server-side-template-injection
+- https://modelcontextprotocol.io/specification/2025-03-26/server/tools
 owasp_mcp:
-  - "MCP04:2025"
+- MCP04:2025
 tags:
-  - input_validation
-  - template_injection
-  - ssti
-  - code_execution
+- input_validation
+- template_injection
+- ssti
+- code_execution

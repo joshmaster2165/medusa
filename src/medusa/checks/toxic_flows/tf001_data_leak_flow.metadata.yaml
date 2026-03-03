@@ -1,0 +1,35 @@
+check_id: tf001
+title: Ensure Server does not expose a Data Leak Flow
+category: toxic_flows
+severity: critical
+description: Checks whether the MCP server exposes a combination of tools that together enable a data leak flow. A data
+  leak flow exists when a server has tools that (1) accept untrusted external input, (2) access private/sensitive data,
+  and (3) send data to external destinations. An attacker can chain these capabilities to exfiltrate sensitive data through
+  the MCP server.
+risk_explanation: 'When a server exposes untrusted input tools alongside private data access tools and external output
+  sinks, an attacker can construct a multi-step attack chain: inject a malicious prompt or URL via the untrusted input
+  tool, use the private data tool to read sensitive files or database records, then exfiltrate the data via the external
+  output tool. Each individual tool may be legitimate, but the combination creates a dangerous data leak pathway that
+  can be exploited without direct server compromise.
+
+  '
+remediation: '1. Review tool combinations on the server and apply the principle of least privilege.
+
+  2. Separate data-reading tools from external communication tools onto different MCP servers.
+
+  3. Implement tool-level authorization so tools accessing private data cannot be chained with output sinks without explicit
+  user approval.
+
+  4. Add data loss prevention (DLP) controls to output sink tools to prevent sensitive data from being transmitted externally.
+
+  5. Use tool call confirmation for high-risk tool chains.'
+references:
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+owasp_mcp:
+- MCP05:2025
+tags:
+- toxic_flow
+- data_leak
+- exfiltration
+- tool_combination

@@ -1,31 +1,26 @@
 check_id: intg018
-title: Schema-Less Tools
+title: Ensure Tools has a schema
 category: integrity
 severity: medium
-description: >
-  Detects tools with no inputSchema or an empty inputSchema. Without
-  a schema, there is no contract for parameter validation, allowing
-  arbitrary data to be passed to the tool without any type checking
-  or constraint enforcement.
-risk_explanation: >
-  Tools without input schemas accept any data an LLM or client sends.
-  This means there is no server-side validation contract, making it
-  impossible to enforce input constraints, detect malformed requests,
-  or prevent injection attacks through parameter manipulation. Schema-
-  less tools are effectively black boxes that accept and process
-  arbitrary input.
-remediation: >
-  Define a complete inputSchema for every tool using JSON Schema
-  format. Include type definitions, required fields, and validation
-  constraints (pattern, maxLength, enum, etc.) for each parameter.
-  For tools that genuinely require no parameters, declare an explicit
-  empty schema with "properties": {} and "additionalProperties":
-  false to prevent unexpected input.
+description: Checks for tools with no inputSchema or an empty inputSchema. Without a schema, there is no contract for parameter
+  validation, allowing arbitrary data to be passed to the tool without any type checking or constraint enforcement.
+risk_explanation: 'Tools without input schemas accept any data an LLM or client sends. This means there is no server-side
+  validation contract, making it impossible to enforce input constraints, detect malformed requests, or prevent injection
+  attacks through parameter manipulation. Schema- less tools are effectively black boxes that accept and process arbitrary
+  input.
+
+  '
+remediation: '1. Define a complete inputSchema for every tool using JSON Schema format.
+
+  2. Include type definitions, required fields, and validation constraints (pattern, maxLength, enum, etc.) for each parameter.
+
+  3. For tools that genuinely require no parameters, declare an explicit empty schema with "properties": {} and "additionalProperties":
+  false to prevent unexpected input.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
+- https://owasp.org/www-project-mcp-top-10/
 owasp_mcp:
-  - "MCP04:2025"
+- MCP04:2025
 tags:
-  - integrity
-  - schema
-  - input_validation
+- integrity
+- schema
+- input_validation

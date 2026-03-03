@@ -1,33 +1,29 @@
 check_id: sm016
-title: High-Entropy Default Values
+title: Ensure default values do not contain high-entropy secrets
 category: secrets_management
 severity: critical
-description: >
-  Detects tool parameter default values that have high Shannon entropy,
-  suggesting hardcoded secrets such as API keys, tokens, or passwords
-  embedded directly in the tool's JSON Schema definition. Hardcoded
-  secrets in schema defaults are exposed to every client that connects
-  to the server and persisted in tool definitions.
-risk_explanation: >
-  Default values in JSON Schema are visible to all MCP clients and may
-  be cached, logged, or stored in configuration files. If a real secret
-  is accidentally set as a default value, it is effectively published to
-  every consumer of the tool. Attackers can extract these credentials
-  without any authentication, leading to unauthorized access to external
-  services, data breaches, or lateral movement within the infrastructure.
-remediation: >
-  Remove all hardcoded secrets from tool parameter default values. Use
-  environment variables, secret management systems (e.g., HashiCorp
-  Vault, AWS Secrets Manager), or runtime configuration to inject
-  secrets. If a default value is needed for documentation purposes, use
-  a clearly marked placeholder such as 'YOUR_API_KEY_HERE' or
-  '${SECRET_NAME}'.
+description: Checks for tool parameter default values that have high Shannon entropy, suggesting hardcoded secrets such as
+  API keys, tokens, or passwords embedded directly in the tool's JSON Schema definition. Hardcoded secrets in schema defaults
+  are exposed to every client that connects to the server and persisted in tool definitions.
+risk_explanation: 'Default values in JSON Schema are visible to all MCP clients and may be cached, logged, or stored in configuration
+  files. If a real secret is accidentally set as a default value, it is effectively published to every consumer of the tool.
+  Attackers can extract these credentials without any authentication, leading to unauthorized access to external services,
+  data breaches, or lateral movement within the infrastructure.
+
+  '
+remediation: '1. Remove all hardcoded secrets from tool parameter default values.
+
+  2. Use environment variables, secret management systems (e.g., HashiCorp Vault, AWS Secrets Manager), or runtime configuration
+  to inject secrets.
+
+  3. If a default value is needed for documentation purposes, use a clearly marked placeholder such as ''YOUR_API_KEY_HERE''
+  or ''${SECRET_NAME}''.'
 references:
-  - "https://owasp.org/www-project-mcp-top-10/"
-  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/server/tools
 owasp_mcp:
-  - "MCP05:2025"
+- MCP05:2025
 tags:
-  - secrets_management
-  - hardcoded_secrets
-  - entropy
+- secrets_management
+- hardcoded_secrets
+- entropy

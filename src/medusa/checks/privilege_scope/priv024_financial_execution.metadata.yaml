@@ -1,0 +1,35 @@
+check_id: priv024
+title: Ensure Financial Transaction Tools require explicit human approval
+category: privilege_scope
+severity: high
+description: Checks whether the MCP server exposes tools with financial transaction capabilities such as payments, transfers,
+  invoicing, billing, or cryptocurrency operations. Financial tools should require explicit human-in-the-loop confirmation
+  before execution to prevent unauthorized transactions.
+risk_explanation: 'Tools that can initiate financial transactions (payments, transfers, refunds, purchases) represent a
+  high-risk category because unauthorized execution can result in direct monetary loss. An LLM operating autonomously may
+  be tricked via prompt injection into initiating unwanted financial transactions. Without explicit human approval gates,
+  a compromised or manipulated LLM session could drain accounts, authorize fraudulent transfers, or make unauthorized
+  purchases.
+
+  '
+remediation: '1. Implement mandatory human-in-the-loop confirmation for all financial transaction tools.
+
+  2. Add transaction amount limits that require additional approval for large transactions.
+
+  3. Use multi-factor authentication for financial operations.
+
+  4. Log all financial tool invocations with full audit trails.
+
+  5. Consider moving financial tools to a separate MCP server with stricter access controls.'
+references:
+- https://owasp.org/www-project-mcp-top-10/
+- https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+owasp_mcp:
+- MCP02:2025
+- MCP07:2025
+tags:
+- privilege_scope
+- financial
+- payment
+- transaction
+- human_approval
