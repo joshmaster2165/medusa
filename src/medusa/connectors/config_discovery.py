@@ -14,6 +14,7 @@ from medusa.connectors.stdio import StdioConnector
 logger = logging.getLogger(__name__)
 
 # Known MCP client config file locations
+# Paths sourced from Snyk agent-scan's well_known_clients.py and verified
 CONFIG_PATHS: dict[str, dict[str, str]] = {
     "claude_desktop": {
         "darwin": "~/Library/Application Support/Claude/claude_desktop_config.json",
@@ -25,6 +26,48 @@ CONFIG_PATHS: dict[str, dict[str, str]] = {
         "win32": "%APPDATA%/.cursor/mcp.json",
         "linux": "~/.cursor/mcp.json",
     },
+    "windsurf": {
+        "darwin": "~/.codeium/windsurf/mcp_config.json",
+        "win32": "%APPDATA%/Codeium/Windsurf/mcp_config.json",
+        "linux": "~/.codeium/windsurf/mcp_config.json",
+    },
+    "vscode": {
+        "darwin": "~/Library/Application Support/Code/User/settings.json",
+        "win32": "%APPDATA%/Code/User/settings.json",
+        "linux": "~/.config/Code/User/settings.json",
+    },
+    "claude_code": {
+        "darwin": "~/.claude.json",
+        "win32": "%USERPROFILE%/.claude.json",
+        "linux": "~/.claude.json",
+    },
+    "gemini_cli": {
+        "darwin": "~/.gemini/settings.json",
+        "win32": "%APPDATA%/gemini/settings.json",
+        "linux": "~/.config/gemini/settings.json",
+    },
+    "zed": {
+        "darwin": "~/.config/zed/settings.json",
+        "win32": "%APPDATA%/Zed/settings.json",
+        "linux": "~/.config/zed/settings.json",
+    },
+    "cline": {
+        "darwin": (  # noqa: E501
+            "~/Library/Application Support/Code/User"
+            "/globalStorage/saoudrizwan.claude-dev"
+            "/settings/cline_mcp_settings.json"
+        ),
+        "win32": (
+            "%APPDATA%/Code/User/globalStorage"
+            "/saoudrizwan.claude-dev"
+            "/settings/cline_mcp_settings.json"
+        ),
+        "linux": (
+            "~/.config/Code/User/globalStorage"
+            "/saoudrizwan.claude-dev"
+            "/settings/cline_mcp_settings.json"
+        ),
+    },
 }
 
 
@@ -34,6 +77,20 @@ def _expand_path(path_str: str) -> Path:
 
     expanded = os.path.expandvars(os.path.expanduser(path_str))
     return Path(expanded)
+
+
+def _extract_servers(config: dict) -> dict:
+    """Extract MCP server configs from a parsed JSON config.
+
+    Handles multiple formats:
+    - Standard: {"mcpServers": {...}}
+    - VSCode:   {"mcp": {"servers": {...}}}
+    """
+    servers = config.get("mcpServers", {})
+    if not servers:
+        # VSCode format: mcp.servers key
+        servers = config.get("mcp", {}).get("servers", {})
+    return servers
 
 
 def _build_connector(
@@ -106,7 +163,7 @@ def discover_servers(
             logger.warning("Failed to parse %s: %s", config_path, e)
             continue
 
-        servers = config.get("mcpServers", {})
+        servers = _extract_servers(config)
         for server_name, server_config in servers.items():
             connector = _build_connector(server_name, server_config, str(config_path))
             if connector:
@@ -125,7 +182,7 @@ def discover_servers(
             logger.warning("Failed to parse %s: %s", config_path, e)
             continue
 
-        servers = config.get("mcpServers", {})
+        servers = _extract_servers(config)
         for server_name, server_config in servers.items():
             connector = _build_connector(server_name, server_config, str(config_path))
             if connector:

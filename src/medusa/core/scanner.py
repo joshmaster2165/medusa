@@ -58,6 +58,7 @@ class ScanEngine:
         self.enable_reasoning = enable_reasoning
         self._reasoning_results: dict[str, object] = {}
         self._filter_stats: dict[str, dict[str, int]] = {}
+        self._server_tools: dict[str, list[dict]] = {}  # for change tracking
 
         all_checks = registry.get_checks(
             categories=categories,
@@ -191,6 +192,9 @@ class ScanEngine:
                     self._emit("check_done", check.metadata().check_id)
                 self._emit("server_done", connector.name)
                 return [], None
+
+            # Store tools for change tracking
+            self._server_tools[snapshot.server_name] = list(snapshot.tools)
 
             findings = await self._scan_server(snapshot)
 
@@ -424,6 +428,17 @@ class ScanEngine:
                         name,
                     )
 
+        # Change detection: compare against previous scan
+        changes: dict[str, list[dict]] = {}
+        if self._server_tools:
+            try:
+                from medusa.core.change_tracker import detect_changes, save_snapshot
+
+                changes = detect_changes(self._server_tools)
+                save_snapshot(self._server_tools)
+            except Exception:
+                logger.debug("Change tracking unavailable", exc_info=True)
+
         return ScanResult(
             scan_id=scan_id,
             timestamp=datetime.now(UTC),
@@ -437,6 +452,7 @@ class ScanEngine:
             aggregate_grade=score_to_grade(aggregate),
             reasoning_results=reasoning_results,
             ai_filter_stats=self._filter_stats,
+            changes=changes,
         )
 
 

@@ -1554,5 +1554,125 @@ def baseline_unsuppress(
         sys.exit(2)
 
 
+# ── watch ────────────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.option(
+    "--interval",
+    type=int,
+    default=300,
+    help="Seconds between scans.  [default: 300]",
+)
+@click.option(
+    "--config-file",
+    type=str,
+    default=None,
+    help="Path to MCP client config (claude_desktop_config.json, etc).",
+)
+@click.option(
+    "--scan-config",
+    type=str,
+    default=None,
+    help="Path to medusa.yaml scan configuration.",
+)
+@click.pass_context
+def watch(
+    ctx: click.Context,
+    interval: int,
+    config_file: str | None,
+    scan_config: str | None,
+) -> None:
+    """Continuously monitor MCP servers for configuration changes.
+
+    Runs scans at a configurable interval and reports when tool definitions
+    change (added, removed, or modified tools). Useful for detecting
+    supply-chain drift and unauthorized modifications.
+
+    \b
+    Examples:
+      medusa watch                         Monitor every 5 minutes
+      medusa watch --interval 60           Monitor every minute
+      medusa watch --config-file mcp.json  Watch specific config
+    """
+    import signal
+    import time as _time
+
+    quiet = ctx.obj.get("quiet", False)
+
+    if not quiet:
+        console.print()
+        console.print(
+            f"  [green]\u25b8 Watching MCP servers[/green] "
+            f"[dim](every {interval}s, Ctrl+C to stop)[/dim]"
+        )
+        console.print()
+
+    # Handle graceful shutdown
+    stop = False
+
+    def _handle_signal(signum, frame):
+        nonlocal stop
+        stop = True
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    scan_count = 0
+    while not stop:
+        scan_count += 1
+
+        # Build connectors
+        extra_configs = [config_file] if config_file else []
+        config = load_config(scan_config)
+        extra_configs.extend(config.discovery.config_files)
+        connectors = discover_servers(additional_config_files=extra_configs or None)
+
+        if not connectors:
+            if not quiet:
+                console.print("  [yellow]No servers found. Retrying...[/yellow]")
+            _time.sleep(interval)
+            continue
+
+        # Run scan
+        registry = CheckRegistry()
+        registry.discover_checks()
+
+        engine = ScanEngine(
+            connectors=connectors,
+            registry=registry,
+            scan_mode="static",
+        )
+
+        result = asyncio.run(engine.scan())
+
+        # Report changes if any
+        if result.changes:
+            total = sum(len(c) for c in result.changes.values())
+            if not quiet:
+                console.print(
+                    f"  [bold yellow]\u25b8 Scan #{scan_count}:[/bold yellow] "
+                    f"[yellow]{total} change(s) detected[/yellow]"
+                )
+                for server, changes in result.changes.items():
+                    for change in changes:
+                        console.print(
+                            f"    {change['type']}: {change['name']} [dim]({server})[/dim]"
+                        )
+                console.print()
+        elif not quiet and scan_count == 1:
+            console.print(
+                f"  [dim]Scan #{scan_count}: No previous scan \u2014 baseline recorded.[/dim]"
+            )
+        elif not quiet:
+            console.print(f"  [dim]Scan #{scan_count}: No changes detected.[/dim]")
+
+        # Wait for next interval
+        _time.sleep(interval)
+
+    if not quiet:
+        console.print("\n  [dim]Watch stopped.[/dim]")
+
+
 if __name__ == "__main__":
     cli()

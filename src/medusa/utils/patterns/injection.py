@@ -79,6 +79,17 @@ URL_INJECTION_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"data:text/html", re.IGNORECASE),
 ]
 
+# Download-execute patterns in descriptions (curl|bash, wget+exec, script URLs)
+DOWNLOAD_EXECUTE_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"curl\s+.*\|\s*(bash|sh|python|node)", re.IGNORECASE),
+    re.compile(r"wget\s+.*&&\s*(chmod|bash|sh|\.\/)", re.IGNORECASE),
+    re.compile(r"https?://.*\.(sh|bash|ps1|bat|exe|msi|dmg|pkg)\b", re.IGNORECASE),
+    re.compile(r"download.*(?:run|execute|install|launch)", re.IGNORECASE),
+    re.compile(r"(?:run|execute|install|launch).*download", re.IGNORECASE),
+    re.compile(r"pip\s+install\s+https?://", re.IGNORECASE),
+    re.compile(r"npx\s+https?://", re.IGNORECASE),
+]
+
 # Markdown injection patterns in descriptions
 MARKDOWN_INJECTION_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"!\[.*?\]\(https?://[^\)]+\)"),  # Image with URL
