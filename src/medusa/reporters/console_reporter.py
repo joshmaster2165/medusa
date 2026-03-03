@@ -55,7 +55,7 @@ class ConsoleReporter(BaseReporter):
         self._print_server_breakdown(result, console)
         self._print_findings_table(result, console)
         if result.reasoning_results:
-            self._print_reasoning(result, console)
+            self._print_analysis_insights(result, console)
         self._print_status_counts(result, console)
         if result.compliance_results:
             self._print_compliance(result, console)
@@ -89,10 +89,6 @@ class ConsoleReporter(BaseReporter):
         for f in failed:
             counts[f.severity] += 1
 
-        # Count AI vs static findings
-        ai_count = sum(1 for f in failed if f.check_id.startswith("ai"))
-        static_count = len(failed) - ai_count
-
         parts = []
         if counts[Severity.CRITICAL]:
             parts.append(f"[bold red]{counts[Severity.CRITICAL]} Critical[/]")
@@ -106,13 +102,7 @@ class ConsoleReporter(BaseReporter):
             parts.append(f"[dim]{counts[Severity.INFORMATIONAL]} Info[/]")
 
         if parts:
-            line = f"  {' · '.join(parts)}"
-            if ai_count:
-                line += (
-                    f"  [dim]([/dim][bright_magenta]{ai_count} AI[/]"
-                    f"[dim] + {static_count} static)[/dim]"
-                )
-            console.print(line)
+            console.print(f"  {' · '.join(parts)}")
         console.print()
 
     def _print_server_breakdown(self, result: ScanResult, console: Console) -> None:
@@ -164,15 +154,10 @@ class ConsoleReporter(BaseReporter):
             owasp = ", ".join(f.owasp_mcp) if f.owasp_mcp else "-"
             resource = f"{f.resource_type}/{f.resource_name}"
 
-            # AI findings get a purple dot prefix
-            title_display = f.check_title
-            if f.check_id.startswith("ai"):
-                title_display = f"[bright_magenta]●[/bright_magenta] {f.check_title}"
-
             table.add_row(
                 f"[{sev_style}]{f.severity.value.upper()}[/{sev_style}]",
                 f.check_id,
-                title_display,
+                f.check_title,
                 f.server_name,
                 resource,
                 owasp,
@@ -210,9 +195,9 @@ class ConsoleReporter(BaseReporter):
                         console.print(f"    {req_name}: {req_data}")
             console.print()
 
-    def _print_reasoning(self, result: ScanResult, console: Console) -> None:
-        """Print AI Reasoning Layer output."""
-        console.print(Rule("[bold bright_magenta]AI Reasoning Analysis[/bold bright_magenta]"))
+    def _print_analysis_insights(self, result: ScanResult, console: Console) -> None:
+        """Print analysis insights: executive summary, priorities, attack chains."""
+        console.print(Rule("[bold]Analysis Insights[/bold]"))
         console.print()
 
         for server_name, reasoning in result.reasoning_results.items():
@@ -225,8 +210,8 @@ class ConsoleReporter(BaseReporter):
                 console.print(
                     Panel(
                         summary,
-                        title=(f"[bold]{server_name}[/bold] — Executive Summary"),
-                        border_style="bright_magenta",
+                        title=f"[bold]{server_name}[/bold] — Executive Summary",
+                        border_style="cyan",
                         padding=(1, 2),
                     )
                 )
@@ -234,9 +219,7 @@ class ConsoleReporter(BaseReporter):
             # Top Priorities
             priorities = reasoning.get("top_priorities", [])
             if priorities:
-                console.print(
-                    "  [bold bright_magenta]Top Remediation Priorities:[/bold bright_magenta]"
-                )
+                console.print("  [bold]Top Remediation Priorities:[/bold]")
                 for i, p in enumerate(priorities[:5], 1):
                     console.print(f"    {i}. {p}")
                 console.print()
@@ -266,57 +249,26 @@ class ConsoleReporter(BaseReporter):
                     console.print(
                         Panel(
                             body,
-                            title=(f"[bold]{chain.get('chain_id', '')}[/bold]"),
+                            title=f"[bold]{chain.get('chain_id', '')}[/bold]",
                             border_style="red",
                         )
                     )
                 console.print()
 
-            # False Positives
-            annotations = reasoning.get("annotations", [])
-            fps = [
-                a
-                for a in annotations
-                if isinstance(a, dict)
-                and a.get("confidence") in ("false_positive", "likely_false_positive")
-            ]
-            if fps:
-                console.print(Rule(f"[bold]Likely False Positives ({len(fps)})[/bold]"))
-                console.print()
-                for fp in fps:
-                    reason = fp.get("reasoning", "No reason given")
-                    console.print(
-                        f"  [dim]~[/dim] {fp.get('check_id', '?')} "
-                        f"on {fp.get('resource_name', '?')}: "
-                        f"{reason}"
-                    )
-                console.print()
-
-            # Gap Findings
-            gaps = reasoning.get("gap_findings", [])
+            # Subtle filter summary for transparency
+            filter_stats = result.ai_filter_stats.get(server_name, {})
+            removed = filter_stats.get("false_positives_removed", 0)
+            adjusted = filter_stats.get("severities_adjusted", 0)
+            gaps = filter_stats.get("gaps_added", 0)
+            parts = []
+            if removed:
+                parts.append(f"{removed} findings filtered")
+            if adjusted:
+                parts.append(f"{adjusted} severities adjusted")
             if gaps:
-                console.print(Rule(f"[bold]AI-Discovered Gaps ({len(gaps)})[/bold]"))
-                console.print()
-                for gap in gaps:
-                    sev = gap.get("severity", "medium")
-                    console.print(
-                        f"  [bright_magenta]●[/bright_magenta] "
-                        f"[bold]{gap.get('title', '')}[/bold] "
-                        f"({sev.upper()})"
-                    )
-                    console.print(f"    {gap.get('description', '')[:120]}")
-                console.print()
-
-            # Token usage
-            usage = reasoning.get("token_usage", {})
-            duration = reasoning.get("reasoning_duration_seconds", 0)
-            if usage.get("input_tokens"):
-                console.print(
-                    f"  [dim]Reasoning: "
-                    f"{usage.get('input_tokens', 0):,} input + "
-                    f"{usage.get('output_tokens', 0):,} output "
-                    f"tokens in {duration}s[/dim]"
-                )
+                parts.append(f"{gaps} additional findings discovered")
+            if parts:
+                console.print(f"  [dim]{', '.join(parts)}[/dim]")
                 console.print()
 
     def _print_footer(self, result: ScanResult, console: Console) -> None:

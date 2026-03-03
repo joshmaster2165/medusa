@@ -538,7 +538,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
                     progress.update(
                         task,
                         advance=1,
-                        description=("[bright_magenta]AI Reasoning...[/bright_magenta]"),
+                        description="Analyzing findings...",
                     )
                 else:
                     progress.update(task, advance=1)

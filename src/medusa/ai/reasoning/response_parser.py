@@ -101,6 +101,7 @@ def _parse_annotations(raw: list) -> list[FindingAnnotation]:
                     exploitability_note=entry.get("exploitability_note"),
                     adjusted_severity=adj_sev,
                     additional_context=entry.get("additional_context"),
+                    contradicting_evidence=entry.get("contradicting_evidence"),
                 )
             )
         except (ValueError, TypeError) as e:

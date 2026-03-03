@@ -13,7 +13,7 @@ from medusa import __version__
 from medusa.connectors.base import BaseConnector
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.exceptions import ConnectionError
-from medusa.core.models import Finding, ScanResult, Status
+from medusa.core.models import Finding, ScanResult, Severity, Status
 from medusa.core.registry import CheckRegistry
 from medusa.core.scoring import (
     calculate_aggregate_score,
@@ -57,6 +57,7 @@ class ScanEngine:
         self.scan_mode = scan_mode
         self.enable_reasoning = enable_reasoning
         self._reasoning_results: dict[str, object] = {}
+        self._filter_stats: dict[str, dict[str, int]] = {}
 
         all_checks = registry.get_checks(
             categories=categories,
@@ -198,9 +199,12 @@ class ScanEngine:
                 reasoning_result = await self._run_reasoning(snapshot, findings)
                 if reasoning_result is not None:
                     self._reasoning_results[snapshot.server_name] = reasoning_result
-                    # Convert gap findings into standard Finding objects
-                    gap_findings = self._gaps_to_findings(reasoning_result, snapshot)
-                    findings.extend(gap_findings)
+                    # Apply AI reasoning: filter FPs, adjust severities,
+                    # add gap findings — all invisibly.
+                    findings, filter_stats = self._apply_reasoning_to_findings(
+                        findings, reasoning_result, snapshot
+                    )
+                    self._filter_stats[snapshot.server_name] = filter_stats
                 self._emit("check_done", "ai_reasoning")
 
             check_ids_run = {f.check_id for f in findings if f.status != Status.SKIPPED}
@@ -231,14 +235,110 @@ class ScanEngine:
             )
             return None
 
+    def _apply_reasoning_to_findings(
+        self,
+        findings: list[Finding],
+        reasoning_result: object,
+        snapshot: ServerSnapshot,
+    ) -> tuple[list[Finding], dict[str, int]]:
+        """Apply AI reasoning to silently improve finding accuracy.
+
+        - Removes false positives (confidence_score < 0.3, double-gated)
+        - Never removes CRITICAL severity findings
+        - Adjusts severities when AI provides adjusted_severity
+        - Adds gap findings as normal findings
+        - Caps bulk removal at 50% as a safety valve
+
+        Returns the filtered findings and a stats dict.
+        """
+        severity_map = {
+            "critical": Severity.CRITICAL,
+            "high": Severity.HIGH,
+            "medium": Severity.MEDIUM,
+            "low": Severity.LOW,
+            "info": Severity.INFORMATIONAL,
+        }
+
+        annotations = getattr(reasoning_result, "annotations", [])
+        stats: dict[str, int] = {
+            "false_positives_removed": 0,
+            "severities_adjusted": 0,
+            "gaps_added": 0,
+            "critical_preserved": 0,
+        }
+
+        # Build lookup: (check_id, resource_name) -> annotation
+        annotation_map: dict[tuple[str, str], object] = {}
+        for ann in annotations:
+            key = (ann.check_id, ann.resource_name)
+            annotation_map[key] = ann
+
+        # Count FAIL findings before filtering (for bulk safety valve)
+        fail_count_before = sum(1 for f in findings if f.status == Status.FAIL)
+        removal_candidates: list[int] = []  # indices to remove
+
+        filtered: list[Finding] = []
+        for idx, f in enumerate(findings):
+            key = (f.check_id, f.resource_name)
+            ann = annotation_map.get(key)
+
+            if ann and f.status == Status.FAIL:
+                conf = getattr(ann, "confidence", "")
+                conf_score = getattr(ann, "confidence_score", 1.0)
+
+                # Filter false positives: double-gate
+                if conf in ("false_positive", "likely_false_positive") and conf_score < 0.3:
+                    if f.severity == Severity.CRITICAL:
+                        # Never auto-remove critical findings
+                        stats["critical_preserved"] += 1
+                    else:
+                        removal_candidates.append(idx)
+                        continue  # tentatively skip
+
+                # Adjust severity if AI provides one
+                adj_sev_str = getattr(ann, "adjusted_severity", None)
+                if adj_sev_str:
+                    new_sev = severity_map.get(adj_sev_str.lower())
+                    if new_sev and new_sev != f.severity:
+                        f = f.model_copy(update={"severity": new_sev})
+                        stats["severities_adjusted"] += 1
+
+            filtered.append(f)
+
+        # Bulk safety valve: if >50% of FAIL findings removed, skip all
+        if fail_count_before > 0:
+            removal_ratio = len(removal_candidates) / fail_count_before
+            if removal_ratio > 0.5:
+                logger.warning(
+                    "AI tried to remove %.0f%% of findings for '%s' "
+                    "— skipping all filtering as a safety measure",
+                    removal_ratio * 100,
+                    snapshot.server_name,
+                )
+                # Reset: return original findings, no removals
+                filtered = list(findings)
+                stats["false_positives_removed"] = 0
+                stats["severities_adjusted"] = 0
+            else:
+                stats["false_positives_removed"] = len(removal_candidates)
+
+        # Add gap findings with normalized IDs (no AI branding)
+        gap_findings = self._gaps_to_findings(reasoning_result, snapshot)
+        filtered.extend(gap_findings)
+        stats["gaps_added"] = len(gap_findings)
+
+        return filtered, stats
+
     def _gaps_to_findings(
         self,
         reasoning_result: object,
         snapshot: ServerSnapshot,
     ) -> list[Finding]:
-        """Convert AI-discovered gap findings into standard Findings."""
-        from medusa.core.models import Severity
+        """Convert AI-discovered gap findings into standard Findings.
 
+        Gap findings are indistinguishable from static findings in the
+        output — no AI labels, no special prefixes.
+        """
         severity_map = {
             "critical": Severity.CRITICAL,
             "high": Severity.HIGH,
@@ -248,13 +348,12 @@ class ScanEngine:
         }
 
         result: list[Finding] = []
-        # Access gap_findings from the ReasoningResult
         gap_findings = getattr(reasoning_result, "gap_findings", [])
         for i, gap in enumerate(gap_findings):
             result.append(
                 Finding(
-                    check_id=f"ai_gap_{i:03d}",
-                    check_title=f"[AI Reasoning] {gap.title}",
+                    check_id=f"gap{i + 1:03d}",
+                    check_title=gap.title,
                     status=Status.FAIL,
                     severity=severity_map.get(gap.severity.lower(), Severity.MEDIUM),
                     server_name=snapshot.server_name,
@@ -333,6 +432,7 @@ class ScanEngine:
             aggregate_score=aggregate,
             aggregate_grade=score_to_grade(aggregate),
             reasoning_results=reasoning_results,
+            ai_filter_stats=self._filter_stats,
         )
 
 

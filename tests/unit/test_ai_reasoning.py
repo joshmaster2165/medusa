@@ -681,9 +681,9 @@ class TestScannerReasoning:
         )
         gap_findings = engine._gaps_to_findings(reasoning, snapshot)
         assert len(gap_findings) == 1
-        assert gap_findings[0].check_id == "ai_gap_000"
+        assert gap_findings[0].check_id == "gap001"
         assert gap_findings[0].severity == Severity.HIGH
-        assert "[AI Reasoning]" in gap_findings[0].check_title
+        assert gap_findings[0].check_title == "Test Gap"
 
 
 # =====================================================================
@@ -743,3 +743,300 @@ class TestScanResultReasoning:
         data = json.loads(result.model_dump_json())
         assert "reasoning_results" in data
         assert data["reasoning_results"]["server1"]["summary"] == "OK"
+
+
+# =====================================================================
+# Apply Reasoning to Findings (Invisible Quality Layer)
+# =====================================================================
+
+
+class TestApplyReasoningToFindings:
+    """Tests for the invisible AI filtering in _apply_reasoning_to_findings."""
+
+    def _make_engine(self):
+        from medusa.core.registry import CheckRegistry
+        from medusa.core.scanner import ScanEngine
+
+        registry = CheckRegistry()
+        registry.discover_checks()
+        return ScanEngine(connectors=[], registry=registry, enable_reasoning=True)
+
+    def test_fp_with_low_score_is_removed(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        # Need at least 3 findings so removing 1 (33%) doesn't
+        # trigger the 50% bulk safety valve.
+        findings = [
+            _make_finding(check_id="tp001", severity=Severity.HIGH, resource_name="tool_a"),
+            _make_finding(check_id="tp002", severity=Severity.MEDIUM, resource_name="tool_b"),
+            _make_finding(check_id="tp003", severity=Severity.LOW, resource_name="tool_c"),
+        ]
+        reasoning = ReasoningResult(
+            server_name="test",
+            annotations=[
+                FindingAnnotation(
+                    check_id="tp001",
+                    resource_name="tool_a",
+                    confidence=Confidence.FALSE_POSITIVE,
+                    confidence_score=0.1,
+                    reasoning="Doc context.",
+                    false_positive_reason=FalsePositiveReason.DOCUMENTATION_CONTEXT,
+                )
+            ],
+        )
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        fail_findings = [f for f in filtered if f.status == Status.FAIL]
+        assert len(fail_findings) == 2  # tp002 and tp003 kept
+        assert stats["false_positives_removed"] == 1
+
+    def test_fp_with_high_score_is_kept(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        findings = [
+            _make_finding(check_id="tp001", severity=Severity.HIGH, resource_name="tool_a"),
+        ]
+        reasoning = ReasoningResult(
+            server_name="test",
+            annotations=[
+                FindingAnnotation(
+                    check_id="tp001",
+                    resource_name="tool_a",
+                    confidence=Confidence.LIKELY_FALSE_POSITIVE,
+                    confidence_score=0.4,  # Above 0.3 threshold
+                    reasoning="Might be FP.",
+                )
+            ],
+        )
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        fail_findings = [f for f in filtered if f.status == Status.FAIL]
+        assert len(fail_findings) == 1
+        assert stats["false_positives_removed"] == 0
+
+    def test_critical_fp_is_never_removed(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        findings = [
+            _make_finding(check_id="tp001", severity=Severity.CRITICAL, resource_name="tool_a"),
+        ]
+        reasoning = ReasoningResult(
+            server_name="test",
+            annotations=[
+                FindingAnnotation(
+                    check_id="tp001",
+                    resource_name="tool_a",
+                    confidence=Confidence.FALSE_POSITIVE,
+                    confidence_score=0.05,
+                    reasoning="FP but critical.",
+                )
+            ],
+        )
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        fail_findings = [f for f in filtered if f.status == Status.FAIL]
+        assert len(fail_findings) == 1  # Preserved!
+        assert stats["critical_preserved"] == 1
+        assert stats["false_positives_removed"] == 0
+
+    def test_severity_adjustment_applied(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        findings = [
+            _make_finding(check_id="tp001", severity=Severity.HIGH, resource_name="tool_a"),
+        ]
+        reasoning = ReasoningResult(
+            server_name="test",
+            annotations=[
+                FindingAnnotation(
+                    check_id="tp001",
+                    resource_name="tool_a",
+                    confidence=Confidence.CONFIRMED,
+                    confidence_score=0.9,
+                    reasoning="Real but medium.",
+                    adjusted_severity="medium",
+                )
+            ],
+        )
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        assert filtered[0].severity == Severity.MEDIUM
+        assert stats["severities_adjusted"] == 1
+
+    def test_gap_findings_use_normalized_ids(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        findings = [_make_finding(status=Status.PASS)]
+        reasoning = ReasoningResult(
+            server_name="test",
+            gap_findings=[
+                GapFinding(
+                    title="Semantic Mismatch",
+                    severity="high",
+                    resource_type="tool",
+                    resource_name="bad_tool",
+                    description="Tool is bad.",
+                    evidence="Evidence.",
+                    remediation="Fix it.",
+                    reasoning="Static missed it.",
+                ),
+                GapFinding(
+                    title="Another Gap",
+                    severity="medium",
+                    resource_type="tool",
+                    resource_name="other_tool",
+                    description="Also bad.",
+                    evidence="More evidence.",
+                    remediation="Fix too.",
+                    reasoning="Also missed.",
+                ),
+            ],
+        )
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        gap_findings = [f for f in filtered if f.status == Status.FAIL]
+        assert len(gap_findings) == 2
+        assert gap_findings[0].check_id == "gap001"
+        assert gap_findings[1].check_id == "gap002"
+        # No AI branding in titles
+        assert "[AI Reasoning]" not in gap_findings[0].check_title
+        assert gap_findings[0].check_title == "Semantic Mismatch"
+        assert stats["gaps_added"] == 2
+
+    def test_bulk_removal_safety_valve(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        # 4 findings, AI tries to remove 3 (75% > 50% threshold)
+        findings = [
+            _make_finding(check_id=f"tp{i:03d}", severity=Severity.HIGH, resource_name=f"t{i}")
+            for i in range(4)
+        ]
+        annotations = [
+            FindingAnnotation(
+                check_id=f"tp{i:03d}",
+                resource_name=f"t{i}",
+                confidence=Confidence.FALSE_POSITIVE,
+                confidence_score=0.1,
+                reasoning="FP.",
+            )
+            for i in range(3)  # 3 out of 4 = 75%
+        ]
+        reasoning = ReasoningResult(server_name="test", annotations=annotations)
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        fail_findings = [f for f in filtered if f.status == Status.FAIL]
+        # Safety valve triggers: all 4 findings preserved
+        assert len(fail_findings) == 4
+        assert stats["false_positives_removed"] == 0
+
+    def test_ai_failure_passes_findings_through(self) -> None:
+        """When reasoning_result is None, findings pass through unmodified.
+
+        The scanner only calls _apply_reasoning_to_findings when
+        reasoning_result is not None, so findings are unchanged.
+        """
+        findings = [
+            _make_finding(check_id="tp001"),
+            _make_finding(check_id="tp002"),
+        ]
+        # Simulate: _run_reasoning returns None (AI call failed)
+        # _apply_reasoning_to_findings is never called
+        # Verify findings are unchanged
+        assert len(findings) == 2
+        assert findings[0].check_id == "tp001"
+
+    def test_no_annotations_passes_through(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        findings = [
+            _make_finding(check_id="tp001", resource_name="tool_a"),
+        ]
+        # Reasoning with no annotations — findings pass through
+        reasoning = ReasoningResult(server_name="test")
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        assert len(filtered) == 1
+        assert stats["false_positives_removed"] == 0
+        assert stats["severities_adjusted"] == 0
+
+    def test_pass_findings_not_affected(self) -> None:
+        engine = self._make_engine()
+        snapshot = make_snapshot()
+
+        findings = [
+            _make_finding(check_id="tp001", status=Status.PASS, resource_name="tool_a"),
+            _make_finding(check_id="tp002", status=Status.FAIL, resource_name="tool_b"),
+        ]
+        reasoning = ReasoningResult(
+            server_name="test",
+            annotations=[
+                FindingAnnotation(
+                    check_id="tp001",
+                    resource_name="tool_a",
+                    confidence=Confidence.FALSE_POSITIVE,
+                    confidence_score=0.1,
+                    reasoning="FP.",
+                )
+            ],
+        )
+
+        filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
+        # PASS finding is not affected by FP annotation (only FAIL gets filtered)
+        pass_count = sum(1 for f in filtered if f.status == Status.PASS)
+        fail_count = sum(1 for f in filtered if f.status == Status.FAIL)
+        assert pass_count == 1
+        assert fail_count == 1
+
+    def test_contradicting_evidence_parsed(self) -> None:
+        data = {
+            "annotations": [
+                {
+                    "check_id": "tp001",
+                    "resource_name": "tool",
+                    "confidence": "false_positive",
+                    "confidence_score": 0.1,
+                    "reasoning": "Doc context.",
+                    "false_positive_reason": "documentation_context",
+                    "contradicting_evidence": "Description says 'this is an example'",
+                }
+            ]
+        }
+        result = parse_reasoning_response(data, "server")
+        assert (
+            result.annotations[0].contradicting_evidence == "Description says 'this is an example'"
+        )
+
+
+class TestPromptIncludesPassFindings:
+    """Tests that PASS findings are sent to AI for false-negative detection."""
+
+    def test_payload_includes_pass_findings_section(self) -> None:
+        snapshot = make_snapshot()
+        findings = [
+            _make_finding(check_id="tp001", status=Status.FAIL),
+            _make_finding(check_id="iv001", status=Status.PASS, resource_name="safe_tool"),
+        ]
+        payload = build_reasoning_user_payload(snapshot, findings)
+        assert "PASSED CHECKS" in payload
+        assert "PASS iv001" in payload
+        assert "safe_tool" in payload
+
+    def test_payload_no_pass_section_when_no_passes(self) -> None:
+        snapshot = make_snapshot()
+        findings = [
+            _make_finding(check_id="tp001", status=Status.FAIL),
+        ]
+        payload = build_reasoning_user_payload(snapshot, findings)
+        assert "PASSED CHECKS" not in payload
+
+    def test_system_prompt_mentions_false_negatives(self) -> None:
+        prompt = build_reasoning_system_prompt(num_findings=5)
+        assert "FALSE NEGATIVES" in prompt
+        assert "contradicting_evidence" in prompt

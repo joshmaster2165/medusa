@@ -47,6 +47,7 @@ class FindingAnnotation(BaseModel):
     exploitability_note: str | None = None
     adjusted_severity: str | None = None
     additional_context: str | None = None
+    contradicting_evidence: str | None = None
 
 
 class AttackChain(BaseModel):

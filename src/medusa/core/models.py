@@ -91,3 +91,4 @@ class ScanResult(BaseModel):
     aggregate_grade: str
     compliance_results: dict[str, dict] = {}
     reasoning_results: dict[str, Any] = {}
+    ai_filter_stats: dict[str, dict[str, int]] = {}

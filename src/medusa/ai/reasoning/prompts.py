@@ -27,19 +27,36 @@ REASONING to produce five outputs:
 
 ## A. VALIDATE FINDINGS
 For each FAIL finding listed below, assess whether it is a true positive \
-or a false positive. Provide:
+or a false positive. You MUST provide EVIDENCE-BASED reasoning.
+
+CRITICAL RULES for false positive assessment:
+- You may ONLY mark a finding as false_positive or likely_false_positive \
+if you can cite SPECIFIC evidence from the snapshot that contradicts the \
+finding.
+- "Insufficient evidence" alone is NOT grounds for false_positive. If \
+you cannot confirm the issue, mark it "uncertain", not "likely_false_positive".
+- Err on the side of caution: when in doubt, mark "likely" (true positive).
+- A finding with concrete evidence in the snapshot is ALWAYS at least "likely".
+- Scores below 0.3 will cause the finding to be REMOVED from the report, \
+so use extreme care with low scores. Only assign scores below 0.3 when \
+you have clear contradicting evidence.
+
+For each finding provide:
 - confidence: one of "confirmed", "likely", "uncertain", \
 "likely_false_positive", "false_positive"
 - confidence_score: a float from 0.0 (certainly false positive) to 1.0 \
 (certainly real issue)
-- reasoning: a 1-2 sentence explanation
-- false_positive_reason: if a false positive, one of: \
-"documentation_context", "example_code", "security_measure", \
-"negation_context", "insufficient_evidence", \
-"semantic_misunderstanding", "benign_pattern"
+- reasoning: a 1-3 sentence explanation citing specific snapshot data
+- false_positive_reason: REQUIRED if confidence is false_positive or \
+likely_false_positive. Must be one of: "documentation_context", \
+"example_code", "security_measure", "negation_context", \
+"insufficient_evidence", "semantic_misunderstanding", "benign_pattern"
+- contradicting_evidence: REQUIRED if confidence is false_positive or \
+likely_false_positive. The specific snapshot text that contradicts the \
+finding.
 - exploitability_note: (optional) how this could be exploited in practice
-- adjusted_severity: (optional) if the actual severity differs from the \
-static check's rating
+- adjusted_severity: (optional) only if the actual severity clearly \
+differs from the static check's rating, with reasoning
 
 ## B. CORRELATE FINDINGS — ATTACK CHAINS
 Identify sets of 2 or more findings that TOGETHER form an attack chain. \
@@ -55,7 +72,19 @@ to the full server snapshot — look for semantic issues that regex-based \
 pattern matching cannot detect. ONLY report issues with CONCRETE evidence \
 from the snapshot data. Do NOT invent theoretical risks.
 
-## D. PRIORITIZE
+## D. DETECT FALSE NEGATIVES
+Review the PASSED CHECKS section below. Identify any checks that passed \
+but SHOULD HAVE FAILED based on the server snapshot data. For each false \
+negative, include it in the gap_findings array with:
+- title: a descriptive title for the missed issue
+- evidence: the specific snapshot data that shows the check should have \
+failed
+- reasoning: why the static check missed this (e.g., pattern not covered, \
+semantic issue the regex missed)
+Only report false negatives with CONCRETE evidence. A check passing \
+correctly is not a gap.
+
+## E. PRIORITIZE
 Provide an executive_summary (2-3 sentences) and a top_priorities list \
 (ordered remediation actions, max 10).
 
@@ -71,8 +100,9 @@ Return ONLY a JSON object with this exact structure:
       "resource_name": "tool_or_resource_name",
       "confidence": "confirmed",
       "confidence_score": 0.95,
-      "reasoning": "Brief explanation",
+      "reasoning": "Brief explanation citing snapshot data",
       "false_positive_reason": null,
+      "contradicting_evidence": null,
       "exploitability_note": "How exploitable in practice",
       "adjusted_severity": null,
       "additional_context": null
@@ -162,8 +192,8 @@ def build_reasoning_user_payload(
     """Build the user payload: server snapshot + compact findings.
 
     The snapshot is serialized using the existing ``build_analysis_payload``
-    helper.  Findings are formatted compactly — only FAIL findings are
-    included with their key fields.
+    helper.  Findings are formatted compactly — FAIL findings get full
+    detail, PASS findings are listed compactly for false-negative detection.
     """
     # Section 1: Server snapshot (reuse existing serializer)
     snapshot_text = build_analysis_payload(
@@ -178,7 +208,7 @@ def build_reasoning_user_payload(
 
     # Section 2: Compact findings summary
     fail_findings = [f for f in findings if f.status == Status.FAIL]
-    pass_count = sum(1 for f in findings if f.status == Status.PASS)
+    pass_findings = [f for f in findings if f.status == Status.PASS]
     error_count = sum(1 for f in findings if f.status == Status.ERROR)
 
     lines: list[str] = [
@@ -186,11 +216,14 @@ def build_reasoning_user_payload(
         "=" * 60,
         "STATIC FINDINGS",
         "=" * 60,
-        f"Summary: {len(fail_findings)} failed, {pass_count} passed"
+        f"Summary: {len(fail_findings)} failed, {len(pass_findings)} passed"
         f"{f', {error_count} errors' if error_count else ''}",
         "",
     ]
 
+    # Full detail for FAIL findings
+    lines.append("--- FAILED CHECKS ---")
+    lines.append("")
     for f in fail_findings:
         lines.append(f"[{f.severity.value.upper()}] {f.check_id}: {f.check_title}")
         lines.append(f"  Resource: {f.resource_type}/{f.resource_name}")
@@ -206,6 +239,16 @@ def build_reasoning_user_payload(
             lines.append(f"  Evidence: {evidence}")
         if f.owasp_mcp:
             lines.append(f"  OWASP: {', '.join(f.owasp_mcp)}")
+        lines.append("")
+
+    # Compact summary of PASS findings for false-negative detection
+    if pass_findings:
+        lines.append("--- PASSED CHECKS (review for false negatives) ---")
+        lines.append("")
+        for f in pass_findings:
+            lines.append(
+                f"  PASS {f.check_id}: {f.check_title} [{f.resource_type}/{f.resource_name}]"
+            )
         lines.append("")
 
     return snapshot_text + "\n".join(lines)
