@@ -215,7 +215,7 @@ class TestServerCatalog:
     def test_load_catalog(self) -> None:
         """Should load the built-in catalog with known servers."""
         catalog = load_server_catalog()
-        assert len(catalog) == 9
+        assert len(catalog) == 8
         names = [s.name for s in catalog]
         assert "filesystem" in names
         assert "memory" in names

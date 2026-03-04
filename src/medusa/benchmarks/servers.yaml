@@ -1,4 +1,15 @@
 servers:
+  # ── Zero-config servers (no env vars needed) ──────────────────────────
+  # These are lightweight servers that connect reliably via stdio.
+
+  - name: everything
+    package: "@modelcontextprotocol/server-everything"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-everything"]
+    description: "MCP test server exercising all protocol features"
+    category: "Testing"
+    url: "https://github.com/modelcontextprotocol/servers"
+
   - name: filesystem
     package: "@modelcontextprotocol/server-filesystem"
     command: npx
@@ -6,6 +17,24 @@ servers:
     description: "Secure file operations with configurable access controls"
     category: "File System"
     url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: memory
+    package: "@modelcontextprotocol/server-memory"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    description: "Knowledge graph-based persistent memory"
+    category: "Memory"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: sequential-thinking
+    package: "@modelcontextprotocol/server-sequential-thinking"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    description: "Sequential thinking and reasoning server"
+    category: "Reasoning"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  # ── Env-gated servers (skipped if tokens not set) ─────────────────────
 
   - name: github
     package: "@modelcontextprotocol/server-github"
@@ -25,22 +54,6 @@ servers:
     category: "Communication"
     url: "https://github.com/modelcontextprotocol/servers"
 
-  - name: memory
-    package: "@modelcontextprotocol/server-memory"
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-memory"]
-    description: "Knowledge graph-based persistent memory"
-    category: "Memory"
-    url: "https://github.com/modelcontextprotocol/servers"
-
-  - name: puppeteer
-    package: "@modelcontextprotocol/server-puppeteer"
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-puppeteer"]
-    description: "Browser automation via Puppeteer"
-    category: "Browser"
-    url: "https://github.com/modelcontextprotocol/servers"
-
   - name: brave-search
     package: "@modelcontextprotocol/server-brave-search"
     command: npx
@@ -50,14 +63,6 @@ servers:
     category: "Search"
     url: "https://github.com/modelcontextprotocol/servers"
 
-  - name: everything
-    package: "@modelcontextprotocol/server-everything"
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-everything"]
-    description: "MCP test server exercising all protocol features"
-    category: "Testing"
-    url: "https://github.com/modelcontextprotocol/servers"
-
   - name: postgres
     package: "@modelcontextprotocol/server-postgres"
     command: npx
@@ -65,12 +70,4 @@ servers:
     env_required: ["POSTGRES_CONNECTION_STRING"]
     description: "PostgreSQL database operations"
     category: "Database"
-    url: "https://github.com/modelcontextprotocol/servers"
-
-  - name: sequential-thinking
-    package: "@modelcontextprotocol/server-sequential-thinking"
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    description: "Sequential thinking and reasoning server"
-    category: "Reasoning"
     url: "https://github.com/modelcontextprotocol/servers"

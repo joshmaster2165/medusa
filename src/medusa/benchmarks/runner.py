@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -47,22 +49,50 @@ def check_env_requirements(entry: ServerCatalogEntry) -> tuple[bool, str]:
 def _prepare_server_args(entry: ServerCatalogEntry) -> list[str]:
     """Prepare server args, creating temp directories where needed."""
     args = list(entry.args)
-    for i, arg in enumerate(args):
+    for _i, arg in enumerate(args):
         if arg.startswith("/tmp/") and not Path(arg).exists():
-            # Create temp path for servers that need a directory or file
             if arg.endswith(".db"):
-                # Ensure parent dir exists for database files
                 Path(arg).parent.mkdir(parents=True, exist_ok=True)
             else:
-                # Create the directory for filesystem-type servers
                 Path(arg).mkdir(parents=True, exist_ok=True)
                 logger.info("Created temp directory: %s", arg)
     return args
 
 
+async def _warmup_npx_cache(
+    entries: list[ServerCatalogEntry],
+) -> None:
+    """Pre-download npm packages so npx doesn't timeout during connection.
+
+    Runs ``npx -y <package> --help`` for each entry to populate the npx
+    cache.  Failures are silently ignored — the benchmark will catch them.
+    """
+    npx = shutil.which("npx")
+    if not npx:
+        logger.warning("npx not found; skipping package warmup")
+        return
+
+    async def _warm_one(entry: ServerCatalogEntry) -> None:
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                npx,
+                "-y",
+                entry.package,
+                "--help",
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await asyncio.wait_for(proc.wait(), timeout=120)
+        except Exception:
+            pass  # warmup failure is non-fatal
+
+    # Warm up all packages concurrently
+    await asyncio.gather(*[_warm_one(e) for e in entries])
+
+
 async def run_benchmark(
     server_names: list[str] | None = None,
-    timeout: int = 60,
+    timeout: int = 120,
 ) -> BenchmarkReport:
     """Run benchmarks against catalog servers.
 
@@ -77,6 +107,14 @@ async def run_benchmark(
 
     catalog = load_server_catalog()
     catalog = filter_catalog(catalog, server_names)
+
+    # Determine which servers will actually be scanned (env check passes)
+    scannable = [e for e in catalog if check_env_requirements(e)[0]]
+
+    # Pre-download npm packages so npx connections don't timeout
+    if scannable:
+        logger.info("Warming up npx cache for %d server(s)...", len(scannable))
+        await _warmup_npx_cache(scannable)
 
     results: list[BenchmarkServerResult] = []
     scanned = 0
@@ -108,6 +146,7 @@ async def run_benchmark(
                 command=entry.command,
                 args=prepared_args,
                 env=env_vars if env_vars else None,
+                timeout=timeout,
             )
 
             # Build registry and engine for this single server
