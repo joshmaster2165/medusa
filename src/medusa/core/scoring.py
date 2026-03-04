@@ -26,12 +26,12 @@ GRADE_THRESHOLDS: list[tuple[float, str]] = [
 # Prevent inflated grades when critical/high findings exist, regardless of
 # how many checks pass overall.
 
-CRITICAL_CAP_BASE: float = 4.9  # 1 CRITICAL → max score 4.9 (Grade D)
-CRITICAL_CAP_DECAY: float = 0.5  # Each additional CRITICAL lowers cap by 0.5
+CRITICAL_CAP_BASE: float = 6.9  # 1 CRITICAL → max score 6.9 (Grade C)
+CRITICAL_CAP_DECAY: float = 0.3  # Each additional CRITICAL lowers cap by 0.3
 
 HIGH_CAP_THRESHOLD: int = 5  # Caps kick in at ≥ 5 HIGH findings
-HIGH_CAP_BASE: float = 6.9  # 5 HIGH → max score 6.9 (Grade C)
-HIGH_CAP_DECAY: float = 0.1  # Each additional HIGH beyond 5 lowers cap by 0.1
+HIGH_CAP_BASE: float = 7.9  # 5 HIGH → max score 7.9 (Grade B)
+HIGH_CAP_DECAY: float = 0.05  # Each additional HIGH beyond 5 lowers cap by 0.05
 
 
 def score_to_grade(score: float) -> str:
