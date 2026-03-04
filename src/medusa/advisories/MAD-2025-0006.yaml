@@ -1,0 +1,32 @@
+id: MAD-2025-0006
+title: "Tool Name Confusion and Near-Duplicate Attacks"
+severity: medium
+description: |
+  Attackers can register MCP tools with names that are near-duplicates of
+  legitimate tools (e.g., 'readFile' vs 'read_file', 'getUser' vs 'get_user_v2')
+  to trick LLMs into invoking the malicious version. Version variants and
+  homoglyph substitutions make this attack particularly insidious.
+affected_tools_pattern: "Servers with tools whose names are Levenshtein-similar to other tools, or contain version suffixes suggesting shadowing"
+attack_vector: |
+  A malicious MCP server registers tools with names that are visually or
+  semantically similar to legitimate tools. The LLM, relying on tool names
+  for selection, may choose the attacker's tool instead of the intended one,
+  especially when both are available in the same context.
+impact: |
+  Unintended tool execution, data redirection to malicious handlers,
+  credential interception, and covert replacement of legitimate functionality.
+references:
+  - "https://invariantlabs.ai/blog/mcp-security-risks"
+related_checks:
+  - tp044
+  - tp042
+  - agent023
+owasp_mcp:
+  - "MCP03:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-1007"
+tags:
+  - tool_confusion
+  - name_collision
+  - tool_shadowing

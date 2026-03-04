@@ -1,8 +1,13 @@
 """AGENT-004: Multi-Step Attack Chain Risk.
 
-Checks if tools can be chained without limits by detecting the presence
-of both read/fetch tools and write/send tools with no chaining limit
-config. Fails when > threshold tools exist and no chain limit is set.
+Classifies ALL tools by risk using classify_tool_risk() and identifies
+dangerous chain combinations that could be exploited:
+  - READ_ONLY + EXFILTRATIVE  = data theft chain
+  - READ_ONLY + DESTRUCTIVE   = informed destruction
+  - PRIVILEGED + EXFILTRATIVE = privilege-to-exfil chain
+
+Emits a server-level FAIL for each dangerous chain found.  Falls back to
+config chain-limit checks as a mitigating factor.
 """
 
 from __future__ import annotations
@@ -14,6 +19,7 @@ import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.utils.heuristics import ToolRisk, classify_tool_risk
 from medusa.utils.patterns.agentic import AGENT_SAFETY_CONFIG_KEYS
 
 CHAIN_LIMIT_KEYS: set[str] = AGENT_SAFETY_CONFIG_KEYS | {
@@ -22,7 +28,13 @@ CHAIN_LIMIT_KEYS: set[str] = AGENT_SAFETY_CONFIG_KEYS | {
     "chain_limit",
     "tool_call_limit",
 }
-MULTI_TOOL_THRESHOLD = 5
+
+# Dangerous chain combinations: (category_a, category_b, chain_label)
+_DANGEROUS_CHAINS: list[tuple[ToolRisk, ToolRisk, str]] = [
+    (ToolRisk.READ_ONLY, ToolRisk.EXFILTRATIVE, "data theft chain"),
+    (ToolRisk.READ_ONLY, ToolRisk.DESTRUCTIVE, "informed destruction"),
+    (ToolRisk.PRIVILEGED, ToolRisk.EXFILTRATIVE, "privilege-to-exfil chain"),
+]
 
 
 class MultiStepAttackChainCheck(BaseCheck):
@@ -40,10 +52,29 @@ class MultiStepAttackChainCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        tool_count = len(snapshot.tools)
-        has_limit = _walk_config_for_keys(snapshot.config_raw, CHAIN_LIMIT_KEYS)
+        has_chain_limit = _walk_config_for_keys(
+            snapshot.config_raw, CHAIN_LIMIT_KEYS
+        )
 
-        if tool_count > MULTI_TOOL_THRESHOLD and not has_limit:
+        # Classify all tools and group by risk category
+        risk_groups: dict[ToolRisk, list[str]] = {}
+        for tool in snapshot.tools:
+            risk = classify_tool_risk(tool)
+            tool_name = tool.get("name", "<unnamed>")
+            risk_groups.setdefault(risk, []).append(tool_name)
+
+        # Check for each dangerous chain combination
+        for cat_a, cat_b, chain_label in _DANGEROUS_CHAINS:
+            tools_a = risk_groups.get(cat_a, [])
+            tools_b = risk_groups.get(cat_b, [])
+
+            if not tools_a or not tools_b:
+                continue
+
+            if has_chain_limit:
+                # Config has chain-limit -- mitigated, skip
+                continue
+
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -55,15 +86,24 @@ class MultiStepAttackChainCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Server exposes {tool_count} tools with no chain/call limit "
-                        f"in configuration, enabling unbounded multi-step attack chains."
+                        f"Dangerous {chain_label} detected: "
+                        f"{cat_a.value} tools ({', '.join(tools_a[:3])}) "
+                        f"can be chained with {cat_b.value} tools "
+                        f"({', '.join(tools_b[:3])}) with no chain limit "
+                        f"in configuration."
                     ),
-                    evidence=f"tool_count={tool_count}, threshold={MULTI_TOOL_THRESHOLD}",
+                    evidence=(
+                        f"chain_type={chain_label}, "
+                        f"{cat_a.value}_tools={tools_a[:5]}, "
+                        f"{cat_b.value}_tools={tools_b[:5]}, "
+                        f"chain_limit_config=missing"
+                    ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
             )
-        else:
+
+        if not findings and snapshot.tools:
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -75,7 +115,9 @@ class MultiStepAttackChainCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Tool count ({tool_count}) within threshold or chain limit configured."
+                        f"No dangerous tool chain combinations detected, or "
+                        f"chain limits are configured across "
+                        f"{len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
@@ -86,6 +128,7 @@ class MultiStepAttackChainCheck(BaseCheck):
 
 
 def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
+    """Recursively walk config looking for any matching key."""
     if _depth > 10:
         return False
     if isinstance(config, dict):

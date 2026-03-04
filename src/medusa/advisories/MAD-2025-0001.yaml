@@ -1,0 +1,40 @@
+id: MAD-2025-0001
+title: "Tool Poisoning via Hidden Instructions in MCP Tool Descriptions"
+severity: high
+description: |
+  MCP tool descriptions can contain hidden instruction tags (e.g., <IMPORTANT>,
+  <!-- hidden -->, zero-width characters) that manipulate LLM behavior when the
+  tool listing is included in the context window. These hidden instructions are
+  invisible to users but processed by language models, enabling covert control
+  of agent behavior.
+affected_tools_pattern: "Any MCP tool with HTML/XML tags, markdown hidden content, or suspicious Unicode in its description"
+attack_vector: |
+  An attacker publishes or modifies an MCP server to include hidden instruction
+  tags in tool descriptions. When an LLM client lists available tools, these
+  hidden instructions are silently included in the context and can override user
+  instructions, redirect data flows, or trigger unauthorized actions.
+impact: |
+  Data exfiltration, unauthorized command execution, user instruction override,
+  and full agent compromise through invisible prompt injection embedded in tool
+  metadata.
+references:
+  - "https://invariantlabs.ai/blog/mcp-security-risks"
+  - "https://modelcontextprotocol.io/specification/2025-03-26/server/tools"
+related_checks:
+  - tp001
+  - tp002
+  - tp003
+  - tp004
+  - tp005
+  - tp038
+owasp_mcp:
+  - "MCP03:2025"
+  - "MCP06:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-94"
+  - "CWE-79"
+tags:
+  - tool_poisoning
+  - prompt_injection
+  - hidden_instructions

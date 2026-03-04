@@ -954,6 +954,150 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
     console.print(table)
 
 
+# ── list-advisories ──────────────────────────────────────────────────────
+
+
+@cli.command("list-advisories")
+@click.option("--severity", type=str, default=None, help="Filter by severity (critical, high, medium, low).")
+@click.option("--check", type=str, default=None, help="Show advisories for a specific check ID.")
+@click.option("--tag", type=str, default=None, help="Filter by tag.")
+def list_advisories_cmd(severity: str | None, check: str | None, tag: str | None) -> None:
+    """Browse the Medusa Advisory Database (MAD).
+
+    Displays known MCP attack patterns with severity ratings, affected
+    tool patterns, related checks, and OWASP MCP Top 10 mappings.
+    """
+    from medusa.advisories.loader import (
+        get_advisories_by_severity,
+        get_advisories_by_tag,
+        get_advisories_for_check,
+        load_all_advisories,
+    )
+
+    if check:
+        advisories = get_advisories_for_check(check)
+    elif severity:
+        advisories = get_advisories_by_severity(severity)
+    elif tag:
+        advisories = get_advisories_by_tag(tag)
+    else:
+        advisories = list(load_all_advisories())
+
+    if not advisories:
+        console.print("[dim]No advisories found matching the filter.[/dim]")
+        return
+
+    table = Table(title=f"Medusa Advisory Database ({len(advisories)} advisories)")
+    table.add_column("ID", style="bold cyan", no_wrap=True)
+    table.add_column("Severity", no_wrap=True)
+    table.add_column("Title", max_width=60)
+    table.add_column("Checks", style="dim")
+    table.add_column("OWASP", style="dim")
+
+    severity_styles = {
+        "critical": "bold red",
+        "high": "red",
+        "medium": "yellow",
+        "low": "blue",
+    }
+
+    for adv in advisories:
+        sev_style = severity_styles.get(adv.severity, "white")
+        table.add_row(
+            adv.id,
+            f"[{sev_style}]{adv.severity.upper()}[/{sev_style}]",
+            adv.title,
+            ", ".join(adv.related_checks[:5]),
+            ", ".join(adv.owasp_mcp[:3]),
+        )
+
+    console.print(table)
+
+
+# ── benchmark ─────────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.option(
+    "--servers",
+    "-s",
+    type=str,
+    default=None,
+    help="Comma-separated server names to benchmark (default: all).",
+)
+@click.option(
+    "--output-dir",
+    type=str,
+    default="benchmarks/results",
+    help="Directory to save benchmark results.",
+)
+@click.option(
+    "--timeout",
+    "-t",
+    type=int,
+    default=60,
+    help="Connection timeout per server in seconds.  [default: 60]",
+)
+@click.option(
+    "--markdown",
+    is_flag=True,
+    default=False,
+    help="Output markdown report to stdout.",
+)
+@click.pass_context
+def benchmark(
+    ctx: click.Context,
+    servers: str | None,
+    output_dir: str,
+    timeout: int,
+    markdown: bool,
+) -> None:
+    """Run benchmarks against popular MCP servers.
+
+    Scans a catalog of well-known MCP servers and generates a
+    "State of MCP Security" report with scores and grades.
+    Servers requiring missing environment variables are skipped.
+
+    \b
+    Examples:
+      medusa benchmark                                   Scan all catalog servers
+      medusa benchmark --servers filesystem,memory       Scan specific servers
+      medusa benchmark --markdown                        Markdown report to stdout
+      medusa benchmark --timeout 120 --output-dir ./out  Custom timeout & output
+    """
+    from medusa.benchmarks.report import (
+        generate_markdown_report,
+        print_benchmark_report,
+        save_benchmark_results,
+    )
+    from medusa.benchmarks.runner import run_benchmark
+
+    quiet = ctx.obj.get("quiet", False)
+    server_list = [s.strip() for s in servers.split(",")] if servers else None
+
+    if not quiet:
+        console.print()
+        if server_list:
+            console.print(
+                f"  [green]\u25b8 Benchmarking:[/green] [dim]{', '.join(server_list)}[/dim]"
+            )
+        else:
+            console.print("  [green]\u25b8 Benchmarking all catalog servers[/green]")
+        console.print()
+
+    report = asyncio.run(run_benchmark(server_names=server_list, timeout=timeout))
+
+    if markdown:
+        console.print(generate_markdown_report(report))
+    else:
+        print_benchmark_report(report, console=console)
+
+    # Save results
+    filepath = save_benchmark_results(report, output_dir=output_dir)
+    if not quiet:
+        console.print(f"\n  [dim]Results saved to {filepath}[/dim]")
+
+
 # ── configure ─────────────────────────────────────────────────────────────
 
 

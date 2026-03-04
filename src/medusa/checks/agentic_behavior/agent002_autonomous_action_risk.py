@@ -1,7 +1,10 @@
 """AGENT-002: Autonomous Action Risk.
 
-Checks configuration for auto-approve or auto-execute settings that
-allow an agent to take actions without user intervention.
+For each tool classified as DESTRUCTIVE, PRIVILEGED, or EXFILTRATIVE,
+checks whether the tool's inputSchema contains confirmation or rate-limit
+parameters that act as safeguards against autonomous invocation.  Also
+checks server config for auto-approve/auto-execute settings as a
+secondary signal.  Emits a per-tool FAIL when no safeguards are found.
 """
 
 from __future__ import annotations
@@ -13,6 +16,11 @@ import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.utils.heuristics import ToolRisk, classify_tool_risk
+from medusa.utils.patterns.agentic import (
+    CONFIRMATION_SCHEMA_PARAMS,
+    RATE_LIMIT_SCHEMA_PARAMS,
+)
 
 AUTO_APPROVE_KEYS: set[str] = {
     "auto_approve",
@@ -40,9 +48,34 @@ class AutonomousActionRiskCheck(BaseCheck):
         meta = self.metadata()
         findings: list[Finding] = []
 
-        found_keys = _find_matching_keys(snapshot.config_raw, AUTO_APPROVE_KEYS)
+        if not snapshot.tools:
+            return findings
 
-        if found_keys:
+        # Secondary signal: auto-approve config keys present
+        has_auto_approve = _walk_config_for_keys(
+            snapshot.config_raw, AUTO_APPROVE_KEYS
+        )
+
+        safeguard_params = CONFIRMATION_SCHEMA_PARAMS | RATE_LIMIT_SCHEMA_PARAMS
+        risky_levels = (ToolRisk.DESTRUCTIVE, ToolRisk.PRIVILEGED, ToolRisk.EXFILTRATIVE)
+
+        for tool in snapshot.tools:
+            risk = classify_tool_risk(tool)
+            if risk not in risky_levels:
+                continue
+
+            tool_name: str = tool.get("name", "<unnamed>")
+            input_schema = tool.get("inputSchema", {})
+            properties = input_schema.get("properties", {}) if input_schema else {}
+            param_names = {p.lower() for p in properties}
+
+            has_confirm = bool(param_names & CONFIRMATION_SCHEMA_PARAMS)
+            has_rate_limit = bool(param_names & RATE_LIMIT_SCHEMA_PARAMS)
+
+            if has_confirm or has_rate_limit:
+                # Tool has schema-level safeguards -- safe
+                continue
+
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -51,19 +84,26 @@ class AutonomousActionRiskCheck(BaseCheck):
                     severity=meta.severity,
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
-                    resource_type="server",
-                    resource_name=snapshot.server_name,
+                    resource_type="tool",
+                    resource_name=tool_name,
                     status_extended=(
-                        f"Configuration contains autonomous execution settings: "
-                        f"{', '.join(sorted(found_keys)[:5])}. "
-                        f"Agent can take actions without user approval."
+                        f"Tool '{tool_name}' ({risk.value}) has no confirmation "
+                        f"or rate-limit parameters in its schema. It can be "
+                        f"autonomously invoked without safeguards."
                     ),
-                    evidence=f"auto_approve_keys={sorted(found_keys)[:5]}",
+                    evidence=(
+                        f"risk={risk.value}, "
+                        f"params={sorted(param_names)[:10]}, "
+                        f"confirm_param=missing, "
+                        f"rate_limit_param=missing, "
+                        f"auto_approve_config={'present' if has_auto_approve else 'absent'}"
+                    ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
             )
-        else:
+
+        if not findings and snapshot.tools:
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -74,7 +114,11 @@ class AutonomousActionRiskCheck(BaseCheck):
                     server_transport=snapshot.transport_type,
                     resource_type="server",
                     resource_name=snapshot.server_name,
-                    status_extended="No autonomous execution configuration detected.",
+                    status_extended=(
+                        f"All high-risk tools have confirmation or rate-limit "
+                        f"parameters, or no high-risk tools found across "
+                        f"{len(snapshot.tools)} tool(s)."
+                    ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -83,17 +127,18 @@ class AutonomousActionRiskCheck(BaseCheck):
         return findings
 
 
-def _find_matching_keys(config: Any, keys: set[str], _depth: int = 0) -> set[str]:
-    """Recursively find all matching keys in config dict."""
-    found: set[str] = set()
+def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
+    """Recursively walk config looking for any matching key."""
     if _depth > 10:
-        return found
+        return False
     if isinstance(config, dict):
         for key in config:
             if isinstance(key, str) and key.lower() in keys:
-                found.add(key.lower())
-            found |= _find_matching_keys(config[key], keys, _depth + 1)
+                return True
+            if _walk_config_for_keys(config[key], keys, _depth + 1):
+                return True
     elif isinstance(config, list):
         for item in config:
-            found |= _find_matching_keys(item, keys, _depth + 1)
-    return found
+            if _walk_config_for_keys(item, keys, _depth + 1):
+                return True
+    return False

@@ -1,0 +1,35 @@
+id: MAD-2025-0004
+title: "Cross-Tool Data Exfiltration via Source-Sink Chains"
+severity: high
+description: |
+  When an MCP server exposes both data-reading tools (source) and
+  data-transmitting tools (sink), an LLM agent can be directed to chain
+  these tools together to exfiltrate sensitive data. A single tool containing
+  both source and sink parameters is especially dangerous.
+affected_tools_pattern: "Servers with both read/query tools and send/upload/webhook tools, or single tools with both source and sink parameters"
+attack_vector: |
+  An attacker uses prompt injection or tool poisoning to instruct the LLM to:
+  1) Read sensitive data using a source tool (file reader, database query)
+  2) Send the data to an external endpoint using a sink tool (webhook, email, HTTP post)
+  The chain operates within normal tool invocation, making it hard to detect.
+impact: |
+  Exfiltration of sensitive data including source code, database contents,
+  configuration files, credentials, and personal information to
+  attacker-controlled endpoints.
+references:
+  - "https://invariantlabs.ai/blog/mcp-security-risks"
+related_checks:
+  - dp033
+  - tp004
+  - dp001
+owasp_mcp:
+  - "MCP10:2025"
+  - "MCP03:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-200"
+  - "CWE-359"
+tags:
+  - data_exfiltration
+  - attack_chain
+  - cross_tool

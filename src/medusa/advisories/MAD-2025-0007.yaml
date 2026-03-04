@@ -1,0 +1,32 @@
+id: MAD-2025-0007
+title: "Autonomous Destructive Actions Without Confirmation Mechanism"
+severity: high
+description: |
+  MCP tools that perform destructive operations (delete, drop, remove, wipe)
+  without requiring a confirmation or dry-run parameter allow LLM agents to
+  execute irreversible actions with no safety check. Combined with prompt
+  injection, this enables automated data destruction.
+affected_tools_pattern: "Tools classified as DESTRUCTIVE that lack confirm/dry_run/force/approve parameters in their schema"
+attack_vector: |
+  An LLM agent, either through normal operation or prompt injection, invokes
+  a destructive tool (e.g., delete_database, remove_files) without any
+  confirmation step. The tool executes immediately and irreversibly because
+  no safety parameter exists to prevent it.
+impact: |
+  Irreversible data loss, service disruption, infrastructure damage, and
+  potential compliance violations from unauthorized data deletion.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+related_checks:
+  - agent026
+  - agent001
+owasp_mcp:
+  - "MCP02:2025"
+  - "MCP03:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-862"
+tags:
+  - destructive_actions
+  - missing_confirmation
+  - agentic_safety

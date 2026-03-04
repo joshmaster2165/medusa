@@ -1,8 +1,7 @@
 """MT001: Missing Tenant Isolation.
 
-Detects MCP servers that handle multiple tenants without implementing proper isolation between
-tenant contexts. Missing isolation allows one tenant operations, data, and tool invocations to
-affect or be visible to other tenants sharing the same server instance.
+Detects MCP servers where data-access tools lack tenant-scoping parameters,
+meaning one tenant's operations could affect or be visible to other tenants.
 """
 
 from __future__ import annotations
@@ -14,6 +13,8 @@ import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
+from medusa.utils.heuristics import ToolRisk, classify_tool_risk
+from medusa.utils.patterns.multi_tenant import TENANT_ID_PARAMS
 
 _TENANT_ISOLATION_KEYS = {
     "tenant_isolation",
@@ -26,6 +27,14 @@ _TENANT_ISOLATION_KEYS = {
     "multitenant",
     "workspace",
     "organization",
+}
+
+# Risk levels that represent data-access tools needing tenant isolation
+_DATA_ACCESS_RISKS = {
+    ToolRisk.READ_ONLY,
+    ToolRisk.DESTRUCTIVE,
+    ToolRisk.EXFILTRATIVE,
+    ToolRisk.PRIVILEGED,
 }
 
 
@@ -46,41 +55,6 @@ def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
     return False
 
 
-def _mt_config_check(
-    snapshot: ServerSnapshot,
-    meta: CheckMetadata,
-    config_keys: set[str],
-    missing_msg: str,
-    present_msg: str,
-) -> list[Finding]:
-    """Shared multi-tenant config-key check: FAIL if keys absent, PASS if present."""
-    if not snapshot.config_raw:
-        return []  # No config to evaluate
-    found = _walk_config_for_keys(snapshot.config_raw, config_keys)
-    status = Status.PASS if found else Status.FAIL
-    status_extended = (
-        present_msg.format(server=snapshot.server_name)
-        if found
-        else missing_msg.format(server=snapshot.server_name)
-    )
-    return [
-        Finding(
-            check_id=meta.check_id,
-            check_title=meta.title,
-            status=status,
-            severity=meta.severity,
-            server_name=snapshot.server_name,
-            server_transport=snapshot.transport_type,
-            resource_type="server",
-            resource_name=snapshot.server_name,
-            status_extended=status_extended,
-            evidence=f"config_raw present: {bool(snapshot.config_raw)}",
-            remediation=meta.remediation,
-            owasp_mcp=meta.owasp_mcp,
-        )
-    ]
-
-
 class MissingTenantIsolationCheck(BaseCheck):
     """Missing Tenant Isolation."""
 
@@ -91,13 +65,73 @@ class MissingTenantIsolationCheck(BaseCheck):
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
         meta = self.metadata()
-        return _mt_config_check(
-            snapshot,
-            meta,
-            config_keys=_TENANT_ISOLATION_KEYS,
-            missing_msg=(
-                "Server '{server}' has no tenant isolation configuration. "
-                "Tenant contexts may bleed across sessions."
-            ),
-            present_msg="Server '{server}' has tenant isolation configuration.",
+        findings: list[Finding] = []
+
+        if not snapshot.tools:
+            return findings
+
+        # Secondary signal: config-level tenant isolation
+        has_config_isolation = _walk_config_for_keys(
+            snapshot.config_raw, _TENANT_ISOLATION_KEYS,
         )
+
+        for tool in snapshot.tools:
+            tool_name = tool.get("name", "<unnamed>")
+            risk = classify_tool_risk(tool)
+
+            # Only check tools that access/modify data
+            if risk not in _DATA_ACCESS_RISKS:
+                continue
+
+            input_schema = tool.get("inputSchema", {})
+            properties = input_schema.get("properties", {}) if input_schema else {}
+            param_names = {p.lower() for p in properties}
+            has_tenant_param = bool(param_names & TENANT_ID_PARAMS)
+
+            if not has_tenant_param and not has_config_isolation:
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="tool",
+                        resource_name=tool_name,
+                        status_extended=(
+                            f"Tool '{tool_name}' ({risk.value}) has no "
+                            f"tenant-scoping parameter. Operations may "
+                            f"affect or expose other tenants' data."
+                        ),
+                        evidence=(
+                            f"risk={risk.value}, "
+                            f"params={sorted(param_names)[:10]}, "
+                            f"tenant_param=missing"
+                        ),
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        if not findings and snapshot.tools:
+            findings.append(
+                Finding(
+                    check_id=meta.check_id,
+                    check_title=meta.title,
+                    status=Status.PASS,
+                    severity=meta.severity,
+                    server_name=snapshot.server_name,
+                    server_transport=snapshot.transport_type,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
+                    status_extended=(
+                        "All data-access tools have tenant-scoping parameters, "
+                        "or tenant isolation is configured at the server level."
+                    ),
+                    remediation=meta.remediation,
+                    owasp_mcp=meta.owasp_mcp,
+                )
+            )
+
+        return findings

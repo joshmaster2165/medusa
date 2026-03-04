@@ -51,6 +51,7 @@ class CheckMetadata(BaseModel):
     audit: str = ""
     impact: str = ""
     default_value: str = ""
+    advisory_ids: list[str] = []
 
 
 class Finding(BaseModel):

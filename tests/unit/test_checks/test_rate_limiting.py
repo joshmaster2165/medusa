@@ -28,6 +28,9 @@ from medusa.checks.rate_limiting.dos015_backpressure_missing import Backpressure
 from tests.conftest import make_snapshot
 
 
+from medusa.core.models import Status
+
+
 class TestMissingRateLimitingCheck:
     """Tests for MissingRateLimitingCheck."""
 
@@ -40,10 +43,179 @@ class TestMissingRateLimitingCheck:
         assert meta.check_id == "dos001"
         assert meta.category == "rate_limiting"
 
-    async def test_stub_returns_empty(self, check: MissingRateLimitingCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_returns_empty_no_tools(self, check: MissingRateLimitingCheck) -> None:
+        """Empty tools list should return no findings."""
+        snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_fails_on_resource_intensive_tool_no_rate_limit(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Resource-intensive tool (run_query) with no rate-limit params should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_query",
+                    "description": "Execute a database query.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "sql": {"type": "string"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Resource-intensive tool without rate limit should FAIL"
+        assert "run_query" in fail_findings[0].status_extended
+
+    async def test_fails_on_export_tool_no_rate_limit(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Export tool with no rate-limit params should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "export_data",
+                    "description": "Export records from storage.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Export tool without rate limit should FAIL"
+
+    async def test_passes_with_limit_param(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Resource-intensive tool with 'limit' param should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_query",
+                    "description": "Execute a query.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "sql": {"type": "string"},
+                            "limit": {"type": "integer"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Tool with 'limit' param should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_with_max_results_param(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Resource-intensive tool with 'max_results' param should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "search_records",
+                    "description": "Search for records in the database.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "max_results": {"type": "integer"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Tool with 'max_results' param should PASS"
+
+    async def test_passes_with_config_rate_limit(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Config-level rate_limit should satisfy the check."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_query",
+                    "description": "Execute a database query.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"sql": {"type": "string"}},
+                    },
+                }
+            ],
+            config_raw={"command": "node", "rate_limit": {"max_requests": 100}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Config rate_limit should satisfy the check"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_skips_non_intensive_tools(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Tool named 'get_weather' with no resource indicators should not FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "calculate_sum",
+                    "description": "Add two numbers together.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "a": {"type": "number"},
+                            "b": {"type": "number"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Non-intensive tool should not trigger FAIL"
+
+    async def test_per_tool_findings(
+        self, check: MissingRateLimitingCheck
+    ) -> None:
+        """Two intensive tools without limit should each get a FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_query",
+                    "description": "Execute a database query.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"sql": {"type": "string"}},
+                    },
+                },
+                {
+                    "name": "export_data",
+                    "description": "Export records from storage.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                    },
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 2, "Each intensive tool should get its own FAIL"
+        failed_names = {f.resource_name for f in fail_findings}
+        assert "run_query" in failed_names
+        assert "export_data" in failed_names
 
 
 class TestMissingRequestThrottlingCheck:

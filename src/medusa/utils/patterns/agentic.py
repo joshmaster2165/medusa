@@ -71,3 +71,62 @@ DELEGATION_KEYWORDS: set[str] = {
     "orchestrate",
     "spawn",
 }
+
+# Schema-level confirmation parameters (for tool inputSchema.properties inspection)
+CONFIRMATION_SCHEMA_PARAMS: set[str] = {
+    "confirm",
+    "confirmation",
+    "dry_run",
+    "dryrun",
+    "dry-run",
+    "force",
+    "yes",
+    "approve",
+    "simulate",
+    "preview",
+    "test_mode",
+    "safe_mode",
+    "no_op",
+    "noop",
+    "check_only",
+}
+
+# Schema-level rate limiting parameters
+RATE_LIMIT_SCHEMA_PARAMS: set[str] = {
+    "rate_limit",
+    "max_calls",
+    "throttle",
+    "cooldown",
+    "max_per_minute",
+    "max_per_hour",
+    "requests_per_second",
+}
+
+# Schema parameters that enable recursion/looping
+RECURSION_PARAMS: set[str] = {
+    "depth",
+    "max_depth",
+    "max_iterations",
+    "level",
+    "recursive",
+    "iterations",
+    "max_recursion",
+    "recursion_depth",
+    "max_steps",
+}
+
+# Schema-level auth/credential parameters
+AUTH_SCHEMA_PARAMS: set[str] = {
+    "auth",
+    "token",
+    "credential",
+    "api_key",
+    "apikey",
+    "authorization",
+    "bearer",
+    "secret",
+    "password",
+    "auth_token",
+    "access_token",
+    "session_token",
+}

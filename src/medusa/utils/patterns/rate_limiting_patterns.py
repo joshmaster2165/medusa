@@ -48,3 +48,35 @@ BACKPRESSURE_KEYS: set[str] = {
     "max_queue",
     "buffer_size",
 }
+
+# Tool indicators suggesting resource-intensive operations
+RESOURCE_INTENSIVE_INDICATORS: set[str] = {
+    "query",
+    "execute",
+    "run",
+    "fetch",
+    "search",
+    "scan",
+    "list",
+    "export",
+    "download",
+    "upload",
+    "send",
+    "process",
+    "analyze",
+    "compute",
+}
+
+# Schema parameters that indicate built-in rate limiting
+RATE_LIMIT_TOOL_PARAMS: set[str] = {
+    "limit",
+    "max_results",
+    "page_size",
+    "batch_size",
+    "timeout",
+    "max_count",
+    "max_items",
+    "per_page",
+    "top",
+    "take",
+}

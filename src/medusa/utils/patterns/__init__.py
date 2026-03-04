@@ -132,10 +132,24 @@ from medusa.utils.patterns.session import (
 # -- agentic behavior --------------------------------------------------------
 from medusa.utils.patterns.agentic import (
     AGENT_SAFETY_CONFIG_KEYS,
+    AUTH_SCHEMA_PARAMS,
     CONFIRMATION_CONFIG_KEYS,
+    CONFIRMATION_SCHEMA_PARAMS,
     DELEGATION_KEYWORDS,
     DESTRUCTIVE_ACTION_KEYWORDS,
     LOOP_DETECTION_KEYWORDS,
+    RATE_LIMIT_SCHEMA_PARAMS,
+    RECURSION_PARAMS,
+)
+
+# -- multi-tenant --------------------------------------------------------
+from medusa.utils.patterns.multi_tenant import (
+    TENANT_AUDIT_KEYWORDS,
+    TENANT_CONFIG_KEYWORDS,
+    TENANT_CREDENTIAL_KEYWORDS,
+    TENANT_ID_PARAMS,
+    TENANT_RESOURCE_KEYWORDS,
+    TENANT_URI_TEMPLATES,
 )
 
 # -- governance --------------------------------------------------------------
@@ -154,6 +168,8 @@ from medusa.utils.patterns.rate_limiting_patterns import (
     BACKPRESSURE_KEYS,
     RATE_LIMIT_CONFIG_KEYS,
     RATE_LIMIT_ENV_VARS,
+    RATE_LIMIT_TOOL_PARAMS,
+    RESOURCE_INTENSIVE_INDICATORS,
     RESOURCE_LIMIT_KEYS,
 )
 
@@ -252,10 +268,21 @@ __all__ = [
     "SESSION_TIMEOUT_KEYS",
     # agentic
     "AGENT_SAFETY_CONFIG_KEYS",
+    "AUTH_SCHEMA_PARAMS",
     "CONFIRMATION_CONFIG_KEYS",
+    "CONFIRMATION_SCHEMA_PARAMS",
     "DELEGATION_KEYWORDS",
     "DESTRUCTIVE_ACTION_KEYWORDS",
     "LOOP_DETECTION_KEYWORDS",
+    "RATE_LIMIT_SCHEMA_PARAMS",
+    "RECURSION_PARAMS",
+    # multi-tenant
+    "TENANT_AUDIT_KEYWORDS",
+    "TENANT_CONFIG_KEYWORDS",
+    "TENANT_CREDENTIAL_KEYWORDS",
+    "TENANT_ID_PARAMS",
+    "TENANT_RESOURCE_KEYWORDS",
+    "TENANT_URI_TEMPLATES",
     # governance
     "CHANGE_MANAGEMENT_KEYS",
     "COMPLIANCE_CONFIG_KEYS",
@@ -268,6 +295,8 @@ __all__ = [
     "BACKPRESSURE_KEYS",
     "RATE_LIMIT_CONFIG_KEYS",
     "RATE_LIMIT_ENV_VARS",
+    "RATE_LIMIT_TOOL_PARAMS",
+    "RESOURCE_INTENSIVE_INDICATORS",
     "RESOURCE_LIMIT_KEYS",
     # error handling
     "DEBUG_CONFIG_KEYS",

@@ -15,24 +15,7 @@ import yaml
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
 from medusa.utils.heuristics import ToolRisk, classify_tool_risk
-
-_CONFIRMATION_PARAMS: set[str] = {
-    "confirm",
-    "confirmation",
-    "dry_run",
-    "dryrun",
-    "dry-run",
-    "force",
-    "yes",
-    "approve",
-    "simulate",
-    "preview",
-    "test_mode",
-    "safe_mode",
-    "no_op",
-    "noop",
-    "check_only",
-}
+from medusa.utils.patterns.agentic import CONFIRMATION_SCHEMA_PARAMS
 
 
 class DestructiveToolNoConfirmationCheck(BaseCheck):
@@ -60,7 +43,7 @@ class DestructiveToolNoConfirmationCheck(BaseCheck):
             input_schema = tool.get("inputSchema", {})
             properties = input_schema.get("properties", {}) if input_schema else {}
             param_names = {p.lower() for p in properties}
-            has_confirm = bool(param_names & _CONFIRMATION_PARAMS)
+            has_confirm = bool(param_names & CONFIRMATION_SCHEMA_PARAMS)
 
             if not has_confirm:
                 findings.append(

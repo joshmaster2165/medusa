@@ -1,0 +1,30 @@
+id: MAD-2025-0005
+title: "ANSI Escape Code Injection in MCP Tool Descriptions"
+severity: medium
+description: |
+  MCP tool descriptions containing ANSI escape sequences can manipulate
+  terminal output when displayed in CLI environments. These sequences can
+  hide text, change colors to make malicious content appear benign, or
+  exploit terminal emulator vulnerabilities.
+affected_tools_pattern: "Tools with ANSI escape codes (\\x1b[, \\033[) in names or descriptions"
+attack_vector: |
+  An attacker embeds ANSI escape sequences in tool descriptions that, when
+  rendered in a terminal, can: hide malicious instructions from the user,
+  overwrite previously displayed safe content with dangerous commands,
+  or exploit terminal emulator parsing bugs for code execution.
+impact: |
+  UI spoofing, hidden content injection, terminal exploitation, and user
+  deception leading to unintended authorization of malicious actions.
+references:
+  - "https://doyensec.com/resources/Doyensec_MCP_SecurityResearch.pdf"
+related_checks:
+  - tp036
+owasp_mcp:
+  - "MCP03:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-150"
+tags:
+  - ansi_injection
+  - terminal_exploitation
+  - ui_spoofing

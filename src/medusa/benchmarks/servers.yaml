@@ -1,0 +1,76 @@
+servers:
+  - name: filesystem
+    package: "@modelcontextprotocol/server-filesystem"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp/medusa-benchmark"]
+    description: "Secure file operations with configurable access controls"
+    category: "File System"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: github
+    package: "@modelcontextprotocol/server-github"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env_required: ["GITHUB_PERSONAL_ACCESS_TOKEN"]
+    description: "GitHub API integration for repository management"
+    category: "Developer Tools"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: slack
+    package: "@modelcontextprotocol/server-slack"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-slack"]
+    env_required: ["SLACK_BOT_TOKEN", "SLACK_TEAM_ID"]
+    description: "Slack workspace integration"
+    category: "Communication"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: memory
+    package: "@modelcontextprotocol/server-memory"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    description: "Knowledge graph-based persistent memory"
+    category: "Memory"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: puppeteer
+    package: "@modelcontextprotocol/server-puppeteer"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-puppeteer"]
+    description: "Browser automation via Puppeteer"
+    category: "Browser"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: brave-search
+    package: "@modelcontextprotocol/server-brave-search"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-brave-search"]
+    env_required: ["BRAVE_API_KEY"]
+    description: "Web and local search via Brave Search API"
+    category: "Search"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: everything
+    package: "@modelcontextprotocol/server-everything"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-everything"]
+    description: "MCP test server exercising all protocol features"
+    category: "Testing"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: postgres
+    package: "@modelcontextprotocol/server-postgres"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost:5432/test"]
+    env_required: ["POSTGRES_CONNECTION_STRING"]
+    description: "PostgreSQL database operations"
+    category: "Database"
+    url: "https://github.com/modelcontextprotocol/servers"
+
+  - name: sqlite
+    package: "@modelcontextprotocol/server-sqlite"
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-sqlite", "/tmp/medusa-benchmark.db"]
+    description: "SQLite database operations"
+    category: "Database"
+    url: "https://github.com/modelcontextprotocol/servers"

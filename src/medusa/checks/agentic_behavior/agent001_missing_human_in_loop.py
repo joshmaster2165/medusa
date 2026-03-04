@@ -1,9 +1,9 @@
 """AGENT-001: Missing Human-in-the-Loop.
 
-Checks if tools with destructive or privileged risk profiles have a
-corresponding confirmation/approval mechanism in config.  Uses semantic
-tool-risk classification from name + description analysis rather than
-simple keyword substring matching.
+For each tool classified as DESTRUCTIVE or PRIVILEGED, checks whether the
+tool's inputSchema contains a confirmation/approval parameter AND whether
+the server config has a confirmation mechanism.  Emits a per-tool FAIL
+when both layers are absent.
 """
 
 from __future__ import annotations
@@ -16,7 +16,10 @@ import yaml
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
 from medusa.utils.heuristics import ToolRisk, classify_tool_risk
-from medusa.utils.patterns.agentic import CONFIRMATION_CONFIG_KEYS
+from medusa.utils.patterns.agentic import (
+    CONFIRMATION_CONFIG_KEYS,
+    CONFIRMATION_SCHEMA_PARAMS,
+)
 
 
 class MissingHumanInLoopCheck(BaseCheck):
@@ -34,19 +37,30 @@ class MissingHumanInLoopCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        has_confirmation = _walk_config_for_keys(snapshot.config_raw, CONFIRMATION_CONFIG_KEYS)
+        has_config_confirmation = _walk_config_for_keys(
+            snapshot.config_raw, CONFIRMATION_CONFIG_KEYS
+        )
 
-        # Classify each tool's risk using semantic analysis
-        high_risk_tools: list[tuple[str, ToolRisk]] = []
         for tool in snapshot.tools:
             risk = classify_tool_risk(tool)
-            if risk in (ToolRisk.DESTRUCTIVE, ToolRisk.PRIVILEGED):
-                tool_name = tool.get("name", "<unnamed>")
-                high_risk_tools.append((tool_name, risk))
+            if risk not in (ToolRisk.DESTRUCTIVE, ToolRisk.PRIVILEGED):
+                continue
 
-        if high_risk_tools and not has_confirmation:
-            tool_names = [name for name, _ in high_risk_tools[:5]]
-            risk_details = ", ".join(f"{name} ({risk.value})" for name, risk in high_risk_tools[:5])
+            tool_name: str = tool.get("name", "<unnamed>")
+            input_schema = tool.get("inputSchema", {})
+            properties = input_schema.get("properties", {}) if input_schema else {}
+            param_names = {p.lower() for p in properties}
+            has_confirm_param = bool(param_names & CONFIRMATION_SCHEMA_PARAMS)
+
+            if has_confirm_param:
+                # Tool has its own confirmation parameter -- safe
+                continue
+
+            if has_config_confirmation:
+                # No schema param, but server config has confirmation -- safe
+                continue
+
+            # Neither schema param nor config confirmation
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -55,19 +69,25 @@ class MissingHumanInLoopCheck(BaseCheck):
                     severity=meta.severity,
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
-                    resource_type="server",
-                    resource_name=snapshot.server_name,
+                    resource_type="tool",
+                    resource_name=tool_name,
                     status_extended=(
-                        f"Server exposes {len(high_risk_tools)} high-risk tool(s) "
-                        f"({', '.join(tool_names)}) without a confirmation "
-                        f"mechanism in configuration."
+                        f"Tool '{tool_name}' is classified as {risk.value.upper()} "
+                        f"but has no confirmation or dry-run parameter in its "
+                        f"schema, and no confirmation mechanism in server config."
                     ),
-                    evidence=f"high_risk_tools=[{risk_details}]",
+                    evidence=(
+                        f"risk={risk.value}, "
+                        f"params={sorted(param_names)[:10]}, "
+                        f"confirm_param=missing, "
+                        f"config_confirmation=missing"
+                    ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
             )
-        else:
+
+        if not findings and snapshot.tools:
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -79,8 +99,9 @@ class MissingHumanInLoopCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        "No unguarded high-risk tools detected, or confirmation "
-                        "mechanism is present in configuration."
+                        f"All high-risk tools have confirmation parameters "
+                        f"or server-level confirmation is configured "
+                        f"across {len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,

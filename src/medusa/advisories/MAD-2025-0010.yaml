@@ -1,0 +1,35 @@
+id: MAD-2025-0010
+title: "Missing Tenant Isolation in Multi-Tenant MCP Servers"
+severity: high
+description: |
+  Multi-tenant MCP servers that expose data-access tools without tenant-scoping
+  parameters allow cross-tenant data access. When tools lack tenant_id,
+  workspace_id, or equivalent scoping parameters, one tenant's LLM agent can
+  read, modify, or delete another tenant's data.
+affected_tools_pattern: "Data-access tools (read, query, delete, export) in multi-tenant environments that lack tenant_id/workspace_id parameters"
+attack_vector: |
+  In a shared MCP server serving multiple tenants, a compromised or malicious
+  LLM agent invokes tools without specifying a tenant context. The tools
+  operate on the shared data store without isolation, returning or modifying
+  data belonging to other tenants.
+impact: |
+  Cross-tenant data exposure, unauthorized data modification, privacy
+  violations, compliance failures (GDPR, SOC2, HIPAA), and complete
+  breakdown of multi-tenant security boundaries.
+references:
+  - "https://owasp.org/www-project-mcp-top-10/"
+related_checks:
+  - mt001
+  - mt003
+  - mt009
+owasp_mcp:
+  - "MCP07:2025"
+  - "MCP10:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-284"
+  - "CWE-639"
+tags:
+  - multi_tenant
+  - tenant_isolation
+  - data_leakage

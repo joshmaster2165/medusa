@@ -1,7 +1,10 @@
 """AGENT-005: Delegation Without Authorization.
 
-Checks for DELEGATION_KEYWORDS in tool descriptions without auth requirements
-in config. Fails when delegation-style tools exist with no auth config.
+For each tool whose name or description matches delegation keywords,
+checks whether the tool's inputSchema contains authentication parameters
+(token, credential, api_key, etc.).  Falls back to server config auth
+keys as a secondary signal.  Emits a per-tool FAIL when neither layer
+provides auth.
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ import yaml
 
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.models import CheckMetadata, Finding, Status
-from medusa.utils.patterns.agentic import DELEGATION_KEYWORDS
+from medusa.utils.patterns.agentic import AUTH_SCHEMA_PARAMS, DELEGATION_KEYWORDS
 from medusa.utils.patterns.authentication import AUTH_CONFIG_KEYS
 
 
@@ -32,17 +35,36 @@ class DelegationWithoutAuthCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        has_auth = _walk_config_for_keys(snapshot.config_raw, AUTH_CONFIG_KEYS)
+        has_config_auth = _walk_config_for_keys(
+            snapshot.config_raw, AUTH_CONFIG_KEYS
+        )
 
-        delegation_tools: list[str] = []
         for tool in snapshot.tools:
-            name: str = tool.get("name", "").lower()
-            desc: str = tool.get("description", "").lower()
-            combined = f"{name} {desc}"
-            if any(kw in combined for kw in DELEGATION_KEYWORDS):
-                delegation_tools.append(tool.get("name", "<unnamed>"))
+            tool_name: str = tool.get("name", "<unnamed>")
+            name_lower: str = tool_name.lower()
+            desc_lower: str = tool.get("description", "").lower()
+            combined = f"{name_lower} {desc_lower}"
 
-        if delegation_tools and not has_auth:
+            # Identify which delegation keywords matched
+            matched_keywords = [kw for kw in DELEGATION_KEYWORDS if kw in combined]
+            if not matched_keywords:
+                continue
+
+            # Check tool schema for auth parameters
+            input_schema = tool.get("inputSchema", {})
+            properties = input_schema.get("properties", {}) if input_schema else {}
+            param_names = {p.lower() for p in properties}
+            has_auth_param = bool(param_names & AUTH_SCHEMA_PARAMS)
+
+            if has_auth_param:
+                # Tool has auth parameters in schema -- safe
+                continue
+
+            if has_config_auth:
+                # No schema auth param, but server config has auth -- safe
+                continue
+
+            # Neither schema auth param nor config auth
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -51,18 +73,26 @@ class DelegationWithoutAuthCheck(BaseCheck):
                     severity=meta.severity,
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
-                    resource_type="server",
-                    resource_name=snapshot.server_name,
+                    resource_type="tool",
+                    resource_name=tool_name,
                     status_extended=(
-                        f"Tool(s) with delegation keywords found "
-                        f"({', '.join(delegation_tools[:5])}) but no auth config detected."
+                        f"Tool '{tool_name}' matches delegation keywords "
+                        f"({', '.join(matched_keywords[:3])}) but has no "
+                        f"auth parameters in its schema and no auth config "
+                        f"at the server level."
                     ),
-                    evidence=f"delegation_tools={delegation_tools[:5]}",
+                    evidence=(
+                        f"delegation_keywords={matched_keywords[:5]}, "
+                        f"params={sorted(param_names)[:10]}, "
+                        f"auth_param=missing, "
+                        f"config_auth=missing"
+                    ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
             )
-        else:
+
+        if not findings and snapshot.tools:
             findings.append(
                 Finding(
                     check_id=meta.check_id,
@@ -74,7 +104,9 @@ class DelegationWithoutAuthCheck(BaseCheck):
                     resource_type="server",
                     resource_name=snapshot.server_name,
                     status_extended=(
-                        "No unguarded delegation tools detected, or auth config is present."
+                        f"All delegation tools have auth parameters or "
+                        f"server-level auth config is present across "
+                        f"{len(snapshot.tools)} tool(s)."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
@@ -85,6 +117,7 @@ class DelegationWithoutAuthCheck(BaseCheck):
 
 
 def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
+    """Recursively walk config looking for any matching key."""
     if _depth > 10:
         return False
     if isinstance(config, dict):

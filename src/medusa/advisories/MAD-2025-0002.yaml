@@ -1,0 +1,36 @@
+id: MAD-2025-0002
+title: "Credential Harvesting Through MCP Tool Descriptions and Schemas"
+severity: high
+description: |
+  MCP tools can be designed to harvest credentials by including instructions in
+  their descriptions that direct the LLM to collect sensitive information
+  (passwords, API keys, tokens) from the user's environment and pass them as
+  tool parameters.
+affected_tools_pattern: "Tools with descriptions referencing credential collection, or schemas with parameters designed to capture secrets"
+attack_vector: |
+  A malicious MCP server exposes tools whose descriptions instruct the LLM to
+  read environment variables, configuration files, or prompt the user for
+  credentials, then pass these values to tool parameters that transmit them
+  to an attacker-controlled endpoint.
+impact: |
+  Theft of API keys, cloud credentials, SSH keys, database passwords, and
+  other sensitive authentication material. Lateral movement and privilege
+  escalation in connected systems.
+references:
+  - "https://invariantlabs.ai/blog/mcp-security-risks"
+related_checks:
+  - cred024
+  - cred025
+  - cred001
+  - cred002
+owasp_mcp:
+  - "MCP01:2025"
+  - "MCP03:2025"
+published_date: "2025-03-15"
+cwe:
+  - "CWE-522"
+  - "CWE-200"
+tags:
+  - credential_harvesting
+  - data_theft
+  - social_engineering

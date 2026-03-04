@@ -75,10 +75,11 @@ class TestMissingHumanInLoopCheck:
         assert meta.check_id == "agent001"
         assert meta.category == "agentic_behavior"
 
-    async def test_stub_returns_empty(self, check: MissingHumanInLoopCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_returns_empty_no_tools(self, check: MissingHumanInLoopCheck) -> None:
+        """Empty tools list should return no findings."""
+        snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
 
     async def test_fails_on_destructive_tool_no_confirmation(
         self, check: MissingHumanInLoopCheck
@@ -154,6 +155,52 @@ class TestMissingHumanInLoopCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1, "Confirmation config should satisfy the check"
 
+    async def test_passes_with_confirm_schema_param(self, check: MissingHumanInLoopCheck) -> None:
+        """Destructive tool with 'confirm' property in schema should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently removes a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                            "confirm": {"type": "boolean", "description": "Set to true to confirm deletion"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Tool with 'confirm' param should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_with_dry_run_schema_param(self, check: MissingHumanInLoopCheck) -> None:
+        """Destructive tool with 'dry_run' property in schema should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "drop_table",
+                    "description": "Drops a database table permanently.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "table": {"type": "string"},
+                            "dry_run": {"type": "boolean", "description": "Preview changes without executing"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Tool with 'dry_run' param should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
     async def test_risk_classification_in_evidence(self, check: MissingHumanInLoopCheck) -> None:
         """Evidence should include risk classification labels."""
         snapshot = make_snapshot(
@@ -172,6 +219,11 @@ class TestMissingHumanInLoopCheck:
         assert "destructive" in fail_findings[0].evidence.lower()
 
 
+# ==========================================================================
+# AGENT-002: Autonomous Action Risk
+# ==========================================================================
+
+
 class TestAutonomousActionRiskCheck:
     """Tests for AutonomousActionRiskCheck."""
 
@@ -184,10 +236,158 @@ class TestAutonomousActionRiskCheck:
         assert meta.check_id == "agent002"
         assert meta.category == "agentic_behavior"
 
-    async def test_stub_returns_empty(self, check: AutonomousActionRiskCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_returns_empty_no_tools(self, check: AutonomousActionRiskCheck) -> None:
+        """Empty tools list should return no findings."""
+        snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_fails_on_destructive_tool_no_safeguards(
+        self, check: AutonomousActionRiskCheck
+    ) -> None:
+        """Destructive tool (delete_user) with no confirm/rate_limit params should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently deletes a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Destructive tool without safeguards should FAIL"
+        assert "delete_user" in fail_findings[0].status_extended
+
+    async def test_fails_on_exfiltrative_tool_no_safeguards(
+        self, check: AutonomousActionRiskCheck
+    ) -> None:
+        """Exfiltrative tool (export_data with callback_url) with no safeguards should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "export_data",
+                    "description": "Export all user data and send it externally.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "callback_url": {"type": "string", "description": "URL to send results"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Exfiltrative tool without safeguards should FAIL"
+
+    async def test_passes_with_confirmation_param(
+        self, check: AutonomousActionRiskCheck
+    ) -> None:
+        """Destructive tool with 'confirm' property in schema should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently deletes a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                            "confirm": {"type": "boolean"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Tool with 'confirm' param should not FAIL"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_with_rate_limit_param(
+        self, check: AutonomousActionRiskCheck
+    ) -> None:
+        """Tool with 'rate_limit' property in schema should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently deletes a user account.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string"},
+                            "rate_limit": {"type": "integer"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Tool with 'rate_limit' param should not FAIL"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_on_read_only_tools(
+        self, check: AutonomousActionRiskCheck
+    ) -> None:
+        """Read-only tool (get_weather) should PASS without safeguards."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Fetch current weather data for a city.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"city": {"type": "string"}},
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1, "Read-only tool should PASS"
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_per_tool_findings(
+        self, check: AutonomousActionRiskCheck
+    ) -> None:
+        """Two destructive tools without safeguards should each get their own FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delete_user",
+                    "description": "Permanently deletes a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "drop_database",
+                    "description": "Drops the entire database.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 2, "Each destructive tool should get its own FAIL"
+        failed_names = {f.resource_name for f in fail_findings}
+        assert "delete_user" in failed_names
+        assert "drop_database" in failed_names
+
+
+# ==========================================================================
+# AGENT-003: Agent Loop Detection
+# ==========================================================================
 
 
 class TestAgentLoopDetectionCheck:
@@ -202,10 +402,190 @@ class TestAgentLoopDetectionCheck:
         assert meta.check_id == "agent003"
         assert meta.category == "agentic_behavior"
 
-    async def test_stub_returns_empty(self, check: AgentLoopDetectionCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_returns_empty_no_tools(self, check: AgentLoopDetectionCheck) -> None:
+        """Empty tools list should return no findings."""
+        snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_fails_on_unconstrained_depth(self, check: AgentLoopDetectionCheck) -> None:
+        """Tool with 'depth' param and no maximum constraint should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "crawl_site",
+                    "description": "Crawl a website recursively.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string"},
+                            "depth": {"type": "integer", "description": "Crawl depth"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Unconstrained depth param should FAIL"
+        assert "depth" in fail_findings[0].status_extended.lower()
+
+    async def test_passes_on_constrained_depth(self, check: AgentLoopDetectionCheck) -> None:
+        """Tool with 'depth' param plus maximum:10 should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "crawl_site",
+                    "description": "Crawl a website recursively.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string"},
+                            "depth": {"type": "integer", "maximum": 10},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Constrained depth param should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_unconstrained_max_iterations(
+        self, check: AgentLoopDetectionCheck
+    ) -> None:
+        """Tool with 'max_iterations' param but no maximum/enum constraint should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "retry_task",
+                    "description": "Retry a task multiple times.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "task_id": {"type": "string"},
+                            "max_iterations": {"type": "integer"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Unconstrained max_iterations should FAIL"
+
+    async def test_passes_with_enum_constraint(self, check: AgentLoopDetectionCheck) -> None:
+        """Tool with 'level' param constrained by enum should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "scan_directory",
+                    "description": "Scan a directory tree.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "path": {"type": "string"},
+                            "level": {"type": "string", "enum": ["shallow", "medium", "deep"]},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Enum-constrained param should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_fails_on_circular_reference(self, check: AgentLoopDetectionCheck) -> None:
+        """Tool whose description mentions another tool by name should FAIL for circular ref."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "tool_a",
+                    "description": "Processes data and then calls tool_b for finalization.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "tool_b",
+                    "description": "Finalizes data processing.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Circular reference risk should FAIL"
+        # Check that tool_b is mentioned as referenced
+        assert any("tool_b" in f.status_extended for f in fail_findings)
+
+    async def test_passes_no_recursion_params(self, check: AgentLoopDetectionCheck) -> None:
+        """Simple tools with no recursion params should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Get current weather for a city.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"city": {"type": "string"}},
+                    },
+                },
+                {
+                    "name": "calculate_sum",
+                    "description": "Add two numbers together.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "a": {"type": "number"},
+                            "b": {"type": "number"},
+                        },
+                    },
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_config_safety_mitigates(self, check: AgentLoopDetectionCheck) -> None:
+        """Unconstrained depth with config max_iterations should produce no FAIL finding."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "crawl_site",
+                    "description": "Crawl a website recursively.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string"},
+                            "depth": {"type": "integer"},
+                        },
+                    },
+                }
+            ],
+            config_raw={"command": "node", "max_iterations": 100},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        # Config safety key should mitigate unconstrained recursion params
+        # (circular reference findings are separate and always emitted)
+        unconstrained_fails = [
+            f for f in fail_findings if "unconstrained" in f.status_extended.lower()
+            or "without constraints" in f.status_extended.lower()
+        ]
+        assert len(unconstrained_fails) == 0, (
+            "Config max_iterations should mitigate unconstrained recursion params"
+        )
+
+
+# ==========================================================================
+# AGENT-004: Multi-Step Attack Chain
+# ==========================================================================
 
 
 class TestMultiStepAttackChainCheck:
@@ -220,10 +600,153 @@ class TestMultiStepAttackChainCheck:
         assert meta.check_id == "agent004"
         assert meta.category == "agentic_behavior"
 
-    async def test_stub_returns_empty(self, check: MultiStepAttackChainCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_returns_empty_no_tools(self, check: MultiStepAttackChainCheck) -> None:
+        """Empty tools list should return no findings."""
+        snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_fails_on_data_theft_chain(self, check: MultiStepAttackChainCheck) -> None:
+        """READ_ONLY + EXFILTRATIVE tools should FAIL with 'data theft chain'."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Retrieve user data from the database.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "send_webhook",
+                    "description": "Send data to an external webhook endpoint.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"url": {"type": "string"}, "data": {"type": "string"}},
+                    },
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Data theft chain should be detected"
+        assert any("data theft" in f.status_extended.lower() for f in fail_findings)
+
+    async def test_fails_on_informed_destruction(self, check: MultiStepAttackChainCheck) -> None:
+        """READ_ONLY + DESTRUCTIVE tools should FAIL with 'informed destruction'."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Retrieve user data from the database.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "delete_user",
+                    "description": "Permanently deletes a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Informed destruction chain should be detected"
+        assert any("informed destruction" in f.status_extended.lower() for f in fail_findings)
+
+    async def test_fails_on_privilege_exfil_chain(self, check: MultiStepAttackChainCheck) -> None:
+        """PRIVILEGED + EXFILTRATIVE tools should FAIL with 'privilege-to-exfil'."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "run_command",
+                    "description": "Execute a shell command on the server.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "send_webhook",
+                    "description": "Send data to an external webhook endpoint.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"url": {"type": "string"}},
+                    },
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Privilege-to-exfil chain should be detected"
+        assert any("privilege" in f.status_extended.lower() for f in fail_findings)
+
+    async def test_passes_on_safe_tool_combo(self, check: MultiStepAttackChainCheck) -> None:
+        """READ_ONLY tools only should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Fetch current weather data.",
+                    "inputSchema": {"type": "object", "properties": {"city": {"type": "string"}}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1, "Safe tool combo should PASS"
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0
+
+    async def test_config_chain_limit_mitigates(self, check: MultiStepAttackChainCheck) -> None:
+        """Dangerous combo with config 'max_tool_calls' should produce no FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Retrieve user data.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "send_webhook",
+                    "description": "Send data to a webhook.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+            config_raw={"command": "node", "max_tool_calls": 5},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Config chain limit should mitigate dangerous chains"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_multiple_chains_detected(self, check: MultiStepAttackChainCheck) -> None:
+        """Tools that trigger both data_theft and informed_destruction chains."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_user",
+                    "description": "Retrieve user data from the database.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "send_webhook",
+                    "description": "Send data to an external webhook.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+                {
+                    "name": "delete_user",
+                    "description": "Permanently deletes a user account.",
+                    "inputSchema": {"type": "object", "properties": {}},
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 2, "Multiple chain types should be detected"
+        chain_labels = [f.status_extended.lower() for f in fail_findings]
+        assert any("data theft" in label for label in chain_labels)
+        assert any("informed destruction" in label for label in chain_labels)
+
+
+# ==========================================================================
+# AGENT-005: Delegation Without Authorization
+# ==========================================================================
 
 
 class TestDelegationWithoutAuthCheck:
@@ -238,10 +761,186 @@ class TestDelegationWithoutAuthCheck:
         assert meta.check_id == "agent005"
         assert meta.category == "agentic_behavior"
 
-    async def test_stub_returns_empty(self, check: DelegationWithoutAuthCheck) -> None:
-        snapshot = make_snapshot()
+    async def test_returns_empty_no_tools(self, check: DelegationWithoutAuthCheck) -> None:
+        """Empty tools list should return no findings."""
+        snapshot = make_snapshot(tools=[])
         findings = await check.execute(snapshot)
-        assert isinstance(findings, list)
+        assert findings == []
+
+    async def test_fails_on_delegation_tool_no_auth(
+        self, check: DelegationWithoutAuthCheck
+    ) -> None:
+        """Tool named 'delegate_task' with no auth params should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delegate_task",
+                    "description": "Forward a task to another agent for processing.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "task": {"type": "string"},
+                            "agent_name": {"type": "string"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Delegation tool without auth should FAIL"
+        assert "delegate_task" in fail_findings[0].status_extended
+
+    async def test_fails_on_proxy_tool_no_auth(
+        self, check: DelegationWithoutAuthCheck
+    ) -> None:
+        """Tool with 'proxy' in description and no auth should FAIL."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "forward_request",
+                    "description": "Proxy the request to another service for handling.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "target": {"type": "string"},
+                            "payload": {"type": "string"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) >= 1, "Proxy tool without auth should FAIL"
+
+    async def test_passes_with_auth_param(self, check: DelegationWithoutAuthCheck) -> None:
+        """Delegation tool with 'token' property should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delegate_task",
+                    "description": "Forward a task to another agent.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "task": {"type": "string"},
+                            "token": {"type": "string", "description": "Auth token"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Delegation tool with 'token' should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_with_api_key_param(self, check: DelegationWithoutAuthCheck) -> None:
+        """Delegation tool with 'api_key' property should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delegate_task",
+                    "description": "Forward a task to another agent.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "task": {"type": "string"},
+                            "api_key": {"type": "string"},
+                        },
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Delegation tool with 'api_key' should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_with_config_auth(self, check: DelegationWithoutAuthCheck) -> None:
+        """Delegation tool with no schema auth but config has auth keys should PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delegate_task",
+                    "description": "Forward a task to another agent.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"task": {"type": "string"}},
+                    },
+                }
+            ],
+            config_raw={"command": "node", "auth": {"type": "bearer", "token": "abc123"}},
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Config auth should satisfy the check"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_skips_non_delegation_tools(self, check: DelegationWithoutAuthCheck) -> None:
+        """Non-delegation tool (get_weather) should produce no delegation FAIL findings."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "get_weather",
+                    "description": "Fetch weather data for a city.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {"city": {"type": "string"}},
+                    },
+                }
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "Non-delegation tools should not trigger delegation FAIL"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+    async def test_passes_all_delegation_tools_have_auth(
+        self, check: DelegationWithoutAuthCheck
+    ) -> None:
+        """Multiple delegation tools, all with auth params, should result in PASS."""
+        snapshot = make_snapshot(
+            tools=[
+                {
+                    "name": "delegate_task",
+                    "description": "Forward a task to another agent.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "task": {"type": "string"},
+                            "token": {"type": "string"},
+                        },
+                    },
+                },
+                {
+                    "name": "proxy_request",
+                    "description": "Relay a request to a proxy service.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "target": {"type": "string"},
+                            "api_key": {"type": "string"},
+                        },
+                    },
+                },
+            ],
+        )
+        findings = await check.execute(snapshot)
+        fail_findings = [f for f in findings if f.status == Status.FAIL]
+        assert len(fail_findings) == 0, "All delegation tools with auth should PASS"
+        pass_findings = [f for f in findings if f.status == Status.PASS]
+        assert len(pass_findings) >= 1
+
+
+# ==========================================================================
+# AGENT-006: Tool Selection Manipulation
+# ==========================================================================
 
 
 class TestToolSelectionManipulationCheck:
