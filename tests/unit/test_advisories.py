@@ -181,6 +181,7 @@ class TestAdvisoryLoader:
     def test_advisory_id_format(self) -> None:
         """All advisory IDs should match the MAD-YYYY-NNNN format."""
         import re
+
         pattern = re.compile(r"^MAD-\d{4}-\d{4}$")
         for a in load_all_advisories():
             assert pattern.match(a.id), f"Invalid advisory ID format: {a.id}"

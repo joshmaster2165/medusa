@@ -85,7 +85,8 @@ class TenantResourceExhaustionCheck(BaseCheck):
 
         # Secondary signal: config-level tenant quotas
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _TENANT_QUOTA_KEYS,
+            snapshot.config_raw,
+            _TENANT_QUOTA_KEYS,
         )
 
         for tool in snapshot.tools:

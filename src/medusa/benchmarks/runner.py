@@ -1,4 +1,5 @@
 """Benchmark runner that uses the existing ScanEngine to scan catalog servers."""
+
 from __future__ import annotations
 
 import os
@@ -105,32 +106,29 @@ async def run_benchmark(
             passed = sum(1 for f in findings if f.status == Status.PASS)
             failed = total - passed
             critical = sum(
-                1 for f in findings
-                if f.status == Status.FAIL and f.severity == Severity.CRITICAL
+                1 for f in findings if f.status == Status.FAIL and f.severity == Severity.CRITICAL
             )
             high = sum(
-                1 for f in findings
-                if f.status == Status.FAIL and f.severity == Severity.HIGH
+                1 for f in findings if f.status == Status.FAIL and f.severity == Severity.HIGH
             )
             medium = sum(
-                1 for f in findings
-                if f.status == Status.FAIL and f.severity == Severity.MEDIUM
+                1 for f in findings if f.status == Status.FAIL and f.severity == Severity.MEDIUM
             )
-            low = sum(
-                1 for f in findings
-                if f.status == Status.FAIL and f.severity == Severity.LOW
-            )
+            low = sum(1 for f in findings if f.status == Status.FAIL and f.severity == Severity.LOW)
             info = sum(
-                1 for f in findings
+                1
+                for f in findings
                 if f.status == Status.FAIL and f.severity == Severity.INFORMATIONAL
             )
 
             # Get unique failing categories
-            categories_failed = sorted(set(
-                f.check_id.rsplit("0", 1)[0] if "0" in f.check_id else f.check_id
-                for f in findings
-                if f.status == Status.FAIL
-            ))[:10]
+            categories_failed = sorted(
+                set(
+                    f.check_id.rsplit("0", 1)[0] if "0" in f.check_id else f.check_id
+                    for f in findings
+                    if f.status == Status.FAIL
+                )
+            )[:10]
 
             # Top findings by severity
             severity_order = {
@@ -193,9 +191,7 @@ async def run_benchmark(
     # Calculate average score across scanned servers
     scanned_results = [r for r in results if r.status == "scanned"]
     avg_score = (
-        sum(r.score for r in scanned_results) / len(scanned_results)
-        if scanned_results
-        else 0.0
+        sum(r.score for r in scanned_results) / len(scanned_results) if scanned_results else 0.0
     )
 
     return BenchmarkReport(

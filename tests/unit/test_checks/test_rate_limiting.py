@@ -90,9 +90,7 @@ class TestMissingRateLimitingCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Export tool without rate limit should FAIL"
 
-    async def test_passes_with_limit_param(
-        self, check: MissingRateLimitingCheck
-    ) -> None:
+    async def test_passes_with_limit_param(self, check: MissingRateLimitingCheck) -> None:
         """Resource-intensive tool with 'limit' param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -115,9 +113,7 @@ class TestMissingRateLimitingCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1
 
-    async def test_passes_with_max_results_param(
-        self, check: MissingRateLimitingCheck
-    ) -> None:
+    async def test_passes_with_max_results_param(self, check: MissingRateLimitingCheck) -> None:
         """Resource-intensive tool with 'max_results' param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -138,9 +134,7 @@ class TestMissingRateLimitingCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0, "Tool with 'max_results' param should PASS"
 
-    async def test_passes_with_config_rate_limit(
-        self, check: MissingRateLimitingCheck
-    ) -> None:
+    async def test_passes_with_config_rate_limit(self, check: MissingRateLimitingCheck) -> None:
         """Config-level rate_limit should satisfy the check."""
         snapshot = make_snapshot(
             tools=[
@@ -161,9 +155,7 @@ class TestMissingRateLimitingCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1
 
-    async def test_skips_non_intensive_tools(
-        self, check: MissingRateLimitingCheck
-    ) -> None:
+    async def test_skips_non_intensive_tools(self, check: MissingRateLimitingCheck) -> None:
         """Tool named 'get_weather' with no resource indicators should not FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -184,9 +176,7 @@ class TestMissingRateLimitingCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0, "Non-intensive tool should not trigger FAIL"
 
-    async def test_per_tool_findings(
-        self, check: MissingRateLimitingCheck
-    ) -> None:
+    async def test_per_tool_findings(self, check: MissingRateLimitingCheck) -> None:
         """Two intensive tools without limit should each get a FAIL."""
         snapshot = make_snapshot(
             tools=[

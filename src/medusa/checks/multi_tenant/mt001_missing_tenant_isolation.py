@@ -72,7 +72,8 @@ class MissingTenantIsolationCheck(BaseCheck):
 
         # Secondary signal: config-level tenant isolation
         has_config_isolation = _walk_config_for_keys(
-            snapshot.config_raw, _TENANT_ISOLATION_KEYS,
+            snapshot.config_raw,
+            _TENANT_ISOLATION_KEYS,
         )
 
         for tool in snapshot.tools:

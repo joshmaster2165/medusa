@@ -80,27 +80,64 @@ TENANT_URI_TEMPLATES: set[str] = {
 
 # Keywords indicating resource-intensive operations
 TENANT_RESOURCE_KEYWORDS: set[str] = {
-    "query", "search", "scan", "export", "import",
-    "bulk", "batch", "migrate", "sync", "replicate",
-    "backup", "restore", "download", "upload",
+    "query",
+    "search",
+    "scan",
+    "export",
+    "import",
+    "bulk",
+    "batch",
+    "migrate",
+    "sync",
+    "replicate",
+    "backup",
+    "restore",
+    "download",
+    "upload",
 }
 
 # Parameters that indicate per-tenant resource limits
 TENANT_LIMIT_PARAMS: set[str] = {
-    "max_results", "limit", "page_size", "quota",
-    "max_count", "batch_size", "max_items", "per_page",
-    "max_rows", "count", "top",
+    "max_results",
+    "limit",
+    "page_size",
+    "quota",
+    "max_count",
+    "batch_size",
+    "max_items",
+    "per_page",
+    "max_rows",
+    "count",
+    "top",
 }
 
 # Parameters that indicate data-processing inputs
 DATA_PARAMS: set[str] = {
-    "file", "path", "query", "data", "content",
-    "body", "payload", "document", "record", "input",
-    "sql", "command", "statement", "url", "uri",
+    "file",
+    "path",
+    "query",
+    "data",
+    "content",
+    "body",
+    "payload",
+    "document",
+    "record",
+    "input",
+    "sql",
+    "command",
+    "statement",
+    "url",
+    "uri",
 }
 
 # Parameters that indicate meta-tool invocation (calling other tools)
 TOOL_DISPATCH_PARAMS: set[str] = {
-    "tool_name", "function_name", "method", "action",
-    "operation", "tool_id", "function_id", "callable",
+    "tool_name",
+    "function_name",
+    "method",
+    "action",
+    "operation",
+    "tool_id",
+    "function_id",
+    "callable",
 }

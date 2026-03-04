@@ -89,9 +89,7 @@ class TestMissingTenantIsolationCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Destructive tool without tenant param should FAIL"
 
-    async def test_passes_with_tenant_id_param(
-        self, check: MissingTenantIsolationCheck
-    ) -> None:
+    async def test_passes_with_tenant_id_param(self, check: MissingTenantIsolationCheck) -> None:
         """Data-access tool with tenant_id param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -114,9 +112,7 @@ class TestMissingTenantIsolationCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1
 
-    async def test_passes_with_workspace_id_param(
-        self, check: MissingTenantIsolationCheck
-    ) -> None:
+    async def test_passes_with_workspace_id_param(self, check: MissingTenantIsolationCheck) -> None:
         """Data-access tool with workspace_id param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -256,9 +252,7 @@ class TestSharedResourceAccessCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Data-access tool without tenant param should FAIL"
 
-    async def test_passes_on_tool_with_tenant_param(
-        self, check: SharedResourceAccessCheck
-    ) -> None:
+    async def test_passes_on_tool_with_tenant_param(self, check: SharedResourceAccessCheck) -> None:
         """Data-access tool with tenant_id param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -781,9 +775,7 @@ class TestMissingTenantAuditCheck:
         findings = await check.execute(snapshot)
         assert findings == []
 
-    async def test_fails_when_no_audit_tools_exist(
-        self, check: MissingTenantAuditCheck
-    ) -> None:
+    async def test_fails_when_no_audit_tools_exist(self, check: MissingTenantAuditCheck) -> None:
         """Server with tools but no audit/logging tool should FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -932,9 +924,7 @@ class TestTenantResourceExhaustionCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Resource-intensive tool without limits should FAIL"
 
-    async def test_passes_with_tenant_param(
-        self, check: TenantResourceExhaustionCheck
-    ) -> None:
+    async def test_passes_with_tenant_param(self, check: TenantResourceExhaustionCheck) -> None:
         """Privileged tool with tenant_id param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -955,9 +945,7 @@ class TestTenantResourceExhaustionCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0, "Tool with tenant_id should PASS"
 
-    async def test_passes_with_limit_param(
-        self, check: TenantResourceExhaustionCheck
-    ) -> None:
+    async def test_passes_with_limit_param(self, check: TenantResourceExhaustionCheck) -> None:
         """Resource-intensive tool with limit param should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -1057,14 +1045,16 @@ class TestCrossTenantToolAccessCheck:
             for i in range(4)
         ]
         # Add a destructive tool without tenant param
-        tools.append({
-            "name": "delete_records",
-            "description": "Delete database records permanently.",
-            "inputSchema": {
-                "type": "object",
-                "properties": {"filter": {"type": "string"}},
-            },
-        })
+        tools.append(
+            {
+                "name": "delete_records",
+                "description": "Delete database records permanently.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"filter": {"type": "string"}},
+                },
+            }
+        )
         snapshot = make_snapshot(tools=tools)
         findings = await check.execute(snapshot)
         fail_findings = [f for f in findings if f.status == Status.FAIL]
@@ -1204,9 +1194,7 @@ class TestMissingTenantConfigurationCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Feature flag tool without tenant should FAIL"
 
-    async def test_passes_with_tenant_param(
-        self, check: MissingTenantConfigurationCheck
-    ) -> None:
+    async def test_passes_with_tenant_param(self, check: MissingTenantConfigurationCheck) -> None:
         """Config tool with tenant_id param should PASS."""
         snapshot = make_snapshot(
             tools=[

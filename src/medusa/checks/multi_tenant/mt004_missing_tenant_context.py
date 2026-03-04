@@ -28,9 +28,17 @@ _CONTEXT_VALIDATION_KEYS = {
 
 # Keywords in tool descriptions that suggest multi-tenant usage
 _MULTI_TENANT_DESCRIPTION_KEYWORDS = {
-    "tenant", "workspace", "organization", "org",
-    "multi-tenant", "multitenant", "customer",
-    "account", "namespace", "team", "company",
+    "tenant",
+    "workspace",
+    "organization",
+    "org",
+    "multi-tenant",
+    "multitenant",
+    "customer",
+    "account",
+    "namespace",
+    "team",
+    "company",
 }
 
 
@@ -76,7 +84,8 @@ class MissingTenantContextCheck(BaseCheck):
             return findings
 
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _CONTEXT_VALIDATION_KEYS,
+            snapshot.config_raw,
+            _CONTEXT_VALIDATION_KEYS,
         )
 
         for tool in snapshot.tools:
@@ -91,46 +100,50 @@ class MissingTenantContextCheck(BaseCheck):
             has_tenant = bool(param_names & TENANT_ID_PARAMS)
 
             if not has_tenant and not has_config_mitigation:
-                findings.append(Finding(
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="tool",
+                        resource_name=tool_name,
+                        status_extended=(
+                            f"Tool '{tool_name}' description suggests multi-tenant "
+                            f"usage but its schema has no tenant-scoping parameter. "
+                            f"Clients may operate outside their authorized tenant scope."
+                        ),
+                        evidence=(
+                            f"params={sorted(param_names)[:10]}, "
+                            f"tenant_param=missing, "
+                            f"description_mentions_tenant=true"
+                        ),
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        if not findings and snapshot.tools:
+            findings.append(
+                Finding(
                     check_id=meta.check_id,
                     check_title=meta.title,
-                    status=Status.FAIL,
+                    status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
-                    resource_type="tool",
-                    resource_name=tool_name,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Tool '{tool_name}' description suggests multi-tenant "
-                        f"usage but its schema has no tenant-scoping parameter. "
-                        f"Clients may operate outside their authorized tenant scope."
-                    ),
-                    evidence=(
-                        f"params={sorted(param_names)[:10]}, "
-                        f"tenant_param=missing, "
-                        f"description_mentions_tenant=true"
+                        "Tools with multi-tenant descriptions have tenant-scoping "
+                        "parameters, or tenant context validation is configured "
+                        "at the server level."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
-                ))
-
-        if not findings and snapshot.tools:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    "Tools with multi-tenant descriptions have tenant-scoping "
-                    "parameters, or tenant context validation is configured "
-                    "at the server level."
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+                )
+            )
 
         return findings

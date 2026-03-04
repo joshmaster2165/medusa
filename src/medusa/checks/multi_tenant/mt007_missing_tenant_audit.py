@@ -70,13 +70,13 @@ class MissingTenantAuditCheck(BaseCheck):
 
         # Secondary signal: config-level tenant audit logging
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _TENANT_AUDIT_KEYS,
+            snapshot.config_raw,
+            _TENANT_AUDIT_KEYS,
         )
 
         # Check if any audit-related tools exist at all
         has_any_audit_tool = any(
-            _tool_matches_keywords(t, TENANT_AUDIT_KEYWORDS)
-            for t in snapshot.tools
+            _tool_matches_keywords(t, TENANT_AUDIT_KEYWORDS) for t in snapshot.tools
         )
 
         if not has_any_audit_tool and not has_config_mitigation:
@@ -95,10 +95,7 @@ class MissingTenantAuditCheck(BaseCheck):
                         f"{len(snapshot.tools)} tools but none provide "
                         f"tenant-scoped audit or logging functionality."
                     ),
-                    evidence=(
-                        f"total_tools={len(snapshot.tools)}, "
-                        f"audit_tools=0"
-                    ),
+                    evidence=(f"total_tools={len(snapshot.tools)}, audit_tools=0"),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
                 )
@@ -119,7 +116,8 @@ class MissingTenantAuditCheck(BaseCheck):
 
             if not has_tenant_param and not has_config_mitigation:
                 matched_keywords = [
-                    kw for kw in TENANT_AUDIT_KEYWORDS
+                    kw
+                    for kw in TENANT_AUDIT_KEYWORDS
                     if kw in (tool.get("name", "") + " " + tool.get("description", "")).lower()
                 ]
                 findings.append(

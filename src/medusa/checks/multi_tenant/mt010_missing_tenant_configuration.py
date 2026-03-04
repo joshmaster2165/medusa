@@ -79,7 +79,8 @@ class MissingTenantConfigurationCheck(BaseCheck):
 
         # Secondary signal: config-level tenant configuration isolation
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _TENANT_CONFIG_KEYS,
+            snapshot.config_raw,
+            _TENANT_CONFIG_KEYS,
         )
 
         for tool in snapshot.tools:
@@ -101,7 +102,8 @@ class MissingTenantConfigurationCheck(BaseCheck):
 
             if not has_tenant_param and not has_config_mitigation:
                 matched_keywords = [
-                    kw for kw in TENANT_CONFIG_KEYWORDS
+                    kw
+                    for kw in TENANT_CONFIG_KEYWORDS
                     if kw in (tool.get("name", "") + " " + tool.get("description", "")).lower()
                 ]
                 findings.append(

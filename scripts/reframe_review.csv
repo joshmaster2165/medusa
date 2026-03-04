@@ -1,0 +1,513 @@
+check_id,old_title,new_title,title_changed,desc_changed,remediation_changed
+agent001,Missing Human-in-the-Loop,Ensure Human-in-the-Loop is configured,True,True,True
+agent002,Autonomous Action Risk,Ensure protection against Autonomous Action,True,True,True
+agent003,Agent Loop Detection,Ensure protection against Agent Loop,True,True,True
+agent004,Multi-Step Attack Chain Risk,Ensure protection against Multi-Step Attack Chain,True,True,True
+agent005,Delegation Without Authorization,Ensure Authorization is configured for Delegation,True,True,True
+agent006,Tool Selection Manipulation,Ensure protection against Tool Selection manipulation,True,True,True
+agent007,Agent Memory Poisoning,Ensure protection against Agent Memory poisoning,True,True,True
+agent008,Goal Hijacking,Ensure protection against Goal hijacking,True,True,True
+agent009,Reward Hacking,Ensure protection against Reward hacking,True,True,True
+agent010,Agent Impersonation,Ensure protection against Agent impersonation,True,True,True
+agent011,Unbounded Tool Call Count,Ensure Tool Call Count is bounded,True,True,True
+agent012,Agent Persistence Risk,Ensure protection against Agent Persistence,True,True,True
+agent013,Capability Accumulation,Ensure protection against Capability accumulation,True,True,True
+agent014,Indirect Prompt Injection via Tools,Ensure protection against Indirect Prompt Injection via Tools,True,True,True
+agent015,Agent Data Hoarding,Ensure protection against Agent Data hoarding,True,True,True
+agent016,Unauthorized External Communications,Ensure External Communications are authorized,True,True,True
+agent017,Agent Self-Modification,Ensure Agent self-modification is prevented,True,True,True
+agent018,Multi-Agent Coordination Risk,Ensure protection against Multi-Agent Coordination,True,True,True
+agent019,Agent Resource Exhaustion,Ensure protection against Agent Resource exhaustion,True,True,True
+agent020,Missing Agent Audit Trail,Ensure Agent Audit Trail is configured,True,True,True
+agent021,Excessive Tool Count,Ensure Tool Count is bounded,True,True,True
+agent022,Missing Tool Annotations,Ensure Tool Annotations are configured,True,True,True
+agent023,Conflicting Tool Names,Ensure Tool Names do not conflict,True,True,True
+agent024,Unrestricted Tool Output,Ensure Tool Output is restricted,True,True,True
+agent025,Missing Sampling Capability,Ensure Sampling Capability is configured,True,True,True
+ai001,[AI] Tool Poisoning Analysis,[AI] Tool Poisoning Analysis,False,True,True
+ai002,[AI] Authentication Analysis,[AI] Authentication Analysis,False,True,True
+ai003,[AI] Input Validation Analysis,[AI] Input Validation Analysis,False,True,True
+ai004,[AI] Credential Exposure Analysis,[AI] Credential Exposure Analysis,False,True,True
+ai005,[AI] Privilege Scope Analysis,[AI] Privilege Scope Analysis,False,True,True
+ai006,[AI] Transport Security Analysis,[AI] Transport Security Analysis,False,True,True
+ai007,[AI] Data Protection Analysis,[AI] Data Protection Analysis,False,True,True
+ai008,[AI] Integrity Analysis,[AI] Integrity Analysis,False,True,True
+ai009,[AI] Session Management Analysis,[AI] Session Management Analysis,False,True,True
+ai010,[AI] Error Handling Analysis,[AI] Error Handling Analysis,False,True,True
+ai011,[AI] Rate Limiting Analysis,[AI] Rate Limiting Analysis,False,True,True
+ai012,[AI] SSRF & Network Analysis,[AI] SSRF & Network Analysis,False,True,True
+ai013,[AI] Agentic Behavior Analysis,[AI] Agentic Behavior Analysis,False,True,True
+ai014,[AI] Sampling Security Analysis,[AI] Sampling Security Analysis,False,True,True
+ai015,[AI] Context Security Analysis,[AI] Context Security Analysis,False,True,True
+ai016,[AI] Resource Security Analysis,[AI] Resource Security Analysis,False,True,True
+ai017,[AI] Multi-Tenant Analysis,[AI] Multi-Tenant Analysis,False,True,True
+ai018,[AI] Secrets Management Analysis,[AI] Secrets Management Analysis,False,True,True
+ai019,[AI] Server Hardening Analysis,[AI] Server Hardening Analysis,False,True,True
+ai020,[AI] Governance Analysis,[AI] Governance Analysis,False,True,True
+ai021,[AI] Audit Logging Analysis,[AI] Audit Logging Analysis,False,True,True
+ai022,[AI] Supply Chain Analysis,[AI] Supply Chain Analysis,False,True,True
+ai023,[AI] Server Identity Analysis,[AI] Server Identity Analysis,False,True,True
+ai024,[AI] Prompt Security Analysis,[AI] Prompt Security Analysis,False,True,True
+audit001,Missing Logging Configuration,Ensure Logging Configuration is configured,True,True,True
+audit002,Missing Audit Trail Capability,Ensure Audit Trail Capability is configured,True,True,True
+audit003,Insufficient Log Detail,Ensure Log Detail is sufficient,True,True,True
+audit004,Log Tampering Risk,Ensure protection against Log Tampering,True,True,True
+audit005,Missing Log Rotation,Ensure Log Rotation is configured,True,True,True
+audit006,Missing Security Alerting,Ensure Security Alerting is configured,True,True,True
+audit007,Sensitive Data in Logs,Ensure sensitive data is not present in logs,True,True,True
+audit008,Missing Access Logging,Ensure Access Logging is configured,True,True,True
+audit009,Log Injection Risk,Ensure protection against Log Injection,True,True,True
+audit010,Missing Forensic Capability,Ensure Forensic Capability is configured,True,True,True
+auth001,No Authentication on HTTP Transport,Ensure Authentication is enabled for HTTP Transport,True,True,True
+auth002,Weak OAuth Configuration,Ensure OAuth Configuration has sufficient strength,True,True,True
+auth003,Missing TLS on HTTP Transport,Ensure TLS on HTTP Transport is configured,True,True,True
+auth004,Localhost Binding Without Authentication,Ensure Authentication is configured for Localhost Binding,True,True,True
+auth005,Weak Token Entropy,Ensure Token Entropy has sufficient strength,True,True,True
+auth006,Missing Token Expiration,Ensure Token Expiration is configured,True,True,True
+auth007,Insecure Token Storage,Ensure Token Storage meets security requirements,True,True,True
+auth008,Missing OAuth PKCE,Ensure OAuth PKCE is configured,True,True,True
+auth009,Bearer Token in URL Parameters,Ensure Bearer Token is not exposed in URL Parameters,True,True,True
+auth010,Missing CSRF Protection,Ensure CSRF Protection is configured,True,True,True
+auth011,Hardcoded Credentials in Config,Ensure Credentials in Config is not hardcoded,True,True,True
+auth012,Missing Token Rotation,Ensure Token Rotation is configured,True,True,True
+auth013,Insecure Cookie Flags,Ensure Cookie Flags meets security requirements,True,True,True
+auth014,JWT Algorithm None Attack,Ensure protection against JWT Algorithm None attack,True,True,True
+auth015,JWT Weak Signing Key,Ensure JWT signing key has sufficient strength,True,True,True
+auth016,Missing Authentication on Sensitive Tools,Ensure Authentication on Sensitive Tools are configured,True,True,True
+auth017,API Key in Insecure Headers,Ensure API Key is not exposed in Insecure Headers,True,True,True
+auth018,Missing Mutual TLS,Ensure Mutual TLS is configured,True,True,True
+auth019,Token Scope Too Broad,Ensure token scope follows least-privilege,True,True,True
+auth020,Missing Authorization Header,Ensure Authorization Header is configured,True,True,True
+auth021,Basic Auth Over HTTP,Ensure basic authentication is not used over HTTP,True,True,True
+auth022,Missing Token Revocation,Ensure Token Revocation is configured,True,True,True
+auth023,Shared Secrets Across Servers,Ensure secrets are not shared across servers,True,True,True
+auth024,Missing Rate Limit on Auth Endpoints,Ensure Rate Limit on Auth Endpoints are configured,True,True,True
+auth025,Session Fixation Risk,Ensure protection against Session Fixation,True,True,True
+auth026,Missing Logout Mechanism,Ensure Logout Mechanism is configured,True,True,True
+auth027,Weak Password Policy,Ensure Password Policy has sufficient strength,True,True,True
+auth028,Missing Multi-Factor Authentication,Ensure Multi-Factor Authentication is configured,True,True,True
+auth029,Insecure Auth Redirect,Ensure Auth Redirect meets security requirements,True,True,True
+ctx001,Excessive Tool/Resource/Prompt Counts (Over-Sharing),Ensure tool/resource/prompt counts are bounded,True,True,True
+ctx002,Hidden Instructions / Prompt Injection in Resources and Prompts,Ensure Resources and Prompts does not contain hidden Instructions / Prompt Injection,True,True,True
+ctx003,Context Window Overflow Attack,Ensure protection against Context Window Overflow attack,True,True,True
+ctx004,Instruction Hierarchy Violation,Ensure instruction hierarchy is enforced,True,True,True
+ctx005,Context Poisoning via Resource Content,Ensure protection against context poisoning via resource content,True,True,True
+ctx006,System Prompt Leakage Risk,Ensure protection against System Prompt Leakage,True,True,True
+ctx007,Cross-Conversation Context Contamination,Ensure protection against cross-conversation context contamination,True,True,True
+ctx008,Token Budget Exhaustion,Ensure protection against Token Budget exhaustion,True,True,True
+ctx009,Role Confusion Attack,Ensure protection against Role Confusion attack,True,True,True
+ctx010,Multi-Turn Conversation Manipulation,Ensure protection against multi-turn conversation manipulation,True,True,True
+cred001,Secrets in MCP Configuration Files,Ensure secrets are not present in MCP Configuration Files,True,True,True
+cred002,Environment Variable Leakage,Ensure Environment Variable is not leaked,True,True,True
+cred003,Secrets in Tool Definitions,Ensure secrets are not present in Tool Definitions,True,True,True
+cred004,GCP Service Account Key Exposure,Ensure GCP Service Account Key is not exposed,True,True,True
+cred005,Azure Credential Exposure,Ensure Azure Credential is not exposed,True,True,True
+cred006,Database Connection String Exposure,Ensure Database Connection String is not exposed,True,True,True
+cred007,SSH Private Key Exposure,Ensure SSH Private Key is not exposed,True,True,True
+cred008,JWT Secret in Environment,Ensure JWT secret is not present in environment variables,True,True,True
+cred009,OAuth Client Secret Exposure,Ensure OAuth Client Secret is not exposed,True,True,True
+cred010,SMTP Credential Exposure,Ensure SMTP Credential is not exposed,True,True,True
+cred011,Docker Registry Auth Exposure,Ensure Docker Registry Auth is not exposed,True,True,True
+cred012,Kubernetes Secret Exposure,Ensure Kubernetes Secret is not exposed,True,True,True
+cred013,Terraform State Secrets,Ensure Terraform state does not contain secrets,True,True,True
+cred014,NPM Token Exposure,Ensure NPM Token is not exposed,True,True,True
+cred015,PyPI Token Exposure,Ensure PyPI Token is not exposed,True,True,True
+cred016,Encryption Key Exposure,Ensure Encryption Key is not exposed,True,True,True
+cred017,Webhook Secret Exposure,Ensure Webhook Secret is not exposed,True,True,True
+cred018,LDAP Bind Credential Exposure,Ensure LDAP Bind Credential is not exposed,True,True,True
+cred019,Redis Auth Exposure,Ensure Redis Auth is not exposed,True,True,True
+cred020,Firebase Credential Exposure,Ensure Firebase Credential is not exposed,True,True,True
+cred021,Twilio Credential Exposure,Ensure Twilio Credential is not exposed,True,True,True
+cred022,SendGrid API Key Exposure,Ensure SendGrid API Key is not exposed,True,True,True
+cred023,HashiCorp Vault Token Exposure,Ensure HashiCorp Vault Token is not exposed,True,True,True
+dp001,PII in Tool/Resource/Prompt Definitions,Ensure PII is not present in tool/resource/prompt definitions,True,True,True
+dp002,Sensitive File Paths in Resource URIs,Ensure Sensitive File Paths are not present in Resource URIs,True,True,True
+dp003,Missing Data Classification on Resources,Ensure Data Classification on Resources are configured,True,True,True
+dp004,Excessive Data Exposure via Bulk Export Tools,Ensure Data Exposure via Bulk Export Tools are bounded,True,True,True
+dp005,Data Leakage via Error Messages,Ensure error messages do not leak sensitive data,True,True,True
+dp006,Unmasked Sensitive Fields,Ensure Sensitive Fields are masked,True,True,True
+dp007,Missing Data Retention Policy,Ensure Data Retention Policy is configured,True,True,True
+dp008,Cross-Origin Data Sharing,Ensure cross-origin data sharing is controlled,True,True,True
+dp009,Missing Encryption at Rest,Ensure Encryption at Rest is configured,True,True,True
+dp010,Missing Encryption in Transit,Ensure Encryption in Transit is configured,True,True,True
+dp011,Excessive Logging of PII,Ensure Logging of PII is bounded,True,True,True
+dp012,Missing Data Consent Mechanism,Ensure Data Consent Mechanism is configured,True,True,True
+dp013,Data Minimization Violation,Ensure data minimization principles are followed,True,True,True
+dp014,Missing Data Anonymization,Ensure Data Anonymization is configured,True,True,True
+dp015,Clipboard Data Exposure Risk,Ensure protection against Clipboard Data Exposure,True,True,True
+dp016,Screenshot Capture Risk,Ensure protection against Screenshot Capture,True,True,True
+dp017,Keylogger Risk,Ensure protection against Keylogger,True,True,True
+dp018,Browser History Access,Ensure Browser History access is controlled,True,True,True
+dp019,Contact Data Access,Ensure Contact Data access is controlled,True,True,True
+dp020,Location Data Exposure,Ensure Location Data is not exposed,True,True,True
+dp021,Camera/Microphone Access,Ensure Camera/Microphone access is controlled,True,True,True
+dp022,Calendar Data Access,Ensure Calendar Data access is controlled,True,True,True
+dp023,Message/Chat Data Access,Ensure Message/Chat Data access is controlled,True,True,True
+dp024,Biometric Data Handling,Ensure protection against Biometric Data Handling,True,True,True
+dp025,Health Data Exposure,Ensure Health Data is not exposed,True,True,True
+dp026,Financial Data Exposure,Ensure Financial Data is not exposed,True,True,True
+dp027,Child Data Protection (COPPA),Ensure child data protection (COPPA) compliance,True,True,True
+dp028,Missing Data Portability,Ensure Data Portability is configured,True,True,True
+dp029,Missing Right to Deletion,Ensure Right to Deletion is configured,True,True,True
+dp030,Unbounded Array Parameters,Ensure Array Parameters are bounded,True,True,True
+dp031,PII Field Without Protection,Ensure Protection is configured for PII Field,True,True,True
+dp032,Bulk Data Export Tool,Ensure bulk data export is controlled,True,True,True
+err001,Stack Trace Exposure,Ensure Stack Trace is not exposed,True,True,True
+err002,Debug Mode Enabled,Ensure Debug Mode is disabled in production,True,True,True
+err003,Verbose Error Messages,Ensure Error Messages does not disclose sensitive information,True,True,True
+err004,Missing Error Handling,Ensure Error Handling is configured,True,True,True
+err005,Information Disclosure via Errors,Ensure errors do not disclose sensitive information,True,True,True
+err006,Missing Error Codes,Ensure Error Codes is configured,True,True,True
+err007,Error Message Injection,Ensure protection against Error Message injection,True,True,True
+err008,Unhandled Exception Risk,Ensure protection against Unhandled Exception,True,True,True
+err009,Error-Based Enumeration,Ensure protection against Error-Based enumeration,True,True,True
+err010,Missing Graceful Degradation,Ensure Graceful Degradation is configured,True,True,True
+err011,Missing Error Rate Alerting,Ensure Error Rate Alerting is configured,True,True,True
+err012,Sensitive File Paths in Errors,Ensure sensitive file paths are not disclosed in errors,True,True,True
+err013,Database Errors Exposed,Ensure Database Errors is not exposed,True,True,True
+err014,API Version in Error Messages,Ensure API version is not disclosed in error messages,True,True,True
+err015,Missing Error Recovery,Ensure Error Recovery is configured,True,True,True
+gov001,Missing Security Policy,Ensure Security Policy is configured,True,True,True
+gov002,Missing Privacy Policy,Ensure Privacy Policy is configured,True,True,True
+gov003,Missing Terms of Service,Ensure Terms of Service is configured,True,True,True
+gov004,Missing Compliance Mapping,Ensure Compliance Mapping is configured,True,True,True
+gov005,Missing Incident Response Plan,Ensure Incident Response Plan is configured,True,True,True
+gov006,Missing Change Management Process,Ensure Change Management Process is configured,True,True,True
+gov007,Missing Access Review Process,Ensure Access Review Process is configured,True,True,True
+gov008,Missing Vulnerability Management,Ensure Vulnerability Management is configured,True,True,True
+gov009,Missing Data Governance Framework,Ensure Data Governance Framework is configured,True,True,True
+gov010,Missing Third-Party Risk Assessment,Ensure Third-Party Risk Assessment is configured,True,True,True
+gov011,Missing Business Continuity Plan,Ensure Business Continuity Plan is configured,True,True,True
+gov012,Missing Disaster Recovery Plan,Ensure Disaster Recovery Plan is configured,True,True,True
+gov013,Missing SLA Definition,Ensure SLA Definition is configured,True,True,True
+gov014,Missing Regulatory Compliance,Ensure Regulatory Compliance is configured,True,True,True
+gov015,Missing Audit Schedule,Ensure Audit Schedule is configured,True,True,True
+gov016,Missing Security Training Program,Ensure Security Training Program is configured,True,True,True
+gov017,Missing Asset Inventory,Ensure Asset Inventory is configured,True,True,True
+gov018,Missing Risk Assessment,Ensure Risk Assessment is configured,True,True,True
+gov019,Missing Data Classification Policy,Ensure Data Classification Policy is configured,True,True,True
+gov020,Missing Vendor Security Assessment,Ensure Vendor Security Assessment is configured,True,True,True
+gov021,Missing Tool Namespace,Ensure Tool Namespace is configured,True,True,True
+gov022,Missing Server Version,Ensure Server Version is configured,True,True,True
+iv001,Command Injection Risk via Tool Input Schema,Ensure Tool Input Schema is protected against Command Injection,True,True,True
+iv002,Path Traversal Risk via Tool Input Schema,Ensure Tool Input Schema is protected against Path Traversal,True,True,True
+iv003,SQL Injection Risk via Tool Input Schema,Ensure Tool Input Schema is protected against SQL Injection,True,True,True
+iv004,Missing or Empty Input Schema on Tool,Ensure or Empty Input Schema on Tool is configured,True,True,True
+iv005,Overly Permissive Tool Input Schema,Ensure Tool Input Schema follows least-privilege,True,True,True
+iv006,LDAP Injection Risk,Ensure protection against LDAP Injection,True,True,True
+iv007,NoSQL Injection Risk,Ensure protection against NoSQL Injection,True,True,True
+iv008,Server-Side Template Injection Risk,Ensure protection against Server-Side Template Injection,True,True,True
+iv009,XML External Entity Injection Risk,Ensure protection against XML External Entity Injection,True,True,True
+iv010,HTTP Header Injection Risk,Ensure protection against HTTP Header Injection,True,True,True
+iv011,Regular Expression DoS (ReDoS),Ensure protection against regular expression DoS (ReDoS),True,True,True
+iv012,Integer Overflow Risk,Ensure protection against integer overflow,True,True,True
+iv013,Format String Injection,Ensure protection against Format String injection,True,True,True
+iv014,XPath Injection Risk,Ensure protection against XPath Injection,True,True,True
+iv015,CSV Injection Risk,Ensure protection against CSV Injection,True,True,True
+iv016,Unicode Normalization Bypass,Ensure protection against Unicode Normalization bypass,True,True,True
+iv017,Null Byte Injection Risk,Ensure protection against Null Byte Injection,True,True,True
+iv018,CRLF Injection Risk,Ensure protection against CRLF Injection,True,True,True
+iv019,Missing Input Length Constraint,Ensure Input Length Constraint is configured,True,True,True
+iv020,Missing Type Constraint,Ensure Type Constraint is configured,True,True,True
+iv021,Environment Variable Injection,Ensure protection against Environment Variable injection,True,True,True
+iv022,Unsafe Deserialization Risk,Ensure protection against Unsafe Deserialization,True,True,True
+iv023,Prototype Pollution Risk,Ensure protection against Prototype Pollution,True,True,True
+iv024,Log Injection Risk,Ensure protection against Log Injection,True,True,True
+iv025,Template Literal Injection,Ensure protection against Template Literal injection,True,True,True
+iv026,Wildcard Parameter Matching,Ensure Parameter Matching does not use wildcards,True,True,True
+iv027,Missing Enum Constraint on Action Parameters,Ensure Enum Constraint on Action Parameters are configured,True,True,True
+iv028,Excessive Nested Object Depth,Ensure Nested Object Depth is bounded,True,True,True
+iv029,Unbounded Array Length,Ensure Array Length is bounded,True,True,True
+iv030,Open Additional Properties,Ensure Additional Properties are restricted,True,True,True
+iv031,Missing Pattern Validation on String Parameters,Ensure Pattern Validation on String Parameters are configured,True,True,True
+iv032,URL Parameter Injection,Ensure protection against URL Parameter injection,True,True,True
+iv033,Email Parameter Injection,Ensure protection against Email Parameter injection,True,True,True
+iv034,File Upload Without Validation,Ensure Validation is configured for File Upload,True,True,True
+iv035,HTML Injection Risk,Ensure protection against HTML Injection,True,True,True
+iv036,LDAP Injection Parameters,Ensure protection against LDAP Injection Parameters,True,True,True
+iv037,Server-Side Template Injection,Ensure protection against Server-Side Template injection,True,True,True
+iv038,HTTP Header Injection (CRLF),Ensure protection against HTTP header injection (CRLF),True,True,True
+iv039,NoSQL Injection Parameters,Ensure protection against NoSQL Injection Parameters,True,True,True
+iv040,CSV Formula Injection,Ensure protection against CSV Formula injection,True,True,True
+iv041,Regex Denial of Service (ReDoS),Ensure protection against regex denial of service (ReDoS),True,True,True
+iv042,XML External Entity Injection (XXE),Ensure protection against XML external entity injection (XXE),True,True,True
+iv042,XML External Entity (XXE) Injection,Ensure protection against XML external entity (XXE) injection,True,True,True
+iv043,Unbounded Numeric Range,Ensure Numeric Range is bounded,True,True,True
+iv044,Integer Overflow Risk,Ensure protection against integer overflow,True,True,True
+iv045,Deeply Nested Schema,Ensure Schema depth is limited,True,True,True
+iv046,Missing Required Field Declaration,Ensure Required Field Declaration is configured,True,True,True
+intg001,Missing Version Pinning for Package Manager Commands,Ensure Version Pinning for Package Manager Commands is configured,True,True,True
+intg002,Unsigned Server Binaries,Ensure Server Binaries are signed,True,True,True
+intg003,Configuration Stored in World-Writable Path,Ensure configuration is not stored in world-writable path,True,True,True
+intg004,Missing Integrity Verification for Tool Definitions,Ensure Integrity Verification for Tool Definitions are configured,True,True,True
+intg005,Missing Package Lockfile,Ensure Package Lockfile is configured,True,True,True
+intg006,Lockfile Integrity Tampered,Ensure lockfile integrity is maintained,True,True,True
+intg007,Unsigned Server Updates,Ensure Server Updates are signed,True,True,True
+intg008,Missing Software Bill of Materials,Ensure Software Bill of Materials is configured,True,True,True
+intg009,Missing Configuration Schema,Ensure Configuration Schema is configured,True,True,True
+intg010,Tool Schema Drift Detection,Ensure tool schema integrity is maintained,True,True,True
+intg011,Missing Reproducible Build,Ensure Reproducible Build is configured,True,True,True
+intg012,Dependency Confusion Risk,Ensure protection against Dependency Confusion,True,True,True
+intg013,Typosquatting Risk,Ensure protection against Typosquatting,True,True,True
+intg014,Missing Subresource Integrity,Ensure Subresource Integrity is configured,True,True,True
+intg015,Binary Planting Risk,Ensure protection against Binary Planting,True,True,True
+intg016,Insecure Config File Permissions,Ensure Config File Permissions meets security requirements,True,True,True
+intg017,Missing Timestamp Verification,Ensure Timestamp Verification is configured,True,True,True
+intg018,Schema-Less Tools,Ensure Tools has a schema,True,True,True
+intg019,Empty Tool Descriptions,Ensure Tool Descriptions are populated,True,True,True
+intg020,Inconsistent Tool Naming Convention,Ensure tool naming convention is consistent,True,True,True
+mt001,Missing Tenant Isolation,Ensure Tenant Isolation is configured,True,True,True
+mt002,Shared Resource Cross-Tenant Access,Ensure Resource Cross-Tenant Access is not shared,True,True,True
+mt003,Tenant Data Leakage,Ensure Tenant Data is not leaked,True,True,True
+mt004,Missing Tenant Context Validation,Ensure Tenant Context Validation is configured,True,True,True
+mt005,Tenant Impersonation Risk,Ensure protection against Tenant Impersonation,True,True,True
+mt006,Shared Credential Store,Ensure Credential Store is not shared,True,True,True
+mt007,Missing Tenant-Specific Audit,Ensure Tenant-Specific Audit is configured,True,True,True
+mt008,Tenant Resource Exhaustion,Ensure protection against Tenant Resource exhaustion,True,True,True
+mt009,Cross-Tenant Tool Access,Ensure cross-tenant tool access is prevented,True,True,True
+mt010,Missing Tenant Configuration Isolation,Ensure Tenant Configuration Isolation is configured,True,True,True
+priv001,Overprivileged Filesystem Access Tool,Ensure Filesystem Access Tool follows least-privilege,True,True,True
+priv002,Unrestricted Network Access Tool,Ensure Network Access Tool is restricted,True,True,True
+priv003,Shell Execution Capability Detected,Ensure Shell Execution Capability is not present,True,True,True
+priv004,Cloud Metadata Service Access,Ensure cloud metadata service access is restricted,True,True,True
+priv005,Destructive Operations Without Confirmation,Ensure Confirmation is configured for Destructive Operations,True,True,True
+priv006,RBAC Bypass Risk,Ensure protection against RBAC Bypass,True,True,True
+priv007,Sudo/Root Elevation,Ensure sudo/root elevation is restricted,True,True,True
+priv008,Container Escape Risk,Ensure protection against Container Escape,True,True,True
+priv009,Unrestricted Process Spawning,Ensure Process Spawning is restricted,True,True,True
+priv010,Environment Variable Modification,Ensure protection against Environment Variable Modification,True,True,True
+priv011,System Registry Access,Ensure System Registry access is controlled,True,True,True
+priv012,Kernel Module Loading,Ensure protection against Kernel Module Loading,True,True,True
+priv013,Cron/Scheduled Task Creation,Ensure cron/scheduled task creation is restricted,True,True,True
+priv014,User Management Operations,Ensure protection against User Management Operations,True,True,True
+priv015,Firewall Rule Modification,Ensure protection against Firewall Rule Modification,True,True,True
+priv016,Package Installation Rights,Ensure package installation rights are restricted,True,True,True
+priv017,System Service Management,Ensure protection against System Service Management,True,True,True
+priv018,Database Admin Operations,Ensure protection against Database Admin Operations,True,True,True
+priv019,IDOR in Resource Access,Ensure protection against IDOR in resource access,True,True,True
+priv020,Missing Resource Authorization,Ensure Resource Authorization is configured,True,True,True
+priv021,Horizontal Privilege Escalation,Ensure protection against horizontal privilege escalation,True,True,True
+priv022,Missing Least Privilege,Ensure Least Privilege is configured,True,True,True
+priv023,Cross-Tenant Data Access,Ensure cross-tenant data access is prevented,True,True,True
+pmt001,Prompt Argument Injection,Ensure protection against Prompt Argument injection,True,True,True
+pmt002,Jailbreak Phrases in Prompt Definitions,Ensure protection against Jailbreak Phrases in Prompt Definitions,True,True,True
+pmt003,Role Reassignment in Prompts,Ensure protection against Role Reassignment in Prompts,True,True,True
+pmt004,Prompt Template Injection,Ensure protection against Prompt Template injection,True,True,True
+pmt005,Missing Prompt Sanitization,Ensure Prompt Sanitization is configured,True,True,True
+pmt006,Prompt Chaining Risk,Ensure protection against Prompt Chaining,True,True,True
+pmt007,Excessive Prompt Arguments,Ensure Prompt Arguments are bounded,True,True,True
+pmt008,Prompt Argument Type Coercion,Ensure protection against Prompt Argument Type Coercion,True,True,True
+pmt009,Dangerous Default Prompt Arguments,Ensure default prompt arguments are safe,True,True,True
+pmt010,Prompt Output Manipulation,Ensure protection against Prompt Output manipulation,True,True,True
+pmt011,Multilingual Prompt Injection,Ensure protection against Multilingual Prompt injection,True,True,True
+pmt012,Prompt Encoding Bypass,Ensure protection against Prompt Encoding bypass,True,True,True
+pmt013,Missing Prompt Length Limit,Ensure Prompt Length Limit is configured,True,True,True
+pmt014,Prompt History Manipulation,Ensure protection against Prompt History manipulation,True,True,True
+pmt015,Prompt Metadata Leakage,Ensure Prompt Metadata is not leaked,True,True,True
+pmt016,Hardcoded Secrets in Prompt Templates,Ensure Secrets in Prompt Templates is not hardcoded,True,True,True
+pmt017,Untyped Prompt Arguments,Ensure Prompt Arguments are typed,True,True,True
+pmt018,System Prompt Leakage,Ensure System Prompt is not leaked,True,True,True
+pmt019,Excessive Prompt Argument Count,Ensure Prompt Argument Count is bounded,True,True,True
+pmt020,Prompt Role Manipulation,Ensure protection against Prompt Role manipulation,True,True,True
+dos001,Missing Rate Limiting,Ensure Rate Limiting is configured,True,True,True
+dos002,Missing Request Throttling,Ensure Request Throttling is configured,True,True,True
+dos003,Resource Exhaustion Risk,Ensure protection against Resource Exhaustion,True,True,True
+dos004,Missing Concurrent Request Limit,Ensure Concurrent Request Limit is configured,True,True,True
+dos005,Missing Payload Size Limit,Ensure Payload Size Limit is configured,True,True,True
+dos006,Missing Timeout Configuration,Ensure Timeout Configuration is configured,True,True,True
+dos007,Connection Pool Exhaustion,Ensure protection against Connection Pool exhaustion,True,True,True
+dos008,Memory Exhaustion Risk,Ensure protection against Memory Exhaustion,True,True,True
+dos009,Disk Exhaustion Risk,Ensure protection against Disk Exhaustion,True,True,True
+dos010,CPU Exhaustion Risk,Ensure protection against CPU Exhaustion,True,True,True
+dos011,Missing Recursive Operation Limit,Ensure Recursive Operation Limit is configured,True,True,True
+dos012,Missing Batch Operation Limit,Ensure Batch Operation Limit is configured,True,True,True
+dos013,Slowloris Attack Risk,Ensure protection against Slowloris Attack,True,True,True
+dos014,Amplification Attack Risk,Ensure protection against Amplification Attack,True,True,True
+dos015,Missing Backpressure Mechanism,Ensure Backpressure Mechanism is configured,True,True,True
+res001,Missing Resource Access Control,Ensure Resource Access Control is configured,True,True,True
+res002,Resource Template Path Traversal,Ensure protection against Resource Template Path Traversal,True,True,True
+res003,Missing Resource Content Validation,Ensure Resource Content Validation is configured,True,True,True
+res004,Resource Injection via URI,Ensure protection against Resource Injection via URI,True,True,True
+res005,Resource Enumeration Risk,Ensure protection against Resource Enumeration,True,True,True
+res006,Resource Race Condition,Ensure protection against Resource Race Condition,True,True,True
+res007,Resource Caching Security Risk,Ensure protection against Resource Caching Security,True,True,True
+res008,Resource Symlink Following,Ensure Resource Symlink following is restricted,True,True,True
+res009,Missing Resource Size Limit,Ensure Resource Size Limit is configured,True,True,True
+res010,Resource Type Confusion,Ensure protection against Resource Type Confusion,True,True,True
+res011,Missing Resource Origin Validation,Ensure Resource Origin Validation is configured,True,True,True
+res012,Missing Resource Lifetime Management,Ensure Resource Lifetime Management is configured,True,True,True
+res013,Dynamic Resource Injection,Ensure protection against Dynamic Resource injection,True,True,True
+res014,Missing Resource Schema Validation,Ensure Resource Schema Validation is configured,True,True,True
+res015,Resource Subscription Abuse,Ensure protection against Resource Subscription abuse,True,True,True
+res016,Missing URI Normalization,Ensure URI Normalization is configured,True,True,True
+res017,Resource Content-Type Mismatch,Ensure Resource Content-Type is consistent,True,True,True
+res018,Resource Encoding Bypass,Ensure protection against Resource Encoding bypass,True,True,True
+res019,Missing Resource Quota,Ensure Resource Quota is configured,True,True,True
+res020,Resource Dependency Chain Risk,Ensure protection against Resource Dependency Chain,True,True,True
+res021,Wildcard Resource URI Patterns,Ensure Resource URI Patterns does not use wildcards,True,True,True
+res022,Sensitive File Extension Exposure,Ensure Sensitive File Extension is not exposed,True,True,True
+res023,Resource Without MIME Type,Ensure MIME Type is configured for Resource,True,True,True
+res024,Resource URI Template Injection,Ensure protection against Resource URI Template injection,True,True,True
+res025,Recursive Directory Resource,Ensure Directory Resource recursion is limited,True,True,True
+samp001,Sampling Request Injection,Ensure protection against Sampling Request injection,True,True,True
+samp002,Model Manipulation via Sampling,Ensure protection against Model Manipulation via Sampling,True,True,True
+samp003,Unauthorized Sampling Requests,Ensure Sampling Requests is authorized,True,True,True
+samp004,Data Exfiltration via Sampling,Ensure protection against Data Exfiltration via Sampling,True,True,True
+samp005,Privilege Escalation via Sampling,Ensure protection against Privilege Escalation via Sampling,True,True,True
+samp006,Recursive Sampling Attack,Ensure protection against Recursive Sampling attack,True,True,True
+samp007,Sampling Without Rate Limit,Ensure sampling has rate limiting configured,True,True,True
+samp008,Sampling Context Manipulation,Ensure protection against Sampling Context manipulation,True,True,True
+samp009,Missing Sampling Response Validation,Ensure Sampling Response Validation is configured,True,True,True
+samp010,Cross-Server Sampling Attack,Ensure protection against Cross-Server Sampling attack,True,True,True
+samp011,Sampling Token Exhaustion,Ensure protection against Sampling Token exhaustion,True,True,True
+samp012,Sampling Output Injection,Ensure protection against Sampling Output injection,True,True,True
+samp013,Model Selection Manipulation,Ensure protection against Model Selection manipulation,True,True,True
+samp014,Sampling History Poisoning,Ensure protection against Sampling History poisoning,True,True,True
+samp015,Sampling System Prompt Override,Ensure Sampling System Prompt override is prevented,True,True,True
+sm001,Plaintext Secrets in Configuration,Ensure Secrets are not stored in plaintext in Configuration,True,True,True
+sm002,Missing Secret Rotation,Ensure Secret Rotation is configured,True,True,True
+sm003,Secrets in Version Control,Ensure secrets are not present in Version Control,True,True,True
+sm004,Missing Vault Integration,Ensure Vault Integration is configured,True,True,True
+sm005,Hardcoded Encryption Keys,Ensure Encryption Keys are not hardcoded,True,True,True
+sm006,Shared Secrets Across Environments,Ensure secrets are not shared across environments,True,True,True
+sm007,Missing Secret Access Audit,Ensure Secret Access Audit is configured,True,True,True
+sm008,Insecure Secret Generation,Ensure Secret Generation meets security requirements,True,True,True
+sm009,Secrets in Environment Variables,Ensure secrets are not present in Environment Variables,True,True,True
+sm010,Missing Secret Encryption at Rest,Ensure Secret Encryption at Rest is configured,True,True,True
+sm011,Secret Sprawl,Ensure secret sprawl is controlled,True,True,True
+sm012,Missing Secret Revocation,Ensure Secret Revocation is configured,True,True,True
+sm013,Default Secrets in Use,Ensure Secrets in Use does not use defaults,True,True,True
+sm014,Secrets in Log Output,Ensure secrets are not present in Log Output,True,True,True
+sm015,Missing Secret Access Control,Ensure Secret Access Control is configured,True,True,True
+sm016,High-Entropy Default Values,Ensure default values do not contain high-entropy secrets,True,True,True
+sm017,Secrets in Tool Descriptions,Ensure secrets are not present in Tool Descriptions,True,True,True
+sm018,Credentials in Resource Descriptions,Ensure Credentials are not exposed in Resource Descriptions,True,True,True
+sm019,Weak Default Password Patterns,Ensure Default Password Patterns has sufficient strength,True,True,True
+sm020,Secrets in Command-Line Arguments,Ensure secrets are not present in Command-Line Arguments,True,True,True
+hard001,Unnecessary Services Enabled,Ensure unnecessary Services are disabled,True,True,True
+hard002,Default Configuration in Production,Ensure Configuration in Production does not use defaults,True,True,True
+hard003,Missing Security Headers,Ensure Security Headers are configured,True,True,True
+hard004,Directory Listing Enabled,Ensure directory listing is disabled,True,True,True
+hard005,Admin Interface Exposed,Ensure Admin Interface is not exposed,True,True,True
+hard006,Debug Endpoints Enabled,Ensure debug endpoints are disabled,True,True,True
+hard007,Missing Server-Level Input Sanitization,Ensure Server-Level Input Sanitization is configured,True,True,True
+hard008,Insecure Default Credentials,Ensure Default Credentials meets security requirements,True,True,True
+hard009,Missing Security Updates,Ensure Security Updates are configured,True,True,True
+hard010,Exposed Version Information,Ensure version information is not exposed,True,True,True
+hard011,Missing Server Resource Limits,Ensure Server Resource Limits is configured,True,True,True
+hard012,Unnecessary HTTP Methods Enabled,Ensure unnecessary HTTP Methods is disabled,True,True,True
+hard013,Missing Request Validation,Ensure Request Validation is configured,True,True,True
+hard014,Insecure File Permissions,Ensure File Permissions meets security requirements,True,True,True
+hard015,Missing Network Segmentation,Ensure Network Segmentation is configured,True,True,True
+hard016,Debug Mode Indicators,Ensure debug mode indicators are not present,True,True,True
+hard017,Permissive Server Capabilities,Ensure server capabilities follow least-privilege,True,True,True
+hard018,Unrestricted Tool Execution Scope,Ensure Tool Execution Scope is restricted,True,True,True
+shadow001,Generic or Duplicate-Prone Server Name,Ensure server name is specific and unique,True,True,True
+shadow002,Unverified Server Identity,Ensure Server Identity is verified,True,True,True
+shadow003,Duplicate Tool Names Across Servers,Ensure Tool Names Across Servers is unique,True,True,True
+shadow004,Missing Server Metadata,Ensure Server Metadata is configured,True,True,True
+shadow005,Suspicious Server Origin,Ensure Server Origin is validated,True,True,True
+shadow006,Server Version Spoofing,Ensure protection against Server Version spoofing,True,True,True
+shadow007,Unauthorized Server Registration,Ensure Server Registration is authorized,True,True,True
+sess001,Missing Session Timeout,Ensure Session Timeout is configured,True,True,True
+sess002,Session Fixation Vulnerability,Ensure protection against Session Fixation vulnerability,True,True,True
+sess003,Weak Session ID Entropy,Ensure Session ID Entropy has sufficient strength,True,True,True
+sess004,Session ID Stored in URL,Ensure session ID is not stored in URL,True,True,True
+sess005,Missing Session Invalidation on Logout,Ensure Session Invalidation on Logout is configured,True,True,True
+sess006,Missing Concurrent Session Limit,Ensure Concurrent Session Limit is configured,True,True,True
+sess007,Session Replay Attack Risk,Ensure protection against Session Replay Attack,True,True,True
+sess008,Missing Session-IP Binding,Ensure Session-IP Binding is configured,True,True,True
+sess009,Session Data Exposure,Ensure Session Data is not exposed,True,True,True
+sess010,Missing Session ID Rotation,Ensure Session ID Rotation is configured,True,True,True
+sess011,Persistent Session Risk,Ensure protection against Persistent Session,True,True,True
+sess012,Cross-Site Session Sharing,Ensure cross-site session sharing is prevented,True,True,True
+sess013,Overly Broad Session Cookie Scope,Ensure session cookie scope follows least-privilege,True,True,True
+sess014,Missing Session Encryption,Ensure Session Encryption is configured,True,True,True
+sess015,Session Hijacking via XSS,Ensure protection against session hijacking via XSS,True,True,True
+sess016,Session Token in Logs,Ensure session tokens are not present in logs,True,True,True
+sess017,Missing Idle Session Timeout,Ensure Idle Session Timeout is configured,True,True,True
+sess018,Session Deserialization Risk,Ensure protection against Session Deserialization,True,True,True
+sess019,Missing Session Audit Trail,Ensure Session Audit Trail is configured,True,True,True
+sess020,WebSocket Session Security,Ensure WebSocket session security is configured,True,True,True
+ssrf001,Private IP Address Access,Ensure Private IP Address access is controlled,True,True,True
+ssrf002,Cloud Metadata SSRF,Ensure protection against Cloud Metadata SSRF,True,True,True
+ssrf003,DNS Rebinding Risk,Ensure protection against DNS Rebinding,True,True,True
+ssrf004,Unrestricted Network Egress,Ensure Network Egress is restricted,True,True,True
+ssrf005,Localhost Access,Ensure Localhost access is controlled,True,True,True
+ssrf006,Internal Service Discovery,Ensure protection against Internal Service Discovery,True,True,True
+ssrf007,URL Redirect Following,Ensure URL Redirect following is restricted,True,True,True
+ssrf008,Protocol Smuggling Risk,Ensure protection against Protocol Smuggling,True,True,True
+ssrf009,IP Address Representation Bypass,Ensure protection against IP Address Representation bypass,True,True,True
+ssrf010,Missing URL Scheme Validation,Ensure URL Scheme Validation is configured,True,True,True
+ssrf011,Missing Egress Allowlist,Ensure Egress Allowlist is configured,True,True,True
+ssrf012,Network Scanning Capability,Ensure protection against Network Scanning Capability,True,True,True
+ssrf013,Port Scanning Risk,Ensure protection against Port Scanning,True,True,True
+ssrf014,File Scheme URL Access,Ensure File Scheme URL access is controlled,True,True,True
+ssrf015,Gopher Protocol Risk,Ensure protection against Gopher Protocol,True,True,True
+ssrf016,Missing Request Timeout,Ensure Request Timeout is configured,True,True,True
+ssrf017,Unbounded Redirect Chain,Ensure Redirect Chain is bounded,True,True,True
+ssrf018,Internal API Exposure,Ensure Internal API is not exposed,True,True,True
+ssrf019,Kubernetes API Access,Ensure Kubernetes API access is controlled,True,True,True
+ssrf020,Docker API Access,Ensure Docker API access is controlled,True,True,True
+sc001,Untrusted Package Sources,Ensure Package Sources are trusted and verified,True,True,True
+sc002,Known Dependency Vulnerabilities,Ensure no known Dependency Vulnerabilities,True,True,True
+sc003,Abandoned Dependencies,Ensure Dependencies are actively maintained,True,True,True
+sc004,Excessive Dependency Count,Ensure Dependency Count is bounded,True,True,True
+sc005,Unpinned Transitive Dependencies,Ensure Transitive Dependencies are pinned,True,True,True
+sc006,Install Scripts Present,Ensure install scripts are reviewed for safety,True,True,True
+sc007,Native Binary Dependencies,Ensure native binary dependencies are verified,True,True,True
+sc008,Single Maintainer Risk,Ensure protection against Single Maintainer,True,True,True
+sc009,Writable Directory Binary Path,Ensure binary path is not in a writable directory,True,True,True
+sc010,Code Evaluation in Server Args,Ensure server args do not contain code evaluation,True,True,True
+sc011,Remote Code Loading in Args,Ensure server args do not load remote code,True,True,True
+sc012,Insecure HTTP Transport,Ensure HTTP Transport meets security requirements,True,True,True
+sc013,Shell Metacharacters in Server Command,Ensure server command does not contain shell metacharacters,True,True,True
+tp001,Hidden Instructions in Tool Descriptions,Ensure Tool Descriptions do not contain hidden Instructions,True,True,True
+tp002,Tool Description Prompt Injection,Ensure protection against Tool Description Prompt injection,True,True,True
+tp003,Tool Shadowing / Namespace Collision,Ensure protection against tool shadowing / namespace collision,True,True,True
+tp004,Suspicious Parameter Names,Ensure Parameter Names are validated,True,True,True
+tp005,Abnormally Long Tool Descriptions,Ensure Long Tool Descriptions are within normal bounds,True,True,True
+tp006,Rug Pull Detection — Tool Definition Drift,Ensure protection against rug pull — tool definition drift,True,True,True
+tp007,Schema Poisoning via Default Values,Ensure protection against schema poisoning via default values,True,True,True
+tp008,Unicode Homoglyph Tool Names,Ensure protection against Unicode Homoglyph Tool Names,True,True,True
+tp009,Base64-Encoded Instructions in Descriptions,Ensure protection against Base64-Encoded Instructions in Descriptions,True,True,True
+tp010,Cross-Server Tool Name Collision,Ensure Cross-Server Tool Name is unique,True,True,True
+tp011,Invisible Unicode Characters in Tool Descriptions,Ensure protection against Invisible Unicode Characters in Tool Descriptions,True,True,True
+tp012,URL Injection in Tool Descriptions,Ensure protection against URL Injection in Tool Descriptions,True,True,True
+tp013,Excessive Tool Parameter Count,Ensure Tool Parameter Count is bounded,True,True,True
+tp014,Recursive Tool Invocation Risk,Ensure protection against Recursive Tool Invocation,True,True,True
+tp015,Tool Name Impersonation,Ensure protection against Tool Name impersonation,True,True,True
+tp016,Hidden XML Attributes in Descriptions,Ensure Descriptions do not contain hidden XML Attributes,True,True,True
+tp017,Markdown Link Injection in Descriptions,Ensure protection against Markdown Link Injection in Descriptions,True,True,True
+tp018,JSON Injection in Parameter Defaults,Ensure protection against JSON Injection in Parameter Defaults,True,True,True
+tp019,Abnormal Description-to-Name Length Ratio,Ensure Description-to-Name Length Ratio is within normal bounds,True,True,True
+tp020,Conflicting Parameter Descriptions,Ensure Parameter Descriptions do not conflict,True,True,True
+tp021,Tool Capability Escalation,Ensure protection against Tool Capability escalation,True,True,True
+tp022,TOCTOU in Tool Definitions,Ensure protection against TOCTOU in Tool Definitions,True,True,True
+tp023,Description Language Mismatch,Ensure Description Language is consistent,True,True,True
+tp024,Parameter Type Coercion Risk,Ensure protection against Parameter Type Coercion,True,True,True
+tp025,Tool Annotation Abuse,Ensure protection against Tool Annotation abuse,True,True,True
+tp026,Description Length Anomaly,Ensure protection against Description Length Anomaly,True,True,True
+tp027,Semantic Name-Action Mismatch,Ensure Semantic Name-Action is consistent,True,True,True
+tp028,Unicode Homoglyph in Identifiers,Ensure protection against Unicode Homoglyph in Identifiers,True,True,True
+tp029,Encoded Payload in Metadata,Ensure protection against Encoded Payload in Metadata,True,True,True
+tp030,Cross-Tool Reference Manipulation,Ensure protection against Cross-Tool Reference manipulation,True,True,True
+ts001,Unencrypted Transport,Ensure Transport uses encryption,True,True,True
+ts002,Missing Certificate Validation,Ensure Certificate Validation is configured,True,True,True
+ts003,Insecure TLS Configuration,Ensure TLS Configuration meets security requirements,True,True,True
+ts004,Missing Transport Authentication Headers,Ensure Transport Authentication Headers are configured,True,True,True
+ts005,Mixed Content Transport,Ensure transport does not mix encrypted and unencrypted content,True,True,True
+ts006,Weak TLS Cipher Suites,Ensure TLS Cipher Suites has sufficient strength,True,True,True
+ts007,Missing HSTS Header,Ensure HSTS Header is configured,True,True,True
+ts008,Certificate Pinning Absent,Ensure certificate pinning is configured,True,True,True
+ts009,Self-Signed Certificate Usage,Ensure certificates are not self-signed in production,True,True,True
+ts010,Expired TLS Certificate,Ensure TLS certificates are not expired,True,True,True
+ts011,Wildcard Certificate Usage,Ensure wildcard certificates are not used,True,True,True
+ts012,Missing CORS Headers,Ensure CORS Headers are configured,True,True,True
+ts013,Overly Permissive CORS,Ensure CORS follows least-privilege,True,True,True
+ts014,WebSocket Without TLS,Ensure TLS is configured for WebSocket,True,True,True
+ts015,SSE Without TLS,Ensure TLS is configured for SSE,True,True,True
+ts016,Missing Content Security Policy,Ensure Content Security Policy is configured,True,True,True
+ts017,DNS Over HTTP,Ensure DNS uses encrypted transport,True,True,True
+ts018,Proxy Without TLS,Ensure TLS is configured for Proxy,True,True,True
+ts019,Missing Certificate Transparency,Ensure Certificate Transparency is configured,True,True,True

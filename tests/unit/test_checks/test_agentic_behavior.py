@@ -296,9 +296,7 @@ class TestAutonomousActionRiskCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) >= 1, "Exfiltrative tool without safeguards should FAIL"
 
-    async def test_passes_with_confirmation_param(
-        self, check: AutonomousActionRiskCheck
-    ) -> None:
+    async def test_passes_with_confirmation_param(self, check: AutonomousActionRiskCheck) -> None:
         """Destructive tool with 'confirm' property in schema should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -321,9 +319,7 @@ class TestAutonomousActionRiskCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1
 
-    async def test_passes_with_rate_limit_param(
-        self, check: AutonomousActionRiskCheck
-    ) -> None:
+    async def test_passes_with_rate_limit_param(self, check: AutonomousActionRiskCheck) -> None:
         """Tool with 'rate_limit' property in schema should PASS."""
         snapshot = make_snapshot(
             tools=[
@@ -346,9 +342,7 @@ class TestAutonomousActionRiskCheck:
         pass_findings = [f for f in findings if f.status == Status.PASS]
         assert len(pass_findings) >= 1
 
-    async def test_passes_on_read_only_tools(
-        self, check: AutonomousActionRiskCheck
-    ) -> None:
+    async def test_passes_on_read_only_tools(self, check: AutonomousActionRiskCheck) -> None:
         """Read-only tool (get_weather) should PASS without safeguards."""
         snapshot = make_snapshot(
             tools=[
@@ -368,9 +362,7 @@ class TestAutonomousActionRiskCheck:
         fail_findings = [f for f in findings if f.status == Status.FAIL]
         assert len(fail_findings) == 0
 
-    async def test_per_tool_findings(
-        self, check: AutonomousActionRiskCheck
-    ) -> None:
+    async def test_per_tool_findings(self, check: AutonomousActionRiskCheck) -> None:
         """Two destructive tools without safeguards should each get their own FAIL."""
         snapshot = make_snapshot(
             tools=[
@@ -584,7 +576,9 @@ class TestAgentLoopDetectionCheck:
         # Config safety key should mitigate unconstrained recursion params
         # (circular reference findings are separate and always emitted)
         unconstrained_fails = [
-            f for f in fail_findings if "unconstrained" in f.status_extended.lower()
+            f
+            for f in fail_findings
+            if "unconstrained" in f.status_extended.lower()
             or "without constraints" in f.status_extended.lower()
         ]
         assert len(unconstrained_fails) == 0, (
@@ -800,9 +794,7 @@ class TestDelegationWithoutAuthCheck:
         assert len(fail_findings) >= 1, "Delegation tool without auth should FAIL"
         assert "delegate_task" in fail_findings[0].status_extended
 
-    async def test_fails_on_proxy_tool_no_auth(
-        self, check: DelegationWithoutAuthCheck
-    ) -> None:
+    async def test_fails_on_proxy_tool_no_auth(self, check: DelegationWithoutAuthCheck) -> None:
         """Tool with 'proxy' in description and no auth should FAIL."""
         snapshot = make_snapshot(
             tools=[

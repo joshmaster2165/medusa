@@ -52,9 +52,7 @@ class AutonomousActionRiskCheck(BaseCheck):
             return findings
 
         # Secondary signal: auto-approve config keys present
-        has_auto_approve = _walk_config_for_keys(
-            snapshot.config_raw, AUTO_APPROVE_KEYS
-        )
+        has_auto_approve = _walk_config_for_keys(snapshot.config_raw, AUTO_APPROVE_KEYS)
 
         risky_levels = (ToolRisk.DESTRUCTIVE, ToolRisk.PRIVILEGED, ToolRisk.EXFILTRATIVE)
 

@@ -393,10 +393,7 @@ class TestSeverityCaps:
             _make_finding(status=Status.FAIL, severity=Severity.LOW, check_id=f"l{i}")
             for i in range(7)
         )
-        findings.extend(
-            _make_finding(status=Status.PASS, check_id=f"p{i}")
-            for i in range(306)
-        )
+        findings.extend(_make_finding(status=Status.PASS, check_id=f"p{i}") for i in range(306))
         result = calculate_server_score(findings, total_checks_run=379)
         # 7 CRITICALs: cap = 6.9 - 6*0.3 = 5.1 (Grade C)
         # 24 HIGHs: cap = 7.9 - 19*0.05 = 6.95 (Grade C)

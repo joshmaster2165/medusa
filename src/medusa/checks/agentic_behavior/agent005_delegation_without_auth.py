@@ -35,9 +35,7 @@ class DelegationWithoutAuthCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        has_config_auth = _walk_config_for_keys(
-            snapshot.config_raw, AUTH_CONFIG_KEYS
-        )
+        has_config_auth = _walk_config_for_keys(snapshot.config_raw, AUTH_CONFIG_KEYS)
 
         for tool in snapshot.tools:
             tool_name: str = tool.get("name", "<unnamed>")

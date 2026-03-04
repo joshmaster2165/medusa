@@ -83,7 +83,8 @@ class SharedResourceAccessCheck(BaseCheck):
 
         # Secondary signal: config-level resource access control
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _SHARED_RESOURCE_KEYS,
+            snapshot.config_raw,
+            _SHARED_RESOURCE_KEYS,
         )
 
         # Check resources for tenant-scoped URIs
@@ -106,10 +107,7 @@ class SharedResourceAccessCheck(BaseCheck):
                             f"Resource '{resource_name}' has no tenant-scoped "
                             f"URI. It may be accessible across tenant boundaries."
                         ),
-                        evidence=(
-                            f"uri={uri!r}, "
-                            f"tenant_template=missing"
-                        ),
+                        evidence=(f"uri={uri!r}, tenant_template=missing"),
                         remediation=meta.remediation,
                         owasp_mcp=meta.owasp_mcp,
                     )

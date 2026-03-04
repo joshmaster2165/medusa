@@ -81,7 +81,8 @@ class CrossTenantToolAccessCheck(BaseCheck):
 
         # Secondary signal: config-level tool access policy
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _TOOL_ACCESS_KEYS,
+            snapshot.config_raw,
+            _TOOL_ACCESS_KEYS,
         )
 
         has_many_tools = len(snapshot.tools) >= 5

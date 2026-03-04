@@ -27,15 +27,32 @@ _IMPERSONATION_PREVENTION_KEYS = {
 
 # Keywords in tool name/description that indicate auth-related tools
 _AUTH_TOOL_KEYWORDS = {
-    "auth", "login", "session", "token", "authenticate",
-    "sso", "oauth", "saml", "identity", "signin", "sign_in",
+    "auth",
+    "login",
+    "session",
+    "token",
+    "authenticate",
+    "sso",
+    "oauth",
+    "saml",
+    "identity",
+    "signin",
+    "sign_in",
 }
 
 # Parameters that indicate re-authentication is required
 _REAUTH_PARAMS = {
-    "password", "credentials", "mfa_code", "otp", "totp",
-    "verification_code", "challenge_response", "confirm_password",
-    "current_password", "auth_token", "re_authenticate",
+    "password",
+    "credentials",
+    "mfa_code",
+    "otp",
+    "totp",
+    "verification_code",
+    "challenge_response",
+    "confirm_password",
+    "current_password",
+    "auth_token",
+    "re_authenticate",
 }
 
 
@@ -82,7 +99,8 @@ class TenantImpersonationCheck(BaseCheck):
             return findings
 
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _IMPERSONATION_PREVENTION_KEYS,
+            snapshot.config_raw,
+            _IMPERSONATION_PREVENTION_KEYS,
         )
 
         for tool in snapshot.tools:
@@ -100,45 +118,49 @@ class TenantImpersonationCheck(BaseCheck):
 
             # Auth tool allows tenant switching without re-authentication
             if has_tenant_param and not has_reauth_param and not has_config_mitigation:
-                findings.append(Finding(
+                findings.append(
+                    Finding(
+                        check_id=meta.check_id,
+                        check_title=meta.title,
+                        status=Status.FAIL,
+                        severity=meta.severity,
+                        server_name=snapshot.server_name,
+                        server_transport=snapshot.transport_type,
+                        resource_type="tool",
+                        resource_name=tool_name,
+                        status_extended=(
+                            f"Auth tool '{tool_name}' accepts a tenant-switching "
+                            f"parameter without requiring re-authentication. "
+                            f"One tenant may impersonate another."
+                        ),
+                        evidence=(
+                            f"tenant_params={sorted(param_names & TENANT_ID_PARAMS)}, "
+                            f"reauth_param=missing"
+                        ),
+                        remediation=meta.remediation,
+                        owasp_mcp=meta.owasp_mcp,
+                    )
+                )
+
+        if not findings and snapshot.tools:
+            findings.append(
+                Finding(
                     check_id=meta.check_id,
                     check_title=meta.title,
-                    status=Status.FAIL,
+                    status=Status.PASS,
                     severity=meta.severity,
                     server_name=snapshot.server_name,
                     server_transport=snapshot.transport_type,
-                    resource_type="tool",
-                    resource_name=tool_name,
+                    resource_type="server",
+                    resource_name=snapshot.server_name,
                     status_extended=(
-                        f"Auth tool '{tool_name}' accepts a tenant-switching "
-                        f"parameter without requiring re-authentication. "
-                        f"One tenant may impersonate another."
-                    ),
-                    evidence=(
-                        f"tenant_params={sorted(param_names & TENANT_ID_PARAMS)}, "
-                        f"reauth_param=missing"
+                        "Auth tools either require re-authentication for tenant "
+                        "switching, do not expose tenant-switching parameters, "
+                        "or impersonation protection is configured at the server level."
                     ),
                     remediation=meta.remediation,
                     owasp_mcp=meta.owasp_mcp,
-                ))
-
-        if not findings and snapshot.tools:
-            findings.append(Finding(
-                check_id=meta.check_id,
-                check_title=meta.title,
-                status=Status.PASS,
-                severity=meta.severity,
-                server_name=snapshot.server_name,
-                server_transport=snapshot.transport_type,
-                resource_type="server",
-                resource_name=snapshot.server_name,
-                status_extended=(
-                    "Auth tools either require re-authentication for tenant "
-                    "switching, do not expose tenant-switching parameters, "
-                    "or impersonation protection is configured at the server level."
-                ),
-                remediation=meta.remediation,
-                owasp_mcp=meta.owasp_mcp,
-            ))
+                )
+            )
 
         return findings

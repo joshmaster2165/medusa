@@ -68,7 +68,8 @@ class TenantDataLeakageCheck(BaseCheck):
 
         # Secondary signal: config-level data isolation
         has_config_mitigation = _walk_config_for_keys(
-            snapshot.config_raw, _LEAKAGE_PREVENTION_KEYS,
+            snapshot.config_raw,
+            _LEAKAGE_PREVENTION_KEYS,
         )
 
         for tool in snapshot.tools:

@@ -34,9 +34,7 @@ class AgentLoopDetectionCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        has_config_safety = _walk_config_for_keys(
-            snapshot.config_raw, AGENT_SAFETY_CONFIG_KEYS
-        )
+        has_config_safety = _walk_config_for_keys(snapshot.config_raw, AGENT_SAFETY_CONFIG_KEYS)
 
         # Collect all tool names for cross-reference detection
         all_tool_names: set[str] = set()

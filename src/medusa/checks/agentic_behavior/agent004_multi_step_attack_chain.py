@@ -52,9 +52,7 @@ class MultiStepAttackChainCheck(BaseCheck):
         if not snapshot.tools:
             return findings
 
-        has_chain_limit = _walk_config_for_keys(
-            snapshot.config_raw, CHAIN_LIMIT_KEYS
-        )
+        has_chain_limit = _walk_config_for_keys(snapshot.config_raw, CHAIN_LIMIT_KEYS)
 
         # Classify all tools and group by risk category
         risk_groups: dict[ToolRisk, list[str]] = {}

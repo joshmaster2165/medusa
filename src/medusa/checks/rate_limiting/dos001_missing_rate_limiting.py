@@ -39,9 +39,7 @@ class MissingRateLimitingCheck(BaseCheck):
             return findings
 
         # Secondary signal: config-level rate limiting
-        has_config_rate_limit = _walk_config_for_keys(
-            snapshot.config_raw, RATE_LIMIT_CONFIG_KEYS
-        )
+        has_config_rate_limit = _walk_config_for_keys(snapshot.config_raw, RATE_LIMIT_CONFIG_KEYS)
 
         for tool in snapshot.tools:
             tool_name: str = tool.get("name", "<unnamed>")
@@ -50,9 +48,7 @@ class MissingRateLimitingCheck(BaseCheck):
             combined = f"{name_lower} {desc_lower}"
 
             # Identify if this tool is resource-intensive
-            matched_indicators = [
-                ind for ind in RESOURCE_INTENSIVE_INDICATORS if ind in combined
-            ]
+            matched_indicators = [ind for ind in RESOURCE_INTENSIVE_INDICATORS if ind in combined]
             if not matched_indicators:
                 continue
 

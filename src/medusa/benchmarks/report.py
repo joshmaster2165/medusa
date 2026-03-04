@@ -1,4 +1,5 @@
 """Benchmark report generators (console + markdown)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -133,9 +134,7 @@ def generate_markdown_report(report: BenchmarkReport) -> str:
         else:
             msg = r.error_message[:50]
             lines.append(
-                f"| {r.server_name} | {r.package} "
-                f"| error | - | - | - | - | - "
-                f"| - | {msg} |"
+                f"| {r.server_name} | {r.package} | error | - | - | - | - | - | - | {msg} |"
             )
 
     lines.append("")
