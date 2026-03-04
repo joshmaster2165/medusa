@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
@@ -13,6 +14,8 @@ from medusa.benchmarks.models import (
     BenchmarkServerResult,
     ServerCatalogEntry,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def load_server_catalog() -> list[ServerCatalogEntry]:
@@ -39,6 +42,22 @@ def check_env_requirements(entry: ServerCatalogEntry) -> tuple[bool, str]:
     if missing:
         return False, f"Missing env vars: {', '.join(missing)}"
     return True, ""
+
+
+def _prepare_server_args(entry: ServerCatalogEntry) -> list[str]:
+    """Prepare server args, creating temp directories where needed."""
+    args = list(entry.args)
+    for i, arg in enumerate(args):
+        if arg.startswith("/tmp/") and not Path(arg).exists():
+            # Create temp path for servers that need a directory or file
+            if arg.endswith(".db"):
+                # Ensure parent dir exists for database files
+                Path(arg).parent.mkdir(parents=True, exist_ok=True)
+            else:
+                # Create the directory for filesystem-type servers
+                Path(arg).mkdir(parents=True, exist_ok=True)
+                logger.info("Created temp directory: %s", arg)
+    return args
 
 
 async def run_benchmark(
@@ -79,12 +98,15 @@ async def run_benchmark(
             continue
 
         try:
+            # Prepare args (create temp dirs as needed)
+            prepared_args = _prepare_server_args(entry)
+
             # Build a StdioConnector for this server
             env_vars = {v: os.environ.get(v, "") for v in entry.env_required}
             connector = StdioConnector(
                 name=entry.name,
                 command=entry.command,
-                args=entry.args,
+                args=prepared_args,
                 env=env_vars if env_vars else None,
             )
 
@@ -100,11 +122,25 @@ async def run_benchmark(
 
             report = await engine.scan()
 
+            # Detect connection failure: scanner returns 0 servers_scanned
+            # when the server fails to connect
+            if report.servers_scanned == 0:
+                results.append(
+                    BenchmarkServerResult(
+                        server_name=entry.name,
+                        package=entry.package,
+                        status="error",
+                        error_message="Connection failed (server did not respond)",
+                    )
+                )
+                skipped += 1
+                continue
+
             # Extract results from scan report
             findings = report.findings
             total = len(findings)
             passed = sum(1 for f in findings if f.status == Status.PASS)
-            failed = total - passed
+            failed = sum(1 for f in findings if f.status == Status.FAIL)
             critical = sum(
                 1 for f in findings if f.status == Status.FAIL and f.severity == Severity.CRITICAL
             )
@@ -146,10 +182,10 @@ async def run_benchmark(
                 )[:5]
             ]
 
-            # Extract counts from server scores if available
-            tool_count = 0
-            resource_count = 0
-            prompt_count = 0
+            # Extract actual counts from engine metadata
+            tool_count = len(engine._server_tools.get(entry.name, []))
+            resource_count = len(engine._server_resources.get(entry.name, []))
+            prompt_count = len(engine._server_prompts.get(entry.name, []))
             score = report.aggregate_score
             grade = report.aggregate_grade
 

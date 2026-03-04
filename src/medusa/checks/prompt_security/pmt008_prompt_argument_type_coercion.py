@@ -79,7 +79,7 @@ class PromptArgumentTypeCoercionCheck(BaseCheck):
 
         for prompt in snapshot.prompts:
             prompt_name = prompt.get("name", "<unnamed>")
-            arguments = prompt.get("arguments", [])
+            arguments = prompt.get("arguments") or []
 
             for arg in arguments:
                 arg_name = arg.get("name", "<unnamed>")

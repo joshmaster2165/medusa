@@ -59,6 +59,8 @@ class ScanEngine:
         self._reasoning_results: dict[str, object] = {}
         self._filter_stats: dict[str, dict[str, int]] = {}
         self._server_tools: dict[str, list[dict]] = {}  # for change tracking
+        self._server_resources: dict[str, list[dict]] = {}
+        self._server_prompts: dict[str, list[dict]] = {}
 
         all_checks = registry.get_checks(
             categories=categories,
@@ -174,8 +176,12 @@ class ScanEngine:
                 self._emit("server_done", connector.name)
                 return [], None
 
-            # Store tools for change tracking
+            # Store server metadata for change tracking and benchmarks
             self._server_tools[snapshot.server_name] = list(snapshot.tools)
+            self._server_resources[snapshot.server_name] = list(snapshot.resources)
+            self._server_prompts[snapshot.server_name] = list(
+                snapshot.prompts if snapshot.prompts else []
+            )
 
             findings = await self._scan_server(snapshot)
 

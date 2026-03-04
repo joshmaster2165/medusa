@@ -34,7 +34,7 @@ class ExcessivePromptArgumentsCheck(BaseCheck):
 
         for prompt in snapshot.prompts:
             prompt_name = prompt.get("name", "<unnamed>")
-            arguments = prompt.get("arguments", [])
+            arguments = prompt.get("arguments") or []
             arg_count = len(arguments)
 
             if arg_count > _MAX_ARGS:

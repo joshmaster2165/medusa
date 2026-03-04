@@ -221,7 +221,7 @@ class TestServerCatalog:
         assert "memory" in names
         assert "everything" in names
         assert "github" in names
-        assert "sqlite" in names
+        assert "sequential-thinking" in names
 
     def test_all_entries_have_package(self) -> None:
         """Every catalog entry should have a package containing '@'."""

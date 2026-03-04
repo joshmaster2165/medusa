@@ -67,10 +67,10 @@ servers:
     category: "Database"
     url: "https://github.com/modelcontextprotocol/servers"
 
-  - name: sqlite
-    package: "@modelcontextprotocol/server-sqlite"
+  - name: sequential-thinking
+    package: "@modelcontextprotocol/server-sequential-thinking"
     command: npx
-    args: ["-y", "@modelcontextprotocol/server-sqlite", "/tmp/medusa-benchmark.db"]
-    description: "SQLite database operations"
-    category: "Database"
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    description: "Sequential thinking and reasoning server"
+    category: "Reasoning"
     url: "https://github.com/modelcontextprotocol/servers"

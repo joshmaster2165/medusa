@@ -67,7 +67,7 @@ class PromptArgumentInjectionCheck(BaseCheck):
 
         for prompt_template in snapshot.prompts:
             prompt_name: str = prompt_template.get("name", "<unnamed>")
-            arguments = prompt_template.get("arguments", [])
+            arguments = prompt_template.get("arguments") or []
 
             if not arguments:
                 continue
