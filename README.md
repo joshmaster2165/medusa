@@ -8,13 +8,13 @@
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License: Apache 2.0"></a>
-  <a href="#check-categories"><img src="https://img.shields.io/badge/checks-487-brightgreen.svg" alt="Checks: 487"></a>
-  <a href="#check-categories"><img src="https://img.shields.io/badge/categories-24-brightgreen.svg" alt="Categories: 24"></a>
+  <a href="#check-categories"><img src="https://img.shields.io/badge/checks-559-brightgreen.svg" alt="Checks: 559"></a>
+  <a href="#check-categories"><img src="https://img.shields.io/badge/categories-26-brightgreen.svg" alt="Categories: 26"></a>
   <a href="#owasp-mcp-top-10-compliance"><img src="https://img.shields.io/badge/OWASP-MCP%20Top%2010-orange.svg" alt="OWASP MCP Top 10"></a>
 </p>
 
 <p align="center">
-  Medusa is an open-source CLI tool that connects to <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> servers, runs <strong>487 security checks</strong> across <strong>24 categories</strong>, scores findings on a 0–10 scale, and generates reports and dashboards. An optional <strong>AI reasoning engine</strong> validates findings, detects attack chains, and discovers gaps. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+  Medusa is an open-source CLI tool that connects to <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> servers, runs <strong>559 security checks</strong> across <strong>26 categories</strong>, scores findings on a 0–10 scale, and generates reports and dashboards. An optional <strong>AI reasoning engine</strong> validates findings, detects attack chains, and discovers gaps. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
 </p>
 
 ---
@@ -22,7 +22,7 @@
 ## Features
 
 - **Auto-discovery** -- finds MCP servers from Claude Desktop, Cursor, Windsurf, and custom config files without manual configuration.
-- **487 built-in checks** across 24 categories including tool poisoning, input validation, credential exposure, authentication, data protection, agentic behavior, resource security, privilege/scope, prompt security, governance, integrity, transport security, session management, SSRF/network, secrets management, server hardening, rate limiting, error handling, sampling security, supply chain, context security, multi-tenant isolation, audit logging, and server identity.
+- **559 built-in checks** across 26 categories including tool poisoning (56 TTP-based checks), input validation, credential exposure, authentication, data protection, agentic behavior, resource security, privilege/scope, prompt security, governance, integrity, transport security, session management, SSRF/network, secrets management, server hardening, rate limiting, error handling, sampling security, supply chain, context security, multi-tenant isolation, audit logging, server identity, and toxic flows.
 - **AI reasoning layer** -- run static checks first, then send findings to Claude for validation, false-positive detection, attack chain correlation, gap discovery, and prioritized remediation (`--reason`).
 - **Severity scoring** -- each server receives a 0--10 numeric score and an A--F letter grade.
 - **Multiple output formats** -- Console (Rich tables), JSON (machine-readable), HTML (interactive dashboard), Markdown, and SARIF.
@@ -118,42 +118,44 @@ medusa scan --exclude-checks tp005,iv005
 
 | Flag | Behavior |
 |------|----------|
-| *(default)* | Static checks only (487 checks, fast, free) |
+| *(default)* | Static checks only (559 checks, fast, free) |
 | `--reason` | Static + AI reasoning engine (recommended) |
+| `--deep` | Alias for `--reason` |
 
-The `--reason` flag runs all 487 static checks first, then sends the findings and server snapshot to Claude as a reasoning engine. The AI validates findings, identifies false positives, discovers attack chains across categories, finds gaps the static checks missed, and produces an executive summary with prioritized remediation.
+The `--reason` flag runs all 559 static checks first, then sends the findings and server snapshot to Claude as a reasoning engine. The AI validates findings, identifies false positives, discovers attack chains across categories, finds gaps the static checks missed, and produces an executive summary with prioritized remediation.
 
 ---
 
 ## Check Categories
 
-Medusa ships with **487 checks** across **24 categories**:
+Medusa ships with **559 checks** across **26 categories**:
 
 | Category               | Prefix      | Checks | Description                                                                 |
 |------------------------|-------------|--------|-----------------------------------------------------------------------------|
-| Input Validation       | `iv0xx`     | 46     | Command injection, path traversal, SQL/NoSQL injection, LDAP, SSRF, XXE, SSTI, header injection, regex DoS, schema validation, deserialization |
-| Data Protection        | `dp0xx`     | 32     | PII exposure, data leakage, encryption, consent, COPPA, health/financial data, data retention |
-| Tool Poisoning         | `tp0xx`     | 30     | Hidden instructions, prompt injection, tool shadowing, rug pull detection, cross-server collisions, obfuscation, steganographic payloads |
-| Authentication         | `auth0xx`   | 29     | Missing auth, weak OAuth, token storage, JWT issues, CSRF, MFA, credential rotation |
+| Tool Poisoning         | `tp0xx`     | 56     | Hidden instructions, prompt injection, tool shadowing, rug pull detection, ANSI escape injection, jailbreak patterns, system impersonation, name confusion attacks, TTP-based behavioral analysis |
+| Input Validation       | `iv0xx`     | 47     | Command injection, path traversal, SQL/NoSQL injection, LDAP, SSRF, XXE, SSTI, header injection, regex DoS, schema validation, shell metachar defaults |
+| Data Protection        | `dp0xx`     | 34     | PII exposure, data leakage, encryption, consent, exfiltration channels, full filesystem control, data retention |
+| Authentication         | `auth0xx`   | 30     | Missing auth, weak OAuth, token storage, JWT issues, CSRF, MFA, credential rotation, insecure transport credentials |
+| Agentic Behavior       | `agent0xx`  | 27     | Unauthorized tool chaining, goal drift, memory poisoning, destructive tool confirmation, delegation depth limits, self-modification |
+| Credential Exposure    | `cred0xx`   | 25     | Secrets in config, env var leakage, credential harvesting tools, sensitive file references, API key patterns, cloud credentials |
 | Resource Security      | `res0xx`    | 25     | URI injection, unauthorized access, SSRF via resources, dependency chains, template injection |
-| Agentic Behavior       | `agent0xx`  | 25     | Unauthorized tool chaining, goal drift, memory poisoning, self-modification, shadow tool invocation |
-| Credential Exposure    | `cred0xx`   | 23     | Secrets in config, env var leakage, hardcoded tokens, API key patterns, cloud credentials, JWT secrets |
-| Privilege & Scope      | `priv0xx`   | 23     | Filesystem access, network access, shell execution, privilege escalation, container escape |
+| Privilege & Scope      | `priv0xx`   | 26     | Filesystem access, network access, unconstrained shell execution, admin tools without auth, privilege escalation |
 | Governance             | `gov0xx`    | 22     | Security policies, access review, vulnerability management, compliance, data classification |
 | Integrity              | `intg0xx`   | 20     | Version pinning, lockfiles, SBOM, dependency confusion, typosquatting, reproducible builds |
 | Prompt Security        | `pmt0xx`    | 20     | Prompt injection patterns, encoding attacks, multi-language injection, delimiter abuse |
 | Session Management     | `sess0xx`   | 20     | Session fixation, timeout, hijacking, cookie security, WebSocket sessions |
-| SSRF & Network         | `ssrf0xx`   | 20     | Private IP access, cloud metadata, DNS rebinding, egress control, IPv6 bypass |
+| SSRF & Network         | `ssrf0xx`   | 22     | Private IP access, cloud metadata, DNS rebinding, egress control, dangerous URI schemes, internal service discovery |
 | Secrets Management     | `sm0xx`     | 20     | Plaintext secrets, rotation, vault integration, encryption at rest, key derivation |
 | Transport Security     | `ts0xx`     | 19     | Unencrypted transport, TLS validation, certificate issues, CORS, WebSocket security |
 | Server Hardening       | `hard0xx`   | 18     | Default configs, unnecessary features, security headers, directory listing, debug endpoints |
 | Error Handling         | `err0xx`    | 15     | Stack traces, error codes, injection, graceful degradation, log injection |
 | Rate Limiting          | `dos0xx`    | 15     | Missing rate limits, DDoS protection, burst control, cost-based limiting |
 | Sampling Security      | `samp0xx`   | 15     | Sampling abuse, model manipulation, prompt leakage, budget exhaustion |
+| Context Security       | `ctx0xx`    | 13     | Context overflow, token exhaustion, prompt argument injection, context shadowing, persistent state injection |
 | Supply Chain           | `sc0xx`     | 13     | Untrusted sources, abandoned deps, install scripts, native binaries, lockfile poisoning |
-| Context Security       | `ctx0xx`    | 10     | Context overflow, token exhaustion, role confusion, multi-turn manipulation |
 | Multi-Tenant           | `mt0xx`     | 10     | Tenant isolation, cross-tenant access, data leakage, impersonation |
 | Audit Logging          | `audit0xx`  | 10     | Missing logging, audit trails, log integrity, rotation, forensic capability |
+| Toxic Flows            | `toxic0xx`  | 10     | Dangerous data flow patterns, cross-tool contamination |
 | Server Identity        | `shadow0xx` | 7      | Duplicate names, missing metadata, suspicious origins, version spoofing |
 
 Run `medusa list-checks` to see the full table with OWASP MCP mappings.
@@ -166,7 +168,7 @@ The `--reason` flag enables a two-phase architecture: **static checks first, AI 
 
 ```
 Phase 1: Static Scan (fast, free, deterministic)
-  ServerSnapshot -> 487 static checks -> list[Finding]
+  ServerSnapshot -> 559 static checks -> list[Finding]
 
 Phase 2: AI Reasoning Engine (1-2 API calls per server)
   (snapshot + findings) -> Claude -> ReasoningResult
@@ -220,6 +222,19 @@ The score is calculated by deducting weighted penalties for each failed check:
 | Informational | 0.0    |
 
 A server with no failures scores 10.0 (grade A). The aggregate score across multiple servers is a weighted average based on the number of checks run per server.
+
+### Severity Caps
+
+To ensure critical findings are properly reflected in the score, Medusa applies severity-based caps that prevent a server from receiving a high grade when serious vulnerabilities exist:
+
+| Condition | Maximum Score | Effect |
+|-----------|---------------|--------|
+| 1 CRITICAL finding | 6.9 | Cannot exceed grade C |
+| Each additional CRITICAL | −0.3 | Progressive cap reduction |
+| 5+ HIGH findings | 7.9 | Cannot exceed grade B |
+| Each additional HIGH beyond 5 | −0.05 | Gradual cap reduction |
+
+For example, a server with 7 critical findings has a cap of `6.9 - (6 × 0.3) = 5.1` (Grade C), regardless of how many checks pass. This ensures that the presence of critical vulnerabilities is always visible in the score, even when the vast majority of checks pass.
 
 ---
 

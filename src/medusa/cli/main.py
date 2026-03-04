@@ -97,7 +97,7 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     """Medusa — Security scanner for MCP servers.
 
     Scans Model Context Protocol (MCP) servers for security vulnerabilities
-    using 530+ checks across 25 categories, with an optional AI reasoning
+    using 559 checks across 26 categories, with an optional AI reasoning
     engine for finding validation, attack chain correlation, and gap
     discovery.
     """

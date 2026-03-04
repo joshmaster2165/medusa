@@ -69,7 +69,7 @@ def _count_checks() -> tuple[int, int]:
         cats = {c.metadata().category for c in static}
         return len(static), len(cats)
     except Exception:
-        return 487, 24  # fallback
+        return 559, 26  # fallback
 
 
 def print_banner(console: Console, version: str) -> None:
