@@ -8,7 +8,7 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from medusa.core.models import ScanResult, Severity, Status
+from medusa.core.models import FindingSource, ScanResult, Severity, Status
 from medusa.reporters.base import BaseReporter
 
 GRADE_COLORS = {
@@ -174,10 +174,13 @@ class ConsoleReporter(BaseReporter):
             sev_style = SEVERITY_STYLES.get(f.severity, "")
             owasp = ", ".join(f.owasp_mcp) if f.owasp_mcp else "-"
             resource = f"{f.resource_type}/{f.resource_name}"
+            check_id_display = f.check_id
+            if f.source == FindingSource.AI_GAP:
+                check_id_display = f"{f.check_id} [dim](AI)[/dim]"
 
             table.add_row(
                 f"[{sev_style}]{f.severity.value.upper()}[/{sev_style}]",
-                f.check_id,
+                check_id_display,
                 f.check_title,
                 f.server_name,
                 resource,
@@ -333,20 +336,33 @@ class ConsoleReporter(BaseReporter):
                     )
                 console.print()
 
-            # Subtle filter summary for transparency
+            # AI modifications transparency
             filter_stats = result.ai_filter_stats.get(server_name, {})
             removed = filter_stats.get("false_positives_removed", 0)
             adjusted = filter_stats.get("severities_adjusted", 0)
             gaps = filter_stats.get("gaps_added", 0)
-            parts = []
-            if removed:
-                parts.append(f"{removed} findings filtered")
-            if adjusted:
-                parts.append(f"{adjusted} severities adjusted")
-            if gaps:
-                parts.append(f"{gaps} additional findings discovered")
-            if parts:
-                console.print(f"  [dim]{', '.join(parts)}[/dim]")
+
+            if removed or adjusted or gaps:
+                console.print(Rule("[dim]AI Modifications[/dim]"))
+                console.print()
+
+                if removed:
+                    removed_ids = filter_stats.get("removed_ids", [])
+                    console.print(f"  [dim]False positives removed ({removed}):[/dim]")
+                    for check_id, resource in removed_ids[:10]:
+                        console.print(f"    [dim]- {check_id} on {resource}[/dim]")
+
+                if adjusted:
+                    adjusted_details = filter_stats.get("adjusted_details", [])
+                    console.print(f"  [dim]Severity adjustments ({adjusted}):[/dim]")
+                    for adj in adjusted_details[:10]:
+                        console.print(
+                            f"    [dim]- {adj['check_id']}: "
+                            f"{adj['from'].upper()} -> {adj['to'].upper()}[/dim]"
+                        )
+
+                if gaps:
+                    console.print(f"  [dim]Additional findings discovered: {gaps}[/dim]")
                 console.print()
 
     def _print_footer(self, result: ScanResult, console: Console) -> None:

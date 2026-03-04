@@ -9,6 +9,7 @@ that reference the *original* static check IDs (e.g. tp001, iv003).
 from __future__ import annotations
 
 import logging
+import warnings
 from abc import abstractmethod
 from pathlib import Path
 
@@ -59,6 +60,11 @@ class BaseAiCategoryCheck(BaseCheck):
     # ── execute ───────────────────────────────────────────────────────
 
     async def execute(self, snapshot: ServerSnapshot) -> list[Finding]:
+        warnings.warn(
+            "Legacy AI checks (ai001-ai024) are deprecated. Use --deep instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         meta = self.metadata()
 
         # Lazy imports so static-only scans never touch AI modules

@@ -1,0 +1,29 @@
+check_id: iv047
+title: Ensure Parameter Defaults do not contain shell metacharacters
+category: input_validation
+severity: high
+description: Detects parameters whose default values contain shell injection vectors such as pipes, semicolons, command substitution
+  ($() or backticks), command chaining (&&, ||), or redirects (>, >>). These defaults can execute arbitrary commands when the parameter
+  value flows into a shell context, as described in the Command Injection TTP.
+risk_explanation: 'Shell metacharacters in default values are particularly dangerous because they activate silently when the LLM omits
+  a parameter. An attacker can craft a tool where the default value chains commands, redirects output to attacker-controlled files,
+  or spawns background processes. The user never sees or approves the default.
+
+  '
+remediation: '1. Reject parameter defaults that contain shell metacharacters (|, ;, &&, ||, $(), ``, >, >>).
+
+  2. Restrict defaults to simple alphanumeric strings, file paths, or well-known constants.
+
+  3. Implement server-side validation that strips or escapes shell metacharacters before execution.
+
+  4. Use parameterized command execution instead of string concatenation with shell interpreters.'
+references:
+- https://modelcontextprotocol-security.io/ttps/command-injection/command-injection/
+- https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+- MCP05:2025
+tags:
+- command_injection
+- shell_metacharacters
+- default_values
+- ttp_based

@@ -28,6 +28,13 @@ class Status(StrEnum):
     SKIPPED = "skipped"
 
 
+class FindingSource(StrEnum):
+    """Origin of a finding — static check or AI-discovered gap."""
+
+    STATIC = "static"
+    AI_GAP = "ai_gap"
+
+
 class CheckMetadata(BaseModel):
     """Metadata describing a security check."""
 
@@ -61,6 +68,7 @@ class Finding(BaseModel):
     evidence: str | None = None
     remediation: str
     owasp_mcp: list[str] = []
+    source: FindingSource = FindingSource.STATIC
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
@@ -95,5 +103,5 @@ class ScanResult(BaseModel):
     aggregate_grade: str
     compliance_results: dict[str, dict] = {}
     reasoning_results: dict[str, Any] = {}
-    ai_filter_stats: dict[str, dict[str, int]] = {}
+    ai_filter_stats: dict[str, dict[str, Any]] = {}
     changes: dict[str, list[dict]] = {}

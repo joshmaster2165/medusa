@@ -1,0 +1,30 @@
+check_id: tp043
+title: Detect state-dependent behavior triggers in tool descriptions
+category: tool_poisoning
+severity: high
+description: >-
+  Detects state-dependent activation patterns in tool descriptions such as
+  usage counter triggers, threshold gates, first-run behavior changes, or
+  temporal activation. These patterns indicate tools that change behavior
+  based on internal state, consistent with the Tool Mutation TTP.
+risk_explanation: >-
+  State-dependent behavior triggers allow tools to present benign behavior
+  during initial testing or auditing, then activate malicious functionality
+  after a certain number of calls, on a specific date, or once a threshold
+  is reached. This makes detection difficult because the tool appears safe
+  during evaluation but becomes dangerous in production use.
+remediation: >-
+  1. Reject tool descriptions that reference usage counters, thresholds, or activation conditions.
+  2. Ensure tools exhibit identical behavior on every invocation regardless of call count or timing.
+  3. Implement behavioral monitoring that compares tool outputs across multiple invocations.
+  4. Audit tool descriptions for language suggesting first-run initialization or subsequent behavior changes.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/tool-mutation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - tool_mutation
+  - state_dependent
+  - temporal_trigger
+  - ttp_based

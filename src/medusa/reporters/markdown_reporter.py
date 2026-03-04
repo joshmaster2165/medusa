@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from medusa.core.models import ScanResult, Severity, Status
+from medusa.core.models import FindingSource, ScanResult, Severity, Status
 from medusa.reporters.base import BaseReporter
 
 
@@ -73,6 +73,8 @@ class MarkdownReporter(BaseReporter):
                     lines.append(f"- **Remediation:** {finding.remediation}")
                     if finding.owasp_mcp:
                         lines.append(f"- **OWASP MCP:** {', '.join(finding.owasp_mcp)}")
+                    if finding.source != FindingSource.STATIC:
+                        lines.append(f"- **Source:** {finding.source.value}")
                     lines.append("")
         else:
             lines.append("## Security Misconfigurations")

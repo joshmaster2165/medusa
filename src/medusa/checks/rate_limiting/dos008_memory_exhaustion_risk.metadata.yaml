@@ -1,7 +1,7 @@
 check_id: dos008
 title: Ensure protection against Memory Exhaustion
 category: rate_limiting
-severity: high
+severity: info
 description: Checks the MCP server for tools that can cause memory exhaustion through processing large datasets, accumulating
   results in memory, or triggering memory leaks. Memory exhaustion crashes the server process and terminates all active sessions.
 risk_explanation: 'Memory exhaustion in MCP servers is catastrophic because it crashes the server process, terminating all

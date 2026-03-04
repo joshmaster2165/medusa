@@ -1,0 +1,29 @@
+check_id: tp052
+title: Detect unverifiable security claims in tool descriptions
+category: tool_poisoning
+severity: medium
+description: >-
+  Detects unverifiable security claims in tool descriptions such as "sanitizes
+  all input", "SQL injection proof", "cannot be hacked", or "100% safe".
+  Absolute security claims are objectively false and indicate either deception
+  or negligence in tool metadata.
+risk_explanation: >-
+  Absolute security claims like "cannot be hacked" or "100% safe" are
+  demonstrably false for any software. Their presence in tool descriptions
+  creates false trust that may lead the LLM to bypass security precautions.
+  Attackers use these claims to make malicious tools appear trustworthy.
+remediation: >-
+  1. Remove absolute security claims from tool descriptions.
+  2. No tool is "100% safe" or "cannot be hacked".
+  3. Describe actual security measures implemented rather than making absolute claims.
+  4. Use qualified language when discussing security properties.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/metadata-manipulation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - metadata_manipulation
+  - security_claims
+  - false_trust
+  - ttp_based

@@ -7,7 +7,7 @@ from io import StringIO
 import pytest
 from rich.console import Console as RichConsole
 
-from medusa.core.models import Finding, ScanResult, ServerScore, Severity, Status
+from medusa.core.models import Finding, FindingSource, ScanResult, ServerScore, Severity, Status
 from medusa.reporters.console_reporter import ConsoleReporter
 from medusa.reporters.html_reporter import HtmlReporter
 from medusa.reporters.json_reporter import JsonReporter
@@ -401,3 +401,83 @@ class TestConsoleReporter:
         reporter.print_to_console(result, test_console)
         output = string_io.getvalue()
         assert "all checks passed" in output
+
+
+# ── FindingSource awareness in reporters ───────────────────────────────────
+
+
+@pytest.fixture
+def ai_gap_finding() -> Finding:
+    return Finding(
+        check_id="gap001",
+        check_title="AI-discovered missing rate limiting",
+        status=Status.FAIL,
+        severity=Severity.HIGH,
+        server_name="test-server",
+        server_transport="stdio",
+        resource_type="tool",
+        resource_name="exec_command",
+        status_extended="No rate limiting detected on tool invocation",
+        remediation="Add rate limiting to tool endpoints",
+        owasp_mcp=["MCP09:2025"],
+        source=FindingSource.AI_GAP,
+    )
+
+
+@pytest.fixture
+def ai_gap_scan_result(ai_gap_finding, sample_server_score) -> ScanResult:
+    return ScanResult(
+        scan_id="test-ai-gap",
+        timestamp=datetime.now(UTC),
+        medusa_version="0.1.0",
+        scan_duration_seconds=2.0,
+        servers_scanned=1,
+        total_findings=1,
+        findings=[ai_gap_finding],
+        server_scores=[sample_server_score],
+        aggregate_score=7.0,
+        aggregate_grade="C",
+    )
+
+
+class TestFindingSourceInReporters:
+    def test_json_includes_source_field(self, ai_gap_scan_result):
+        reporter = JsonReporter()
+        output = reporter.generate(ai_gap_scan_result)
+        data = json.loads(output)
+        assert data["findings"][0]["source"] == "ai_gap"
+
+    def test_json_static_source_default(self, sample_scan_result):
+        reporter = JsonReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        assert data["findings"][0]["source"] == "static"
+
+    def test_markdown_includes_source_for_ai_gap(self, ai_gap_scan_result):
+        reporter = MarkdownReporter()
+        output = reporter.generate(ai_gap_scan_result)
+        assert "**Source:** ai_gap" in output
+
+    def test_markdown_omits_source_for_static(self, sample_scan_result):
+        reporter = MarkdownReporter()
+        output = reporter.generate(sample_scan_result)
+        assert "**Source:**" not in output
+
+    def test_sarif_includes_source_in_properties(self, ai_gap_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(ai_gap_scan_result)
+        data = json.loads(output)
+        result = data["runs"][0]["results"][0]
+        assert result["properties"]["source"] == "ai_gap"
+
+    def test_sarif_static_source_in_properties(self, sample_scan_result):
+        reporter = SarifReporter()
+        output = reporter.generate(sample_scan_result)
+        data = json.loads(output)
+        result = data["runs"][0]["results"][0]
+        assert result["properties"]["source"] == "static"
+
+    def test_html_includes_source_field(self, ai_gap_scan_result):
+        reporter = HtmlReporter()
+        output = reporter.generate(ai_gap_scan_result)
+        assert "ai_gap" in output

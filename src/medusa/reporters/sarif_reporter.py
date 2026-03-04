@@ -83,6 +83,7 @@ def _build_result(finding: Finding) -> dict[str, Any]:
             "severity": finding.severity.value,
             "server_name": finding.server_name,
             "server_transport": finding.server_transport,
+            "source": finding.source.value,
         },
     }
     if finding.evidence:

@@ -57,7 +57,7 @@ EPILOG = """
 Quick start:
   medusa scan                                         Auto-discover & scan
   medusa scan --http http://localhost:3000/mcp        Scan specific server
-  medusa scan --reason                                Static + AI reasoning
+  medusa scan --deep                                  Static + AI deep analysis
   medusa scan -o html --output-file report.html       HTML dashboard
   medusa scan -o json --fail-on high                  CI/CD integration
   medusa scan --generate-baseline .medusa-baseline.json   Save baseline
@@ -97,7 +97,7 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     """Medusa — Security scanner for MCP servers.
 
     Scans Model Context Protocol (MCP) servers for security vulnerabilities
-    using 487 checks across 24 categories, with an optional AI reasoning
+    using 530+ checks across 25 categories, with an optional AI reasoning
     engine for finding validation, attack chain correlation, and gap
     discovery.
     """
@@ -243,29 +243,15 @@ def cli(ctx: click.Context, verbose: int, quiet: bool) -> None:
     help="Static checks only (default).",
 )
 @click.option(
-    "--ai",
-    "flag_ai",
+    "--deep",
+    "flag_deep",
     is_flag=True,
     default=False,
-    help="Legacy AI-only analysis (use --reason instead).",
+    help="Static + AI deep analysis: validates findings, detects attack chains, discovers gaps.",
 )
-@click.option(
-    "--all",
-    "flag_all",
-    is_flag=True,
-    default=False,
-    help="Legacy static + AI combined (use --reason instead).",
-)
-@click.option(
-    "--reason",
-    "flag_reason",
-    is_flag=True,
-    default=False,
-    help=(
-        "Enable AI reasoning engine. Validates findings, detects "
-        "attack chains, identifies false positives, and discovers gaps."
-    ),
-)
+@click.option("--ai", "flag_ai", is_flag=True, default=False, hidden=True)
+@click.option("--all", "flag_all", is_flag=True, default=False, hidden=True)
+@click.option("--reason", "flag_reason", is_flag=True, default=False, hidden=True)
 @click.option(
     "--claude-api-key",
     type=str,
@@ -313,6 +299,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     upload: bool,
     api_key: str | None,
     flag_static: bool,
+    flag_deep: bool,
     flag_ai: bool,
     flag_all: bool,
     flag_reason: bool,
@@ -323,14 +310,14 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 ) -> None:
     """Scan MCP servers for security vulnerabilities.
 
-    Run 487 security checks across 24 categories against your MCP servers.
-    Use --reason to enable the AI reasoning engine that validates findings,
+    Run 462+ security checks across 25 categories against your MCP servers.
+    Use --deep to enable AI deep analysis that validates findings,
     detects attack chains, identifies false positives, and discovers gaps.
 
     \b
     Scan modes:
-      (default)  Static checks only — 487 checks, fast, free
-      --reason   Static + AI reasoning engine (recommended)
+      (default)  Static checks only — fast, free
+      --deep     Static + AI deep analysis (recommended)
 
     \b
     Output formats:
@@ -344,7 +331,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     Examples:
       medusa scan                                     Auto-discover & scan
       medusa scan --http http://localhost:3000/mcp     Scan specific server
-      medusa scan --reason                             Static + AI reasoning
+      medusa scan --deep                               Static + AI deep analysis
       medusa scan -o html --output-file report.html    HTML dashboard
       medusa scan -o json --fail-on high               CI/CD gate
       medusa scan --compliance owasp_mcp_top10         OWASP compliance
@@ -352,27 +339,16 @@ def scan(  # noqa: C901, PLR0912, PLR0913
     quiet = ctx.obj.get("quiet", False)
 
     # ── Resolve scan mode ─────────────────────────────────────────
-    mode_flags = [flag_static, flag_ai, flag_all]
-    if sum(mode_flags) > 1:
-        console.print("\n  [red]Use only one of --static, --ai, or --all.[/red]")
-        sys.exit(2)
+    # Deprecated flags map to --deep (static + reasoning engine)
+    if flag_ai and not quiet:
+        console.print("  [yellow]--ai is deprecated. Use --deep instead.[/yellow]")
+    if flag_all and not quiet:
+        console.print("  [yellow]--all is deprecated. Use --deep instead.[/yellow]")
+    if flag_reason and not quiet:
+        console.print("  [yellow]--reason is deprecated. Use --deep instead.[/yellow]")
 
-    if flag_reason and flag_ai:
-        console.print(
-            "\n  [red]Cannot combine --ai with --reason.[/red]\n"
-            "  Use [cyan]--reason[/cyan] alone or "
-            "[cyan]--all --reason[/cyan]."
-        )
-        sys.exit(2)
-
-    if flag_ai:
-        scan_mode = "ai"
-    elif flag_all:
-        scan_mode = "full"
-    else:
-        scan_mode = "static"
-
-    enable_reasoning = flag_reason
+    scan_mode = "static"
+    enable_reasoning = flag_deep or flag_reason or flag_ai or flag_all
 
     # Load scan config
     config = load_config(scan_config)
@@ -472,8 +448,7 @@ def scan(  # noqa: C901, PLR0912, PLR0913
             exclude_ids = config_excludes
 
     # ── AI scanning setup ─────────────────────────────────────────
-    needs_ai = scan_mode in ("ai", "full") or enable_reasoning
-    if needs_ai:
+    if enable_reasoning:
         _setup_ai_scan(ctx, ai_mode, claude_api_key, api_key, quiet)
         # Single credit deduction for the entire AI scan
         if not _deduct_ai_scan_credit(quiet):
@@ -498,26 +473,10 @@ def scan(  # noqa: C901, PLR0912, PLR0913
 
     if not quiet:
         check_word = "check" if num_checks == 1 else "checks"
-        reasoning_label = " + AI reasoning" if enable_reasoning else ""
-        if scan_mode == "ai":
-            console.print(
-                f"  [green]▸ Running {num_checks} AI"
-                f" {check_word}[/green] "
-                f"[dim](legacy mode){reasoning_label}[/dim]"
-            )
-        elif scan_mode == "full":
-            console.print(
-                f"  [green]▸ Running {num_checks}"
-                f" {check_word}[/green] "
-                f"[dim](static + legacy AI)"
-                f"{reasoning_label}[/dim]"
-            )
-        else:
-            console.print(
-                f"  [green]▸ Running {num_checks}"
-                f" {check_word}[/green] "
-                f"[dim](static{reasoning_label})[/dim]"
-            )
+        deep_label = " + AI deep analysis" if enable_reasoning else ""
+        console.print(
+            f"  [green]▸ Running {num_checks} {check_word}[/green] [dim](static{deep_label})[/dim]"
+        )
         console.print()
 
     # Run scan with progress bar

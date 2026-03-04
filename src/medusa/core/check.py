@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import functools
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
+
+import yaml
 
 from medusa.core.models import CheckMetadata, Finding
+
+
+@functools.lru_cache(maxsize=512)
+def _load_metadata_yaml(meta_path: str) -> CheckMetadata:
+    """Load and cache CheckMetadata from a YAML sidecar file."""
+    data = yaml.safe_load(Path(meta_path).read_text())
+    return CheckMetadata(**data)
 
 
 @dataclass(frozen=True)

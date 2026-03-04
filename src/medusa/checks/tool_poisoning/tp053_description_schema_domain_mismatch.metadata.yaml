@@ -1,0 +1,31 @@
+check_id: tp053
+title: Detect description-schema domain mismatch
+category: tool_poisoning
+severity: high
+description: >-
+  Detects tools where description keywords indicate one domain (e.g., file
+  operations) but schema parameters indicate a completely different domain
+  (e.g., network URLs, shell commands). This cross-domain mismatch between
+  claimed and actual functionality is a strong indicator of metadata
+  manipulation.
+risk_explanation: >-
+  When a tool's description claims one functional domain (e.g., "reads files")
+  but its parameters belong to a different domain (e.g., network URLs or shell
+  commands), the tool is likely hiding its true purpose. This domain mismatch
+  enables attacks where the LLM believes it is performing a safe file operation
+  but actually triggers network requests or command execution.
+remediation: >-
+  1. Ensure tool descriptions accurately reflect the domain of their parameters.
+  2. A tool described as performing file operations should have file-related parameters.
+  3. Misaligned metadata may indicate the tool is hiding its true functionality.
+  4. Audit tools for cross-domain mismatches between description and schema.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/metadata-manipulation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - metadata_manipulation
+  - domain_mismatch
+  - schema_mismatch
+  - ttp_based

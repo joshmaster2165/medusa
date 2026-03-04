@@ -1,0 +1,31 @@
+check_id: cred025
+title: Ensure Tools do not reference sensitive file paths
+category: credential_exposure
+severity: high
+description: Detects tools whose descriptions or parameter default values reference sensitive file paths commonly targeted for
+  credential harvesting, such as /etc/passwd, .env, .aws/credentials, .ssh/ keys, or Kubernetes configs. This maps to the Credential
+  Exfiltration Config File Harvesting TTP.
+risk_explanation: 'Tools that reference sensitive file paths in their metadata may be designed to guide the LLM toward accessing
+  credential files. Even if the tool itself is benign, mentioning paths like .env or .aws/credentials in descriptions primes the
+  LLM to interact with these files. An attacker can create a tool whose description normalizes accessing sensitive paths, making
+  subsequent exfiltration attempts appear routine.
+
+  '
+remediation: '1. Remove references to sensitive file paths from tool descriptions and parameter metadata.
+
+  2. Use abstract resource identifiers instead of literal file paths in tool interfaces.
+
+  3. Implement file path allowlists that restrict which paths tools can reference or access.
+
+  4. Flag tool registrations that mention known sensitive file patterns for security review.'
+references:
+- https://modelcontextprotocol-security.io/ttps/data-exfiltration/credential-exfiltration/
+- https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+- MCP06:2025
+- MCP09:2025
+tags:
+- credential_exfiltration
+- config_harvesting
+- sensitive_paths
+- ttp_based

@@ -43,6 +43,8 @@ def _config_check(
     present_msg: str,
 ) -> list[Finding]:
     """Generic config-walk check: FAIL if keys absent, PASS if present."""
+    if not snapshot.config_raw and not snapshot.env:
+        return []  # No config or env to evaluate
     found_config = False
     found_env = False
 

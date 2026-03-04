@@ -22,7 +22,7 @@ from medusa.ai.reasoning.prompts import (
     build_reasoning_user_payload,
 )
 from medusa.ai.reasoning.response_parser import parse_reasoning_response
-from medusa.core.models import Finding, Severity, Status
+from medusa.core.models import Finding, FindingSource, Severity, Status
 from tests.conftest import make_snapshot
 
 # ── Fixtures ────────────────────────────────────────────────────────
@@ -684,6 +684,7 @@ class TestScannerReasoning:
         assert gap_findings[0].check_id == "gap001"
         assert gap_findings[0].severity == Severity.HIGH
         assert gap_findings[0].check_title == "Test Gap"
+        assert gap_findings[0].source == FindingSource.AI_GAP
 
 
 # =====================================================================
@@ -790,6 +791,7 @@ class TestApplyReasoningToFindings:
         fail_findings = [f for f in filtered if f.status == Status.FAIL]
         assert len(fail_findings) == 2  # tp002 and tp003 kept
         assert stats["false_positives_removed"] == 1
+        assert stats["removed_ids"] == [("tp001", "tool_a")]
 
     def test_fp_with_high_score_is_kept(self) -> None:
         engine = self._make_engine()
@@ -866,6 +868,9 @@ class TestApplyReasoningToFindings:
         filtered, stats = engine._apply_reasoning_to_findings(findings, reasoning, snapshot)
         assert filtered[0].severity == Severity.MEDIUM
         assert stats["severities_adjusted"] == 1
+        assert stats["adjusted_details"] == [
+            {"check_id": "tp001", "resource_name": "tool_a", "from": "high", "to": "medium"}
+        ]
 
     def test_gap_findings_use_normalized_ids(self) -> None:
         engine = self._make_engine()
@@ -907,6 +912,9 @@ class TestApplyReasoningToFindings:
         assert "[AI Reasoning]" not in gap_findings[0].check_title
         assert gap_findings[0].check_title == "Semantic Mismatch"
         assert stats["gaps_added"] == 2
+        # Gap findings tagged with AI_GAP source
+        assert gap_findings[0].source == FindingSource.AI_GAP
+        assert gap_findings[1].source == FindingSource.AI_GAP
 
     def test_bulk_removal_safety_valve(self) -> None:
         engine = self._make_engine()
@@ -934,6 +942,7 @@ class TestApplyReasoningToFindings:
         # Safety valve triggers: all 4 findings preserved
         assert len(fail_findings) == 4
         assert stats["false_positives_removed"] == 0
+        assert stats["removed_ids"] == []
 
     def test_ai_failure_passes_findings_through(self) -> None:
         """When reasoning_result is None, findings pass through unmodified.

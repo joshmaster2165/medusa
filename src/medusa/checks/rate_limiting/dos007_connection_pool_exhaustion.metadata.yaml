@@ -1,7 +1,7 @@
 check_id: dos007
 title: Ensure protection against Connection Pool exhaustion
 category: rate_limiting
-severity: high
+severity: info
 description: Checks the MCP server for configurations where connection pools for databases, external APIs, or internal services
   can be exhausted by excessive tool invocations. Without connection pool management, tools that open connections without
   proper release can deplete available connections.

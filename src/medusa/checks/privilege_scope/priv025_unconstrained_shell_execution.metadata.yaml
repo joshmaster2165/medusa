@@ -1,0 +1,30 @@
+check_id: priv025
+title: Detect unconstrained shell execution parameters
+category: privilege_scope
+severity: critical
+description: >-
+  Detects tools with shell execution names that have string parameters without
+  any schema constraints such as pattern, enum, or maxLength. Shell tools with
+  completely unconstrained string inputs create direct command injection vectors
+  since any arbitrary command can be passed through the parameter.
+risk_explanation: >-
+  When shell execution tools accept string parameters without constraints,
+  there is no schema-level defense against command injection. An LLM can be
+  manipulated into passing arbitrary commands through these parameters,
+  potentially leading to remote code execution, data exfiltration, or
+  system compromise.
+remediation: >-
+  1. Add pattern constraints to shell tool parameters that restrict allowed characters.
+  2. Use enum constraints to limit parameters to a predefined set of safe commands.
+  3. Add maxLength constraints to limit the size of command inputs.
+  4. Consider replacing free-form shell tools with purpose-specific tools.
+references:
+  - https://owasp.org/www-community/attacks/Command_Injection
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP01:2025
+tags:
+  - shell_execution
+  - command_injection
+  - unconstrained_input
+  - structural_analysis

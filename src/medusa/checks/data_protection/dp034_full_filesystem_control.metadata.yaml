@@ -1,0 +1,29 @@
+check_id: dp034
+title: Detect single tools with full filesystem control
+category: data_protection
+severity: critical
+description: >-
+  Detects individual tools that combine both file read and file write/delete
+  capabilities. Tools that can both access and modify the filesystem through
+  a single interface create privilege escalation and data exfiltration risks
+  since a single compromised tool call can read sensitive data and destroy evidence.
+risk_explanation: >-
+  A single tool with full filesystem control violates the principle of least
+  privilege. If an LLM is manipulated into calling such a tool, it can read
+  sensitive files (credentials, configuration) and write or delete files in
+  a single operation, enabling data exfiltration and evidence destruction
+  without requiring multiple tool calls that might be caught by monitoring.
+remediation: >-
+  1. Separate read and write/delete operations into distinct tools.
+  2. Apply the principle of least privilege to filesystem tool design.
+  3. Use tool annotations to distinguish read-only from destructive operations.
+  4. Implement separate approval workflows for read vs write filesystem operations.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP01:2025
+tags:
+  - filesystem_control
+  - privilege_separation
+  - least_privilege
+  - structural_analysis

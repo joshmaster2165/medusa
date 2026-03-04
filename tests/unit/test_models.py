@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from medusa.core.models import (
     CheckMetadata,
     Finding,
+    FindingSource,
     ScanResult,
     ServerScore,
     Severity,
@@ -58,6 +59,22 @@ class TestStatusEnum:
     def test_all_values(self):
         expected = {"pass", "fail", "error", "skipped"}
         actual = {s.value for s in Status}
+        assert actual == expected
+
+
+# ── FindingSource enum ──────────────────────────────────────────────────────
+
+
+class TestFindingSourceEnum:
+    def test_static_value(self):
+        assert FindingSource.STATIC.value == "static"
+
+    def test_ai_gap_value(self):
+        assert FindingSource.AI_GAP.value == "ai_gap"
+
+    def test_all_values(self):
+        expected = {"static", "ai_gap"}
+        actual = {s.value for s in FindingSource}
         assert actual == expected
 
 
@@ -183,6 +200,37 @@ class TestFinding:
             remediation="none",
         )
         assert finding.owasp_mcp == []
+
+    def test_finding_source_defaults_to_static(self):
+        finding = Finding(
+            check_id="tp001",
+            check_title="Test",
+            status=Status.PASS,
+            severity=Severity.LOW,
+            server_name="s",
+            server_transport="stdio",
+            resource_type="tool",
+            resource_name="t",
+            status_extended="ok",
+            remediation="none",
+        )
+        assert finding.source == FindingSource.STATIC
+
+    def test_finding_source_can_be_ai_gap(self):
+        finding = Finding(
+            check_id="gap001",
+            check_title="AI Gap",
+            status=Status.FAIL,
+            severity=Severity.HIGH,
+            server_name="s",
+            server_transport="stdio",
+            resource_type="tool",
+            resource_name="t",
+            status_extended="AI discovered",
+            remediation="fix",
+            source=FindingSource.AI_GAP,
+        )
+        assert finding.source == FindingSource.AI_GAP
 
 
 # ── ServerScore ──────────────────────────────────────────────────────────────

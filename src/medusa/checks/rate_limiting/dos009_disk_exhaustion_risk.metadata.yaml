@@ -1,7 +1,7 @@
 check_id: dos009
 title: Ensure protection against Disk Exhaustion
 category: rate_limiting
-severity: high
+severity: info
 description: Checks the MCP server for tools that can fill disk space through writing logs, temporary files, output data,
   or uploaded content without storage limits. Disk exhaustion prevents the server from writing logs, creating temporary files,
   or processing requests, causing cascading failures.

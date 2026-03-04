@@ -1,7 +1,7 @@
 check_id: mt003
 title: Ensure Tenant Data is not leaked
 category: multi_tenant
-severity: critical
+severity: info
 description: Checks the MCP server for responses, error messages, logs, or metadata that leak data belonging to one tenant
   to another tenant. Data leakage can occur through shared error handlers, common log streams, cached responses, or improperly
   scoped query results.

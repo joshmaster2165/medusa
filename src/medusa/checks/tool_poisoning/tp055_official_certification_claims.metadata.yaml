@@ -1,0 +1,30 @@
+check_id: tp055
+title: Detect official/certification claims in tool descriptions
+category: tool_poisoning
+severity: high
+description: >-
+  Detects "official", "certified", "authorized", or "licensed" claims in tool
+  descriptions that assert legitimacy but cannot be verified through MCP
+  metadata. These unverifiable claims are commonly used in tool impersonation
+  attacks to establish false trust.
+risk_explanation: >-
+  Claims of being an "official integration", "certified by", or "authorized
+  partner" in tool descriptions cannot be verified through MCP metadata alone.
+  Attackers use these claims to impersonate legitimate tools and gain the
+  LLM's trust, potentially redirecting sensitive operations to malicious
+  endpoints.
+remediation: >-
+  1. Remove official/certification claims from tool descriptions unless independently verifiable.
+  2. MCP metadata is self-reported and should not be trusted for authenticity claims.
+  3. Implement server-level verification instead of relying on description claims.
+  4. Verify official integrations through the service provider's documentation.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/tool-impersonation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - tool_impersonation
+  - certification_claim
+  - false_legitimacy
+  - ttp_based

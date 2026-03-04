@@ -1,0 +1,30 @@
+check_id: agent026
+title: Ensure Destructive Tools have confirmation parameters
+category: agentic_behavior
+severity: high
+description: Detects tools classified as DESTRUCTIVE (delete, remove, drop, truncate, destroy) that lack a confirmation or dry-run
+  parameter in their schema. Without such a safety mechanism at the tool level, an LLM can execute irreversible actions with no
+  opportunity for user approval, as described in the Tool Mutation Behavioral Modification TTP.
+risk_explanation: 'Destructive tools without confirmation parameters allow irreversible operations to execute without any safety
+  gate. When an LLM decides to call a delete or drop tool, there is no schema-level mechanism to require a dry run or explicit
+  approval. This is distinct from server-level human-in-loop configuration since it operates at the individual tool schema level
+  where the safety check is most granular.
+
+  '
+remediation: '1. Add a "dry_run" or "confirm" boolean parameter to all destructive tools.
+
+  2. Default destructive parameters to safe values (e.g., dry_run=true, confirm=false).
+
+  3. Implement server-side enforcement that rejects destructive operations without explicit confirmation.
+
+  4. Use tool annotations to mark destructive tools so clients can add approval workflows.'
+references:
+- https://modelcontextprotocol-security.io/ttps/tool-poisoning/tool-mutation/
+- https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+- MCP04:2025
+tags:
+- destructive_actions
+- confirmation
+- safety_gate
+- ttp_based

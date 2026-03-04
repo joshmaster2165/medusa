@@ -1,7 +1,7 @@
 check_id: mt009
 title: Ensure cross-tenant tool access is prevented
 category: multi_tenant
-severity: critical
+severity: info
 description: Checks the MCP server for where tools registered by one tenant are accessible to other tenants, or where tool
   execution results from one tenant can be observed by another. Cross-tenant tool access enables unauthorized operations and
   data theft through shared tool infrastructure.

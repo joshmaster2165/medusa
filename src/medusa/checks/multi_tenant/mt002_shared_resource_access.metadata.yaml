@@ -1,7 +1,7 @@
 check_id: mt002
 title: Ensure Resource Cross-Tenant Access is not shared
 category: multi_tenant
-severity: critical
+severity: info
 description: Checks the MCP server for resources that are accessible across tenant boundaries without proper access control.
   Shared resources such as files, database connections, caches, and temporary storage that lack tenant-scoped access controls
   enable cross-tenant data access.

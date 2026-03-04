@@ -1,0 +1,31 @@
+check_id: tp039
+title: Detect parameter override instructions in tool descriptions
+category: tool_poisoning
+severity: critical
+description: >-
+  Detects instructions in tool or parameter descriptions that direct the LLM
+  to override, ignore, or replace user-provided parameter values. This is a
+  tool description poisoning technique where embedded instructions manipulate
+  how the LLM handles user inputs as described in the Tool Description
+  Poisoning TTP.
+risk_explanation: >-
+  Parameter override instructions in tool descriptions can cause the LLM to
+  silently replace user-provided values with attacker-controlled alternatives.
+  This enables attacks where the model ignores legitimate user input and
+  substitutes malicious values, potentially redirecting operations to
+  attacker-controlled endpoints or executing unintended commands.
+remediation: >-
+  1. Validate that tool descriptions do not contain directives about parameter handling.
+  2. Implement parameter integrity checks that ensure user-provided values are preserved.
+  3. Strip imperative instructions about value substitution from tool metadata.
+  4. Use structured parameter constraints (enum, pattern) instead of description-based rules.
+references:
+  - https://modelcontextprotocol-security.io/ttps/prompt-injection/tool-description-poisoning/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - parameter_poisoning
+  - value_override
+  - description_poisoning
+  - ttp_based

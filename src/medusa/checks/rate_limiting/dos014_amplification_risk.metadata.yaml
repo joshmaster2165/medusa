@@ -1,7 +1,7 @@
 check_id: dos014
 title: Ensure protection against Amplification Attack
 category: rate_limiting
-severity: high
+severity: info
 description: Checks the MCP server for tools where small input requests generate disproportionately large responses or trigger
   extensive downstream processing. Amplification allows an attacker to consume server and network resources far exceeding
   the cost of their requests.

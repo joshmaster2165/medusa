@@ -1,0 +1,30 @@
+check_id: ctx013
+title: Detect persistent state injection in tool descriptions
+category: context_security
+severity: high
+description: >-
+  Detects instructions in tool or parameter descriptions that attempt to persist
+  behavioral changes across interactions, such as "from now on", "always do",
+  "never forget", and "update your instructions". These attempt to reprogram
+  LLM behavior as described in the Prompt State Manipulation TTP.
+risk_explanation: >-
+  Persistent state injection commands in tool descriptions attempt to create
+  lasting behavioral changes in the LLM beyond the current interaction. If
+  successful, these instructions can cause the model to consistently behave
+  in ways that benefit the attacker across multiple user sessions, such as
+  always including certain data in responses or always calling specific tools.
+remediation: >-
+  1. Validate that tool descriptions do not contain behavioral persistence commands.
+  2. Implement stateless tool processing that resets context between interactions.
+  3. Strip imperative directives about future behavior from tool metadata.
+  4. Use context isolation to prevent tool descriptions from affecting cross-session behavior.
+references:
+  - https://modelcontextprotocol-security.io/ttps/prompt-injection/prompt-state-manipulation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - state_manipulation
+  - persistence
+  - behavioral_change
+  - ttp_based

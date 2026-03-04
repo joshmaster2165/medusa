@@ -13,7 +13,7 @@ from medusa import __version__
 from medusa.connectors.base import BaseConnector
 from medusa.core.check import BaseCheck, ServerSnapshot
 from medusa.core.exceptions import ConnectionError
-from medusa.core.models import Finding, ScanResult, Severity, Status
+from medusa.core.models import CheckMetadata, Finding, FindingSource, ScanResult, Severity, Status
 from medusa.core.registry import CheckRegistry
 from medusa.core.scoring import (
     calculate_aggregate_score,
@@ -66,13 +66,9 @@ class ScanEngine:
             check_ids=check_ids,
             exclude_ids=exclude_ids,
         )
-        # Filter checks based on scan mode
-        if scan_mode == "ai":
-            self.checks = [c for c in all_checks if c.metadata().check_id.startswith("ai")]
-        elif scan_mode == "full":
-            self.checks = all_checks
-        else:  # "static" (default)
-            self.checks = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
+        # Always run static checks only; legacy AI checks (ai001-ai024) are
+        # deprecated — use --deep (reasoning engine) instead.
+        self.checks = [c for c in all_checks if not c.metadata().check_id.startswith("ai")]
         self.max_concurrency = max_concurrency
         self.progress_callback = progress_callback
 
@@ -101,6 +97,25 @@ class ScanEngine:
             logger.error("Unexpected error connecting: %s", e)
             return None
 
+    @staticmethod
+    def _error_finding(
+        meta: CheckMetadata, snapshot: ServerSnapshot, error: BaseException
+    ) -> Finding:
+        """Build a standard error Finding for a check that failed to execute."""
+        return Finding(
+            check_id=meta.check_id,
+            check_title=meta.title,
+            status=Status.ERROR,
+            severity=meta.severity,
+            server_name=snapshot.server_name,
+            server_transport=snapshot.transport_type,
+            resource_type="server",
+            resource_name=snapshot.server_name,
+            status_extended=f"Check execution error: {error}",
+            remediation=meta.remediation,
+            owasp_mcp=meta.owasp_mcp,
+        )
+
     async def _run_check(self, check: BaseCheck, snapshot: ServerSnapshot) -> list[Finding]:
         """Run a single check against a snapshot, catching errors."""
         meta = check.metadata()
@@ -114,21 +129,7 @@ class ScanEngine:
                 snapshot.server_name,
                 e,
             )
-            return [
-                Finding(
-                    check_id=meta.check_id,
-                    check_title=meta.title,
-                    status=Status.ERROR,
-                    severity=meta.severity,
-                    server_name=snapshot.server_name,
-                    server_transport=snapshot.transport_type,
-                    resource_type="server",
-                    resource_name=snapshot.server_name,
-                    status_extended=f"Check execution error: {e}",
-                    remediation=meta.remediation,
-                    owasp_mcp=meta.owasp_mcp,
-                )
-            ]
+            return [self._error_finding(meta, snapshot, e)]
 
     async def _scan_server(self, snapshot: ServerSnapshot) -> list[Finding]:
         """Run all checks concurrently against a single server snapshot.
@@ -137,12 +138,6 @@ class ScanEngine:
         mutable state, so it is safe to run them in parallel.  AI checks
         are throttled via a global semaphore configured from snapshot size.
         """
-        # Configure AI throttle if this scan includes AI checks
-        if self.scan_mode in ("ai", "full"):
-            from medusa.ai.throttle import configure_throttle
-
-            configure_throttle(snapshot)
-
         tasks = [self._run_check(check, snapshot) for check in self.checks]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -156,21 +151,7 @@ class ScanEngine:
                     snapshot.server_name,
                     result,
                 )
-                all_findings.append(
-                    Finding(
-                        check_id=meta.check_id,
-                        check_title=meta.title,
-                        status=Status.ERROR,
-                        severity=meta.severity,
-                        server_name=snapshot.server_name,
-                        server_transport=snapshot.transport_type,
-                        resource_type="server",
-                        resource_name=snapshot.server_name,
-                        status_extended=(f"Check execution error: {result}"),
-                        remediation=meta.remediation,
-                        owasp_mcp=meta.owasp_mcp,
-                    )
-                )
+                all_findings.append(self._error_finding(meta, snapshot, result))
             else:
                 all_findings.extend(result)
             self._emit("check_done", self.checks[i].metadata().check_id)
@@ -248,7 +229,7 @@ class ScanEngine:
         findings: list[Finding],
         reasoning_result: object,
         snapshot: ServerSnapshot,
-    ) -> tuple[list[Finding], dict[str, int]]:
+    ) -> tuple[list[Finding], dict]:
         """Apply AI reasoning to silently improve finding accuracy.
 
         - Removes false positives (confidence_score < 0.3, double-gated)
@@ -268,11 +249,13 @@ class ScanEngine:
         }
 
         annotations = getattr(reasoning_result, "annotations", [])
-        stats: dict[str, int] = {
+        stats: dict = {
             "false_positives_removed": 0,
             "severities_adjusted": 0,
             "gaps_added": 0,
             "critical_preserved": 0,
+            "removed_ids": [],
+            "adjusted_details": [],
         }
 
         # Build lookup: (check_id, resource_name) -> annotation
@@ -301,6 +284,7 @@ class ScanEngine:
                         stats["critical_preserved"] += 1
                     else:
                         removal_candidates.append(idx)
+                        stats["removed_ids"].append((f.check_id, f.resource_name))
                         continue  # tentatively skip
 
                 # Adjust severity if AI provides one
@@ -308,6 +292,14 @@ class ScanEngine:
                 if adj_sev_str:
                     new_sev = severity_map.get(adj_sev_str.lower())
                     if new_sev and new_sev != f.severity:
+                        stats["adjusted_details"].append(
+                            {
+                                "check_id": f.check_id,
+                                "resource_name": f.resource_name,
+                                "from": f.severity.value,
+                                "to": new_sev.value,
+                            }
+                        )
                         f = f.model_copy(update={"severity": new_sev})
                         stats["severities_adjusted"] += 1
 
@@ -327,6 +319,8 @@ class ScanEngine:
                 filtered = list(findings)
                 stats["false_positives_removed"] = 0
                 stats["severities_adjusted"] = 0
+                stats["removed_ids"] = []
+                stats["adjusted_details"] = []
             else:
                 stats["false_positives_removed"] = len(removal_candidates)
 
@@ -372,6 +366,7 @@ class ScanEngine:
                     evidence=gap.evidence,
                     remediation=gap.remediation,
                     owasp_mcp=gap.owasp_mcp,
+                    source=FindingSource.AI_GAP,
                 )
             )
         return result
@@ -385,12 +380,6 @@ class ScanEngine:
         """
         start_time = time.monotonic()
         scan_id = str(uuid.uuid4())[:8]
-
-        # Reset AI throttle for a fresh scan
-        if self.scan_mode in ("ai", "full"):
-            from medusa.ai.throttle import reset_throttle
-
-            reset_throttle()
 
         semaphore = asyncio.Semaphore(self.max_concurrency)
         raw_results = await asyncio.gather(

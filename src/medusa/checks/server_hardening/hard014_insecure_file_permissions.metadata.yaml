@@ -1,7 +1,7 @@
 check_id: hard014
 title: Ensure File Permissions meets security requirements
 category: server_hardening
-severity: high
+severity: info
 description: Checks the MCP server for installations with overly permissive file permissions on configuration files, credential
   stores, log files, and server binaries. World-readable or world-writable permissions allow unauthorized access and modification
   of server components.

@@ -37,6 +37,7 @@ class HtmlReporter(BaseReporter):
                     "evidence": f.evidence or "",
                     "remediation": f.remediation,
                     "owasp": ", ".join(f.owasp_mcp),
+                    "source": f.source.value,
                 }
                 for f in failed
             ]

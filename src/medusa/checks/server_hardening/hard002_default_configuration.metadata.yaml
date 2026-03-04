@@ -1,7 +1,7 @@
 check_id: hard002
 title: Ensure Configuration in Production does not use defaults
 category: server_hardening
-severity: high
+severity: info
 description: Checks the MCP server for deployed with default configuration values that are intended for development or testing.
   Default configurations typically use weak security settings, permissive access controls, and debug-friendly options that
   are inappropriate for production.

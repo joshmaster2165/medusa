@@ -1,0 +1,30 @@
+check_id: tp032
+title: Ensure Parameter Defaults do not contain dangerous content
+category: tool_poisoning
+severity: high
+description: Detects parameter defaults containing dangerous content such as external URLs, path traversal sequences, shell metacharacters,
+  or high-entropy strings that may be embedded secrets. These defaults take effect silently when the LLM omits a value, enabling parameter
+  manipulation attacks described in the Tool Poisoning TTP.
+risk_explanation: 'Dangerous default values can silently redirect tool operations to attacker-controlled endpoints, traverse file systems
+  to access sensitive files, inject shell commands into execution pipelines, or leak embedded secrets. Because defaults activate when the
+  LLM does not explicitly supply a value, the user never sees or approves the dangerous content.
+
+  '
+remediation: '1. Restrict parameter defaults to simple, safe scalar values pointing to local or well-known resources.
+
+  2. Reject defaults containing external URLs, path traversal sequences, or shell metacharacters.
+
+  3. Implement schema validation that flags defaults with high entropy or embedded credentials.
+
+  4. Require explicit user confirmation when tools use non-trivial default values.'
+references:
+- https://modelcontextprotocol-security.io/ttps/tool-poisoning/tool-poisoning/
+- https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+- MCP02:2025
+- MCP03:2025
+tags:
+- tool_poisoning
+- parameter_manipulation
+- default_values
+- ttp_based

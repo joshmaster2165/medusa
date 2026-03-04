@@ -1,7 +1,7 @@
 check_id: hard006
 title: Ensure debug endpoints are disabled
 category: server_hardening
-severity: high
+severity: info
 description: Checks the MCP server for that expose debug or diagnostic endpoints in production deployments. Debug endpoints
   may include health checks with internal details, profiling endpoints, memory dumps, or configuration inspection endpoints
   that reveal sensitive internals.

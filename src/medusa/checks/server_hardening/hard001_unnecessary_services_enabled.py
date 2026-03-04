@@ -51,6 +51,8 @@ def _hardening_config_check(
 
     If fail_on_present=False, logic is inverted (FAIL if key absent).
     """
+    if not fail_on_present and not snapshot.config_raw:
+        return []  # No config to evaluate for absence
     found = _walk_config_for_keys(snapshot.config_raw or {}, bad_keys)
 
     if fail_on_present:

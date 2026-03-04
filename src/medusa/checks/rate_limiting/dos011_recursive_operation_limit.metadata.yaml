@@ -1,7 +1,7 @@
 check_id: dos011
 title: Ensure Recursive Operation Limit is configured
 category: rate_limiting
-severity: high
+severity: info
 description: Checks the MCP server for tools that perform recursive operations without depth limits. Unbounded recursion in
   file traversal, data processing, dependency resolution, or nested structure parsing can exhaust stack space and cause server
   crashes.

@@ -8,6 +8,7 @@ import pkgutil
 from pathlib import Path
 
 from medusa.core.check import BaseCheck
+from medusa.core.models import CheckMetadata
 
 
 class CheckRegistry:
@@ -15,6 +16,7 @@ class CheckRegistry:
 
     def __init__(self) -> None:
         self._checks: dict[str, type[BaseCheck]] = {}
+        self._metadata_cache: dict[str, CheckMetadata] = {}
 
     def discover_checks(self, checks_package: str = "medusa.checks") -> None:
         """Auto-discover all checks from the checks package."""
@@ -23,6 +25,9 @@ class CheckRegistry:
 
         for category_dir in sorted(package_path.iterdir()):
             if not category_dir.is_dir() or category_dir.name.startswith("_"):
+                continue
+            # Legacy AI checks (ai001-ai024) are deprecated; use --deep instead
+            if category_dir.name == "ai_analysis":
                 continue
 
             category_module = f"{checks_package}.{category_dir.name}"
@@ -47,6 +52,7 @@ class CheckRegistry:
                         instance = attr()
                         meta = instance.metadata()
                         self._checks[meta.check_id] = attr
+                        self._metadata_cache[meta.check_id] = meta
 
     @property
     def check_count(self) -> int:
@@ -72,15 +78,17 @@ class CheckRegistry:
             if check_ids and check_id not in check_ids:
                 continue
 
-            instance = check_cls()
-            meta = instance.metadata()
+            meta = self._metadata_cache.get(check_id)
+            if not meta:
+                instance = check_cls()
+                meta = instance.metadata()
 
             if categories and meta.category not in categories:
                 continue
             if severities and meta.severity.value not in severities:
                 continue
 
-            results.append(instance)
+            results.append(check_cls())
 
         return results
 
@@ -95,17 +103,12 @@ class CheckRegistry:
 
     def get_categories(self) -> list[str]:
         """Return all unique check categories."""
-        categories: set[str] = set()
-        for cls in self._checks.values():
-            meta = cls().metadata()
-            categories.add(meta.category)
-        return sorted(categories)
+        return sorted({meta.category for meta in self._metadata_cache.values()})
 
     def get_severity_counts(self) -> dict[str, int]:
         """Return count of checks per severity level."""
         counts: dict[str, int] = {}
-        for cls in self._checks.values():
-            meta = cls().metadata()
+        for meta in self._metadata_cache.values():
             sev = meta.severity.value
             counts[sev] = counts.get(sev, 0) + 1
         return counts

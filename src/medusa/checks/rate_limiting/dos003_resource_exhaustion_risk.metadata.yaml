@@ -1,7 +1,7 @@
 check_id: dos003
 title: Ensure protection against Resource Exhaustion
 category: rate_limiting
-severity: high
+severity: info
 description: Checks the MCP server for tools that can consume unbounded system resources during execution. Tools that process
   large inputs, perform complex computations, or interact with external services without resource limits can exhaust server
   capacity and affect all connected sessions.

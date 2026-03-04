@@ -1,7 +1,7 @@
 check_id: hard005
 title: Ensure Admin Interface is not exposed
 category: server_hardening
-severity: high
+severity: info
 description: Checks the MCP server for that expose administrative or management interfaces to the same network or transport
   as client-facing endpoints. Admin interfaces provide elevated capabilities including server configuration, user management,
   and diagnostic access.

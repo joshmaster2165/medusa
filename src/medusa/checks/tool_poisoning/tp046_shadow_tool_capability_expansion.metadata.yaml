@@ -1,0 +1,31 @@
+check_id: tp046
+title: Detect shadow tool capability expansion
+category: tool_poisoning
+severity: high
+description: >-
+  Detects tools with safe-sounding read-only name prefixes (read_, get_, list_,
+  search_) whose schemas contain dangerous parameters such as shell commands,
+  webhooks, external URLs, or credentials. This structural mismatch between
+  the tool name and its actual capabilities is a strong indicator of tool
+  shadowing attacks.
+risk_explanation: >-
+  A tool named with a read-only prefix (e.g., get_data, list_files) that
+  contains parameters for shell execution, webhook callbacks, or credential
+  handling presents a dangerous mismatch. The safe name lulls the LLM into
+  treating the tool as low-risk while it actually has destructive or
+  exfiltrative capabilities.
+remediation: >-
+  1. Ensure tool names accurately reflect their capabilities.
+  2. Tools with read-only prefixes should only accept read-related parameters.
+  3. If a tool requires write, execute, or network parameters, its name should clearly indicate this.
+  4. Review tool schemas for parameter names that conflict with the tool's stated purpose.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/tool-shadowing/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - tool_shadowing
+  - capability_expansion
+  - schema_mismatch
+  - ttp_based

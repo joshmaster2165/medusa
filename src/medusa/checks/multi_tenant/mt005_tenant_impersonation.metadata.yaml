@@ -1,7 +1,7 @@
 check_id: mt005
 title: Ensure protection against Tenant Impersonation
 category: multi_tenant
-severity: critical
+severity: info
 description: Checks the MCP server for configurations that allow one tenant to impersonate another through token manipulation,
   session hijacking, or exploitation of tenant switching mechanisms. Impersonation enables full access to the target tenant
   data and operations.

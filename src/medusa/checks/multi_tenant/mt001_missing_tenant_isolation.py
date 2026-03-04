@@ -54,7 +54,9 @@ def _mt_config_check(
     present_msg: str,
 ) -> list[Finding]:
     """Shared multi-tenant config-key check: FAIL if keys absent, PASS if present."""
-    found = _walk_config_for_keys(snapshot.config_raw or {}, config_keys)
+    if not snapshot.config_raw:
+        return []  # No config to evaluate
+    found = _walk_config_for_keys(snapshot.config_raw, config_keys)
     status = Status.PASS if found else Status.FAIL
     status_extended = (
         present_msg.format(server=snapshot.server_name)

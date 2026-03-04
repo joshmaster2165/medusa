@@ -1,7 +1,7 @@
 check_id: mt008
 title: Ensure protection against Tenant Resource exhaustion
 category: multi_tenant
-severity: high
+severity: info
 description: Checks the MCP server for that do not enforce per-tenant resource quotas, allowing a single tenant to monopolize
   shared server resources including CPU, memory, network bandwidth, storage, and database connections, causing denial of service
   for other tenants.

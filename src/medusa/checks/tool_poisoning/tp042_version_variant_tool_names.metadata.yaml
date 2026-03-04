@@ -1,0 +1,28 @@
+check_id: tp042
+title: Detect version variant tool names suggesting mutation
+category: tool_poisoning
+severity: medium
+description: >-
+  Detects when both a base tool name and a version-suffixed variant exist on
+  the same server. This structural pattern may indicate tool mutation or
+  rug-pull replacement attacks as described in the Tool Mutation TTP.
+risk_explanation: >-
+  When both a base tool and a versioned variant coexist on the same server,
+  the variant may be a mutated version designed to replace the original with
+  modified behavior. Attackers use version suffixes to introduce malicious
+  tool variants that appear to be legitimate upgrades.
+remediation: >-
+  1. Remove duplicate versioned tools from the server.
+  2. Use a single canonical tool name without version suffixes.
+  3. Implement tool versioning through server-level version control, not name suffixes.
+  4. Audit any versioned tool variants for behavioral differences from the base.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/tool-mutation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - tool_mutation
+  - version_variant
+  - rug_pull
+  - ttp_based
