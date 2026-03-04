@@ -958,7 +958,7 @@ def list_checks(category: str | None, severity: str | None, fmt: str) -> None:
 
 
 @cli.command("list-advisories")
-@click.option("--severity", type=str, default=None, help="Filter by severity (critical, high, medium, low).")
+@click.option("--severity", type=str, default=None, help="Filter by severity.")
 @click.option("--check", type=str, default=None, help="Show advisories for a specific check ID.")
 @click.option("--tag", type=str, default=None, help="Filter by tag.")
 def list_advisories_cmd(severity: str | None, check: str | None, tag: str | None) -> None:

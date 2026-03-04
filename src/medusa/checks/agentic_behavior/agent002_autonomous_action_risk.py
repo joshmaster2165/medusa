@@ -56,7 +56,6 @@ class AutonomousActionRiskCheck(BaseCheck):
             snapshot.config_raw, AUTO_APPROVE_KEYS
         )
 
-        safeguard_params = CONFIRMATION_SCHEMA_PARAMS | RATE_LIMIT_SCHEMA_PARAMS
         risky_levels = (ToolRisk.DESTRUCTIVE, ToolRisk.PRIVILEGED, ToolRisk.EXFILTRATIVE)
 
         for tool in snapshot.tools:

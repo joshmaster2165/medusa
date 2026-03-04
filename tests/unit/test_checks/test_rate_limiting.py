@@ -25,10 +25,8 @@ from medusa.checks.rate_limiting.dos012_batch_operation_limit import BatchOperat
 from medusa.checks.rate_limiting.dos013_slowloris_risk import SlowlorisRiskCheck
 from medusa.checks.rate_limiting.dos014_amplification_risk import AmplificationRiskCheck
 from medusa.checks.rate_limiting.dos015_backpressure_missing import BackpressureMissingCheck
-from tests.conftest import make_snapshot
-
-
 from medusa.core.models import Status
+from tests.conftest import make_snapshot
 
 
 class TestMissingRateLimitingCheck:

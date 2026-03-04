@@ -166,7 +166,10 @@ class TestMissingHumanInLoopCheck:
                         "type": "object",
                         "properties": {
                             "user_id": {"type": "string"},
-                            "confirm": {"type": "boolean", "description": "Set to true to confirm deletion"},
+                            "confirm": {
+                                "type": "boolean",
+                                "description": "Set to true to confirm deletion",
+                            },
                         },
                     },
                 }
@@ -189,7 +192,10 @@ class TestMissingHumanInLoopCheck:
                         "type": "object",
                         "properties": {
                             "table": {"type": "string"},
-                            "dry_run": {"type": "boolean", "description": "Preview changes without executing"},
+                            "dry_run": {
+                                "type": "boolean",
+                                "description": "Preview changes without executing",
+                            },
                         },
                     },
                 }
@@ -277,7 +283,10 @@ class TestAutonomousActionRiskCheck:
                     "inputSchema": {
                         "type": "object",
                         "properties": {
-                            "callback_url": {"type": "string", "description": "URL to send results"},
+                            "callback_url": {
+                                "type": "string",
+                                "description": "URL to send results",
+                            },
                         },
                     },
                 }

@@ -119,16 +119,23 @@ def generate_markdown_report(report: BenchmarkReport) -> str:
     for r in report.results:
         if r.status == "scanned":
             lines.append(
-                f"| {r.server_name} | {r.package} | {r.status} | {r.score:.1f} | {r.grade} | "
-                f"{r.tool_count} | {r.passed} | {r.failed} | {r.critical_findings} | {r.high_findings} |"
+                f"| {r.server_name} | {r.package} | {r.status} "
+                f"| {r.score:.1f} | {r.grade} "
+                f"| {r.tool_count} | {r.passed} | {r.failed} "
+                f"| {r.critical_findings} | {r.high_findings} |"
             )
         elif r.status == "skipped":
             lines.append(
-                f"| {r.server_name} | {r.package} | skipped | - | - | - | - | - | - | {r.skip_reason} |"
+                f"| {r.server_name} | {r.package} "
+                f"| skipped | - | - | - | - | - "
+                f"| - | {r.skip_reason} |"
             )
         else:
+            msg = r.error_message[:50]
             lines.append(
-                f"| {r.server_name} | {r.package} | error | - | - | - | - | - | - | {r.error_message[:50]} |"
+                f"| {r.server_name} | {r.package} "
+                f"| error | - | - | - | - | - "
+                f"| - | {msg} |"
             )
 
     lines.append("")

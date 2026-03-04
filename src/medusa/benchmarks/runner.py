@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -199,7 +199,7 @@ async def run_benchmark(
     )
 
     return BenchmarkReport(
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         medusa_version=__version__,
         total_servers=len(catalog),
         scanned_servers=scanned,

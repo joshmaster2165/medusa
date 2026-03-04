@@ -2,21 +2,18 @@
 
 from __future__ import annotations
 
-import pytest
-
 from medusa.benchmarks.models import (
-    ServerCatalogEntry,
-    BenchmarkServerResult,
     BenchmarkReport,
+    BenchmarkServerResult,
     BenchmarkToolResult,
-)
-from medusa.benchmarks.runner import (
-    load_server_catalog,
-    filter_catalog,
-    check_env_requirements,
+    ServerCatalogEntry,
 )
 from medusa.benchmarks.report import generate_markdown_report
-
+from medusa.benchmarks.runner import (
+    check_env_requirements,
+    filter_catalog,
+    load_server_catalog,
+)
 
 # ==========================================================================
 # Model Tests

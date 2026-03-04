@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
-
-from medusa.advisories.models import Advisory
 from medusa.advisories.loader import (
-    load_all_advisories,
-    get_advisory,
-    get_advisories_for_check,
     get_advisories_by_severity,
     get_advisories_by_tag,
+    get_advisories_for_check,
+    get_advisory,
+    load_all_advisories,
 )
+from medusa.advisories.models import Advisory
 
 
 class TestAdvisoryModel:
@@ -154,7 +152,7 @@ class TestAdvisoryLoader:
     def test_all_advisories_have_required_fields(self) -> None:
         """Every advisory must have all required fields populated."""
         for a in load_all_advisories():
-            assert a.id, f"Advisory missing id"
+            assert a.id, "Advisory missing id"
             assert a.title, f"{a.id} missing title"
             assert a.severity in ("critical", "high", "medium", "low"), (
                 f"{a.id} has invalid severity: {a.severity}"

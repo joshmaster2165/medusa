@@ -141,12 +141,12 @@ def _walk_config_for_keys(config: Any, keys: set[str], _depth: int = 0) -> bool:
 
 def _config_check(
     snapshot: ServerSnapshot,
-    meta: "CheckMetadata",
+    meta: CheckMetadata,
     config_keys: set[str],
     env_vars: set[str],
     missing_msg: str,
     present_msg: str,
-) -> list["Finding"]:
+) -> list[Finding]:
     """Shared config-presence check used by DOS002-015.
 
     Returns a single FAIL if no matching config key or env var is detected,

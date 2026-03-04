@@ -21,7 +21,6 @@ from medusa.checks.multi_tenant.mt010_missing_tenant_configuration import (
 from medusa.core.models import Status
 from tests.conftest import make_snapshot
 
-
 # ==========================================================================
 # MT-001: Missing Tenant Isolation
 # ==========================================================================
@@ -916,7 +915,7 @@ class TestTenantResourceExhaustionCheck:
     async def test_fails_on_resource_intensive_tool_without_limits(
         self, check: TenantResourceExhaustionCheck
     ) -> None:
-        """Resource-intensive tool (matching TENANT_RESOURCE_KEYWORDS) without limits should FAIL."""
+        """Resource-intensive tool without limits should FAIL."""
         snapshot = make_snapshot(
             tools=[
                 {
