@@ -1,0 +1,29 @@
+check_id: agent029
+title: Ensure resource-intensive tools have timeout parameters
+category: agentic_behavior
+severity: medium
+description: >-
+  Checks whether resource-intensive tools (query, execute, search, scan, etc.)
+  include timeout or duration limit parameters. Without bounded execution
+  time, these tools could run indefinitely and enable denial-of-service.
+risk_explanation: >-
+  Resource-intensive tools without timeout parameters can be exploited to
+  consume server resources indefinitely. An attacker or malfunctioning agent
+  could trigger long-running operations that exhaust CPU, memory, or network
+  bandwidth. In agentic workflows, unbounded tools create cascading failures
+  when one tool blocks the entire execution pipeline.
+remediation: >-
+  1. Add a timeout or max_duration parameter to resource-intensive tools.
+  2. Implement server-side timeout enforcement regardless of client parameters.
+  3. Set reasonable default timeout values for all long-running operations.
+  4. Monitor and alert on tools exceeding expected execution durations.
+  5. Implement circuit breakers for tools that frequently timeout.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP09:2025
+tags:
+  - agentic_behavior
+  - timeout
+  - duration
+  - dos_prevention

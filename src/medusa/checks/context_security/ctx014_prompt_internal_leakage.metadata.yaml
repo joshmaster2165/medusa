@@ -1,0 +1,38 @@
+check_id: ctx014
+title: Ensure prompts do not leak internal implementation details
+category: context_security
+severity: low
+description: >-
+  Checks MCP prompt definitions for references to internal implementation details
+  including file system paths, SQL statements, database connection strings, internal
+  hostnames, stack traces, environment variable references, and IP addresses with
+  ports. Exposure of these details aids attackers in mapping internal infrastructure.
+risk_explanation: >-
+  Internal implementation details leaked through prompt descriptions provide
+  attackers with a blueprint of the server's infrastructure. File paths reveal
+  the operating system and directory structure, SQL statements expose database
+  schema and query patterns, connection strings may contain credentials, and
+  internal hostnames map the network topology. This information significantly
+  reduces the effort required for targeted attacks against the backend systems
+  that the MCP server connects to.
+remediation: >-
+  1. Review all prompt descriptions and remove references to internal file paths,
+  database queries, connection strings, and hostnames.
+
+  2. Use abstracted descriptions that explain prompt functionality without
+  exposing implementation details.
+
+  3. Implement a content review pipeline that scans prompt definitions for
+  internal detail leakage before registration.
+
+  4. Replace hardcoded paths and connection strings with configuration
+  references that are resolved server-side.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://cwe.mitre.org/data/definitions/200.html
+owasp_mcp:
+  - MCP06:2025
+tags:
+  - context_security
+  - information_leak
+  - internal_details

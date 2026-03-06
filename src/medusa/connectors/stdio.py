@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import tempfile
 from datetime import timedelta
 
 from mcp import ClientSession, StdioServerParameters
@@ -52,7 +53,13 @@ class StdioConnector(BaseConnector):
             env=self.env if self.env else None,
         )
 
-        async with stdio_client(params) as (read, write):
+        # Capture stderr instead of letting it leak to the terminal.
+        # Without this, failed server processes (e.g. missing build files)
+        # dump raw Node.js stacktraces into the user's console.
+        # Must use a real file (not StringIO) because the MCP SDK passes
+        # errlog to subprocess which requires a file descriptor.
+        self._stderr_file = tempfile.TemporaryFile(mode="w+")
+        async with stdio_client(params, errlog=self._stderr_file) as (read, write):
             async with ClientSession(
                 read,
                 write,
@@ -103,18 +110,47 @@ class StdioConnector(BaseConnector):
                     config_raw=self.config_raw,
                 )
 
+    def _get_stderr_summary(self, max_lines: int = 5) -> str:
+        """Return a concise summary of captured stderr, if any."""
+        f = getattr(self, "_stderr_file", None)
+        if f is None:
+            return ""
+        try:
+            f.seek(0)
+            text = f.read().strip()
+        except (ValueError, OSError):
+            # File may already be closed
+            return ""
+        finally:
+            try:
+                f.close()
+            except (ValueError, OSError):
+                pass
+        if not text:
+            return ""
+        # Log full stderr at debug level for troubleshooting
+        logger.debug("stderr from '%s':\n%s", self.name, text)
+        # Return only the last N lines as a concise hint
+        lines = text.splitlines()
+        if len(lines) > max_lines:
+            return f"\n  stderr (last {max_lines} lines):\n  " + "\n  ".join(lines[-max_lines:])
+        return "\n  stderr:\n  " + "\n  ".join(lines)
+
     async def connect_and_snapshot(self) -> ServerSnapshot:
         """Connect to the MCP server via stdio and return a snapshot."""
         try:
             return await asyncio.wait_for(self._do_connect(), timeout=self.timeout)
         except TimeoutError:
+            hint = self._get_stderr_summary()
             raise ConnectionError(
                 f"Timed out connecting to '{self.name}' after {self.timeout}s "
-                f"(command: {self.command})"
+                f"(command: {self.command}){hint}"
             ) from None
         except ConnectionError:
             raise
         except Exception as e:
+            hint = self._get_stderr_summary()
             raise ConnectionError(
-                f"Failed to connect to stdio server '{self.name}' (command: {self.command}): {e}"
+                f"Failed to connect to stdio server '{self.name}' "
+                f"(command: {self.command}): {e}{hint}"
             ) from e

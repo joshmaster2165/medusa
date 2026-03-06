@@ -1,0 +1,34 @@
+check_id: agent028
+title: Detect sampling capability without token or budget limits
+category: agentic_behavior
+severity: medium
+description: >-
+  Checks whether the MCP server enables the sampling capability without
+  configuring token budget or invocation limits. The sampling capability allows
+  the server to request LLM completions from the client, and without budget
+  constraints, this can lead to unbounded API credit consumption.
+risk_explanation: >-
+  The MCP sampling capability (createMessage) allows servers to invoke LLM
+  completions on demand. Without maxTokens, budget, or maxMessages constraints
+  in the capability configuration, a compromised or misconfigured server can
+  trigger unlimited LLM invocations. This can rapidly exhaust API credits,
+  cause denial of wallet attacks, or enable runaway agentic loops that consume
+  resources without bound. Attackers can exploit this to amplify costs or
+  degrade service availability.
+remediation: >-
+  1. Configure maxTokens in the sampling capability to cap per-request token usage.
+  2. Set a budget or rate limit on the total number of sampling invocations.
+  3. Add maxMessages to limit the number of createMessage calls per session.
+  4. Implement server-side cost monitoring and alerting for sampling usage.
+  5. Consider disabling sampling if it is not essential to server functionality.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/sampling
+owasp_mcp:
+  - MCP09:2025
+tags:
+  - sampling
+  - token_budget
+  - resource_exhaustion
+  - agentic_safety
+  - cost_control

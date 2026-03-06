@@ -52,6 +52,9 @@ class CheckMetadata(BaseModel):
     impact: str = ""
     default_value: str = ""
     advisory_ids: list[str] = []
+    # Transport applicability: None means all transports, otherwise
+    # a list like ["http"] to skip the check for stdio servers.
+    applicable_transports: list[str] | None = None
 
 
 class Finding(BaseModel):

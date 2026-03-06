@@ -24,3 +24,5 @@ tags:
 - authorization
 - resource_access
 - access_control
+applicable_transports:
+- http

@@ -1,4 +1,7 @@
-# Scanning
+# Ad-Hoc Scanning (CLI)
+
+!!! note "For real-time protection, use the [Medusa Agent](agent.md)"
+    This page covers ad-hoc scanning via the CLI for audits and CI/CD pipelines. For continuous, real-time protection with policy enforcement and DLP, install the Medusa Agent instead.
 
 ## Server Discovery
 

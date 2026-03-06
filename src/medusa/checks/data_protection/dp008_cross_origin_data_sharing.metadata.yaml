@@ -22,3 +22,5 @@ tags:
 - cross_origin
 - consent
 - data_isolation
+applicable_transports:
+- http

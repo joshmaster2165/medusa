@@ -1,7 +1,7 @@
 check_id: dos012
 title: Ensure Batch Operation Limit is configured
 category: rate_limiting
-severity: medium
+severity: info
 description: Checks the MCP server for tools that accept batch operations without limiting the batch size. Unbounded batch
   sizes allow a single tool invocation to process an arbitrary number of items, consuming disproportionate resources compared
   to a single invocation.
@@ -29,3 +29,5 @@ tags:
 - rate_limiting
 - dos
 - availability
+applicable_transports:
+- http

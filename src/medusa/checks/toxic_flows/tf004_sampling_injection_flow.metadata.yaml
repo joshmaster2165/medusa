@@ -1,0 +1,37 @@
+check_id: tf004
+title: Ensure Server does not expose a Sampling/CreateMessage Injection Flow
+category: toxic_flows
+severity: high
+description: >-
+  Checks whether the MCP server advertises the sampling capability (createMessage)
+  alongside tools that accept user-controlled text parameters. This combination
+  enables an attacker to inject malicious content through tool inputs that gets
+  forwarded via createMessage to other LLMs, creating a cross-model prompt
+  injection flow.
+risk_explanation: >-
+  When a server enables the MCP sampling capability, it can ask the client to
+  perform LLM completions via createMessage. If the same server also has tools
+  that accept free-text input (message, content, prompt, query, etc.), an attacker
+  can inject adversarial content through those tools. The injected content may
+  then be forwarded via the sampling interface to other LLMs, bypassing safety
+  filters and enabling cross-model prompt injection, data exfiltration, or
+  unauthorized actions on downstream systems.
+remediation: >-
+  1. Disable the sampling capability if it is not required for core functionality.
+  2. Sanitize and validate all user-supplied text before forwarding via createMessage.
+  3. Implement content filtering on the sampling interface to block injection patterns.
+  4. Apply the principle of least privilege by separating text-accepting tools from
+  sampling-capable servers.
+  5. Add human-in-the-loop confirmation before forwarding user-provided text
+  through the sampling interface.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/sampling
+owasp_mcp:
+  - MCP04:2025
+  - MCP08:2025
+tags:
+  - toxic_flow
+  - sampling
+  - prompt_injection
+  - createMessage

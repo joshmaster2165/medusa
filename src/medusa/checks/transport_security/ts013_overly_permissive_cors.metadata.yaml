@@ -26,3 +26,5 @@ tags:
 - cors
 - permissive_origin
 - cross_site
+applicable_transports:
+- http

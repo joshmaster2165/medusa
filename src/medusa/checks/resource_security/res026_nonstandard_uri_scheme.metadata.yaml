@@ -1,0 +1,38 @@
+check_id: res026
+title: Ensure resource URIs use standard URI schemes
+category: resource_security
+severity: medium
+description: >-
+  Checks whether resource URIs use recognized, standard URI schemes (http, https,
+  file, s3, etc.). Nonstandard or custom URI schemes may confuse client-side URI
+  parsers, enable SSRF through unexpected protocol handlers, or mask malicious
+  endpoints behind unfamiliar scheme names.
+risk_explanation: >-
+  Client applications typically validate and route requests based on the URI
+  scheme. A nonstandard scheme may bypass scheme-based security checks, trigger
+  unexpected protocol handlers on the client or host OS, or be used to smuggle
+  requests to internal services. Attackers can register resources with custom
+  schemes to exploit client-side URI handling vulnerabilities or to redirect
+  traffic through attacker-controlled protocol handlers.
+remediation: >-
+  1. Restrict resource URIs to a well-known set of standard schemes (http,
+  https, file, s3, gs, etc.).
+
+  2. Implement server-side validation that rejects resource registrations
+  using unrecognized URI schemes.
+
+  3. Configure client-side URI parsing to reject or flag resources with
+  nonstandard schemes before attempting to resolve them.
+
+  4. Document any custom schemes in the server's specification and ensure
+  clients explicitly opt in to handling them.
+references:
+  - https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/resources
+owasp_mcp:
+  - MCP07:2025
+tags:
+  - resource_security
+  - uri_scheme
+  - ssrf

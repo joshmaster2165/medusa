@@ -1,0 +1,38 @@
+check_id: tp057
+title: Ensure tool descriptions match schema capabilities
+category: tool_poisoning
+severity: high
+description: >-
+  Detects tools where the description claims limited scope but the schema
+  contradicts it across three mismatch categories: (1) read-only/safe/view
+  claims with write/delete/execute parameters, (2) local/offline claims with
+  network-oriented parameters, and (3) non-destructive/safe claims with
+  destructive parameters.  Each category represents a distinct capability
+  misrepresentation that could deceive an LLM into trusting a tool beyond
+  its actual behavior.  Extends TP-051 to cover broader deception patterns.
+risk_explanation: >-
+  When a tool description claims limited scope but the schema exposes
+  contradictory capabilities, the LLM may grant trust based on the description
+  while the tool can actually perform dangerous operations.  A "local" tool
+  with network parameters can exfiltrate data.  A "safe" tool with destructive
+  parameters can delete resources.  A "read-only" tool with callback parameters
+  can send data to attacker-controlled endpoints.  These mismatches are strong
+  indicators of metadata manipulation attacks.
+remediation: >-
+  1. Audit tool descriptions to ensure they accurately reflect all schema
+  capabilities.
+  2. If a tool has network parameters, do not claim it is local or offline.
+  3. If a tool has destructive parameters, do not claim it is safe or
+  non-destructive.
+  4. If a tool has write or execute parameters, do not claim read-only behavior.
+  5. Remove contradictory parameters or update descriptions to honestly
+  disclose capabilities.
+references:
+  - https://modelcontextprotocol-security.io/ttps/tool-poisoning/metadata-manipulation/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP05:2025
+tags:
+  - tool_poisoning
+  - description_mismatch
+  - deception

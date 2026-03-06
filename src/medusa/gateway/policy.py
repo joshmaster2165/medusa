@@ -218,3 +218,44 @@ class PolicyEngine:
             rule_name=rule_name,
             reason=reason,
         )
+
+
+# ── Policy Loading ───────────────────────────────────────────────────────
+
+
+def load_gateway_policy(path: str | None = None) -> GatewayPolicy:
+    """Load gateway policy from YAML file or return defaults.
+
+    Searches an explicit path first, then ``~/.medusa/gateway-policy.yaml``.
+    Returns a default (allow-all) ``GatewayPolicy`` if no file is found.
+    """
+    from pathlib import Path
+
+    import yaml
+
+    search_paths: list[Path] = []
+    if path:
+        search_paths.append(Path(path))
+    search_paths.append(Path.home() / ".medusa" / "gateway-policy.yaml")
+
+    for p in search_paths:
+        if p.exists():
+            try:
+                raw = yaml.safe_load(p.read_text()) or {}
+                policies = raw.get("policies", raw)
+                return GatewayPolicy(
+                    blocked_servers=policies.get("blocked_servers", []),
+                    allowed_servers=policies.get("allowed_servers"),
+                    blocked_tools=policies.get("blocked_tools", []),
+                    blocked_tool_patterns=policies.get("blocked_tool_patterns", []),
+                    max_calls_per_minute=policies.get("max_calls_per_minute", 0),
+                    block_secrets=policies.get("data_protection", {}).get("block_secrets", True),
+                    block_pii=policies.get("data_protection", {}).get("block_pii", False),
+                    scan_responses=policies.get("data_protection", {}).get("scan_responses", True),
+                    scan_code=policies.get("data_protection", {}).get("scan_code", False),
+                    coaching_enabled=policies.get("coaching", {}).get("enabled", True),
+                )
+            except Exception:
+                pass
+
+    return GatewayPolicy()

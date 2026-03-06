@@ -28,3 +28,5 @@ tags:
 - csp
 - xss_prevention
 - http_headers
+applicable_transports:
+- http

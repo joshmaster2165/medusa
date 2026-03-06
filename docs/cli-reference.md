@@ -2,7 +2,125 @@
 
 Complete reference for all Medusa CLI commands and options.
 
-## Global Options
+---
+
+## `medusa-agent` Commands
+
+The `medusa-agent` CLI manages the endpoint security agent. All commands share a global `--debug` flag to enable debug-level logging.
+
+```bash
+medusa-agent [--debug] COMMAND
+```
+
+### `medusa-agent install`
+
+Install the Medusa Agent on this machine.
+
+```bash
+medusa-agent install --customer-id ID --api-key KEY [OPTIONS]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--customer-id ID` | **Required.** Your Medusa customer ID |
+| `--api-key KEY` | **Required.** Your Medusa API key |
+| `--skip-daemon` | Do not start the background daemon after install |
+| `--skip-register` | Do not register the agent with the dashboard |
+
+### `medusa-agent uninstall`
+
+Uninstall the Medusa Agent from this machine.
+
+```bash
+medusa-agent uninstall [OPTIONS]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--keep-data` | Keep agent data (database, config) after uninstall |
+
+### `medusa-agent start`
+
+Start the agent daemon via the platform service (launchd on macOS, Windows Service on Windows).
+
+```bash
+medusa-agent start
+```
+
+### `medusa-agent stop`
+
+Stop the running agent daemon.
+
+```bash
+medusa-agent stop
+```
+
+### `medusa-agent restart`
+
+Stop and restart the agent daemon.
+
+```bash
+medusa-agent restart
+```
+
+### `medusa-agent run`
+
+Run the agent in foreground mode. Useful for debugging. Press Ctrl+C to stop.
+
+```bash
+medusa-agent run [--debug]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--debug` | Enable debug-level logging output |
+
+### `medusa-agent status`
+
+Show agent status, health information, and gateway proxy details.
+
+```bash
+medusa-agent status
+```
+
+Displays: agent state, PID, agent ID, customer ID, platform, hostname, config/database paths, event counts, and a table of registered gateway proxies with their liveness state.
+
+### `medusa-agent logs`
+
+Show agent log output.
+
+```bash
+medusa-agent logs [OPTIONS]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-n, --lines N` | Number of log lines to show (default: 50) |
+| `-f, --follow` | Follow log output in real time (like `tail -f`) |
+
+### `medusa-agent config`
+
+Show current agent configuration. Sensitive values (API keys) are masked.
+
+```bash
+medusa-agent config
+```
+
+### `medusa-agent version`
+
+Show agent version and platform.
+
+```bash
+medusa-agent version
+```
+
+---
+
+## `medusa` Commands
+
+The `medusa` CLI provides ad-hoc scanning, baselines, and diff for audits and CI/CD.
+
+### Global Options
 
 ```bash
 medusa [OPTIONS] COMMAND
@@ -17,7 +135,7 @@ medusa [OPTIONS] COMMAND
 
 ---
 
-## `medusa scan`
+### `medusa scan`
 
 Scan MCP servers for security vulnerabilities.
 
@@ -25,7 +143,7 @@ Scan MCP servers for security vulnerabilities.
 medusa scan [OPTIONS]
 ```
 
-### Server Discovery
+#### Server Discovery
 
 | Option | Description |
 |--------|-------------|
@@ -36,14 +154,14 @@ medusa scan [OPTIONS]
 | `--server NAME` | Scan a specific server from config |
 | `--no-auto-discover` | Disable automatic server discovery |
 
-### Output
+#### Output
 
 | Option | Description |
 |--------|-------------|
 | `-o, --output FORMAT` | Report format: `console`, `json`, `html`, `markdown`, `sarif` |
 | `--output-file PATH` | Write report to file |
 
-### Check Filtering
+#### Check Filtering
 
 | Option | Description |
 |--------|-------------|
@@ -52,14 +170,14 @@ medusa scan [OPTIONS]
 | `--checks IDS` | Only run these check IDs (comma-separated) |
 | `--exclude-checks IDS` | Skip these check IDs (comma-separated) |
 
-### Scoring & Compliance
+#### Scoring & Compliance
 
 | Option | Description |
 |--------|-------------|
 | `--fail-on SEV` | Exit code 1 if findings at/above this severity (default: `high`) |
 | `--compliance FRAMEWORK` | Evaluate a compliance framework |
 
-### AI Reasoning
+#### AI Reasoning
 
 | Option | Description |
 |--------|-------------|
@@ -67,7 +185,7 @@ medusa scan [OPTIONS]
 | `--claude-api-key KEY` | Anthropic API key |
 | `--ai-mode MODE` | `byok` (bring-your-own-key) or `proxied` |
 
-### Legacy Modes
+#### Legacy Modes
 
 | Option | Description |
 |--------|-------------|
@@ -75,14 +193,14 @@ medusa scan [OPTIONS]
 | `--ai` | Legacy AI-only analysis (use `--reason` instead) |
 | `--all` | Legacy static + AI combined (use `--reason` instead) |
 
-### Baseline
+#### Baseline
 
 | Option | Description |
 |--------|-------------|
 | `--baseline PATH` | Compare against baseline, show only new findings |
 | `--generate-baseline PATH` | Save current findings as a baseline |
 
-### Other
+#### Other
 
 | Option | Description |
 |--------|-------------|
@@ -92,7 +210,19 @@ medusa scan [OPTIONS]
 
 ---
 
-## `medusa diff`
+### `medusa quickscan`
+
+Run a fast subset of checks for a quick security assessment.
+
+```bash
+medusa quickscan [OPTIONS]
+```
+
+Accepts the same server discovery and output options as `medusa scan`.
+
+---
+
+### `medusa diff`
 
 Compare two scan results and show changes.
 
@@ -113,7 +243,7 @@ medusa diff BEFORE_FILE AFTER_FILE [OPTIONS]
 
 ---
 
-## `medusa baseline show`
+### `medusa baseline show`
 
 Display contents of a baseline file.
 
@@ -127,7 +257,7 @@ medusa baseline show BASELINE_FILE [OPTIONS]
 
 ---
 
-## `medusa baseline suppress`
+### `medusa baseline suppress`
 
 Suppress a finding in a baseline by fingerprint.
 
@@ -141,7 +271,7 @@ medusa baseline suppress BASELINE_FILE FINGERPRINT --reason "text"
 
 ---
 
-## `medusa baseline unsuppress`
+### `medusa baseline unsuppress`
 
 Remove suppression from a finding.
 
@@ -151,7 +281,7 @@ medusa baseline unsuppress BASELINE_FILE FINGERPRINT
 
 ---
 
-## `medusa list-checks`
+### `medusa list-checks`
 
 List all available security checks.
 
@@ -167,32 +297,17 @@ medusa list-checks [OPTIONS]
 
 ---
 
-## `medusa configure`
+### `medusa list-advisories`
 
-Set up Medusa CLI configuration.
+List security advisories for scanned servers.
 
 ```bash
-medusa configure [OPTIONS]
+medusa list-advisories [OPTIONS]
 ```
-
-Run without options for interactive wizard, or set values directly:
 
 | Option | Description |
 |--------|-------------|
-| `--api-key KEY` | Medusa dashboard API key |
-| `--dashboard-url URL` | Dashboard API URL |
-| `--claude-api-key KEY` | Anthropic API key |
-| `--ai-mode MODE` | `byok` or `proxied` |
-
----
-
-## `medusa settings`
-
-Display current configuration (API keys are masked).
-
-```bash
-medusa settings
-```
+| `--format FMT` | Output format: `table`, `json` |
 
 ---
 

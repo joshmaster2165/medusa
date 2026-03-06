@@ -28,3 +28,5 @@ tags:
 - sse
 - tls
 - event_stream
+applicable_transports:
+- http

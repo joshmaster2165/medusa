@@ -1,7 +1,7 @@
 check_id: audit004
 title: Ensure protection against Log Tampering
 category: audit_logging
-severity: high
+severity: info
 description: Checks the MCP server for log storage configurations where logs are stored in writable locations without integrity
   protections. Attackers who compromise the server can modify or delete logs to cover their tracks.
 risk_explanation: 'If logs are stored in locations writable by the MCP server process, an attacker who compromises the server
@@ -25,3 +25,4 @@ tags:
 - log_integrity
 - tampering
 - security
+- config_gap_detection

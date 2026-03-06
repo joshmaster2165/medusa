@@ -1,5 +1,5 @@
 site_name: Medusa Documentation
-site_description: Security scanner for Model Context Protocol (MCP) servers
+site_description: Endpoint security agent for Model Context Protocol (MCP)
 site_url: https://medusa.security/docs
 repo_url: https://github.com/joshmaster2165/medusa
 repo_name: joshmaster2165/medusa
@@ -54,7 +54,9 @@ nav:
     - Quick Start: getting-started/quickstart.md
     - Configuration: getting-started/configuration.md
   - User Guide:
-    - Scanning: guide/scanning.md
+    - Agent: guide/agent.md
+    - Gateway: guide/gateway.md
+    - Ad-Hoc Scanning (CLI): guide/scanning.md
     - AI Reasoning Engine: guide/ai-reasoning.md
     - Baselines & Diff: guide/baselines.md
     - Output Formats: guide/output-formats.md

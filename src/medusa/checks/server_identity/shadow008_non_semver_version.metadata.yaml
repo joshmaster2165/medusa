@@ -1,0 +1,33 @@
+check_id: shadow008
+title: Ensure server reports a SemVer-compliant version string
+category: server_identity
+severity: low
+description: >-
+  Checks whether the MCP server reports a version string that follows semantic
+  versioning (MAJOR.MINOR.PATCH). Servers without a version or with non-standard
+  version formats cannot be reliably tracked for updates, vulnerability patches,
+  or identity verification.
+risk_explanation: >-
+  A server that does not report a semantic version makes it impossible for clients
+  to determine whether known vulnerabilities have been patched, whether the server
+  is running a supported release, or whether the version has been tampered with.
+  Non-standard version strings may also indicate development builds, forks, or
+  modified servers that have not undergone security review.
+remediation: >-
+  1. Configure the MCP server to report a SemVer-compliant version string
+  (e.g., 1.2.3, 1.0.0-beta.1).
+
+  2. Ensure the version string is updated with each release and matches the
+  actual deployed binary or package version.
+
+  3. Implement client-side version validation that warns when a server reports
+  a missing or non-standard version.
+references:
+  - https://semver.org/
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP06:2025
+tags:
+  - server_identity
+  - version
+  - semver

@@ -26,3 +26,5 @@ tags:
 - wildcard_certificate
 - key_compromise
 - subdomain_security
+applicable_transports:
+- http

@@ -26,3 +26,5 @@ tags:
 - dns
 - dns_over_https
 - dns_spoofing
+applicable_transports:
+- http

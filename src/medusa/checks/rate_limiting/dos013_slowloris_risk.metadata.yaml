@@ -1,7 +1,7 @@
 check_id: dos013
 title: Ensure protection against Slowloris Attack
 category: rate_limiting
-severity: medium
+severity: info
 description: Checks the MCP server for configurations vulnerable to slowloris-style attacks where clients send requests extremely
   slowly, holding connections open for extended periods. Slow connections consume server connection slots without generating
   meaningful load, exhausting the server's ability to accept new connections.
@@ -29,3 +29,5 @@ tags:
 - rate_limiting
 - dos
 - availability
+applicable_transports:
+- http

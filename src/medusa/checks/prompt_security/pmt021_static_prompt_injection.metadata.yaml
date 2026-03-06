@@ -1,0 +1,35 @@
+check_id: pmt021
+title: Ensure static prompts do not contain injection markers
+category: prompt_security
+severity: medium
+description: >-
+  Checks MCP prompt definitions for hidden instruction tags (IMPORTANT, SYSTEM,
+  HIDDEN, etc.) and known injection phrases (ignore previous instructions, do not
+  tell the user, etc.). Uses context-aware scoring to distinguish genuine injection
+  attempts from security documentation that references these patterns.
+risk_explanation: >-
+  Injection markers embedded in static prompt definitions are executed every time
+  the prompt is used, creating a persistent backdoor. Hidden HTML-style tags can
+  carry instructions invisible in most UIs but interpreted by LLMs, while injection
+  phrases can override system-level safety controls. Because prompts are server-defined,
+  a compromised or malicious server can inject these markers to manipulate any
+  connected LLM client without user awareness.
+remediation: >-
+  1. Scan all prompt definitions for hidden instruction tags and known injection
+  phrases before registering them.
+
+  2. Strip or reject prompts containing HTML-style instruction tags (IMPORTANT,
+  SYSTEM, HIDDEN, OVERRIDE, etc.).
+
+  3. Implement a prompt sanitization pipeline that removes known injection patterns.
+
+  4. Review prompts from untrusted servers manually before enabling them.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/server/prompts
+owasp_mcp:
+  - MCP04:2025
+tags:
+  - prompt_security
+  - injection
+  - hidden_instructions

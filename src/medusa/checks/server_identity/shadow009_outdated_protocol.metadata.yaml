@@ -1,0 +1,36 @@
+check_id: shadow009
+title: Ensure server uses the current MCP protocol version
+category: server_identity
+severity: medium
+description: >-
+  Checks whether the MCP server reports the current protocol version. Servers
+  running outdated or unrecognized protocol versions may lack security features,
+  expose deprecated behaviors, or indicate a custom/modified MCP implementation
+  that has not been vetted.
+risk_explanation: >-
+  Each MCP protocol revision may introduce security-relevant changes such as
+  mandatory authentication, transport encryption requirements, or capability
+  restrictions. A server running an older protocol version may not enforce these
+  controls, leaving clients exposed to attacks that the current specification
+  mitigates. Unrecognized versions suggest the server may be a custom fork
+  with unknown security properties.
+remediation: >-
+  1. Update the MCP server to support the latest protocol version.
+
+  2. If the server must support older clients, implement protocol version
+  negotiation that enforces the most secure compatible version.
+
+  3. Reject connections from servers reporting unrecognized protocol versions
+  unless explicitly trusted.
+
+  4. Monitor for protocol version changes in the MCP specification and plan
+  timely upgrades.
+references:
+  - https://modelcontextprotocol.io/specification/2025-03-26
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP10:2025
+tags:
+  - server_identity
+  - protocol
+  - version

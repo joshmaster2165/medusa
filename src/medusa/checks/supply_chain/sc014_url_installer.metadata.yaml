@@ -1,0 +1,30 @@
+check_id: sc014
+title: Ensure URL-based tools require integrity verification
+category: supply_chain
+severity: high
+description: >-
+  Checks whether tools that accept URLs for execution or code loading also
+  require a hash, checksum, or integrity verification parameter. Without
+  integrity checks, an attacker can supply a malicious URL to execute
+  untrusted code through the MCP server.
+risk_explanation: >-
+  Tools that accept URLs and perform execution or loading operations are
+  supply chain attack vectors. If the tool does not verify the integrity
+  of the downloaded content via a hash or checksum, an attacker can perform
+  man-in-the-middle attacks or poison the URL to deliver malicious payloads.
+  This is especially dangerous when the tool runs the fetched content as code.
+remediation: >-
+  1. Add a required hash/checksum parameter to URL-based execution tools.
+  2. Implement content integrity verification before execution.
+  3. Use allowlists for trusted URLs/domains.
+  4. Pin specific versions or commit hashes for code dependencies.
+  5. Consider using signed artifacts with signature verification.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+owasp_mcp:
+  - MCP05:2025
+tags:
+  - supply_chain
+  - url_execution
+  - integrity
+  - hash_pinning

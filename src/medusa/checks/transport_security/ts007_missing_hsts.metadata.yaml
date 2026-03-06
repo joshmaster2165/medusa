@@ -24,3 +24,5 @@ tags:
 - hsts
 - ssl_stripping
 - http_headers
+applicable_transports:
+- http

@@ -1,7 +1,7 @@
 check_id: dos010
 title: Ensure protection against CPU Exhaustion
 category: rate_limiting
-severity: medium
+severity: info
 description: Checks the MCP server for tools that can cause excessive CPU usage through computationally intensive operations
   such as complex regex evaluation, cryptographic operations, data transformation, or algorithmic processing without CPU time
   limits.
@@ -29,3 +29,5 @@ tags:
 - rate_limiting
 - dos
 - availability
+applicable_transports:
+- http

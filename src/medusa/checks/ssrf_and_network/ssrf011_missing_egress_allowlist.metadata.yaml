@@ -28,3 +28,5 @@ owasp_mcp:
 tags:
 - ssrf
 - network_security
+applicable_transports:
+- http

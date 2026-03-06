@@ -222,3 +222,61 @@ TEMPLATE_PARAM_NAMES: set[str] = {
     "handlebars",
     "jinja",
 }
+
+# Timeout/duration parameter names (for bounded execution checks)
+TIMEOUT_PARAM_NAMES: set[str] = {
+    "timeout",
+    "max_duration",
+    "time_limit",
+    "deadline",
+    "max_time",
+    "ttl",
+    "max_seconds",
+    "duration_limit",
+    "max_wait",
+    "timeout_ms",
+    "timeout_seconds",
+}
+
+# Hash/integrity verification parameter names
+HASH_INTEGRITY_PARAMS: set[str] = {
+    "hash",
+    "checksum",
+    "sha256",
+    "sha512",
+    "digest",
+    "integrity",
+    "fingerprint",
+    "signature",
+    "verify",
+    "verification",
+}
+
+# Allowlist/blocklist parameter names
+ALLOWLIST_PARAMS: set[str] = {
+    "allowlist",
+    "whitelist",
+    "allowed_domains",
+    "allowed_hosts",
+    "blocklist",
+    "denylist",
+    "blacklist",
+    "domain_filter",
+    "allowed_urls",
+    "blocked_urls",
+    "url_filter",
+}
+
+# Role/permission parameter names
+ROLE_PERMISSION_PARAMS: set[str] = {
+    "role",
+    "permission",
+    "scope",
+    "access_level",
+    "privilege",
+    "authorization",
+    "acl",
+    "permissions",
+    "roles",
+    "access",
+}

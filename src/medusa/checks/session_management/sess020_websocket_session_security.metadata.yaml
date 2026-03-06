@@ -1,7 +1,7 @@
 check_id: sess020
 title: Ensure WebSocket session security is configured
 category: session_management
-severity: high
+severity: info
 description: Checks the MCP server for using WebSocket transport without proper session security controls. WebSocket connections
   used for MCP communication may lack authentication token validation on upgrade, origin checking, or per-message session
   verification, allowing unauthorized access to tool invocations.
@@ -27,3 +27,6 @@ owasp_mcp:
 tags:
 - session_management
 - authentication
+- config_gap_detection
+applicable_transports:
+- http

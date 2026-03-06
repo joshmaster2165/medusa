@@ -28,3 +28,5 @@ tags:
 - mixed_content
 - https
 - protocol_downgrade
+applicable_transports:
+- http

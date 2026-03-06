@@ -61,6 +61,7 @@ class ScanEngine:
         self._server_tools: dict[str, list[dict]] = {}  # for change tracking
         self._server_resources: dict[str, list[dict]] = {}
         self._server_prompts: dict[str, list[dict]] = {}
+        self._snapshots: list[ServerSnapshot] = []  # for cross-server checks
 
         all_checks = registry.get_checks(
             categories=categories,
@@ -133,20 +134,46 @@ class ScanEngine:
             )
             return [self._error_finding(meta, snapshot, e)]
 
+    def _filter_checks_for_transport(self, snapshot: ServerSnapshot) -> list[BaseCheck]:
+        """Return only checks applicable to this server's transport type."""
+        applicable: list[BaseCheck] = []
+        for check in self.checks:
+            meta = check.metadata()
+            transports = meta.applicable_transports
+            if transports is not None and snapshot.transport_type not in transports:
+                logger.debug(
+                    "Skipping %s for '%s' (transport=%s, requires=%s)",
+                    meta.check_id,
+                    snapshot.server_name,
+                    snapshot.transport_type,
+                    transports,
+                )
+                continue
+            applicable.append(check)
+        return applicable
+
     async def _scan_server(self, snapshot: ServerSnapshot) -> list[Finding]:
         """Run all checks concurrently against a single server snapshot.
 
         Checks operate on an immutable *ServerSnapshot* with no shared
         mutable state, so it is safe to run them in parallel.  AI checks
         are throttled via a global semaphore configured from snapshot size.
+        Checks with ``applicable_transports`` set are skipped when the
+        server transport does not match.
         """
-        tasks = [self._run_check(check, snapshot) for check in self.checks]
+        applicable_checks = self._filter_checks_for_transport(snapshot)
+        tasks = [self._run_check(check, snapshot) for check in applicable_checks]
         results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Emit progress for skipped checks so the progress bar stays accurate
+        skipped_count = len(self.checks) - len(applicable_checks)
+        for _ in range(skipped_count):
+            self._emit("check_done", "transport_skipped")
 
         all_findings: list[Finding] = []
         for i, result in enumerate(results):
             if isinstance(result, BaseException):
-                meta = self.checks[i].metadata()
+                meta = applicable_checks[i].metadata()
                 logger.error(
                     "Unexpected error in check %s on '%s': %s",
                     meta.check_id,
@@ -156,7 +183,7 @@ class ScanEngine:
                 all_findings.append(self._error_finding(meta, snapshot, result))
             else:
                 all_findings.extend(result)
-            self._emit("check_done", self.checks[i].metadata().check_id)
+            self._emit("check_done", applicable_checks[i].metadata().check_id)
         return all_findings
 
     async def _scan_one(
@@ -176,7 +203,8 @@ class ScanEngine:
                 self._emit("server_done", connector.name)
                 return [], None
 
-            # Store server metadata for change tracking and benchmarks
+            # Store snapshot + server metadata for cross-server / change tracking
+            self._snapshots.append(snapshot)
             self._server_tools[snapshot.server_name] = list(snapshot.tools)
             self._server_resources[snapshot.server_name] = list(snapshot.resources)
             self._server_prompts[snapshot.server_name] = list(
@@ -377,12 +405,36 @@ class ScanEngine:
             )
         return result
 
+    async def _run_post_scan_checks(self) -> list[Finding]:
+        """Run cross-server checks after all individual server scans complete.
+
+        Discovers checks that implement ``execute_cross_server(snapshots)``
+        and calls them with the full list of collected snapshots.
+        """
+        findings: list[Finding] = []
+        for check in self.checks:
+            cross_fn = getattr(check, "execute_cross_server", None)
+            if cross_fn is None:
+                continue
+            try:
+                cross_findings = await cross_fn(self._snapshots)
+                findings.extend(cross_findings)
+                self._emit("check_done", check.metadata().check_id)
+            except Exception as e:
+                logger.error(
+                    "Cross-server check %s failed: %s",
+                    check.metadata().check_id,
+                    e,
+                )
+        return findings
+
     async def scan(self) -> ScanResult:
         """Execute the full scan across all configured servers.
 
         Servers are scanned concurrently up to *max_concurrency*.
         Within each server all checks run concurrently as well.
         AI checks are throttled via a dynamic semaphore.
+        After individual scans, cross-server checks run on all snapshots.
         """
         start_time = time.monotonic()
         scan_id = str(uuid.uuid4())[:8]
@@ -407,6 +459,11 @@ class ScanEngine:
             servers_scanned += 1
             all_findings.extend(findings)
             server_scores.append(score)
+
+        # Post-scan phase: run cross-server checks if multiple servers
+        if len(self._snapshots) >= 2:
+            cross_findings = await self._run_post_scan_checks()
+            all_findings.extend(cross_findings)
 
         duration = time.monotonic() - start_time
         aggregate = calculate_aggregate_score(server_scores)

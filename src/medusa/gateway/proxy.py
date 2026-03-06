@@ -29,6 +29,32 @@ from medusa.gateway.policy import PolicyEngine, PolicyResult, Verdict
 
 logger = logging.getLogger(__name__)
 
+# Lazy reference to AgentStore — only initialized if agent.db exists
+_agent_store = None
+_agent_store_checked = False
+
+
+def _get_agent_store():
+    """Lazily get the AgentStore if agent.db exists.
+
+    Returns None if the agent is not installed (backward compatible).
+    """
+    global _agent_store, _agent_store_checked
+    if _agent_store_checked:
+        return _agent_store
+    _agent_store_checked = True
+    try:
+        from medusa.agent.models import AGENT_DB_PATH
+
+        if AGENT_DB_PATH.exists():
+            from medusa.agent.store import AgentStore
+
+            _agent_store = AgentStore()
+            logger.debug("Agent store found at %s", AGENT_DB_PATH)
+    except Exception:
+        pass
+    return _agent_store
+
 
 @dataclass
 class AuditEvent:
@@ -251,6 +277,27 @@ class StdioGatewayProxy:
                     server_name=self._server_name,
                 )
             )
+
+        # Write to shared SQLite if agent is installed (backward compatible)
+        store = _get_agent_store()
+        if store is not None:
+            try:
+                from medusa.agent.models import TelemetryEvent
+
+                store.insert_event(
+                    TelemetryEvent(
+                        direction=msg.direction.value,
+                        message_type=msg.message_type.value,
+                        method=msg.method,
+                        tool_name=msg.tool_name,
+                        server_name=self._server_name,
+                        verdict=result.verdict.value,
+                        rule_name=result.rule_name,
+                        reason=result.reason,
+                    )
+                )
+            except Exception:
+                logger.debug("Failed to write event to agent store", exc_info=True)
 
         if result.verdict != Verdict.ALLOW:
             logger.warning(

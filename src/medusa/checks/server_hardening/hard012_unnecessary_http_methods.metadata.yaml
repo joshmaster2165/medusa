@@ -1,7 +1,7 @@
 check_id: hard012
 title: Ensure unnecessary HTTP Methods is disabled
 category: server_hardening
-severity: medium
+severity: info
 description: Checks the MCP server for using HTTP-based transports that accept HTTP methods beyond those required for MCP
   operation. Methods such as TRACE, OPTIONS, PUT, DELETE, and PATCH may be enabled by default but are not needed for standard
   MCP communication.
@@ -27,3 +27,6 @@ owasp_mcp:
 tags:
 - server_hardening
 - defense_in_depth
+- config_gap_detection
+applicable_transports:
+- http

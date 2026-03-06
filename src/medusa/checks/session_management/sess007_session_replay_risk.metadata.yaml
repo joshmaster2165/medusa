@@ -1,7 +1,7 @@
 check_id: sess007
 title: Ensure protection against Session Replay Attack
 category: session_management
-severity: high
+severity: info
 description: Checks the MCP server for configurations vulnerable to session replay attacks where captured session tokens or
   authenticated requests can be retransmitted to gain unauthorized access. Without replay protections such as nonces or timestamp
   validation, intercepted tool invocation requests can be replayed by an attacker.
@@ -27,3 +27,4 @@ owasp_mcp:
 tags:
 - session_management
 - authentication
+- config_gap_detection

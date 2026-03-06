@@ -1,7 +1,7 @@
 check_id: dos006
 title: Ensure Timeout Configuration is configured
 category: rate_limiting
-severity: medium
+severity: info
 description: Checks the MCP server for tools that execute without configured timeouts. Missing timeouts allow tool invocations
   to run indefinitely, consuming server resources and blocking processing capacity for other requests. Long-running tools
   can be intentionally triggered as a denial-of- service technique.
@@ -28,3 +28,5 @@ tags:
 - rate_limiting
 - dos
 - availability
+applicable_transports:
+- http

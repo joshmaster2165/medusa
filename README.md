@@ -2,7 +2,7 @@
   <img src="docs/logo.svg" alt="Medusa Logo" width="300">
 </p>
 <p align="center">
-  <strong>Security scanner for MCP servers</strong>
+  <strong>Endpoint security agent for MCP</strong>
 </p>
 
 <p align="center">
@@ -14,14 +14,25 @@
 </p>
 
 <p align="center">
-  Medusa is an open-source CLI tool that connects to <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> servers, runs <strong>559 security checks</strong> across <strong>26 categories</strong>, scores findings on a 0–10 scale, and generates reports and dashboards. An optional <strong>AI reasoning engine</strong> validates findings, detects attack chains, and discovers gaps. It auto-discovers servers from Claude Desktop, Cursor, Windsurf, and custom config files so you can audit your MCP setup with a single command.
+  Medusa is an open-source endpoint security agent that auto-discovers <a href="https://modelcontextprotocol.io">Model Context Protocol (MCP)</a> clients, installs a gateway proxy to intercept all MCP traffic, and enforces security policies in real time. It delivers ALLOW, BLOCK, and COACH verdicts on every JSON-RPC message, scans for secrets and PII via built-in DLP, and streams telemetry to a cloud dashboard. For ad-hoc auditing, Medusa also ships a CLI scanner with <strong>559 security checks</strong> across <strong>26 categories</strong>, an AI reasoning engine, and multi-format reporting.
 </p>
 
 ---
 
 ## Features
 
-- **Auto-discovery** -- finds MCP servers from Claude Desktop, Cursor, Windsurf, and custom config files without manual configuration.
+### Endpoint Agent
+
+- **Background daemon** -- runs as a launchd service on macOS or a Windows Service, starting automatically at boot.
+- **Auto-discovery** -- detects MCP clients such as Claude Desktop, Cursor, Windsurf, and custom configurations without manual setup.
+- **Gateway proxy** -- transparently intercepts all JSON-RPC traffic between MCP clients and servers.
+- **Real-time policy enforcement** -- evaluates every request and response against configurable rules, returning ALLOW, BLOCK, or COACH verdicts.
+- **DLP scanning** -- inspects payloads for secrets, PII, and source code patterns before they leave the endpoint.
+- **Cloud dashboard telemetry** -- batches and streams events to a Supabase-backed dashboard for centralized visibility.
+- **Policy sync** -- pulls updated rules from the dashboard so fleet-wide policy changes propagate automatically.
+
+### Ad-Hoc Scanner
+
 - **559 built-in checks** across 26 categories including tool poisoning (56 TTP-based checks), input validation, credential exposure, authentication, data protection, agentic behavior, resource security, privilege/scope, prompt security, governance, integrity, transport security, session management, SSRF/network, secrets management, server hardening, rate limiting, error handling, sampling security, supply chain, context security, multi-tenant isolation, audit logging, server identity, and toxic flows.
 - **AI reasoning layer** -- run static checks first, then send findings to Claude for validation, false-positive detection, attack chain correlation, gap discovery, and prioritized remediation (`--reason`).
 - **Severity scoring** -- each server receives a 0--10 numeric score and an A--F letter grade.
@@ -33,18 +44,44 @@
 
 ---
 
-## Prerequisites
+## Quick Start: Agent Installation
 
-- **Python 3.12+**
+Install the agent as a background daemon that continuously monitors and protects all MCP traffic on the endpoint.
 
-## Quick Start
+```bash
+pip install medusa-mcp
+medusa-agent install --customer-id <CUSTOMER_ID> --api-key <API_KEY>
+```
+
+The installer registers a launchd service (macOS) or Windows Service, auto-discovers running MCP clients, and begins intercepting traffic immediately.
+
+### Agent Commands
+
+| Command | Description |
+|---------|-------------|
+| `medusa-agent install` | Register the daemon and configure the gateway proxy |
+| `medusa-agent uninstall` | Remove the daemon, proxy config, and local state |
+| `medusa-agent start` | Start the background service |
+| `medusa-agent stop` | Stop the background service |
+| `medusa-agent restart` | Restart the background service |
+| `medusa-agent run` | Run in the foreground (useful for debugging) |
+| `medusa-agent status` | Show daemon health, connected clients, and policy version |
+| `medusa-agent logs` | Tail the agent log output |
+| `medusa-agent config` | Display or modify the active configuration |
+| `medusa-agent version` | Print the installed version |
+
+---
+
+## Quick Start: Ad-Hoc Scanning
+
+Run the scanner directly from the command line to audit your MCP servers on demand.
 
 ```bash
 pip install medusa-mcp
 medusa scan
 ```
 
-Medusa auto-discovers your locally configured MCP servers, runs all checks, and prints a JSON report with scores to stdout.
+Medusa auto-discovers your locally configured MCP servers, runs all 559 checks, and prints a JSON report with scores to stdout.
 
 ### Development Install
 
@@ -55,66 +92,39 @@ poetry install
 poetry run medusa scan
 ```
 
----
-
-## Usage
-
-### Auto-discover and scan all configured servers
+### Scanner Usage
 
 ```bash
+# Auto-discover and scan all configured servers
 medusa scan
-```
 
-### Scan a specific HTTP server
-
-```bash
+# Scan a specific HTTP server
 medusa scan --http https://mcp.example.com
-```
 
-### Static scan + AI reasoning (recommended AI mode)
-
-```bash
+# Static scan + AI reasoning (recommended)
 medusa scan --reason --claude-api-key sk-ant-...
-```
 
-### Generate an HTML dashboard
-
-```bash
+# Generate an HTML dashboard
 medusa scan -o html --output-file report.html
-```
 
-### CI/CD -- fail the build on high-severity findings
-
-```bash
+# CI/CD -- fail the build on high-severity findings
 medusa scan -o json --fail-on high
-```
 
-### List all available checks
-
-```bash
+# List all available checks
 medusa list-checks
-```
 
-### Scan with OWASP MCP Top 10 compliance evaluation
-
-```bash
+# OWASP MCP Top 10 compliance evaluation
 medusa scan --compliance owasp_mcp_top10
-```
 
-### Filter checks by category or severity
-
-```bash
+# Filter checks by category or severity
 medusa scan --category tool_poisoning,authentication
 medusa scan --severity critical
-```
 
-### Exclude specific checks
-
-```bash
+# Exclude specific checks
 medusa scan --exclude-checks tp005,iv005
 ```
 
-### Scan modes
+### Scan Modes
 
 | Flag | Behavior |
 |------|----------|
@@ -123,6 +133,60 @@ medusa scan --exclude-checks tp005,iv005
 | `--deep` | Alias for `--reason` |
 
 The `--reason` flag runs all 559 static checks first, then sends the findings and server snapshot to Claude as a reasoning engine. The AI validates findings, identifies false positives, discovers attack chains across categories, finds gaps the static checks missed, and produces an executive summary with prioritized remediation.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Endpoint                                                       │
+│                                                                 │
+│  ┌──────────────┐    ┌───────────────────────────────────────┐  │
+│  │ Agent Daemon  │───>│ Config Watcher                        │  │
+│  │ (launchd /    │    │  - discovers MCP clients               │  │
+│  │  Win Service) │    │  - auto-proxies their configs          │  │
+│  └──────┬───────┘    └───────────────────────────────────────┘  │
+│         │                                                       │
+│         v                                                       │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ Gateway Proxy                                             │   │
+│  │  MCP Client <──JSON-RPC──> Proxy <──JSON-RPC──> MCP Server│   │
+│  │                              │                            │   │
+│  │                     ┌────────┴────────┐                   │   │
+│  │                     │  Policy Engine  │                   │   │
+│  │                     │  ALLOW / BLOCK  │                   │   │
+│  │                     │  / COACH        │                   │   │
+│  │                     └────────┬────────┘                   │   │
+│  │                              │                            │   │
+│  │                     ┌────────┴────────┐                   │   │
+│  │                     │  DLP Scanner    │                   │   │
+│  │                     │  secrets, PII,  │                   │   │
+│  │                     │  source code    │                   │   │
+│  │                     └─────────────────┘                   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│         │                                                       │
+│         v                                                       │
+│  ┌──────────────┐         ┌──────────────┐                      │
+│  │ Telemetry    │────────>│ Supabase     │                      │
+│  │ Manager      │ batched │ Dashboard    │                      │
+│  │              │ events  │              │                      │
+│  └──────────────┘         └──────┬───────┘                      │
+│                                  │                              │
+│  ┌──────────────┐                │                              │
+│  │ Policy Sync  │<───────────────┘                              │
+│  │  fetches rules, writes local YAML                            │
+│  └──────────────┘                                               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Agent Daemon** -- manages lifecycle, watches for new MCP client configurations, and injects the gateway proxy into each client's config.
+
+**Gateway Proxy** -- sits between every MCP client and server. Each JSON-RPC message passes through the policy engine (ALLOW / BLOCK / COACH) and the DLP scanner before being forwarded.
+
+**Telemetry Manager** -- collects verdicts, DLP hits, and connection metadata, batches them, and ships them to the Supabase cloud dashboard.
+
+**Policy Sync** -- periodically fetches the latest policy rules from the dashboard and writes them to local YAML, ensuring fleet-wide consistency.
 
 ---
 
@@ -230,11 +294,11 @@ To ensure critical findings are properly reflected in the score, Medusa applies 
 | Condition | Maximum Score | Effect |
 |-----------|---------------|--------|
 | 1 CRITICAL finding | 6.9 | Cannot exceed grade C |
-| Each additional CRITICAL | −0.3 | Progressive cap reduction |
+| Each additional CRITICAL | -0.3 | Progressive cap reduction |
 | 5+ HIGH findings | 7.9 | Cannot exceed grade B |
-| Each additional HIGH beyond 5 | −0.05 | Gradual cap reduction |
+| Each additional HIGH beyond 5 | -0.05 | Gradual cap reduction |
 
-For example, a server with 7 critical findings has a cap of `6.9 - (6 × 0.3) = 5.1` (Grade C), regardless of how many checks pass. This ensures that the presence of critical vulnerabilities is always visible in the score, even when the vast majority of checks pass.
+For example, a server with 7 critical findings has a cap of `6.9 - (6 x 0.3) = 5.1` (Grade C), regardless of how many checks pass. This ensures that the presence of critical vulnerabilities is always visible in the score, even when the vast majority of checks pass.
 
 ---
 

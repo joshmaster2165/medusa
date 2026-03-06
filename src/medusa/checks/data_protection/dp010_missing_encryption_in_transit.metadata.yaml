@@ -25,3 +25,5 @@ tags:
 - encryption
 - transport
 - tls
+applicable_transports:
+- http

@@ -1,7 +1,7 @@
 check_id: auth013
 title: Ensure Cookie Flags meets security requirements
 category: authentication
-severity: high
+severity: info
 description: Checks for authentication cookies missing security flags such as Secure, HttpOnly, and SameSite. Cookies without
   these flags are vulnerable to interception over unencrypted connections, cross-site scripting theft, and cross-site request
   forgery.
@@ -25,3 +25,6 @@ tags:
 - cookie_security
 - httponly
 - samesite
+- config_gap_detection
+applicable_transports:
+- http

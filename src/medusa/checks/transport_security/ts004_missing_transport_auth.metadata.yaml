@@ -22,3 +22,5 @@ tags:
 - transport_security
 - authentication
 - headers
+applicable_transports:
+- http

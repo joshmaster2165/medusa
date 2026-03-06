@@ -25,3 +25,5 @@ tags:
 - code_signing
 - updates
 - supply_chain
+applicable_transports:
+- http

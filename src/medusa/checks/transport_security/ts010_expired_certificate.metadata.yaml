@@ -27,3 +27,5 @@ tags:
 - expired_certificate
 - certificate_management
 - lifecycle
+applicable_transports:
+- http

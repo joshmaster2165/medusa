@@ -25,3 +25,5 @@ tags:
 - encryption
 - storage
 - cryptography
+applicable_transports:
+- http

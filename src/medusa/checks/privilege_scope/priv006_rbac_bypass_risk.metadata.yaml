@@ -25,3 +25,5 @@ tags:
 - rbac
 - access_control
 - role_management
+applicable_transports:
+- http

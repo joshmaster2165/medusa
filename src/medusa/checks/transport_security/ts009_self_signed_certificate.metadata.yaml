@@ -27,3 +27,5 @@ tags:
 - self_signed
 - certificate_validation
 - mitm
+applicable_transports:
+- http

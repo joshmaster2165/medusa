@@ -28,3 +28,5 @@ tags:
 - websocket
 - tls
 - encryption
+applicable_transports:
+- http

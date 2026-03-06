@@ -1,0 +1,33 @@
+check_id: tf003
+title: Ensure Server does not expose an Environment Variable Exfiltration Flow
+category: toxic_flows
+severity: critical
+description: >-
+  Checks whether the MCP server exposes tools that can read environment variables
+  alongside tools that can send data externally. This combination enables
+  exfiltration of secrets (API keys, tokens, passwords) stored in environment
+  variables.
+risk_explanation: >-
+  Environment variables are commonly used to store secrets like API keys, database
+  passwords, and authentication tokens. When a server has tools that can read
+  these variables AND tools that can transmit data externally, an attacker can
+  chain them to exfiltrate secrets without direct server access. This is especially
+  dangerous because environment variable access is often overlooked in security
+  reviews.
+remediation: >-
+  1. Separate environment-reading tools from external communication tools onto
+  different MCP servers.
+  2. Restrict environment variable access to only the specific variables needed.
+  3. Implement data loss prevention controls on output sink tools.
+  4. Use secret management services instead of environment variables for sensitive data.
+  5. Add tool call confirmation for any tool chain involving environment access.
+references:
+  - https://owasp.org/www-project-mcp-top-10/
+  - https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+owasp_mcp:
+  - MCP06:2025
+tags:
+  - toxic_flow
+  - environment_variables
+  - exfiltration
+  - secrets

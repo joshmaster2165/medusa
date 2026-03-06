@@ -19,3 +19,5 @@ tags:
 - transport_security
 - tls
 - deprecated_protocol
+applicable_transports:
+- http

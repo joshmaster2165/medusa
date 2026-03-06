@@ -27,3 +27,5 @@ tags:
 - cors
 - cross_origin
 - http_headers
+applicable_transports:
+- http

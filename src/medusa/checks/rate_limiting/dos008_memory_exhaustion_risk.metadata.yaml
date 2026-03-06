@@ -27,3 +27,5 @@ tags:
 - rate_limiting
 - dos
 - availability
+applicable_transports:
+- http

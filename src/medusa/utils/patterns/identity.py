@@ -31,3 +31,9 @@ GENERIC_SERVER_NAMES: set[str] = {
     "tmp",
     "temp",
 }
+
+# Known MCP protocol versions
+KNOWN_MCP_PROTOCOL_VERSIONS: list[str] = ["2025-03-26", "2024-11-05", "2024-10-07"]
+
+# Current stable MCP protocol version
+CURRENT_MCP_PROTOCOL_VERSION: str = "2025-03-26"

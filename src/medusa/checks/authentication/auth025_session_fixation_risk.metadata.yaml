@@ -1,7 +1,7 @@
 check_id: auth025
 title: Ensure protection against Session Fixation
 category: authentication
-severity: high
+severity: info
 description: Checks for session management implementations that do not regenerate session IDs after successful authentication.
   Session fixation allows an attacker to set a known session ID before the user authenticates, then hijack the session after
   authentication elevates its privileges.
@@ -29,3 +29,4 @@ tags:
 - session_fixation
 - session_management
 - hijacking
+- config_gap_detection
