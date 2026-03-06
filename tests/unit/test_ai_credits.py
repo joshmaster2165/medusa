@@ -16,7 +16,7 @@ class TestCreditManager:
     async def test_check_balance_success(self):
         mgr = CreditManager(
             api_key="test-key",
-            dashboard_url="https://example.com/api/v1/reports",
+            supabase_url="https://example.com/api/v1/reports",
         )
 
         mock_resp = httpx.Response(status_code=200, json={"available": 42})
@@ -28,7 +28,7 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_check_balance_unauthorized(self):
-        mgr = CreditManager(api_key="bad", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="bad", supabase_url="https://x.com")
 
         mock_resp = httpx.Response(status_code=401, text="Unauthorized")
 
@@ -38,7 +38,7 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_preflight_sufficient(self):
-        mgr = CreditManager(api_key="key", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="key", supabase_url="https://x.com")
 
         mock_resp = httpx.Response(
             status_code=200,
@@ -54,7 +54,7 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_preflight_insufficient(self):
-        mgr = CreditManager(api_key="key", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="key", supabase_url="https://x.com")
 
         mock_resp = httpx.Response(
             status_code=200,
@@ -67,7 +67,7 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_deduct_success(self):
-        mgr = CreditManager(api_key="key", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="key", supabase_url="https://x.com")
 
         mock_resp = httpx.Response(
             status_code=200,
@@ -81,7 +81,7 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_deduct_insufficient_returns_false(self):
-        mgr = CreditManager(api_key="key", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="key", supabase_url="https://x.com")
 
         mock_resp = httpx.Response(status_code=402, text="No credits")
 
@@ -91,7 +91,7 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_deduct_network_error_raises(self):
-        mgr = CreditManager(api_key="key", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="key", supabase_url="https://x.com")
 
         with patch.object(
             mgr._client,
@@ -104,5 +104,5 @@ class TestCreditManager:
 
     @pytest.mark.asyncio
     async def test_remaining_none_before_any_call(self):
-        mgr = CreditManager(api_key="key", dashboard_url="https://x.com")
+        mgr = CreditManager(api_key="key", supabase_url="https://x.com")
         assert mgr.remaining is None

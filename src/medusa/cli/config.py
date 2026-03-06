@@ -7,7 +7,8 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
-DEFAULT_DASHBOARD_URL = "https://app.medusa.security/api/v1/reports"
+DEFAULT_SUPABASE_URL = "https://hgwytiwobyjhchpsimra.supabase.co"
+DEFAULT_DASHBOARD_URL = "https://app.medusa.security"
 CONFIG_DIR = Path.home() / ".medusa"
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
 
@@ -17,6 +18,7 @@ class UserConfig(BaseModel):
 
     api_key: str | None = None
     dashboard_url: str = DEFAULT_DASHBOARD_URL
+    supabase_url: str = DEFAULT_SUPABASE_URL
 
     # AI scanning settings
     claude_api_key: str | None = None

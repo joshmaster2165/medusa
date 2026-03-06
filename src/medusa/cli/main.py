@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 import httpx
@@ -25,7 +26,12 @@ from rich.table import Table
 from medusa import __version__
 from medusa.cli.banner import print_banner
 from medusa.compliance.framework import evaluate_compliance, load_framework
-from medusa.connectors.config_discovery import discover_servers
+from medusa.connectors.config_discovery import (
+    CLIENT_DISPLAY_NAMES,
+    CONFIG_PATHS,
+    discover_servers,
+    discover_servers_detailed,
+)
 from medusa.connectors.http import HttpConnector
 from medusa.connectors.stdio import StdioConnector
 from medusa.core.models import Status
@@ -37,6 +43,9 @@ from medusa.reporters.json_reporter import JsonReporter
 from medusa.reporters.markdown_reporter import MarkdownReporter
 from medusa.reporters.sarif_reporter import SarifReporter
 from medusa.utils.config_parser import load_config
+
+if TYPE_CHECKING:
+    from medusa.gateway.policy import GatewayPolicy
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -55,7 +64,7 @@ class _OrderedGroup(click.Group):
 EPILOG = """
 \b
 Quick start:
-  medusa scan                                         Auto-discover & scan
+  medusa quickscan                                    Discover & scan everything
   medusa scan --http http://localhost:3000/mcp        Scan specific server
   medusa scan --deep                                  Static + AI deep analysis
   medusa scan -o html --output-file report.html       HTML dashboard
@@ -612,6 +621,244 @@ def scan(  # noqa: C901, PLR0912, PLR0913
         sys.exit(1)
 
 
+# ── quickscan ─────────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.option(
+    "-o",
+    "--output",
+    "output_format",
+    type=click.Choice(["console", "json", "html", "markdown", "sarif"]),
+    default="console",
+    help="Report format.  [default: console]",
+)
+@click.option(
+    "--output-file",
+    type=str,
+    default=None,
+    help="Write report to file instead of stdout.",
+)
+@click.option(
+    "--severity",
+    type=str,
+    default=None,
+    help="Minimum severity to include in results.",
+)
+@click.option(
+    "--fail-on",
+    type=str,
+    default="critical",
+    help="Exit code 1 if findings at or above this severity.  [default: critical]",
+)
+@click.option(
+    "--upload",
+    is_flag=True,
+    default=False,
+    help="Upload results to your Medusa dashboard.",
+)
+@click.option(
+    "--api-key",
+    type=str,
+    default=None,
+    help="Medusa API key (overrides env/config).",
+)
+@click.option(
+    "--max-concurrency",
+    type=int,
+    default=4,
+    help="Max parallel server scans.  [default: 4]",
+)
+@click.pass_context
+def quickscan(
+    ctx: click.Context,
+    output_format: str,
+    output_file: str | None,
+    severity: str | None,
+    fail_on: str,
+    upload: bool,
+    api_key: str | None,
+    max_concurrency: int,
+) -> None:
+    """Auto-discover and scan ALL MCP servers on your machine.
+
+    Finds servers from Claude Desktop, Cursor, VS Code, Windsurf,
+    Claude Code, Gemini CLI, Zed, Cline, Roo Code, Continue.dev,
+    Amazon Q, and GitHub Copilot configs — no setup needed.
+
+    \b
+    Examples:
+      medusa quickscan
+      medusa quickscan --severity high
+      medusa quickscan -o html --output-file report.html
+      medusa quickscan -o json --fail-on high
+    """
+    quiet = ctx.obj.get("quiet", False)
+
+    if not quiet:
+        console.print()
+        console.print("  [bold green]🔍 Medusa Quick Scan[/bold green]")
+        console.print()
+
+    # Discover all servers grouped by client
+    grouped = discover_servers_detailed(include_project_configs=True)
+
+    if not grouped:
+        if not quiet:
+            # Build list of checked locations
+            from medusa.connectors.config_discovery import _get_platform_key
+
+            platform_key = _get_platform_key()
+            lines = ["[yellow]No MCP servers found.[/yellow]\n"]
+            lines.append("Checked these locations:")
+            for client_key, paths in CONFIG_PATHS.items():
+                display = CLIENT_DISPLAY_NAMES.get(client_key, client_key)
+                path_str = paths.get(platform_key, "")
+                lines.append(f"  [red]✗[/red] {display} [dim]({path_str})[/dim]")
+            lines.append("")
+            lines.append("To scan a specific server:")
+            lines.append("  [cyan]medusa scan --stdio[/cyan] 'npx my-server'")
+            lines.append("  [cyan]medusa scan --http[/cyan] http://localhost:3000/mcp")
+            console.print(
+                Panel(
+                    "\n".join(lines),
+                    title="[bold yellow]No Targets[/bold yellow]",
+                    border_style="yellow",
+                    padding=(1, 2),
+                )
+            )
+        sys.exit(3)
+
+    # Flatten connectors and display discovery summary
+    connectors = []
+    total_servers = 0
+    for client_name, client_connectors in grouped.items():
+        connectors.extend(client_connectors)
+        total_servers += len(client_connectors)
+
+    if not quiet:
+        client_word = "client" if len(grouped) == 1 else "clients"
+        server_word = "server" if total_servers == 1 else "servers"
+        console.print(
+            f"  [green]Discovered {total_servers} MCP "
+            f"{server_word} across "
+            f"{len(grouped)} {client_word}:[/green]"
+        )
+        console.print()
+
+        for client_name, client_connectors in grouped.items():
+            console.print(f"  [bold]{client_name}:[/bold]")
+            for c in client_connectors:
+                transport = "http" if hasattr(c, "url") else "stdio"
+                console.print(f"    [dim]•[/dim] {c.name} [dim]({transport})[/dim]")
+        console.print()
+
+    # Discover and filter checks
+    registry = CheckRegistry()
+    registry.discover_checks()
+
+    severities = [severity] if severity else None
+
+    engine = ScanEngine(
+        connectors=connectors,
+        registry=registry,
+        severities=severities,
+        max_concurrency=max_concurrency,
+        scan_mode="static",
+        enable_reasoning=False,
+    )
+
+    num_checks = len(engine.checks)
+    total_work = len(connectors) * num_checks
+
+    if not quiet:
+        check_word = "check" if num_checks == 1 else "checks"
+        console.print(f"  [green]▸ Running {num_checks} {check_word}[/green] [dim](static)[/dim]")
+        console.print()
+
+    # Run scan with progress bar
+    with Progress(
+        SpinnerColumn(style="green"),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(
+            bar_width=40,
+            complete_style="green",
+            finished_style="bold green",
+        ),
+        TaskProgressColumn(),
+        TimeElapsedColumn(),
+        console=console,
+        disable=quiet,
+    ) as progress:
+        task = progress.add_task("Scanning...", total=total_work)
+
+        failed_servers: list[str] = []
+
+        def on_progress(event: str, detail: str) -> None:
+            if event == "check_done":
+                progress.update(task, advance=1)
+            elif event == "server_start":
+                progress.update(
+                    task,
+                    description=f"Scanning [cyan]{detail}[/cyan]...",
+                )
+            elif event == "server_done":
+                pass  # tracked via result.servers_scanned below
+
+        engine.progress_callback = on_progress
+        result = asyncio.run(engine.scan())
+
+    # Report connection failures
+    failed_count = total_servers - result.servers_scanned
+    if failed_count > 0 and not quiet:
+        # Identify which servers failed by checking scores
+        scanned_names = {s.server_name for s in result.server_scores}
+        all_names = [c.name for c in connectors]
+        failed_servers = [n for n in all_names if n not in scanned_names]
+        console.print()
+        console.print(f"  [yellow]⚠ {failed_count} server(s) failed to connect (skipped):[/yellow]")
+        for name in failed_servers:
+            console.print(f"    [dim]•[/dim] [yellow]{name}[/yellow]")
+        console.print()
+
+    # Generate report
+    reporters = {
+        "console": ConsoleReporter,
+        "json": JsonReporter,
+        "html": HtmlReporter,
+        "markdown": MarkdownReporter,
+        "sarif": SarifReporter,
+    }
+
+    effective_format = output_format
+    if output_format == "console" and not sys.stdout.isatty() and not output_file:
+        effective_format = "json"
+
+    reporter = reporters[effective_format]()
+
+    if output_file:
+        if effective_format == "console":
+            reporter = JsonReporter()
+        reporter.write(result, output_file)
+        if not quiet:
+            console.print(f"  [green]▸ Report saved:[/green] {output_file}")
+    else:
+        reporter.print_to_console(result, console)
+
+    # Upload results to dashboard
+    if upload:
+        _upload_results(result, api_key, quiet)
+
+    # Print summary for non-console formats
+    if not quiet and effective_format != "console":
+        console.print()
+        _print_summary(result)
+
+    # Exit code
+    if has_findings_above_threshold(result, fail_on):
+        sys.exit(1)
+
+
 # ── AI setup ──────────────────────────────────────────────────────────────
 
 
@@ -686,7 +933,7 @@ def _setup_ai_scan(
 
         client = BackendProxiedClient(
             medusa_api_key=medusa_key,
-            dashboard_url=user_config.dashboard_url,
+            supabase_url=user_config.supabase_url,
         )
 
     # Set up credit manager (needs Medusa API key)
@@ -694,7 +941,7 @@ def _setup_ai_scan(
     if medusa_key:
         credit_mgr = CreditManager(
             api_key=medusa_key,
-            dashboard_url=user_config.dashboard_url,
+            supabase_url=user_config.supabase_url,
         )
 
     configure_ai(client=client, credit_manager=credit_mgr)
@@ -755,11 +1002,12 @@ def _deduct_ai_scan_credit(quiet: bool) -> bool:
 
 
 def _upload_results(result, api_key: str | None, quiet: bool) -> None:
-    """Upload scan results to the Medusa dashboard."""
+    """Upload scan results to the Medusa dashboard via Supabase Edge Function."""
     from medusa.cli.config import load_user_config
 
     user_config = load_user_config()
-    upload_url = user_config.dashboard_url
+    base = user_config.supabase_url.rstrip("/")
+    upload_url = f"{base}/functions/v1/reports"
 
     # Resolve API key: --api-key flag > env var > saved config
     resolved_key = api_key or os.environ.get("MEDUSA_API_KEY", "") or (user_config.api_key or "")
@@ -770,7 +1018,7 @@ def _upload_results(result, api_key: str | None, quiet: bool) -> None:
             Panel(
                 "[red]API key required for upload.[/red]\n\n"
                 "Provide one of:\n"
-                "  [cyan]--api-key[/cyan] sk_medusa_...\n"
+                "  [cyan]--api-key[/cyan] med_...\n"
                 "  [cyan]MEDUSA_API_KEY[/cyan] environment variable\n"
                 "  [cyan]medusa configure[/cyan] to save it",
                 title="[bold red]Upload Failed[/bold red]",
@@ -790,14 +1038,75 @@ def _upload_results(result, api_key: str | None, quiet: bool) -> None:
             headers={"Authorization": f"Bearer {resolved_key}"},
             timeout=30,
         )
-        if resp.status_code == 200:
+        if resp.status_code in (200, 201):
             if not quiet:
-                # Build dashboard base from upload endpoint
-                if "/api/" in upload_url:
-                    dash = upload_url.rsplit("/api/", 1)[0]
-                else:
-                    dash = upload_url
-                console.print(f"  [green]▸ Uploaded to dashboard:[/green] [dim]{dash}[/dim]")
+                data = resp.json()
+                scan_id = data.get("scan_id", "")
+                dash = user_config.dashboard_url.rstrip("/")
+                console.print(
+                    f"  [green]▸ Uploaded to dashboard:[/green] [dim]{dash}/reports/{scan_id}[/dim]"
+                )
+        else:
+            try:
+                detail = resp.json().get("error", resp.text)
+            except (ValueError, KeyError):
+                detail = resp.text[:200] or f"HTTP {resp.status_code}"
+            console.print(f"  [red]✗ Upload failed ({resp.status_code}):[/red] {detail}")
+    except httpx.HTTPError as exc:
+        console.print(f"  [red]✗ Upload failed:[/red] {exc}")
+
+
+# ── Benchmark Upload ─────────────────────────────────────────────────────
+
+
+def _upload_benchmark(report, api_key: str | None, quiet: bool) -> None:
+    """Upload benchmark results to the Medusa dashboard."""
+    from medusa.cli.config import load_user_config
+
+    user_config = load_user_config()
+
+    # Build Edge Function URL from Supabase project base
+    base = user_config.supabase_url.rstrip("/")
+    upload_url = f"{base}/functions/v1/upload-benchmark"
+
+    # Resolve API key: flag > env var > saved config
+    resolved_key = api_key or os.environ.get("MEDUSA_API_KEY", "") or (user_config.api_key or "")
+
+    if not resolved_key:
+        console.print()
+        console.print(
+            Panel(
+                "[red]API key required for upload.[/red]\n\n"
+                "Provide one of:\n"
+                "  [cyan]--api-key[/cyan] sk-med_...\n"
+                "  [cyan]MEDUSA_API_KEY[/cyan] environment variable\n"
+                "  [cyan]medusa configure[/cyan] to save it",
+                title="[bold red]Benchmark Upload Failed[/bold red]",
+                border_style="red",
+                padding=(1, 2),
+            )
+        )
+        return
+
+    if not quiet:
+        console.print("\n  [dim]Uploading benchmark to dashboard...[/dim]")
+
+    try:
+        resp = httpx.post(
+            upload_url,
+            json=report.model_dump(mode="json"),
+            headers={"Authorization": f"Bearer {resolved_key}"},
+            timeout=30,
+        )
+        if resp.status_code == 200:
+            body = resp.json()
+            run_id = body.get("id", "")
+            server_count = body.get("servers", 0)
+            if not quiet:
+                console.print(
+                    f"  [green]▸ Benchmark uploaded:[/green] "
+                    f"[dim]{run_id} ({server_count} servers)[/dim]"
+                )
         else:
             try:
                 detail = resp.json().get("error", resp.text)
@@ -1044,6 +1353,18 @@ def list_advisories_cmd(severity: str | None, check: str | None, tag: str | None
     default=False,
     help="Output markdown report to stdout.",
 )
+@click.option(
+    "--upload",
+    is_flag=True,
+    default=False,
+    help="Upload benchmark results to your Medusa dashboard.",
+)
+@click.option(
+    "--api-key",
+    type=str,
+    default=None,
+    help="Medusa API key for upload.",
+)
 @click.pass_context
 def benchmark(
     ctx: click.Context,
@@ -1051,6 +1372,8 @@ def benchmark(
     output_dir: str,
     timeout: int,
     markdown: bool,
+    upload: bool,
+    api_key: str | None,
 ) -> None:
     """Run benchmarks against popular MCP servers.
 
@@ -1063,6 +1386,7 @@ def benchmark(
       medusa benchmark                                   Scan all catalog servers
       medusa benchmark --servers filesystem,memory       Scan specific servers
       medusa benchmark --markdown                        Markdown report to stdout
+      medusa benchmark --upload                          Upload results to dashboard
       medusa benchmark --timeout 120 --output-dir ./out  Custom timeout & output
     """
     from medusa.benchmarks.report import (
@@ -1097,6 +1421,10 @@ def benchmark(
     if not quiet:
         console.print(f"\n  [dim]Results saved to {filepath}[/dim]")
 
+    # Upload to dashboard
+    if upload:
+        _upload_benchmark(report, api_key=api_key, quiet=quiet)
+
 
 # ── configure ─────────────────────────────────────────────────────────────
 
@@ -1104,6 +1432,12 @@ def benchmark(
 @cli.command()
 @click.option("--api-key", type=str, default=None, help="Medusa dashboard API key.")
 @click.option("--dashboard-url", type=str, default=None, help="Dashboard API URL.")
+@click.option(
+    "--supabase-url",
+    type=str,
+    default=None,
+    help="Supabase project URL.",
+)
 @click.option("--claude-api-key", type=str, default=None, help="Anthropic API key for AI scans.")
 @click.option(
     "--ai-mode",
@@ -1116,6 +1450,7 @@ def configure(
     ctx: click.Context,
     api_key: str | None,
     dashboard_url: str | None,
+    supabase_url: str | None,
     claude_api_key: str | None,
     ai_mode: str | None,
 ) -> None:
@@ -1140,7 +1475,9 @@ def configure(
     config = load_user_config()
 
     # Interactive prompts if no flags provided
-    no_flags = all(v is None for v in [api_key, dashboard_url, claude_api_key, ai_mode])
+    no_flags = all(
+        v is None for v in [api_key, dashboard_url, supabase_url, claude_api_key, ai_mode]
+    )
     if no_flags:
         if not quiet:
             console.print(
@@ -1188,6 +1525,8 @@ def configure(
         config.api_key = api_key
     if dashboard_url is not None:
         config.dashboard_url = dashboard_url
+    if supabase_url is not None:
+        config.supabase_url = supabase_url
     if claude_api_key is not None:
         config.claude_api_key = claude_api_key or None
     if ai_mode is not None:
@@ -1233,6 +1572,7 @@ def settings(ctx: click.Context) -> None:
         dash_table.add_row("API Key", "[red]Not configured[/red]")
 
     dash_table.add_row("Dashboard URL", f"[dim]{config.dashboard_url}[/dim]")
+    dash_table.add_row("Supabase URL", f"[dim]{config.supabase_url}[/dim]")
 
     console.print(
         Panel(
@@ -1775,6 +2115,331 @@ def watch(
 
     if not quiet:
         console.print("\n  [dim]Watch stopped.[/dim]")
+
+
+# ── gateway ──────────────────────────────────────────────────────────────
+
+
+@cli.group("gateway")
+def gateway_group() -> None:
+    """MCP Gateway — real-time proxy for traffic interception.
+
+    Install the Medusa Gateway to transparently intercept MCP traffic
+    between clients (Cursor, Claude Code) and servers, enforcing
+    security policies, DLP, and audit logging in real-time.
+
+    \b
+    Commands:
+      install    Route MCP traffic through the gateway
+      uninstall  Restore original MCP client configs
+      status     Show gateway installation status
+      proxy      Run the gateway proxy (internal)
+    """
+
+
+@gateway_group.command("install")
+@click.option(
+    "--client",
+    type=str,
+    default=None,
+    help="MCP client to install (cursor, claude_desktop, etc). Default: all.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show what would change without modifying files.",
+)
+@click.option(
+    "--server",
+    "server_names",
+    multiple=True,
+    help="Only proxy specific server(s) by name.",
+)
+@click.pass_context
+def gateway_install(
+    ctx: click.Context,
+    client: str | None,
+    dry_run: bool,
+    server_names: tuple[str, ...],
+) -> None:
+    """Install the Medusa Gateway proxy for MCP clients.
+
+    Rewrites MCP client configurations to route server connections
+    through the Medusa Gateway, enabling real-time policy enforcement,
+    DLP scanning, and audit logging.
+
+    \b
+    Examples:
+      medusa gateway install                        Install for all clients
+      medusa gateway install --client cursor         Install for Cursor only
+      medusa gateway install --dry-run               Preview changes
+      medusa gateway install --server my-db-server   Only proxy specific server
+    """
+    from medusa.gateway.config_rewriter import ConfigRewriter
+
+    quiet = ctx.obj.get("quiet", False)
+    rewriter = ConfigRewriter()
+
+    # Determine which clients to install
+    if client:
+        clients_to_install = [client]
+    else:
+        available = rewriter.list_clients()
+        clients_to_install = [c["client"] for c in available if c["exists"] and c["servers"] > 0]
+
+    if not clients_to_install:
+        console.print("  [yellow]No MCP client configs found.[/yellow]")
+        return
+
+    names = list(server_names) if server_names else None
+    total_modified = 0
+
+    for c in clients_to_install:
+        result = rewriter.install(c, dry_run=dry_run, server_names=names)
+
+        if "error" in result:
+            if not quiet:
+                console.print(f"  [red]✗ {c}:[/red] {result['error']}")
+            continue
+
+        modified = result.get("would_modify") or result.get("modified", [])
+        if not modified:
+            if not quiet:
+                console.print(f"  [dim]{c}: No servers to modify[/dim]")
+            continue
+
+        total_modified += len(modified)
+        if dry_run:
+            if not quiet:
+                console.print(
+                    f"  [cyan]▸ {c}:[/cyan] Would proxy {len(modified)} server(s): "
+                    f"[dim]{', '.join(modified)}[/dim]"
+                )
+        else:
+            if not quiet:
+                console.print(
+                    f"  [green]▸ {c}:[/green] Gateway installed for {len(modified)} server(s): "
+                    f"[dim]{', '.join(modified)}[/dim]"
+                )
+                if backup := result.get("backup"):
+                    console.print(f"    [dim]Backup: {backup}[/dim]")
+
+    if not quiet:
+        if dry_run:
+            console.print(
+                f"\n  [cyan]Dry run complete:[/cyan] {total_modified} server(s) would be proxied."
+            )
+        elif total_modified:
+            console.print(
+                f"\n  [green]Gateway installed![/green] {total_modified} server(s) "
+                f"now routed through Medusa."
+            )
+            console.print("  [dim]Restart your MCP clients for changes to take effect.[/dim]")
+
+
+@gateway_group.command("uninstall")
+@click.option(
+    "--client",
+    type=str,
+    default=None,
+    help="MCP client to uninstall (cursor, claude_desktop, etc). Default: all.",
+)
+@click.pass_context
+def gateway_uninstall(ctx: click.Context, client: str | None) -> None:
+    """Remove the Medusa Gateway proxy and restore original configs.
+
+    \b
+    Examples:
+      medusa gateway uninstall                  Uninstall from all clients
+      medusa gateway uninstall --client cursor  Uninstall from Cursor only
+    """
+    from medusa.gateway.config_rewriter import ConfigRewriter
+
+    quiet = ctx.obj.get("quiet", False)
+    rewriter = ConfigRewriter()
+
+    if client:
+        clients_to_uninstall = [client]
+    else:
+        available = rewriter.list_clients()
+        clients_to_uninstall = [
+            c["client"] for c in available if c["exists"] and c["gateway_installed"] > 0
+        ]
+
+    if not clients_to_uninstall:
+        console.print("  [dim]No gateway installations found.[/dim]")
+        return
+
+    total_restored = 0
+    for c in clients_to_uninstall:
+        result = rewriter.uninstall(c)
+        if "error" in result:
+            if not quiet:
+                console.print(f"  [red]✗ {c}:[/red] {result['error']}")
+            continue
+
+        restored = result.get("restored", [])
+        if restored:
+            total_restored += len(restored)
+            if not quiet:
+                console.print(
+                    f"  [green]▸ {c}:[/green] Restored {len(restored)} server(s): "
+                    f"[dim]{', '.join(restored)}[/dim]"
+                )
+
+    if not quiet and total_restored:
+        console.print(f"\n  [green]Gateway removed![/green] {total_restored} server(s) restored.")
+        console.print("  [dim]Restart your MCP clients for changes to take effect.[/dim]")
+
+
+@gateway_group.command("status")
+@click.pass_context
+def gateway_status(ctx: click.Context) -> None:
+    """Show gateway installation status for all MCP clients.
+
+    \b
+    Examples:
+      medusa gateway status
+    """
+    from medusa.gateway.config_rewriter import ConfigRewriter
+
+    quiet = ctx.obj.get("quiet", False)
+    rewriter = ConfigRewriter()
+    clients = rewriter.list_clients()
+
+    if not quiet:
+        table = Table(show_header=True, box=None, padding=(0, 2), pad_edge=False)
+        table.add_column("Client", style="bold")
+        table.add_column("Config", style="dim")
+        table.add_column("Servers")
+        table.add_column("Gateway")
+
+        for c in clients:
+            if not c["exists"]:
+                table.add_row(
+                    c["client"],
+                    c["config_path"],
+                    "[dim]—[/dim]",
+                    "[dim]not installed[/dim]",
+                )
+                continue
+
+            gw_status = (
+                f"[green]{c['gateway_installed']}/{c['servers']} proxied[/green]"
+                if c["gateway_installed"] > 0
+                else "[dim]not installed[/dim]"
+            )
+
+            table.add_row(
+                c["client"],
+                c["config_path"],
+                str(c["servers"]),
+                gw_status,
+            )
+
+        console.print()
+        console.print(
+            Panel(
+                table,
+                title="[bold]Medusa Gateway Status[/bold]",
+                border_style="bright_blue",
+                padding=(1, 2),
+            )
+        )
+        console.print()
+
+
+@cli.command("gateway-proxy", hidden=True)
+@click.argument("server_command", nargs=-1, required=True)
+@click.option(
+    "--policy-file",
+    type=click.Path(exists=False),
+    default=None,
+    help="Path to gateway policy YAML.",
+)
+@click.option("--server-name", type=str, default=None, help="Name for this server.")
+@click.pass_context
+def gateway_proxy_cmd(
+    ctx: click.Context,
+    server_command: tuple[str, ...],
+    policy_file: str | None,
+    server_name: str | None,
+) -> None:
+    """Run the gateway proxy for a single MCP server (internal command).
+
+    This command is invoked by rewritten MCP client configs. It spawns
+    the real MCP server as a subprocess and proxies all JSON-RPC traffic
+    through the Medusa policy engine.
+
+    \b
+    Usage (typically auto-invoked):
+      medusa gateway-proxy -- npx -y @modelcontextprotocol/server-everything
+    """
+    from medusa.gateway.policy import PolicyEngine
+    from medusa.gateway.proxy import StdioGatewayProxy
+
+    cmd = list(server_command)
+    # Strip leading "--" separator if present
+    if cmd and cmd[0] == "--":
+        cmd = cmd[1:]
+
+    if not cmd:
+        click.echo("Error: No server command provided.", err=True)
+        sys.exit(1)
+
+    # Load policy
+    policy = _load_gateway_policy(policy_file)
+    engine = PolicyEngine(policy)
+
+    name = server_name or " ".join(cmd[:2])
+    proxy = StdioGatewayProxy(
+        server_command=cmd,
+        policy_engine=engine,
+        server_name=name,
+    )
+
+    try:
+        exit_code = asyncio.run(proxy.run())
+    except KeyboardInterrupt:
+        exit_code = 0
+
+    sys.exit(exit_code)
+
+
+def _load_gateway_policy(path: str | None = None) -> GatewayPolicy:
+    """Load gateway policy from YAML file or return defaults."""
+    import yaml
+
+    from medusa.gateway.policy import GatewayPolicy
+
+    # Try explicit path, then default location
+    search_paths = []
+    if path:
+        search_paths.append(Path(path))
+    search_paths.append(Path.home() / ".medusa" / "gateway-policy.yaml")
+
+    for p in search_paths:
+        if p.exists():
+            try:
+                raw = yaml.safe_load(p.read_text()) or {}
+                policies = raw.get("policies", raw)
+                return GatewayPolicy(
+                    blocked_servers=policies.get("blocked_servers", []),
+                    allowed_servers=policies.get("allowed_servers"),
+                    blocked_tools=policies.get("blocked_tools", []),
+                    blocked_tool_patterns=policies.get("blocked_tool_patterns", []),
+                    max_calls_per_minute=policies.get("max_calls_per_minute", 0),
+                    block_secrets=policies.get("data_protection", {}).get("block_secrets", True),
+                    block_pii=policies.get("data_protection", {}).get("block_pii", False),
+                    scan_responses=policies.get("data_protection", {}).get("scan_responses", True),
+                    scan_code=policies.get("data_protection", {}).get("scan_code", False),
+                    coaching_enabled=policies.get("coaching", {}).get("enabled", True),
+                )
+            except Exception:
+                pass
+
+    return GatewayPolicy()
 
 
 if __name__ == "__main__":

@@ -21,22 +21,20 @@ class CreditCheckResult:
 
 
 class CreditManager:
-    """Manages AI scan credits via the Medusa dashboard backend.
+    """Manages AI scan credits via the Medusa Supabase backend.
 
     Credits are tracked server-side in Supabase. The CLI calls
-    the dashboard API to check balance and deduct credits.
+    the Edge Function to check balance and deduct credits.
     """
 
     def __init__(
         self,
         api_key: str,
-        dashboard_url: str,
+        supabase_url: str,
         timeout: int = 15,
     ) -> None:
-        base = dashboard_url.rstrip("/")
-        if "/api/" in base:
-            base = base.rsplit("/api/", 1)[0]
-        self._base = f"{base}/api/v1/credits"
+        base = supabase_url.rstrip("/")
+        self._base = f"{base}/functions/v1/credits"
 
         self._client = httpx.AsyncClient(
             headers={

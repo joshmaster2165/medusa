@@ -150,14 +150,12 @@ class BackendProxiedClient:
     def __init__(
         self,
         medusa_api_key: str,
-        dashboard_url: str,
+        supabase_url: str,
         timeout: int = 120,
     ) -> None:
-        # Derive AI endpoint from dashboard URL
-        base = dashboard_url.rstrip("/")
-        if "/api/" in base:
-            base = base.rsplit("/api/", 1)[0]
-        self._ai_url = f"{base}/api/v1/ai/analyze"
+        # Derive AI endpoint from Supabase Edge Function URL
+        base = supabase_url.rstrip("/")
+        self._ai_url = f"{base}/functions/v1/ai-analyze"
 
         self._client = httpx.AsyncClient(
             headers={

@@ -139,7 +139,7 @@ class TestBackendProxiedClient:
         """Proxied client returns parsed response."""
         client = BackendProxiedClient(
             medusa_api_key="medusa-key",
-            dashboard_url="https://example.com/api/v1/reports",
+            supabase_url="https://example.com/api/v1/reports",
         )
         assert "example.com" in client._ai_url
 
@@ -159,7 +159,7 @@ class TestBackendProxiedClient:
         """402 from proxy raises AiApiError about credits."""
         client = BackendProxiedClient(
             medusa_api_key="key",
-            dashboard_url="https://example.com",
+            supabase_url="https://example.com",
         )
 
         mock_response = httpx.Response(status_code=402, text="No credits")
@@ -175,7 +175,7 @@ class TestBackendProxiedClient:
         """502 from proxy triggers retry and succeeds."""
         client = BackendProxiedClient(
             medusa_api_key="key",
-            dashboard_url="https://example.com",
+            supabase_url="https://example.com",
         )
 
         fail_resp = httpx.Response(status_code=502, text="Bad Gateway")
@@ -198,7 +198,7 @@ class TestBackendProxiedClient:
         """429 rate limit triggers retry and succeeds."""
         client = BackendProxiedClient(
             medusa_api_key="key",
-            dashboard_url="https://example.com",
+            supabase_url="https://example.com",
         )
 
         fail_resp = httpx.Response(status_code=429, text="Rate limited")
@@ -221,7 +221,7 @@ class TestBackendProxiedClient:
         """All retries exhausted raises AiApiError."""
         client = BackendProxiedClient(
             medusa_api_key="key",
-            dashboard_url="https://example.com",
+            supabase_url="https://example.com",
         )
 
         fail_resp = httpx.Response(status_code=502, text="Bad Gateway")
@@ -240,7 +240,7 @@ class TestBackendProxiedClient:
         """401 is not retried — fails immediately."""
         client = BackendProxiedClient(
             medusa_api_key="key",
-            dashboard_url="https://example.com",
+            supabase_url="https://example.com",
         )
 
         mock_response = httpx.Response(status_code=401, text="Unauthorized")

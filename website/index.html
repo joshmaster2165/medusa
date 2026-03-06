@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medusa — MCP Security Scanner</title>
+  <meta name="description" content="Scan MCP servers for security vulnerabilities. 500+ checks, AI-powered deep analysis, CI/CD integration. Protect your AI tool infrastructure.">
+  <meta name="theme-color" content="#7c3aed">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+  <style>
+    :root {
+      --purple-50: #faf5ff;
+      --purple-100: #f3e8ff;
+      --purple-200: #e9d5ff;
+      --purple-300: #d8b4fe;
+      --purple-400: #c084fc;
+      --purple-500: #a855f7;
+      --purple-600: #9333ea;
+      --purple-700: #7c3aed;
+      --purple-800: #6b21a8;
+      --purple-900: #581c87;
+      --gray-50: #fafafa;
+      --gray-100: #f4f4f5;
+      --gray-200: #e4e4e7;
+      --gray-300: #d4d4d8;
+      --gray-400: #a1a1aa;
+      --gray-500: #71717a;
+      --gray-600: #52525b;
+      --gray-700: #3f3f46;
+      --gray-800: #27272a;
+      --gray-900: #18181b;
+      --green-500: #22c55e;
+      --green-600: #16a34a;
+      --red-500: #ef4444;
+      --amber-500: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: var(--gray-900);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 2rem;
+    }
+    nav .inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    nav .logo {
+      font-weight: 800; font-size: 1.25rem;
+      color: var(--purple-700); text-decoration: none;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    nav .logo span { font-size: 1.4rem; }
+    nav .links { display: flex; gap: 2rem; align-items: center; }
+    nav .links a {
+      text-decoration: none; color: var(--gray-600);
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    nav .links a:hover { color: var(--purple-700); }
+    nav .cta-sm {
+      background: var(--purple-700); color: #fff !important;
+      padding: 0.5rem 1.25rem; border-radius: 8px;
+      font-weight: 600; font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    nav .cta-sm:hover { background: var(--purple-800); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 8rem 2rem 4rem;
+      text-align: center;
+      background: linear-gradient(135deg, var(--purple-50) 0%, #fff 50%, var(--purple-50) 100%);
+    }
+    .hero .badge {
+      display: inline-block;
+      background: var(--purple-100); color: var(--purple-700);
+      padding: 0.35rem 1rem; border-radius: 50px;
+      font-size: 0.8rem; font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800; line-height: 1.1;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--purple-600), var(--purple-800));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero .sub {
+      font-size: 1.2rem; color: var(--gray-600);
+      max-width: 640px; margin: 0 auto 2rem;
+    }
+    .hero .actions {
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.75rem; border-radius: 10px;
+      font-size: 1rem; font-weight: 600; text-decoration: none;
+      transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--purple-700); color: #fff;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
+    .btn-primary:hover {
+      background: var(--purple-800);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.4);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #fff; color: var(--gray-800);
+      border: 1px solid var(--gray-300);
+    }
+    .btn-secondary:hover { border-color: var(--purple-400); color: var(--purple-700); }
+
+    .terminal {
+      max-width: 720px; margin: 0 auto;
+      background: var(--gray-900); border-radius: 12px;
+      overflow: hidden; text-align: left;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .terminal .bar {
+      background: var(--gray-800); padding: 0.75rem 1rem;
+      display: flex; gap: 6px; align-items: center;
+    }
+    .terminal .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal .dot.r { background: #ff5f57; }
+    .terminal .dot.y { background: #febc2e; }
+    .terminal .dot.g { background: #28c840; }
+    .terminal pre {
+      padding: 1.25rem 1.5rem; font-size: 0.85rem;
+      line-height: 1.7; overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+      color: #e4e4e7;
+    }
+    .terminal .dim { color: var(--gray-500); }
+    .terminal .green { color: #4ade80; }
+    .terminal .purple { color: var(--purple-400); }
+    .terminal .red { color: #f87171; }
+    .terminal .amber { color: #fbbf24; }
+
+    /* ── Sections ── */
+    section { padding: 5rem 2rem; }
+    section.alt { background: var(--gray-50); }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .section-header {
+      text-align: center; margin-bottom: 3rem;
+    }
+    .section-header h2 {
+      font-size: 2.25rem; font-weight: 800;
+      margin-bottom: 0.75rem; letter-spacing: -0.02em;
+    }
+    .section-header p {
+      font-size: 1.1rem; color: var(--gray-500);
+      max-width: 600px; margin: 0 auto;
+    }
+
+    /* ── Stats Bar ── */
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2rem; padding: 3rem 2rem;
+      max-width: 900px; margin: 0 auto;
+    }
+    .stat { text-align: center; }
+    .stat .num {
+      font-size: 2.5rem; font-weight: 800;
+      color: var(--purple-700);
+    }
+    .stat .label {
+      font-size: 0.9rem; color: var(--gray-500); margin-top: 0.25rem;
+    }
+
+    /* ── Features Grid ── */
+    .features {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: 12px; padding: 2rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .feature:hover {
+      border-color: var(--purple-300);
+      box-shadow: 0 4px 20px rgba(124,58,237,0.08);
+    }
+    .feature .icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--purple-100); color: var(--purple-700);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1rem;
+    }
+    .feature h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature p { font-size: 0.9rem; color: var(--gray-600); line-height: 1.6; }
+
+    /* ── How it Works ── */
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem; counter-reset: step;
+    }
+    .step {
+      text-align: center; padding: 1.5rem;
+      counter-increment: step;
+    }
+    .step::before {
+      content: counter(step);
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--purple-700); color: #fff;
+      font-size: 1.25rem; font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .step h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.9rem; color: var(--gray-600); }
+    .step code {
+      display: block; margin-top: 0.75rem;
+      background: var(--gray-100); padding: 0.5rem 1rem;
+      border-radius: 8px; font-size: 0.8rem;
+      font-family: 'SF Mono', monospace;
+    }
+
+    /* ── Pricing ── */
+    .pricing {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem; max-width: 1000px; margin: 0 auto;
+    }
+    .plan {
+      border: 1px solid var(--gray-200); border-radius: 16px;
+      padding: 2.5rem 2rem; position: relative;
+      background: #fff;
+    }
+    .plan.featured {
+      border: 2px solid var(--purple-600);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.12);
+    }
+    .plan.featured .popular {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--purple-700); color: #fff;
+      padding: 0.25rem 1rem; border-radius: 50px;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .plan .name {
+      font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;
+    }
+    .plan .desc {
+      font-size: 0.85rem; color: var(--gray-500); margin-bottom: 1.5rem;
+    }
+    .plan .price {
+      font-size: 2.75rem; font-weight: 800; margin-bottom: 0.25rem;
+    }
+    .plan .price .period {
+      font-size: 1rem; font-weight: 400; color: var(--gray-400);
+    }
+    .plan .price .currency {
+      font-size: 1.5rem; vertical-align: super; font-weight: 600;
+    }
+    .plan ul {
+      list-style: none; margin: 1.5rem 0; padding: 0;
+    }
+    .plan ul li {
+      padding: 0.4rem 0; font-size: 0.9rem;
+      display: flex; align-items: flex-start; gap: 0.5rem;
+    }
+    .plan ul li::before {
+      content: "✓"; color: var(--green-600); font-weight: 700;
+      flex-shrink: 0;
+    }
+    .plan .btn { width: 100%; justify-content: center; margin-top: 1rem; }
+
+    /* ── CI/CD Section ── */
+    .cicd-code {
+      max-width: 700px; margin: 0 auto;
+      background: var(--gray-900); border-radius: 12px;
+      overflow: hidden;
+    }
+    .cicd-code .tab {
+      background: var(--gray-800); padding: 0.5rem 1rem;
+      font-size: 0.75rem; color: var(--gray-400);
+      font-family: 'SF Mono', monospace;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .cicd-code .tab span { color: var(--purple-400); }
+    .cicd-code pre {
+      padding: 1.25rem 1.5rem; font-size: 0.8rem;
+      line-height: 1.7; overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #e4e4e7;
+    }
+    .yaml-key { color: #7dd3fc; }
+    .yaml-val { color: #86efac; }
+    .yaml-comment { color: var(--gray-500); }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      background: linear-gradient(135deg, var(--purple-700), var(--purple-900));
+      color: #fff; padding: 5rem 2rem; border-radius: 0;
+    }
+    .cta-section h2 { font-size: 2.25rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .cta-section p {
+      font-size: 1.1rem; opacity: 0.85; margin-bottom: 2rem;
+      max-width: 500px; margin-left: auto; margin-right: auto;
+    }
+    .cta-section .btn-primary {
+      background: #fff; color: var(--purple-800);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    }
+    .cta-section .btn-primary:hover { background: var(--purple-50); }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--gray-900); color: var(--gray-400);
+      padding: 3rem 2rem; text-align: center; font-size: 0.85rem;
+    }
+    footer a { color: var(--purple-400); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    footer .links { margin-bottom: 1rem; display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      nav .links a:not(.cta-sm) { display: none; }
+      .features { grid-template-columns: 1fr; }
+      .pricing { grid-template-columns: 1fr; max-width: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Nav -->
+  <nav>
+    <div class="inner">
+      <a href="#" class="logo"><span>🐍</span> Medusa</a>
+      <div class="links">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="https://docs.medusa.security" target="_blank">Docs</a>
+        <a href="https://github.com/medusasecurity/medusa" target="_blank">GitHub</a>
+        <a href="https://app.medusa.security" class="cta-sm">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge">Open Source MCP Security</div>
+    <h1>Secure your <em>AI tool<br>infrastructure</em></h1>
+    <p class="sub">
+      The first security scanner built for the Model Context Protocol.
+      500+ checks, AI-powered deep analysis, and CI/CD integration out of the box.
+    </p>
+    <div class="actions">
+      <a href="#pricing" class="btn btn-primary">Get Started Free</a>
+      <a href="https://github.com/medusasecurity/medusa" class="btn btn-secondary" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Star on GitHub
+      </a>
+    </div>
+
+    <div class="terminal">
+      <div class="bar">
+        <div class="dot r"></div>
+        <div class="dot y"></div>
+        <div class="dot g"></div>
+      </div>
+      <pre><span class="dim">$</span> pip install medusa-mcp
+<span class="dim">$</span> medusa scan --stdio <span class="green">'npx -y @modelcontextprotocol/server-everything'</span>
+
+<span class="purple">  Medusa MCP Security Scanner v1.0</span>
+
+  Server: <span class="green">server-everything</span>  (stdio)
+  Tools:  <span class="green">22 discovered</span>
+  Checks: <span class="purple">542 run</span> in 1.2s
+
+  <span class="red">CRITICAL</span>  iv001  Command injection via 'command' param
+  <span class="red">HIGH</span>      tp002  Hidden instructions in tool description
+  <span class="amber">MEDIUM</span>    iv019  Missing length constraint on 'query'
+
+  Grade: <span class="amber">C</span>  |  Score: <span class="amber">5.2</span>/10  |  12 findings</pre>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="num">542</div>
+      <div class="label">Security Checks</div>
+    </div>
+    <div class="stat">
+      <div class="num">12</div>
+      <div class="label">Check Categories</div>
+    </div>
+    <div class="stat">
+      <div class="num">A+&ndash;F</div>
+      <div class="label">Security Grading</div>
+    </div>
+    <div class="stat">
+      <div class="num">SARIF</div>
+      <div class="label">GitHub Integration</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section class="alt" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Built for MCP Security</h2>
+        <p>Comprehensive coverage across every attack surface in the Model Context Protocol.</p>
+      </div>
+      <div class="features">
+        <div class="feature">
+          <div class="icon">🔍</div>
+          <h3>Tool Poisoning Detection</h3>
+          <p>Detect hidden instructions, description manipulation, and schema deception in MCP tool definitions before LLMs act on them.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">💉</div>
+          <h3>Input Validation</h3>
+          <p>Find command injection, path traversal, SQL injection, and unbounded parameters in tool schemas automatically.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">🤖</div>
+          <h3>AI Deep Analysis</h3>
+          <p>Claude-powered reasoning that understands semantic context, identifies multi-step attack chains, and catches what static checks miss.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">🔑</div>
+          <h3>Credential Exposure</h3>
+          <p>Scan for leaked API keys, tokens, passwords, and secrets in tool descriptions, parameters, and server configurations.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">🛡️</div>
+          <h3>OWASP MCP Top 10</h3>
+          <p>Full coverage of the OWASP MCP Top 10 security risks, mapped to every check for compliance tracking.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">⚡</div>
+          <h3>CI/CD Ready</h3>
+          <p>GitHub Action with SARIF upload, fail-on thresholds, and security tab integration. Scan on every PR automatically.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section>
+    <div class="container">
+      <div class="section-header">
+        <h2>Start Scanning in 30 Seconds</h2>
+        <p>No configuration needed. Just point Medusa at your MCP server.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Install</h3>
+          <p>One command to install from PyPI.</p>
+          <code>pip install medusa-mcp</code>
+        </div>
+        <div class="step">
+          <h3>Scan</h3>
+          <p>Point at any stdio or HTTP MCP server.</p>
+          <code>medusa scan --stdio 'npx ...'</code>
+        </div>
+        <div class="step">
+          <h3>Fix</h3>
+          <p>Actionable remediation guidance for every finding.</p>
+          <code>Grade: A+ (0 findings)</code>
+        </div>
+        <div class="step">
+          <h3>Automate</h3>
+          <p>Add to CI/CD and scan on every change.</p>
+          <code>medusa quickscan</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CI/CD -->
+  <section class="alt">
+    <div class="container">
+      <div class="section-header">
+        <h2>GitHub Action Integration</h2>
+        <p>Add MCP security scanning to your CI/CD pipeline in minutes. Results appear in the GitHub Security tab.</p>
+      </div>
+      <div class="cicd-code">
+        <div class="tab"><span>YAML</span> .github/workflows/medusa.yml</div>
+        <pre><span class="yaml-key">name:</span> <span class="yaml-val">MCP Security Scan</span>
+<span class="yaml-key">on:</span> <span class="yaml-val">[push, pull_request]</span>
+
+<span class="yaml-key">jobs:</span>
+  <span class="yaml-key">scan:</span>
+    <span class="yaml-key">runs-on:</span> <span class="yaml-val">ubuntu-latest</span>
+    <span class="yaml-key">permissions:</span>
+      <span class="yaml-key">security-events:</span> <span class="yaml-val">write</span>
+    <span class="yaml-key">steps:</span>
+      - <span class="yaml-key">uses:</span> <span class="yaml-val">actions/checkout@v4</span>
+      - <span class="yaml-key">uses:</span> <span class="yaml-val">medusasecurity/medusa@v1</span>
+        <span class="yaml-key">with:</span>
+          <span class="yaml-key">server-command:</span> <span class="yaml-val">'npx -y your-mcp-server'</span>
+          <span class="yaml-key">fail-on:</span> <span class="yaml-val">high</span>
+          <span class="yaml-comment"># Results auto-upload to GitHub Security tab</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <h2>Simple, Transparent Pricing</h2>
+        <p>Start free with 500+ static checks. Upgrade for AI-powered deep analysis.</p>
+      </div>
+      <div class="pricing">
+        <!-- Free -->
+        <div class="plan">
+          <div class="name">Community</div>
+          <div class="desc">For individual developers and open source projects</div>
+          <div class="price">Free</div>
+          <ul>
+            <li>542 static security checks</li>
+            <li>All check categories included</li>
+            <li>SARIF, JSON, HTML, Markdown output</li>
+            <li>GitHub Action integration</li>
+            <li>QuickScan multi-server discovery</li>
+            <li>A+ through F security grading</li>
+            <li>10 free deep scan credits</li>
+          </ul>
+          <a href="https://github.com/medusasecurity/medusa" class="btn btn-secondary" target="_blank">
+            Install Free
+          </a>
+        </div>
+
+        <!-- Pro -->
+        <div class="plan featured">
+          <div class="popular">Most Popular</div>
+          <div class="name">Pro</div>
+          <div class="desc">For teams shipping AI-powered products</div>
+          <div class="price"><span class="currency">$</span>49<span class="period">/mo</span></div>
+          <ul>
+            <li>Everything in Community</li>
+            <li>100 AI deep scan credits/month</li>
+            <li>Claude-powered reasoning engine</li>
+            <li>Multi-step attack chain detection</li>
+            <li>Dashboard with scan history</li>
+            <li>API access for automation</li>
+            <li>Email support</li>
+          </ul>
+          <a href="https://app.medusa.security/signup?plan=pro" class="btn btn-primary">
+            Start 14-Day Free Trial
+          </a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="plan">
+          <div class="name">Enterprise</div>
+          <div class="desc">For organizations with compliance requirements</div>
+          <div class="price">Custom</div>
+          <ul>
+            <li>Everything in Pro</li>
+            <li>Unlimited deep scan credits</li>
+            <li>BYOK: use your own Anthropic key</li>
+            <li>Custom check development</li>
+            <li>SBOM and compliance reports</li>
+            <li>SSO and team management</li>
+            <li>Dedicated support and SLA</li>
+          </ul>
+          <a href="mailto:sales@medusa.security" class="btn btn-secondary">
+            Contact Sales
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Secure Your MCP Servers Today</h2>
+    <p>Join thousands of developers protecting their AI tool infrastructure with Medusa.</p>
+    <a href="https://github.com/medusasecurity/medusa" class="btn btn-primary" target="_blank">
+      Get Started &mdash; It's Free
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="links">
+      <a href="https://github.com/medusasecurity/medusa" target="_blank">GitHub</a>
+      <a href="https://docs.medusa.security" target="_blank">Documentation</a>
+      <a href="https://app.medusa.security" target="_blank">Dashboard</a>
+      <a href="mailto:hello@medusa.security">Contact</a>
+    </div>
+    <p>&copy; 2025 Medusa Security. Open source under MIT license.</p>
+  </footer>
+</body>
+</html>
