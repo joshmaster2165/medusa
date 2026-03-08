@@ -11,6 +11,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -68,6 +69,10 @@ class AgentConfig(BaseModel):
     config_watch_interval_seconds: int = 30
     health_check_interval_seconds: int = 60
 
+    # Config monitoring
+    config_monitor_interval_seconds: int = 300
+    config_monitor_enabled: bool = True
+
     # Feature flags
     telemetry_enabled: bool = True
     policy_sync_enabled: bool = True
@@ -106,6 +111,9 @@ class TelemetryEvent(BaseModel):
     verdict: str = ""  # "allow" | "block" | "coach"
     rule_name: str = ""
     reason: str = ""
+
+    # Extra data for config monitoring events
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     # Uploaded flag (managed by daemon)
     uploaded: bool = False

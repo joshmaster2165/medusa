@@ -415,6 +415,38 @@ class TestConfigRewriterInstallUninstall:
 # ── ConfigRewriter.list_clients tests ─────────────────────────────────
 
 
+# ── _find_medusa_bin tests ────────────────────────────────────────────
+
+
+class TestFindMedusaBin:
+    """Verify _find_medusa_bin looks for 'medusa-agent'."""
+
+    def test_returns_medusa_agent_when_found(self):
+        from medusa.gateway.config_rewriter import _find_medusa_bin
+
+        with patch("shutil.which", return_value="/usr/bin/medusa-agent"):
+            result = _find_medusa_bin()
+        assert result == "/usr/bin/medusa-agent"
+
+    def test_fallback_to_medusa_agent_string(self):
+        from medusa.gateway.config_rewriter import _find_medusa_bin
+
+        with patch("shutil.which", return_value=None):
+            result = _find_medusa_bin()
+        assert result == "medusa-agent"
+
+    def test_rewritten_entry_uses_medusa_agent(self):
+        """Integration: rewrite_server_entry should use medusa-agent."""
+        entry = {"command": "npx", "args": ["-y", "server"]}
+        with patch(
+            "medusa.gateway.config_rewriter._find_medusa_bin",
+            return_value="medusa-agent",
+        ):
+            result = rewrite_server_entry(entry)
+        assert result["command"] == "medusa-agent"
+        assert result["args"][0] == "gateway-proxy"
+
+
 class TestListClients:
     def test_list_with_existing_config(self, tmp_path):
         config_path = tmp_path / "mcp.json"

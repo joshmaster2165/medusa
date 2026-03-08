@@ -1,128 +1,112 @@
 # Configuration
 
-Medusa supports two configuration layers:
+Medusa uses two configuration files:
 
-1. **Scan config** (`medusa.yaml`) — controls what to scan and how
-2. **User config** (`~/.medusa/config.yaml`) — stores API keys and preferences
+1. **Agent config** (`~/.medusa/agent-config.yaml`) -- agent identity and daemon settings
+2. **Gateway policy** (`~/.medusa/gateway-policy.yaml`) -- security rules for the gateway proxy
 
-## Scan Configuration
+---
 
-Create a `medusa.yaml` in your project root:
+## Agent Configuration
 
-```yaml
-version: "1"
+The agent configuration is created during installation and lives at:
 
-discovery:
-  auto_discover: true
-  servers:
-    - name: my-server
-      transport: http
-      url: http://localhost:3000/mcp
-    - name: local-tools
-      transport: stdio
-      command: npx
-      args: ["my-mcp-tools"]
-      env:
-        NODE_ENV: production
-
-checks:
-  exclude:
-    - ai001  # Skip specific checks
-  categories:
-    - tool_poisoning
-    - credential_exposure
-  min_severity: low
-
-scoring:
-  fail_threshold: high
-
-output:
-  formats: [json, html]
-  directory: ./medusa-reports
-  include_evidence: true
-  include_passing: false
-
-compliance:
-  frameworks:
-    - owasp_mcp_top10
-
-connection:
-  timeout: 30
-  retries: 2
-  parallel: 4
+```
+~/.medusa/agent-config.yaml
 ```
 
-### Config Search Paths
-
-Medusa searches for config files in this order:
-
-1. `--scan-config path/to/config.yaml` (explicit)
-2. `./medusa.yaml`
-3. `./medusa.yml`
-4. `./.medusa.yaml`
-
-### Environment Variables
-
-Use `${ENV_VAR}` syntax for secrets:
-
-```yaml
-discovery:
-  servers:
-    - name: production
-      transport: http
-      url: ${MCP_SERVER_URL}
-      headers:
-        Authorization: "Bearer ${MCP_AUTH_TOKEN}"
-```
-
-## User Configuration
-
-Run the setup wizard:
+### View current config
 
 ```bash
-medusa configure
+medusa-agent config
 ```
 
-Or set values directly:
+### Configuration fields
 
-```bash
-medusa configure --api-key sk_medusa_abc123
-medusa configure --claude-api-key sk-ant-... --ai-mode byok
+| Field                              | Type    | Default | Description                             |
+| ---------------------------------- | ------- | ------- | --------------------------------------- |
+| `customer_id`                      | string  | --      | Your Medusa dashboard customer ID       |
+| `api_key`                          | string  | --      | API key for dashboard authentication    |
+| `agent_id`                         | string  | auto    | Unique agent identifier (auto-generated)|
+| `telemetry_interval_seconds`       | integer | 60      | How often to upload telemetry (seconds) |
+| `policy_sync_interval_seconds`     | integer | 300     | How often to fetch policy (seconds)     |
+| `config_watcher_interval_seconds`  | integer | 30      | How often to check for new MCP servers  |
+| `health_check_interval_seconds`    | integer | 60      | How often to verify proxy liveness      |
+| `config_monitor_interval_seconds`  | integer | 300     | How often to run config security checks |
+| `config_monitor_enabled`           | boolean | true    | Enable/disable config monitoring        |
+
+!!! note
+    Editing the config file while the daemon is running requires a restart
+    (`medusa-agent restart`) for changes to take effect.
+
+---
+
+## Gateway Policy
+
+The gateway policy controls how the proxy evaluates MCP traffic. It lives at:
+
+```
+~/.medusa/gateway-policy.yaml
 ```
 
-Settings are stored in `~/.medusa/config.yaml`:
+When the agent daemon is running, this file is automatically synced from the
+Medusa dashboard every 5 minutes. You can also edit it by hand for local
+testing.
+
+### Example policy
 
 ```yaml
-api_key: sk_medusa_abc123
-dashboard_url: https://app.medusa.security/api/v1/reports
-claude_api_key: sk-ant-...
-claude_model: claude-sonnet-4-20250514
-ai_mode: byok
+policies:
+  blocked_tools:
+    - dangerous_tool
+    - delete_everything
+  blocked_tool_patterns:
+    - ".*admin.*"
+  blocked_servers:
+    - untrusted-server
+  allowed_servers:
+    - approved-server-1
+  max_calls_per_minute: 60
+  data_protection:
+    block_secrets: true
+    block_pii: false
+    scan_responses: true
+    scan_code: false
+  coaching:
+    enabled: true
 ```
 
-### View Current Settings
+### Policy fields
 
-```bash
-medusa settings
+| Field                            | Type           | Description |
+| -------------------------------- | -------------- | ----------- |
+| `blocked_tools`                  | list of string | Tool names that are unconditionally blocked. |
+| `blocked_tool_patterns`          | list of string | Regex patterns matched against tool names. |
+| `blocked_servers`                | list of string | Server names whose traffic is blocked entirely. |
+| `allowed_servers`                | list of string | If set, only these servers are allowed. |
+| `max_calls_per_minute`           | integer        | Rate limit for tool calls per proxy instance. |
+| `data_protection.block_secrets`  | boolean        | Block messages containing detected secrets. |
+| `data_protection.block_pii`     | boolean        | Block messages containing detected PII. |
+| `data_protection.scan_responses` | boolean        | Apply DLP to server responses too. |
+| `data_protection.scan_code`      | boolean        | Apply DLP to code blocks. |
+| `coaching.enabled`               | boolean        | Return coaching suggestions in blocked responses. |
+
+See the [Gateway Guide](../guide/gateway.md) for detailed information on
+policy enforcement and DLP scanning.
+
+---
+
+## Data Storage
+
+All runtime data is stored at:
+
+```
+~/.medusa/
+  agent-config.yaml       # Agent configuration
+  gateway-policy.yaml     # Gateway policy (synced from dashboard)
+  agent.db                # SQLite database (events, state, proxy registry)
+  agent.pid               # PID file for daemon management
 ```
 
-API keys are masked in the output for security.
-
-## Configuration Reference
-
-| Section | Key | Type | Default | Description |
-|---------|-----|------|---------|-------------|
-| `discovery` | `auto_discover` | bool | `true` | Auto-discover from known configs |
-| `discovery` | `config_files` | list[str] | `[]` | Additional config files to scan |
-| `discovery` | `servers` | list | `[]` | Explicit server definitions |
-| `checks` | `include` | list[str] | `[]` | Only run these check IDs |
-| `checks` | `exclude` | list[str] | `[]` | Skip these check IDs |
-| `checks` | `categories` | list[str] | `[]` | Only run these categories |
-| `checks` | `min_severity` | str | `"low"` | Minimum severity to include |
-| `scoring` | `fail_threshold` | str | `"high"` | Exit code 1 if findings at this level |
-| `output` | `formats` | list[str] | `["json"]` | Output formats |
-| `output` | `directory` | str | `"./medusa-reports"` | Report output directory |
-| `compliance` | `frameworks` | list[str] | `[]` | Compliance frameworks to evaluate |
-| `connection` | `timeout` | int | `30` | Connection timeout in seconds |
-| `connection` | `retries` | int | `2` | Connection retry attempts |
-| `connection` | `parallel` | int | `4` | Max parallel server scans |
+The SQLite database uses WAL (Write-Ahead Logging) mode for safe concurrent
+access between the daemon and gateway proxy processes.

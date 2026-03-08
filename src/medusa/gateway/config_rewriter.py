@@ -7,7 +7,7 @@ are backed up before modification.
 Transforms server entries like:
     {"command": "npx", "args": ["-y", "@server/foo"]}
 Into:
-    {"command": "medusa", "args": ["gateway-proxy", "--", "npx", "-y", "@server/foo"]}
+    {"command": "medusa-agent", "args": ["gateway-proxy", "--", "npx", "-y", "@server/foo"]}
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from medusa.connectors.config_discovery import CONFIG_PATHS, _get_platform_key
+from medusa.connectors.mcp_clients import CONFIG_PATHS, _get_platform_key
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +42,11 @@ BACKUP_SUFFIX = ".medusa-backup"
 
 
 def _find_medusa_bin() -> str:
-    """Find the medusa CLI binary path."""
+    """Find the medusa-agent CLI binary path."""
     import shutil as sh
 
-    path = sh.which("medusa")
-    return path or "medusa"
+    path = sh.which("medusa-agent")
+    return path or "medusa-agent"
 
 
 def rewrite_server_entry(entry: dict[str, Any]) -> dict[str, Any]:

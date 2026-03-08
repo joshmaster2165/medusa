@@ -64,6 +64,7 @@ class AgentStore:
                     verdict TEXT DEFAULT '',
                     rule_name TEXT DEFAULT '',
                     reason TEXT DEFAULT '',
+                    metadata TEXT DEFAULT '{}',
                     uploaded INTEGER DEFAULT 0
                 );
 
@@ -108,14 +109,16 @@ class AgentStore:
 
     def insert_event(self, event: TelemetryEvent) -> None:
         """Insert a telemetry event (called by proxy processes)."""
+        import json
+
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT OR IGNORE INTO events
                     (id, timestamp, agent_id, customer_id, direction,
                      message_type, method, tool_name, server_name,
-                     verdict, rule_name, reason, uploaded)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                     verdict, rule_name, reason, metadata, uploaded)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
                 """,
                 (
                     event.id,
@@ -130,6 +133,7 @@ class AgentStore:
                     event.verdict,
                     event.rule_name,
                     event.reason,
+                    json.dumps(event.metadata) if event.metadata else "{}",
                 ),
             )
 

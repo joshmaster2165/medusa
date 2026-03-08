@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from medusa.agent.store import AgentStore
-from medusa.connectors.config_discovery import CONFIG_PATHS, _get_platform_key
+from medusa.connectors.mcp_clients import CONFIG_PATHS, _get_platform_key
 from medusa.gateway.config_rewriter import ConfigRewriter
 
 logger = logging.getLogger(__name__)

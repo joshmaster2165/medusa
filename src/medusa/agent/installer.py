@@ -94,6 +94,13 @@ class AgentInstaller:
             )
             results["servers_proxied"] = len(install_result.get("installed", []))
 
+            # 4b. Migrate old "medusa" → "medusa-agent" in any existing configs
+            migrated = self._migrate_legacy_configs()
+            if migrated:
+                results["steps"].append(
+                    {"step": "migrate_legacy_configs", "status": "ok", "migrated": migrated}
+                )
+
             # 5. Register with dashboard
             if not skip_register and api_key:
                 reg_result = self._register_with_dashboard()
@@ -184,6 +191,62 @@ class AgentInstaller:
             results["error"] = str(e)
 
         return results
+
+    def _migrate_legacy_configs(self) -> int:
+        """Migrate existing configs that use 'medusa' to 'medusa-agent'.
+
+        Handles upgrades from older installations that wrote
+        ``"command": "medusa"`` with ``gateway-proxy`` in args.
+        Returns number of entries migrated.
+        """
+        import json
+
+        from medusa.connectors.mcp_clients import CONFIG_PATHS, _get_platform_key
+        from medusa.gateway.config_rewriter import GATEWAY_MARKER, _find_medusa_bin
+
+        platform_key = _get_platform_key()
+        migrated = 0
+        new_bin = _find_medusa_bin()  # Now returns medusa-agent
+
+        for _client, paths in CONFIG_PATHS.items():
+            path_str = paths.get(platform_key)
+            if not path_str:
+                continue
+            from pathlib import Path
+
+            config_path = Path(path_str).expanduser()
+            if not config_path.exists():
+                continue
+
+            try:
+                raw = json.loads(config_path.read_text())
+            except Exception:
+                continue
+
+            servers = raw.get("mcpServers") or {}
+            if not servers and "mcp" in raw:
+                servers = raw.get("mcp", {}).get("servers", {})
+            if not servers:
+                servers = raw.get("servers", {})
+
+            changed = False
+            for _name, entry in servers.items():
+                if not isinstance(entry, dict):
+                    continue
+                if not entry.get(GATEWAY_MARKER):
+                    continue
+                cmd = entry.get("command", "")
+                args = entry.get("args", [])
+                # Detect legacy "medusa" (not "medusa-agent") with gateway-proxy
+                if "gateway-proxy" in args and "medusa-agent" not in cmd:
+                    entry["command"] = new_bin
+                    changed = True
+                    migrated += 1
+
+            if changed:
+                config_path.write_text(json.dumps(raw, indent=2) + "\n")
+
+        return migrated
 
     def _register_with_dashboard(self) -> dict[str, Any]:
         """Register this agent with the Medusa dashboard."""

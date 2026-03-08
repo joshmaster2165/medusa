@@ -323,6 +323,172 @@ def version() -> None:
     console.print(f"Platform: {get_platform()}")
 
 
+# ── Config Monitoring ─────────────────────────────────────────────────
+
+
+@agent_cli.command()
+def monitor() -> None:
+    """Show MCP config security posture, findings, and drift."""
+    from rich.panel import Panel
+
+    from medusa.agent.config_monitor import (
+        ConfigDriftDetector,
+        ConfigSecurityChecker,
+        PostureScorer,
+    )
+
+    # Posture score
+    checker = ConfigSecurityChecker()
+    findings = checker.check_all_configs()
+
+    scorer = PostureScorer()
+    posture = scorer.calculate(findings=findings)
+
+    posture_color = {
+        "GREEN": "green",
+        "YELLOW": "yellow",
+        "RED": "red",
+    }.get(posture.posture, "white")
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold {posture_color}]{posture.posture}[/bold {posture_color}]",
+            title="Security Posture",
+            expand=False,
+        )
+    )
+
+    # Coverage table
+    cov_table = Table(title="Gateway Coverage", show_header=False)
+    cov_table.add_column("Metric", style="bold")
+    cov_table.add_column("Value")
+    cov_table.add_row("Total servers", str(posture.total_servers))
+    cov_table.add_row("Proxied through gateway", str(posture.proxied_servers))
+    cov_table.add_row(
+        "Coverage",
+        f"[{posture_color}]{posture.gateway_coverage_pct}%[/{posture_color}]",
+    )
+    dlp_str = "[green]Yes[/green]" if posture.dlp_enabled else "[red]No[/red]"
+    cov_table.add_row("DLP enabled", dlp_str)
+    cov_table.add_row(
+        "Rate limiting",
+        "[green]Yes[/green]" if posture.rate_limiting_configured else "[dim]No[/dim]",
+    )
+    console.print(cov_table)
+
+    # Findings table
+    if findings:
+        sev_colors = {
+            "critical": "red bold",
+            "high": "red",
+            "medium": "yellow",
+            "low": "dim",
+        }
+        f_table = Table(title=f"Security Findings ({len(findings)})")
+        f_table.add_column("Rule")
+        f_table.add_column("Severity")
+        f_table.add_column("Client")
+        f_table.add_column("Server")
+        f_table.add_column("Description")
+
+        for f in findings:
+            style = sev_colors.get(f.severity, "white")
+            f_table.add_row(
+                f.rule_id,
+                f"[{style}]{f.severity.upper()}[/{style}]",
+                f.client_name,
+                f.server_name,
+                f.description,
+            )
+        console.print(f_table)
+    else:
+        console.print("[green]No security findings.[/green]")
+
+    # Drift (recent events from store)
+    if AGENT_DB_PATH.exists():
+        try:
+            store = AgentStore()
+            drift_detector = ConfigDriftDetector(store)
+            drift_events = drift_detector.detect_drift()
+            if drift_events:
+                d_table = Table(title=f"Config Drift ({len(drift_events)} change(s))")
+                d_table.add_column("Type")
+                d_table.add_column("Server")
+                d_table.add_column("Description")
+                for evt in drift_events:
+                    d_table.add_row(
+                        evt.rule_name,
+                        evt.server_name,
+                        evt.reason,
+                    )
+                console.print(d_table)
+            else:
+                console.print("[dim]No config drift detected.[/dim]")
+        except Exception:
+            pass
+
+    console.print()
+
+
+# ── Gateway proxy (hidden, invoked by rewritten MCP client configs) ──
+
+
+@agent_cli.command("gateway-proxy", hidden=True)
+@click.argument("server_command", nargs=-1, required=True)
+@click.option(
+    "--policy-file",
+    type=click.Path(exists=False),
+    default=None,
+    help="Path to gateway policy YAML.",
+)
+@click.option("--server-name", type=str, default=None, help="Name for this server.")
+def gateway_proxy_cmd(
+    server_command: tuple[str, ...],
+    policy_file: str | None,
+    server_name: str | None,
+) -> None:
+    """Run the gateway proxy for a single MCP server (internal command).
+
+    This command is invoked by rewritten MCP client configs. It spawns
+    the real MCP server as a subprocess and proxies all JSON-RPC traffic
+    through the Medusa policy engine.
+
+    \b
+    Usage (typically auto-invoked):
+      medusa-agent gateway-proxy -- npx -y @modelcontextprotocol/server-everything
+    """
+    from medusa.gateway.policy import PolicyEngine, load_gateway_policy
+    from medusa.gateway.proxy import StdioGatewayProxy
+
+    cmd = list(server_command)
+    # Strip leading "--" separator if present
+    if cmd and cmd[0] == "--":
+        cmd = cmd[1:]
+
+    if not cmd:
+        click.echo("Error: No server command provided.", err=True)
+        sys.exit(1)
+
+    # Load policy
+    policy = load_gateway_policy(policy_file)
+    engine = PolicyEngine(policy)
+
+    name = server_name or " ".join(cmd[:2])
+    proxy = StdioGatewayProxy(
+        server_command=cmd,
+        policy_engine=engine,
+        server_name=name,
+    )
+
+    try:
+        exit_code = asyncio.run(proxy.run())
+    except KeyboardInterrupt:
+        exit_code = 0
+
+    sys.exit(exit_code)
+
+
 # ── Entry point ──────────────────────────────────────────────────────
 
 if __name__ == "__main__":

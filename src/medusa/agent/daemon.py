@@ -164,6 +164,17 @@ class AgentDaemon:
             )
         )
 
+        if self._config.config_monitor_enabled:
+            tasks.append(
+                asyncio.create_task(
+                    self._run_loop(
+                        "config_monitor",
+                        self._config.config_monitor_interval_seconds,
+                        self._tick_config_monitor,
+                    )
+                )
+            )
+
         return tasks
 
     async def _run_loop(
@@ -223,6 +234,47 @@ class AgentDaemon:
 
         monitor = HealthMonitor(self._store)
         monitor.check_all()
+
+    async def _tick_config_monitor(self) -> None:
+        """Run config drift detection, security checks, and posture scoring."""
+        from medusa.agent.config_monitor import (
+            ConfigDriftDetector,
+            ConfigSecurityChecker,
+            PostureScorer,
+            findings_to_events,
+            posture_to_event,
+        )
+
+        # 1. Drift detection
+        drift = ConfigDriftDetector(self._store)
+        drift_events = drift.detect_drift()
+        for event in drift_events:
+            event.agent_id = self._config.agent_id
+            event.customer_id = self._config.customer_id
+            self._store.insert_event(event)
+        if drift_events:
+            drift.update_baseline()
+            logger.info("Config drift detected: %d change(s)", len(drift_events))
+
+        # 2. Security checks
+        checker = ConfigSecurityChecker()
+        findings = checker.check_all_configs()
+        finding_events = findings_to_events(findings)
+        for event in finding_events:
+            event.agent_id = self._config.agent_id
+            event.customer_id = self._config.customer_id
+            self._store.insert_event(event)
+        if findings:
+            logger.info("Config security: %d finding(s)", len(findings))
+
+        # 3. Posture scoring
+        scorer = PostureScorer()
+        posture = scorer.calculate(findings=findings)
+        posture_event = posture_to_event(posture)
+        posture_event.agent_id = self._config.agent_id
+        posture_event.customer_id = self._config.customer_id
+        self._store.insert_event(posture_event)
+        logger.debug("Posture: %s (%.0f%% coverage)", posture.posture, posture.gateway_coverage_pct)
 
     # ── Shutdown ─────────────────────────────────────────────────────
 

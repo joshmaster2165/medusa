@@ -12,7 +12,7 @@ readme = "README.md"
 repository = "https://github.com/joshmaster2165/medusa"
 homepage = "https://github.com/joshmaster2165/medusa"
 packages = [{include = "medusa", from = "src"}]
-keywords = ["mcp", "security", "agent", "gateway", "endpoint", "scanner", "ai", "model-context-protocol", "owasp"]
+keywords = ["mcp", "security", "agent", "gateway", "endpoint", "model-context-protocol"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -21,24 +21,19 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
-    "Topic :: Software Development :: Testing",
     "Typing :: Typed",
 ]
 
 [tool.poetry.scripts]
-medusa = "medusa.cli.main:cli"
 medusa-agent = "medusa.cli.agent_cli:agent_cli"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
-mcp = ">=1.20.0"
 pydantic = ">=2.0"
 click = ">=8.0"
 rich = ">=13.0"
-jinja2 = ">=3.0"
 httpx = ">=0.27"
 pyyaml = ">=6.0"
-detect-secrets = ">=1.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"
