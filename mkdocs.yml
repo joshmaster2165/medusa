@@ -53,6 +53,19 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quickstart.md
     - Configuration: getting-started/configuration.md
+  - Deployment:
+    - Overview: deployment/index.md
+    - Windows:
+      - Manual Deployment: deployment/windows/manual-deployment.md
+      - Enterprise Deployment: deployment/windows/enterprise-deployment.md
+      - Confirming Deployment: deployment/windows/confirming-deployment.md
+    - macOS:
+      - Manual Deployment: deployment/macos/manual-deployment.md
+      - Enterprise Deployment: deployment/macos/enterprise-deployment.md
+      - Confirming Deployment: deployment/macos/confirming-deployment.md
+    - Linux:
+      - Manual Deployment: deployment/linux/manual-deployment.md
+      - Confirming Deployment: deployment/linux/confirming-deployment.md
   - User Guide:
     - Agent: guide/agent.md
     - Gateway: guide/gateway.md

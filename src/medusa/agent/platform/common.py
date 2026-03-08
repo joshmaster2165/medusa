@@ -128,8 +128,8 @@ def get_platform() -> str:
 def get_daemon_manager() -> object:
     """Get the platform-specific daemon manager.
 
-    Returns a DarwinDaemonManager or WindowsDaemonManager
-    based on the current platform.
+    Returns a DarwinDaemonManager, WindowsDaemonManager, or
+    LinuxDaemonManager based on the current platform.
 
     Raises NotImplementedError for unsupported platforms.
     """
@@ -142,6 +142,10 @@ def get_daemon_manager() -> object:
         from medusa.agent.platform.windows import WindowsDaemonManager
 
         return WindowsDaemonManager()
+    elif plat == "linux":
+        from medusa.agent.platform.linux import LinuxDaemonManager
+
+        return LinuxDaemonManager()
     else:
         raise NotImplementedError(
             f"Daemon management not supported on {plat}. "
